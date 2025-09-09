@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - CryptoChecker Analytics</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
+    <link href="../static/css/style.css" rel="stylesheet">
+    <style>
+        .dashboard-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+        
+        .metric-card {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-left: 4px solid #667eea;
+            margin-bottom: 1rem;
+            transition: transform 0.3s;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+        
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .metric-label {
+            color: #666;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .metric-change {
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+        }
+        
+        .metric-change.positive {
+            color: #28a745;
+        }
+        
+        .metric-change.negative {
+            color: #dc3545;
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            height: 400px;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+        
+        .status-healthy {
+            background-color: #28a745;
+        }
+        
+        .status-warning {
+            background-color: #ffc107;
+        }
+        
+        .status-critical {
+            background-color: #dc3545;
+        }
+        
+        .alert-card {
+            border-left: 4px solid #ffc107;
+        }
+        
+        .alert-card.critical {
+            border-left-color: #dc3545;
+        }
+        
+        .realtime-badge {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        
+        .nav-pills .nav-link {
+            border-radius: 25px;
+            margin-right: 0.5rem;
+        }
+        
+        .nav-pills .nav-link.active {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+        }
+        
+        .table-analytics {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .auto-refresh {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1050;
+        }
+    </style>
+</head>
+<body>
+    <!-- Auto-refresh indicator -->
+    <div class="auto-refresh">
+        <span class="realtime-badge" id="refreshIndicator">
+            <i class="fas fa-sync-alt fa-spin"></i>
+            Live Data
+        </span>
+    </div>
+    
+    <!-- Dashboard Header -->
+    <div class="dashboard-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1><i class="fas fa-tachometer-alt"></i> Admin Analytics Dashboard</h1>
+                    <p class="mb-0">Real-time platform monitoring and analytics</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="d-flex align-items-center justify-content-end">
+                        <span class="status-indicator status-healthy" id="systemStatus"></span>
+                        <span id="systemStatusText">System Healthy</span>
+                    </div>
+                    <small class="d-block mt-1" id="lastUpdated">Last updated: --:--</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Navigation Tabs -->
+        <ul class="nav nav-pills mb-4" id="dashboardTabs">
+            <li class="nav-item">
+                <a class="nav-link active" data-bs-toggle="pill" href="#overview">
+                    <i class="fas fa-chart-line"></i> Overview
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="pill" href="#users">
+                    <i class="fas fa-users"></i> Users
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="pill" href="#gaming">
+                    <i class="fas fa-gamepad"></i> Gaming
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="pill" href="#system">
+                    <i class="fas fa-server"></i> System
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="pill" href="#alerts">
+                    <i class="fas fa-exclamation-triangle"></i> Alerts <span class="badge bg-danger" id="alertCount">0</span>
+                </a>
+            </li>
+        </ul>
+
+        <!-- Tab Content -->
+        <div class="tab-content">
+            <!-- Overview Tab -->
+            <div class="tab-pane fade show active" id="overview">
+                <div class="row">
+                    <!-- Key Metrics -->
+                    <div class="col-lg-3 col-md-6">
+                        <div class="metric-card">
+                            <div class="metric-value" id="totalUsers">--</div>
+                            <div class="metric-label">Total Users</div>
+                            <div class="metric-change" id="userGrowth">--</div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-3 col-md-6">
+                        <div class="metric-card">
+                            <div class="metric-value" id="activeUsers">--</div>
+                            <div class="metric-label">Active Users</div>
+                            <div class="metric-change" id="activeChange">--</div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-3 col-md-6">
+                        <div class="metric-card">
+                            <div class="metric-value" id="totalGames">--</div>
+                            <div class="metric-label">Games Played</div>
+                            <div class="metric-change" id="gameGrowth">--</div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-3 col-md-6">
+                        <div class="metric-card">
+                            <div class="metric-value" id="totalRevenue">--</div>
+                            <div class="metric-label">Virtual Revenue</div>
+                            <div class="metric-change" id="revenueGrowth">--</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div class="row">
+                    <div class="col-lg-8">
+                        <div class="chart-container">
+                            <h5>Daily Active Users</h5>
+                            <canvas id="dauChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-4">
+                        <div class="chart-container">
+                            <h5>User Distribution</h5>
+                            <canvas id="userDistributionChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Users Tab -->
+            <div class="tab-pane fade" id="users">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="metric-card">
+                            <div class="metric-value" id="newUsers">--</div>
+                            <div class="metric-label">New Users (7d)</div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="metric-card">
+                            <div class="metric-value" id="retentionRate">--</div>
+                            <div class="metric-label">Retention Rate</div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="metric-card">
+                            <div class="metric-value" id="onboardingRate">--</div>
+                            <div class="metric-label">Onboarding Rate</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-12">
+                        <div class="chart-container">
+                            <h5>User Funnel Analysis</h5>
+                            <canvas id="funnelChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gaming Tab -->
+            <div class="tab-pane fade" id="gaming">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-value" id="gamesPerUser">--</div>
+                            <div class="metric-label">Games per User</div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-value" id="averageBet">--</div>
+                            <div class="metric-label">Average Bet</div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-value" id="houseEdge">--</div>
+                            <div class="metric-label">House Edge</div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-value" id="activePlayers">--</div>
+                            <div class="metric-label">Active Players</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-lg-6">
+                        <div class="chart-container">
+                            <h5>Gaming Volume</h5>
+                            <canvas id="gamingVolumeChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-6">
+                        <div class="chart-container">
+                            <h5>Bet Distribution</h5>
+                            <canvas id="betDistributionChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Tab -->
+            <div class="tab-pane fade" id="system">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-value" id="cpuUsage">--</div>
+                            <div class="metric-label">CPU Usage</div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-value" id="memoryUsage">--</div>
+                            <div class="metric-label">Memory Usage</div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-value" id="diskUsage">--</div>
+                            <div class="metric-label">Disk Usage</div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="metric-card">
+                            <div class="metric-value" id="uptime">--</div>
+                            <div class="metric-label">Uptime</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-12">
+                        <div class="chart-container">
+                            <h5>System Performance</h5>
+                            <canvas id="systemChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alerts Tab -->
+            <div class="tab-pane fade" id="alerts">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5>Active Alerts</h5>
+                            <button class="btn btn-outline-primary btn-sm" id="refreshAlerts">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                        </div>
+                        
+                        <div id="alertsList">
+                            <!-- Alerts will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div class="loading-spinner" id="loadingSpinner">
+        <i class="fas fa-spinner fa-spin fa-3x"></i>
+        <p>Loading dashboard data...</p>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../static/js/api-client.js"></script>
+    <script>
+        class AdminDashboard {
+            constructor() {
+                this.charts = {};
+                this.refreshInterval = 30000; // 30 seconds
+                this.refreshTimer = null;
+                this.init();
+            }
+            
+            init() {
+                this.loadDashboardData();
+                this.setupAutoRefresh();
+                this.setupEventHandlers();
+            }
+            
+            setupEventHandlers() {
+                document.getElementById('refreshAlerts').addEventListener('click', () => {
+                    this.loadAlerts();
+                });
+                
+                // Handle tab switches
+                document.querySelectorAll('[data-bs-toggle="pill"]').forEach(tab => {
+                    tab.addEventListener('shown.bs.tab', (e) => {
+                        const target = e.target.getAttribute('href').substring(1);
+                        this.handleTabSwitch(target);
+                    });
+                });
+            }
+            
+            setupAutoRefresh() {
+                this.refreshTimer = setInterval(() => {
+                    this.loadDashboardData();
+                }, this.refreshInterval);
+            }
+            
+            async loadDashboardData() {
+                try {
+                    this.showLoading(true);
+                    
+                    // Load all dashboard data in parallel
+                    const [
+                        adminData,
+                        systemStatus,
+                        alerts
+                    ] = await Promise.all([
+                        apiClient.get('/analytics/dashboard/admin'),
+                        apiClient.get('/analytics/monitoring/status'),
+                        apiClient.get('/analytics/monitoring/alerts')
+                    ]);
+                    
+                    this.updateOverviewMetrics(adminData.data);
+                    this.updateSystemStatus(systemStatus.data);
+                    this.updateAlerts(alerts.data);
+                    this.updateCharts(adminData.data);
+                    
+                    document.getElementById('lastUpdated').textContent = 
+                        `Last updated: ${new Date().toLocaleTimeString()}`;
+                    
+                } catch (error) {
+                    console.error('Error loading dashboard data:', error);
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+            
+            updateOverviewMetrics(data) {
+                const platform = data.platform || {};
+                const realtime = data.realtime || {};
+                
+                // Update overview metrics
+                document.getElementById('totalUsers').textContent = 
+                    platform.users?.total_users?.toLocaleString() || '--';
+                document.getElementById('activeUsers').textContent = 
+                    realtime.users_online?.toLocaleString() || '--';
+                document.getElementById('totalGames').textContent = 
+                    platform.gaming?.total_games?.toLocaleString() || '--';
+                document.getElementById('totalRevenue').textContent = 
+                    platform.gaming?.total_wagered?.toLocaleString() || '--';
+                
+                // Update growth indicators
+                this.updateGrowthIndicator('userGrowth', platform.users?.user_growth_rate);
+                this.updateGrowthIndicator('activeChange', platform.users?.user_retention_rate);
+                this.updateGrowthIndicator('gameGrowth', platform.gaming?.games_per_user);
+                this.updateGrowthIndicator('revenueGrowth', platform.gaming?.house_edge);
+            }
+            
+            updateGrowthIndicator(elementId, value) {
+                const element = document.getElementById(elementId);
+                if (value !== undefined && value !== null) {
+                    const isPositive = value > 0;
+                    element.textContent = `${isPositive ? '+' : ''}${value.toFixed(1)}%`;
+                    element.className = `metric-change ${isPositive ? 'positive' : 'negative'}`;
+                } else {
+                    element.textContent = '--';
+                    element.className = 'metric-change';
+                }
+            }
+            
+            updateSystemStatus(statusData) {
+                const status = statusData.status || 'unknown';
+                const statusIndicator = document.getElementById('systemStatus');
+                const statusText = document.getElementById('systemStatusText');
+                
+                // Remove existing status classes
+                statusIndicator.className = 'status-indicator';
+                
+                switch (status) {
+                    case 'healthy':
+                        statusIndicator.classList.add('status-healthy');
+                        statusText.textContent = 'System Healthy';
+                        break;
+                    case 'warning':
+                        statusIndicator.classList.add('status-warning');
+                        statusText.textContent = 'System Warning';
+                        break;
+                    case 'critical':
+                        statusIndicator.classList.add('status-critical');
+                        statusText.textContent = 'System Critical';
+                        break;
+                    default:
+                        statusIndicator.classList.add('status-warning');
+                        statusText.textContent = 'System Unknown';
+                }
+                
+                // Update system metrics
+                const metrics = statusData.metrics || {};
+                const system = metrics.system || {};
+                
+                document.getElementById('cpuUsage').textContent = 
+                    system.cpu?.usage_percent ? `${system.cpu.usage_percent.toFixed(1)}%` : '--';
+                document.getElementById('memoryUsage').textContent = 
+                    system.memory?.usage_percent ? `${system.memory.usage_percent.toFixed(1)}%` : '--';
+                document.getElementById('diskUsage').textContent = 
+                    system.disk?.usage_percent ? `${system.disk.usage_percent.toFixed(1)}%` : '--';
+                document.getElementById('uptime').textContent = 
+                    statusData.uptime ? this.formatUptime(statusData.uptime) : '--';
+            }
+            
+            updateAlerts(alertsData) {
+                const alertCount = alertsData.total_alerts || 0;
+                document.getElementById('alertCount').textContent = alertCount;
+                
+                const alertsList = document.getElementById('alertsList');
+                if (alertCount === 0) {
+                    alertsList.innerHTML = `
+                        <div class="text-center py-4">
+                            <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                            <h5>No Active Alerts</h5>
+                            <p class="text-muted">All systems are operating normally</p>
+                        </div>
+                    `;
+                } else {
+                    alertsList.innerHTML = alertsData.alerts.map(alert => `
+                        <div class="alert-card card mb-3 ${alert.level === 'critical' ? 'critical' : ''}">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="card-title">
+                                            <i class="fas fa-exclamation-triangle text-warning"></i>
+                                            ${alert.title}
+                                        </h6>
+                                        <p class="card-text">${alert.message}</p>
+                                        <small class="text-muted">
+                                            ${new Date(alert.timestamp).toLocaleString()}
+                                        </small>
+                                    </div>
+                                    <button class="btn btn-sm btn-outline-success" 
+                                            onclick="adminDashboard.resolveAlert('${alert.id}')">
+                                        Resolve
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            }
+            
+            updateCharts(data) {
+                // Update DAU Chart
+                this.updateDAUChart(data.platform?.engagement?.dau_trend || []);
+                
+                // Update other charts as needed
+                this.updateUserDistributionChart(data.platform?.users || {});
+                this.updateFunnelChart(data.platform);
+            }
+            
+            updateDAUChart(dauData) {
+                const ctx = document.getElementById('dauChart');
+                if (!ctx) return;
+                
+                if (this.charts.dau) {
+                    this.charts.dau.destroy();
+                }
+                
+                this.charts.dau = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: dauData.map(d => new Date(d.date).toLocaleDateString()),
+                        datasets: [{
+                            label: 'Daily Active Users',
+                            data: dauData.map(d => d.active_users),
+                            borderColor: '#667eea',
+                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+            
+            updateUserDistributionChart(userData) {
+                const ctx = document.getElementById('userDistributionChart');
+                if (!ctx) return;
+                
+                if (this.charts.userDist) {
+                    this.charts.userDist.destroy();
+                }
+                
+                this.charts.userDist = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Active Users', 'Inactive Users'],
+                        datasets: [{
+                            data: [
+                                userData.active_users || 0,
+                                (userData.total_users || 0) - (userData.active_users || 0)
+                            ],
+                            backgroundColor: ['#28a745', '#dc3545']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            }
+            
+            updateFunnelChart(platformData) {
+                // Implementation for funnel chart
+                // This would show the conversion funnel from signup to engagement
+            }
+            
+            async resolveAlert(alertId) {
+                try {
+                    await apiClient.post(`/analytics/monitoring/alerts/${alertId}/resolve`);
+                    this.loadAlerts(); // Refresh alerts
+                } catch (error) {
+                    console.error('Error resolving alert:', error);
+                }
+            }
+            
+            async loadAlerts() {
+                try {
+                    const alerts = await apiClient.get('/analytics/monitoring/alerts');
+                    this.updateAlerts(alerts.data);
+                } catch (error) {
+                    console.error('Error loading alerts:', error);
+                }
+            }
+            
+            handleTabSwitch(tabId) {
+                // Perform any tab-specific data loading or chart updates
+                switch (tabId) {
+                    case 'users':
+                        this.loadUserAnalytics();
+                        break;
+                    case 'gaming':
+                        this.loadGamingAnalytics();
+                        break;
+                    case 'system':
+                        this.loadSystemMetrics();
+                        break;
+                    case 'alerts':
+                        this.loadAlerts();
+                        break;
+                }
+            }
+            
+            async loadUserAnalytics() {
+                // Load user-specific analytics
+            }
+            
+            async loadGamingAnalytics() {
+                // Load gaming-specific analytics
+            }
+            
+            async loadSystemMetrics() {
+                // Load detailed system metrics
+            }
+            
+            formatUptime(seconds) {
+                const days = Math.floor(seconds / 86400);
+                const hours = Math.floor((seconds % 86400) / 3600);
+                if (days > 0) {
+                    return `${days}d ${hours}h`;
+                } else {
+                    return `${hours}h`;
+                }
+            }
+            
+            showLoading(show) {
+                const spinner = document.getElementById('loadingSpinner');
+                spinner.style.display = show ? 'block' : 'none';
+            }
+        }
+        
+        // Initialize dashboard
+        let adminDashboard;
+        document.addEventListener('DOMContentLoaded', () => {
+            adminDashboard = new AdminDashboard();
+        });
+        
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (adminDashboard && adminDashboard.refreshTimer) {
+                clearInterval(adminDashboard.refreshTimer);
+            }
+        });
+    </script>
+</body>
+</html>

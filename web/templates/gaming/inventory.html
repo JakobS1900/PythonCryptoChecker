@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inventory - Gamification</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+  <div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h3 class="mb-0"><i class="fas fa-box-open me-2"></i>Inventory</h3>
+      <a href="/trading" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-2"></i>Back to Trading</a>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-body">
+        <div class="row g-3 align-items-end">
+          <div class="col-sm-4">
+            <label class="form-label">Search</label>
+            <input type="text" id="search" class="form-control" placeholder="Search items..." />
+          </div>
+          <div class="col-sm-4">
+            <label class="form-label">Filter Type</label>
+            <select id="filter-type" class="form-select">
+              <option value="">All Types</option>
+              <option value="TRADING_CARD">Trading Card</option>
+              <option value="COSMETIC">Cosmetic</option>
+              <option value="TROPHY">Trophy</option>
+              <option value="CONSUMABLE">Consumable</option>
+              <option value="SPECIAL">Special</option>
+            </select>
+          </div>
+          <div class="col-sm-4">
+            <label class="form-label">Filter Rarity</label>
+            <select id="filter-rarity" class="form-select">
+              <option value="">All Rarities</option>
+              <option value="COMMON">Common</option>
+              <option value="UNCOMMON">Uncommon</option>
+              <option value="RARE">Rare</option>
+              <option value="EPIC">Epic</option>
+              <option value="LEGENDARY">Legendary</option>
+            </select>
+          </div>
+          <div class="col-sm-4">
+            <label class="form-label">Sort By</label>
+            <select id="sort-by" class="form-select">
+              <option value="acquired_at">Acquired Date</option>
+              <option value="rarity">Rarity</option>
+              <option value="name">Name</option>
+            </select>
+          </div>
+          <div class="col-sm-4">
+            <label class="form-label">Order</label>
+            <select id="sort-dir" class="form-select">
+              <option value="desc">Descending</option>
+              <option value="asc">Ascending</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="inventory-list" class="card">
+      <div class="card-body">
+        <div class="text-muted">Loading inventory...</div>
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mt-3">
+      <div class="text-muted small" id="inv-stats"></div>
+      <div>
+        <button class="btn btn-outline-secondary btn-sm" id="prev-page">Prev</button>
+        <button class="btn btn-outline-secondary btn-sm" id="next-page">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let curPage = 1, perPage = 20, totalItems = 0;
+    document.addEventListener('DOMContentLoaded', () => {
+      loadInventory();
+      document.getElementById('search').addEventListener('input', () => { curPage = 1; loadInventory(); });
+      document.getElementById('filter-type').addEventListener('change', () => { curPage = 1; loadInventory(); });
+      document.getElementById('filter-rarity').addEventListener('change', () => { curPage = 1; loadInventory(); });
+      document.getElementById('sort-by').addEventListener('change', () => { curPage = 1; loadInventory(); });
+      document.getElementById('sort-dir').addEventListener('change', () => { curPage = 1; loadInventory(); });
+      document.getElementById('prev-page').addEventListener('click', () => { if (curPage > 1) { curPage--; loadInventory(); } });
+      document.getElementById('next-page').addEventListener('click', () => { if (curPage * perPage < totalItems) { curPage++; loadInventory(); } });
+    });
+
+    async function loadInventory() {
+      const list = document.getElementById('inventory-list');
+      list.querySelector('.card-body').innerHTML = '<div class="text-muted">Loading inventory...</div>';
+      const params = new URLSearchParams();
+      params.set('page', curPage);
+      params.set('per_page', perPage);
+      const type = document.getElementById('filter-type').value; if (type) params.set('item_type', type);
+      const rarity = document.getElementById('filter-rarity').value; if (rarity) params.set('rarity', rarity);
+      const q = (document.getElementById('search').value || '').trim(); if (q) params.set('search', q);
+      params.set('sort_by', document.getElementById('sort-by').value);
+      params.set('sort_desc', document.getElementById('sort-dir').value === 'desc');
+      const resp = await fetch('/api/trading/gamification/inventory?' + params.toString());
+      const json = await resp.json();
+      if (json.status !== 'success') { list.querySelector('.card-body').innerHTML = '<div class="text-danger">Failed to load inventory</div>'; return; }
+      let items = json.data.items || [];
+      totalItems = json.data.total || items.length;
+      perPage = json.data.per_page || perPage;
+      curPage = json.data.page || curPage;
+      document.getElementById('inv-stats').textContent = `Showing ${items.length} of ${totalItems} items • Page ${curPage}`;
+      if (items.length === 0) { list.querySelector('.card-body').innerHTML = '<div class="text-muted">No items match your filters.</div>'; return; }
+      list.querySelector('.card-body').innerHTML = items.map(it => `
+        <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+          <div>
+            <strong>${it.name || 'Item'}</strong>
+            <span class="badge bg-light text-dark ms-2">${(it.item_type || '').toString().toUpperCase()}</span>
+            <span class="badge bg-secondary ms-1">${(it.rarity || '').toString().toUpperCase()}</span>
+            <div class="text-muted small">${it.description || ''}</div>
+          </div>
+          <div class="text-end">
+            <div class="text-muted">x${it.quantity || 1}</div>
+            ${it.is_consumable ? `<button class="btn btn-sm btn-success mt-1" onclick=\"useConsumable('${it.inventory_id}')\">Use</button>` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function useConsumable(inventoryId) {
+      try {
+        const resp = await fetch(`/api/trading/gamification/consumables/${inventoryId}/use`, { method: 'POST' });
+        const json = await resp.json();
+        if (json.status === 'success') { alert(json.data.effect_applied || 'Consumable used'); loadInventory(); }
+        else { alert('Failed to use consumable'); }
+      } catch (e) { alert('Error using consumable'); }
+    }
+  </script>
+</body>
+</html>

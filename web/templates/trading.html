@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paper Trading - Crypto Analytics Platform</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --success-color: #059669;
+            --danger-color: #dc2626;
+            --warning-color: #d97706;
+        }
+
+        body {
+            background-color: #f8fafc;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .trading-header {
+            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+            color: white;
+            padding: 2rem 0;
+        }
+
+        .portfolio-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .metric-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .positive { color: var(--success-color); }
+        .negative { color: var(--danger-color); }
+        .neutral { color: #6b7280; }
+
+        .holding-item {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            background: white;
+        }
+
+        .trade-form {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .btn-buy {
+            background-color: var(--success-color);
+            border-color: var(--success-color);
+            color: white;
+        }
+
+        .btn-sell {
+            background-color: var(--danger-color);
+            border-color: var(--danger-color);
+            color: white;
+        }
+
+        .transaction-item {
+            padding: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .loading {
+            display: none;
+        }
+
+        .performance-chart {
+            height: 300px;
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="trading-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="mb-0">
+                        <i class="fas fa-chart-line me-3"></i>
+                        Paper Trading Dashboard
+                    </h1>
+                    <p class="mb-0 mt-2 opacity-75">Practice trading with virtual money • Risk-free learning environment</p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <!-- Authentication buttons - show when not logged in -->
+                    <div id="auth-buttons" class="d-none">
+                        <a href="/login" class="btn btn-outline-light me-2">
+                            <i class="fas fa-sign-in-alt me-2"></i>Login
+                        </a>
+                        <a href="/register" class="btn btn-light me-2">
+                            <i class="fas fa-user-plus me-2"></i>Register
+                        </a>
+                    </div>
+                    
+                    <!-- User menu - show when logged in -->
+                    <div id="user-menu" class="d-none">
+                        <div class="dropdown d-inline-block me-2">
+                            <button class="btn btn-outline-light dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown">
+                                <i class="fas fa-user me-2"></i>
+                                <span id="username-display">Guest</span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="/dashboard"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a></li>
+                                <li><a class="dropdown-item" href="/gaming/inventory"><i class="fas fa-box-open me-2"></i>Inventory</a></li>
+                                <li><a class="dropdown-item" href="/achievements"><i class="fas fa-trophy me-2"></i>Achievements</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="#" onclick="logout()"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-light" onclick="refreshDashboard()">
+                        <i class="fas fa-sync-alt me-2"></i>Refresh
+                    </button>
+                    <div id="effects-badge" class="mt-2"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container my-4">
+        
+        <!-- Loading Indicator -->
+        <div class="text-center my-5 loading" id="main-loading">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Loading portfolio data...</p>
+        </div>
+
+        <!-- Portfolio Overview -->
+        <div class="row mb-4" id="portfolio-overview" style="display: none;">
+            <div class="col-12">
+                <div class="portfolio-card">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3 class="mb-0">Demo Trading Portfolio</h3>
+                        <span class="badge bg-success">Active</span>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-2 col-sm-6 mb-3">
+                            <div class="metric-card">
+                                <div class="metric-value text-primary" id="portfolio-value">$0.00</div>
+                                <div class="small text-muted">Portfolio Value</div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-6 mb-3">
+                            <div class="metric-card">
+                                <div class="metric-value" id="total-return">$0.00</div>
+                                <div class="small text-muted">Total Return</div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-6 mb-3">
+                            <div class="metric-card">
+                                <div class="metric-value neutral" id="return-percentage">0.00%</div>
+                                <div class="small text-muted">Return %</div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-6 mb-3">
+                            <div class="metric-card">
+                                <div class="metric-value text-info" id="cash-balance">$0.00</div>
+                                <div class="small text-muted">Cash Balance</div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-6 mb-3">
+                            <div class="metric-card">
+                                <div class="metric-value neutral" id="total-trades">0</div>
+                                <div class="small text-muted">Total Trades</div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-6 mb-3">
+                            <div class="metric-card">
+                                <div class="metric-value neutral" id="win-rate">0%</div>
+                                <div class="small text-muted">Win Rate</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row" id="main-content" style="display: none;">
+            <!-- Portfolio Holdings -->
+            <div class="col-lg-8">
+                <div class="portfolio-card">
+                    <h4 class="mb-3">
+                        <i class="fas fa-wallet text-primary me-2"></i>
+                        Current Holdings
+                    </h4>
+                    <div id="holdings-list">
+                        <!-- Holdings will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Open Orders -->
+                <div class="portfolio-card">
+                    <h4 class="mb-3">
+                        <i class="fas fa-list text-primary me-2"></i>
+                        Open Orders
+                    </h4>
+                    <div id="open-orders-list" class="small text-muted">Loading open orders...</div>
+                </div>
+
+                <!-- Recent Transactions -->
+                <div class="portfolio-card">
+                    <h4 class="mb-3">
+                        <i class="fas fa-history text-primary me-2"></i>
+                        Recent Transactions
+                    </h4>
+                    <div id="transactions-list">
+                        <!-- Transactions will be populated here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trading Panel -->
+            <div class="col-lg-4">
+                <div class="trade-form">
+                    <h4 class="mb-3">
+                        <i class="fas fa-exchange-alt text-primary me-2"></i>
+                        Quick Trade
+                    </h4>
+                    
+                    <form id="trade-form">
+                        <div class="mb-3">
+                            <label class="form-label">Cryptocurrency</label>
+                            <select class="form-select" id="trade-coin" required>
+                                <option value="">Select a coin...</option>
+                                <option value="bitcoin">Bitcoin (BTC)</option>
+                                <option value="ethereum">Ethereum (ETH)</option>
+                                <option value="ripple">XRP (XRP)</option>
+                                <option value="binancecoin">BNB (BNB)</option>
+                                <option value="solana">Solana (SOL)</option>
+                                <option value="cardano">Cardano (ADA)</option>
+                                <option value="dogecoin">Dogecoin (DOGE)</option>
+                                <option value="polygon">Polygon (MATIC)</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Action</label>
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="trade-action" id="action-buy" value="buy" checked>
+                                <label class="btn btn-outline-success" for="action-buy">
+                                    <i class="fas fa-arrow-up me-2"></i>Buy
+                                </label>
+                                
+                                <input type="radio" class="btn-check" name="trade-action" id="action-sell" value="sell">
+                                <label class="btn btn-outline-danger" for="action-sell">
+                                    <i class="fas fa-arrow-down me-2"></i>Sell
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Amount (USD)</label>
+                            <input type="number" class="form-control" id="trade-amount" 
+                                   placeholder="1000" min="1" step="0.01" required>
+                            <div class="form-text">Enter the USD amount to trade</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Order Type</label>
+                            <select class="form-select" id="order-type">
+                                <option value="MARKET">Market Order (Execute Immediately)</option>
+                                <option value="LIMIT">Limit Order (Not yet implemented)</option>
+                            </select>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane me-2"></i>
+                                Place Order
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Replace Protections -->
+                <div class="trade-form mt-4">
+                    <h5 class="mb-3">
+                        <i class="fas fa-shield-alt text-primary me-2"></i>
+                        Replace Protections (OCO)
+                    </h5>
+                    <form id="protect-form">
+                        <div class="mb-2">
+                            <label class="form-label">Coin</label>
+                            <select class="form-select" id="protect-coin">
+                                <option value="bitcoin|BTC">Bitcoin (BTC)</option>
+                                <option value="ethereum|ETH">Ethereum (ETH)</option>
+                                <option value="solana|SOL">Solana (SOL)</option>
+                                <option value="cardano|ADA">Cardano (ADA)</option>
+                            </select>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Stop Loss (%)</label>
+                            <input type="number" class="form-control" id="sl-pct" placeholder="5" min="0" step="0.01">
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Take Profit (%)</label>
+                            <input type="number" class="form-control" id="tp-pct" placeholder="10" min="0" step="0.01">
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Existing OCO Group ID (optional)</label>
+                            <input type="text" class="form-control" id="oco-group-id" placeholder="...">
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-outline-primary">Replace Protections</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Performance Summary -->
+                <div class="trade-form mt-4">
+                    <h5 class="mb-3">
+                        <i class="fas fa-chart-bar text-primary me-2"></i>
+                        Performance Summary
+                    </h5>
+                    <div class="performance-chart" id="performance-summary">
+                        Performance metrics will appear here
+                    </div>
+                </div>
+
+                <!-- Gamification Wallet -->
+                <div class="trade-form mt-4">
+                    <h5 class="mb-3">
+                        <i class="fas fa-gem text-warning me-2"></i>
+                        Gamification Wallet
+                    </h5>
+                    <div id="wallet-summary">
+                        <div class="text-muted">Loading wallet...</div>
+                    </div>
+                    <div class="text-end mt-2">
+                        <a class="btn btn-sm btn-outline-secondary" href="/gaming/inventory">
+                            <i class="fas fa-box-open me-1"></i> View Full Inventory
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Inventory Preview -->
+                <div class="trade-form mt-4">
+                    <h5 class="mb-3">
+                        <i class="fas fa-box-open text-primary me-2"></i>
+                        Inventory Preview
+                    </h5>
+                    <div id="inventory-preview">
+                        <div class="text-muted">Loading inventory...</div>
+                    </div>
+                </div>
+
+                <!-- Consumables -->
+                <div class="trade-form mt-4">
+                    <h5 class="mb-3">
+                        <i class="fas fa-flask text-success me-2"></i>
+                        Consumables
+                    </h5>
+                    <div id="consumables-list">
+                        <div class="text-muted">Loading consumables...</div>
+                    </div>
+                </div>
+
+                <!-- Recent Rewards & Activity -->
+                <div class="trade-form mt-4">
+                    <h5 class="mb-3">
+                        <i class="fas fa-trophy text-warning me-2"></i>
+                        Recent Rewards & Activity
+                    </h5>
+                    <div id="activity-feed">
+                        <div class="text-muted">Loading activity...</div>
+                    </div>
+                </div>
+
+                <!-- Active Effects -->
+                <div class="trade-form mt-4">
+                    <h5 class="mb-3">
+                        <i class="fas fa-bolt text-warning me-2"></i>
+                        Active Effects
+                    </h5>
+                    <div id="effects-list">
+                        <div class="text-muted">Loading effects...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Application state
+        let portfolioData = null;
+        let currentHoldings = [];
+        let recentTransactions = [];
+        let walletData = null;
+        let inventoryData = null;
+        let activityData = null;
+        let effectsData = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuthenticationState();
+            loadPortfolioData();
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            // Trade form submission
+            document.getElementById('trade-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                executeTrade();
+            });
+            document.getElementById('protect-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                replaceProtections();
+            });
+        }
+
+        async function loadPortfolioData() {
+            try {
+                showLoading(true);
+
+                // Load portfolio summary
+                const summaryResponse = await fetch('/api/trading/portfolio/demo-portfolio-456/summary');
+                const summaryData = await summaryResponse.json();
+
+                if (summaryData.status === 'success') {
+                    portfolioData = summaryData.data;
+                    updatePortfolioDisplay();
+                    updateHoldingsDisplay();
+                }
+
+                // Load open orders
+                try {
+                    await loadOpenOrders();
+                } catch (e) { console.warn('Open orders fetch failed', e); }
+
+                // Load recent transactions
+                const transactionsResponse = await fetch('/api/trading/portfolio/demo-portfolio-456/transactions?limit=10');
+                const transactionsData = await transactionsResponse.json();
+
+                if (transactionsData.status === 'success') {
+                    recentTransactions = transactionsData.data.transactions;
+                    updateTransactionsDisplay();
+                }
+
+                // Load wallet
+                try {
+                    const walletResponse = await fetch('/api/trading/gamification/wallet');
+                    const walletJson = await walletResponse.json();
+                    if (walletJson.status === 'success') {
+                        walletData = walletJson.data;
+                        updateWalletDisplay();
+                    }
+                } catch (e) { console.warn('Wallet fetch failed', e); }
+
+                // Load inventory preview
+                try {
+                    const invResponse = await fetch('/api/trading/gamification/inventory?per_page=5');
+                    const invJson = await invResponse.json();
+                    if (invJson.status === 'success') {
+                        inventoryData = invJson.data;
+                        updateInventoryPreview();
+                    }
+                } catch (e) { console.warn('Inventory fetch failed', e); }
+
+                // Load consumables
+                try {
+                    await loadConsumables();
+                } catch (e) { console.warn('Consumables fetch failed', e); }
+
+                // Load recent activity
+                try {
+                    const actResponse = await fetch('/api/trading/gamification/activity');
+                    const actJson = await actResponse.json();
+                    if (actJson.status === 'success') {
+                        activityData = actJson.data;
+                        updateActivityFeed();
+                    }
+                } catch (e) { console.warn('Activity fetch failed', e); }
+
+                // Load active effects
+                try {
+                    await loadEffects();
+                } catch (e) { console.warn('Effects fetch failed', e); }
+
+                showMainContent();
+
+            } catch (error) {
+                console.error('Error loading portfolio data:', error);
+                showError('Failed to load portfolio data');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function replaceProtections() {
+            try {
+                const coinSel = document.getElementById('protect-coin').value.split('|');
+                const coinId = coinSel[0];
+                const coinSymbol = coinSel[1];
+                const slPct = parseFloat(document.getElementById('sl-pct').value || '0') / 100.0;
+                const tpPct = parseFloat(document.getElementById('tp-pct').value || '0') / 100.0;
+                const ocoId = document.getElementById('oco-group-id').value.trim();
+                const body = {
+                    coin_id: coinId,
+                    coin_symbol: coinSymbol,
+                    sl_pct: slPct > 0 ? slPct : null,
+                    tp_pct: tpPct > 0 ? tpPct : null,
+                    cancel_existing: true
+                };
+                if (ocoId) body.oco_group_id = ocoId;
+                const resp = await fetch('/api/trading/portfolio/demo-portfolio-456/orders/protect/replace', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)});
+                const data = await resp.json();
+                if (data.status === 'success') { showSuccess('Protections replaced'); loadOpenOrders(); }
+                else { showError('Failed to replace protections'); }
+            } catch (e) { showError('Error replacing protections'); }
+        }
+
+        async function loadOpenOrders() {
+            const resp = await fetch('/api/trading/portfolio/demo-portfolio-456/orders/open');
+            const data = await resp.json();
+            const el = document.getElementById('open-orders-list');
+            if (data.status !== 'success' || !data.data || !data.data.orders || data.data.orders.length === 0) {
+                el.innerHTML = '<div class="text-muted">No open orders.</div>';
+                return;
+            }
+            const rows = data.data.orders.map(o => `
+                <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+                    <div>
+                        <strong>${o.order_type}</strong> ${o.order_side} ${o.quantity} ${o.coin_symbol}
+                        <div class="text-muted">${o.price ? 'Price: ' + formatCurrency(o.price) : ''} ${o.stop_price ? 'Stop: ' + formatCurrency(o.stop_price) : ''}</div>
+                        ${o.oco_group_id ? `<div class="badge bg-light text-dark">OCO Group: ${o.oco_group_id.substring(0,8)}...</div>` : ''}
+                    </div>
+                    <div>
+                        ${o.oco_group_id ? `<button class="btn btn-sm btn-outline-warning me-2" onclick="cancelOcoGroup('${o.oco_group_id}')">Cancel Group</button>` : ''}
+                        <button class="btn btn-sm btn-outline-danger" onclick="cancelOrder('${o.id}')">Cancel</button>
+                    </div>
+                </div>
+            `).join('');
+            el.innerHTML = rows;
+        }
+
+        async function cancelOrder(orderId) {
+            try {
+                const resp = await fetch(`/api/trading/orders/${orderId}/cancel`, { method: 'POST' });
+                const data = await resp.json();
+                if (data.status === 'success') { showSuccess('Order cancelled'); loadOpenOrders(); }
+                else { showError('Failed to cancel order'); }
+            } catch (e) { showError('Error cancelling order'); }
+        }
+
+        async function cancelOcoGroup(groupId) {
+            try {
+                const resp = await fetch(`/api/trading/oco/${groupId}/cancel`, { method: 'POST' });
+                const data = await resp.json();
+                if (data.status === 'success') { showSuccess('OCO group cancelled'); loadOpenOrders(); }
+                else { showError('Failed to cancel OCO group'); }
+            } catch (e) { showError('Error cancelling OCO group'); }
+        }
+
+        function updatePortfolioDisplay() {
+            if (!portfolioData) return;
+
+            const portfolio = portfolioData.portfolio;
+            
+            document.getElementById('portfolio-value').textContent = formatCurrency(portfolio.total_portfolio_value);
+            
+            const returnElement = document.getElementById('total-return');
+            returnElement.textContent = formatCurrency(portfolio.total_return);
+            returnElement.className = `metric-value ${portfolio.total_return >= 0 ? 'positive' : 'negative'}`;
+            
+            const returnPctElement = document.getElementById('return-percentage');
+            returnPctElement.textContent = `${portfolio.total_return_percentage.toFixed(2)}%`;
+            returnPctElement.className = `metric-value ${portfolio.total_return_percentage >= 0 ? 'positive' : 'negative'}`;
+            
+            document.getElementById('cash-balance').textContent = formatCurrency(portfolio.current_balance);
+            document.getElementById('total-trades').textContent = portfolio.total_trades;
+            document.getElementById('win-rate').textContent = `${portfolio.win_rate.toFixed(1)}%`;
+        }
+
+        function updateHoldingsDisplay() {
+            const holdingsList = document.getElementById('holdings-list');
+            
+            if (!portfolioData || !portfolioData.holdings || portfolioData.holdings.length === 0) {
+                holdingsList.innerHTML = `
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-wallet fa-3x mb-3 opacity-50"></i>
+                        <p>No holdings yet. Start by placing your first trade!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const holdingsHTML = portfolioData.holdings.map(holding => `
+                <div class="holding-item">
+                    <div class="row align-items-center">
+                        <div class="col-md-3">
+                            <strong>${holding.coin_symbol.toUpperCase()}</strong>
+                            <div class="small text-muted">${holding.coin_id}</div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="small text-muted">Quantity</div>
+                            <div>${formatCrypto(holding.quantity)}</div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="small text-muted">Avg Cost</div>
+                            <div>${formatCurrency(holding.average_cost)}</div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="small text-muted">Current Price</div>
+                            <div>${formatCurrency(holding.current_price)}</div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="small text-muted">Market Value</div>
+                            <div>${formatCurrency(holding.market_value)}</div>
+                        </div>
+                        <div class="col-md-1">
+                            <div class="small text-muted">P&L</div>
+                            <div class="${holding.profit_loss >= 0 ? 'positive' : 'negative'}">
+                                ${formatCurrency(holding.profit_loss)}
+                                <div class="small">(${holding.profit_loss_percentage.toFixed(1)}%)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            holdingsList.innerHTML = holdingsHTML;
+        }
+
+        function updateTransactionsDisplay() {
+            const transactionsList = document.getElementById('transactions-list');
+            
+            if (!recentTransactions || recentTransactions.length === 0) {
+                transactionsList.innerHTML = `
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-history fa-3x mb-3 opacity-50"></i>
+                        <p>No transactions yet. Your trading history will appear here.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const transactionsHTML = recentTransactions.slice(0, 5).map(tx => {
+                const date = new Date(tx.created_at).toLocaleDateString();
+                const time = new Date(tx.created_at).toLocaleTimeString();
+                
+                return `
+                    <div class="transaction-item">
+                        <div>
+                            <div class="fw-bold">${tx.description}</div>
+                            <div class="small text-muted">${date} ${time}</div>
+                        </div>
+                        <div class="text-end">
+                            <div class="${tx.amount >= 0 ? 'positive' : 'negative'}">${formatCurrency(Math.abs(tx.amount))}</div>
+                            ${tx.fee > 0 ? `<div class="small text-muted">Fee: ${formatCurrency(tx.fee)}</div>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            transactionsList.innerHTML = transactionsHTML;
+        }
+
+        async function executeTrade() {
+            try {
+                const formData = new FormData(document.getElementById('trade-form'));
+                const coinId = document.getElementById('trade-coin').value;
+                const action = document.querySelector('input[name="trade-action"]:checked').value;
+                const amount = parseFloat(document.getElementById('trade-amount').value);
+
+                if (!coinId || !amount) {
+                    showError('Please fill in all fields');
+                    return;
+                }
+
+                // Show loading
+                const submitBtn = document.querySelector('#trade-form button[type="submit"]');
+                const originalText = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+                submitBtn.disabled = true;
+
+                // Execute quick trade
+                const response = await fetch(`/api/trading/quick-trade/${action}/${coinId}?amount=${amount}`, {
+                    method: 'GET'
+                });
+
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    showSuccess(result.data.message);
+                    
+                    // Reset form and refresh data
+                    document.getElementById('trade-form').reset();
+                    document.getElementById('action-buy').checked = true;
+                    
+                    setTimeout(() => {
+                        loadPortfolioData();
+                    }, 1000);
+                } else {
+                    showError(result.detail || 'Trade execution failed');
+                }
+
+            } catch (error) {
+                console.error('Trade execution error:', error);
+                showError('Failed to execute trade');
+            } finally {
+                // Restore button
+                const submitBtn = document.querySelector('#trade-form button[type="submit"]');
+                submitBtn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Place Order';
+                submitBtn.disabled = false;
+            }
+        }
+
+        function refreshDashboard() {
+            loadPortfolioData();
+        }
+
+        // Utility functions
+        function showLoading(show) {
+            document.getElementById('main-loading').style.display = show ? 'block' : 'none';
+        }
+
+        function showMainContent() {
+            document.getElementById('portfolio-overview').style.display = 'block';
+            document.getElementById('main-content').style.display = 'block';
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(amount);
+        }
+
+        function formatCrypto(amount) {
+            return new Intl.NumberFormat('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 8
+            }).format(amount);
+        }
+
+        function showSuccess(message) {
+            showToast(message, 'success');
+        }
+
+        function showError(message) {
+            showToast(message, 'danger');
+        }
+
+        function showToast(message, type) {
+            const toast = document.createElement('div');
+            toast.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            toast.style.top = '20px';
+            toast.style.right = '20px';
+            toast.style.zIndex = '9999';
+            toast.style.minWidth = '300px';
+            toast.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.remove();
+                }
+            }, 5000);
+        }
+
+        function updateWalletDisplay() {
+            const el = document.getElementById('wallet-summary');
+            if (!walletData || !walletData.wallet) {
+                el.innerHTML = '<div class="text-muted">No wallet found.</div>';
+                return;
+            }
+            const w = walletData.wallet;
+            el.innerHTML = `
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">GEM Coins</span>
+                    <strong class="text-warning">${Math.round(w.gem_coins)}</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Experience</span>
+                    <strong>${w.experience_points} XP</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Level</span>
+                    <strong>${w.level}</strong>
+                </div>
+            `;
+        }
+
+        function updateInventoryPreview() {
+            const el = document.getElementById('inventory-preview');
+            if (!inventoryData || !inventoryData.items || inventoryData.items.length === 0) {
+                el.innerHTML = '<div class="text-muted">No items yet. Play or trade to earn drops!</div>';
+                return;
+            }
+            const items = inventoryData.items;
+            el.innerHTML = items.map(it => `
+                <div class="d-flex justify-content-between border-bottom py-1">
+                    <span>${it.name || it.item_name || 'Item'}</span>
+                    <span class="text-muted">${(it.rarity || '').toString().toUpperCase()}</span>
+                </div>
+            `).join('');
+        }
+
+        async function loadConsumables() {
+            const el = document.getElementById('consumables-list');
+            const resp = await fetch('/api/trading/gamification/consumables');
+            const json = await resp.json();
+            if (json.status !== 'success' || !json.data || json.data.count === 0) {
+                el.innerHTML = '<div class="text-muted">No consumables. Earn items via trading or games.</div>';
+                return;
+            }
+            el.innerHTML = json.data.items.map(it => `
+                <div class="d-flex justify-content-between align-items-center border-bottom py-1">
+                    <div>
+                        <strong>${it.name}</strong> <span class="badge bg-light text-dark">${(it.rarity || '').toString().toUpperCase()}</span>
+                        <div class="text-muted small">${it.description || ''}</div>
+                    </div>
+                    <div>
+                        <span class="text-muted me-2">x${it.quantity}</span>
+                        <button class="btn btn-sm btn-success" onclick="useConsumable('${it.inventory_id}')">Use</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function useConsumable(inventoryId) {
+            try {
+                const resp = await fetch(`/api/trading/gamification/consumables/${inventoryId}/use`, { method: 'POST' });
+                const json = await resp.json();
+                if (json.status === 'success') {
+                    showSuccess(json.data.effect_applied || 'Consumable used');
+                    await loadConsumables();
+                    await refreshGamificationPanels();
+                } else { showError('Failed to use consumable'); }
+            } catch (e) { showError('Error using consumable'); }
+        }
+
+        async function refreshGamificationPanels() {
+            try {
+                const walletResponse = await fetch('/api/trading/gamification/wallet');
+                const walletJson = await walletResponse.json();
+                if (walletJson.status === 'success') { walletData = walletJson.data; updateWalletDisplay(); }
+            } catch {}
+            try {
+                const actResponse = await fetch('/api/trading/gamification/activity');
+                const actJson = await actResponse.json();
+                if (actJson.status === 'success') { activityData = actJson.data; updateActivityFeed(); }
+            } catch {}
+            try {
+                await loadEffects();
+            } catch {}
+        }
+
+        let effectsTimer = null;
+        async function loadEffects() {
+            const el = document.getElementById('effects-list');
+            const resp = await fetch('/api/trading/gamification/effects');
+            const json = await resp.json();
+            if (json.status !== 'success' || !json.data || !json.data.effects || Object.keys(json.data.effects).length === 0) {
+                el.innerHTML = '<div class="text-muted">No active effects.</div>';
+                updateEffectsBadge(null);
+                if (effectsTimer) { clearInterval(effectsTimer); effectsTimer = null; }
+                return;
+            }
+            const effects = Object.values(json.data.effects);
+            const rows = effects.map(e => {
+                const badge = e.type === 'XP_MULT' ? 'bg-info' : e.type === 'GEM_MULT' ? 'bg-success' : e.type === 'DROP_RATE' ? 'bg-primary' : 'bg-warning';
+                const meta = e.remaining_uses ? `${e.remaining_uses} uses` : (e.expires_at ? `<span data-exp="${e.expires_at}"></span>` : '');
+                return `<div class="d-flex justify-content-between align-items-center border-bottom py-1">
+                    <div><span class="badge ${badge}">${e.type}</span> x${e.multiplier || 1}</div>
+                    <div class="text-muted small effect-exp">${meta}</div>
+                </div>`;
+            }).join('');
+            el.innerHTML = rows;
+            updateEffectsBadge(effects);
+            startEffectsCountdown();
+        }
+
+        function updateEffectsBadge(effects) {
+            const el = document.getElementById('effects-badge');
+            if (!effects || effects.length === 0) { el.innerHTML = ''; return; }
+            const types = effects.map(e => e.type);
+            const icons = types.map(t => t === 'XP_MULT' ? '<span class="badge bg-info me-1">XP</span>' : t === 'GEM_MULT' ? '<span class="badge bg-success me-1">GEM</span>' : t === 'DROP_RATE' ? '<span class="badge bg-primary me-1">DROP</span>' : '<span class="badge bg-warning text-dark me-1">RARE</span>').join('');
+            el.innerHTML = `<div class="text-light small">Effects: ${icons}</div>`;
+        }
+
+        function startEffectsCountdown() {
+            if (effectsTimer) { clearInterval(effectsTimer); effectsTimer = null; }
+            const update = () => {
+                const nodes = document.querySelectorAll('#effects-list .effect-exp span[data-exp]');
+                const now = Date.now();
+                nodes.forEach(node => {
+                    const exp = new Date(node.getAttribute('data-exp')).getTime();
+                    const diff = Math.max(0, Math.floor((exp - now) / 1000));
+                    const h = Math.floor(diff / 3600), m = Math.floor((diff % 3600) / 60), s = diff % 60;
+                    node.textContent = diff > 0 ? `${h}h ${m}m ${s}s` : 'expired';
+                });
+            };
+            update();
+            effectsTimer = setInterval(update, 1000);
+        }
+
+        function updateActivityFeed() {
+            const el = document.getElementById('activity-feed');
+            if (!activityData) {
+                el.innerHTML = '<div class="text-muted">No activity yet.</div>';
+                return;
+            }
+            let html = '';
+            if (activityData.recent_drops && activityData.recent_drops.length) {
+                html += '<div class="mb-2"><strong>Recent Item Drops</strong></div>';
+                html += activityData.recent_drops.map(d => `
+                    <div class="d-flex justify-content-between border-bottom py-1">
+                        <span>${d.name}</span>
+                        <span class="text-muted">${(d.rarity || '').toString().toUpperCase()}</span>
+                    </div>
+                `).join('');
+            }
+            if (activityData.transactions && activityData.transactions.length) {
+                html += '<div class="mt-3 mb-2"><strong>Recent Transactions</strong></div>';
+                html += activityData.transactions.slice(0, 5).map(t => `
+                    <div class="d-flex justify-content-between border-bottom py-1">
+                        <span>${t.source || t.type}</span>
+                        <span class="text-muted">${t.amount}</span>
+                    </div>
+                `).join('');
+            }
+            if (!html) html = '<div class="text-muted">No recent rewards.</div>';
+            el.innerHTML = html;
+        }
+
+        // Authentication functions
+        async function checkAuthenticationState() {
+            try {
+                const token = localStorage.getItem('access_token');
+                if (!token) {
+                    showAuthButtons();
+                    return;
+                }
+
+                // Verify token by calling a protected endpoint
+                const response = await fetch('/api/auth/me', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const userData = await response.json();
+                    showUserMenu(userData.data);
+                } else {
+                    // Token expired or invalid
+                    localStorage.removeItem('access_token');
+                    localStorage.removeItem('refresh_token');
+                    showAuthButtons();
+                }
+            } catch (error) {
+                console.error('Auth check failed:', error);
+                showAuthButtons();
+            }
+        }
+
+        function showAuthButtons() {
+            document.getElementById('auth-buttons').classList.remove('d-none');
+            document.getElementById('user-menu').classList.add('d-none');
+        }
+
+        function showUserMenu(userData) {
+            document.getElementById('auth-buttons').classList.add('d-none');
+            document.getElementById('user-menu').classList.remove('d-none');
+            document.getElementById('username-display').textContent = userData.username || 'Player';
+        }
+
+        async function logout() {
+            try {
+                const token = localStorage.getItem('access_token');
+                if (token) {
+                    await fetch('/api/auth/logout', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Logout failed:', error);
+            } finally {
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('refresh_token');
+                showAuthButtons();
+                showSuccess('Logged out successfully');
+            }
+        }
+    </script>
+</body>
+</html>

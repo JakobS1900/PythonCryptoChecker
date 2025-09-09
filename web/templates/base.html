@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Crypto Gamification Platform{% endblock %}</title>
+    
+    <!-- CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="/static/css/main.css" rel="stylesheet">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                <i class="fas fa-dice me-2"></i>
+                <span class="fw-bold">CryptoGaming</span>
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/gaming">
+                            <i class="fas fa-dice-d20 me-1"></i>Gaming
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/inventory">
+                            <i class="fas fa-briefcase me-1"></i>Inventory
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/social">
+                            <i class="fas fa-users me-1"></i>Social
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/leaderboards">
+                            <i class="fas fa-trophy me-1"></i>Leaderboards
+                        </a>
+                    </li>
+                </ul>
+                
+                <!-- User Menu -->
+                <div class="navbar-nav" id="userMenu">
+                    <!-- Authenticated User Menu -->
+                    <div class="nav-item dropdown user-authenticated d-none">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
+                            <img src="/static/images/default-avatar.png" class="rounded-circle me-2" width="32" height="32" id="userAvatar">
+                            <div class="d-flex flex-column">
+                                <span class="fw-semibold" id="userName">Username</span>
+                                <small class="text-light opacity-75">Level <span id="userLevel">1</span></small>
+                            </div>
+                            <div class="ms-3 text-end">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-gem text-warning me-1"></i>
+                                    <span id="userGems">0</span>
+                                </div>
+                            </div>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="/profile"><i class="fas fa-user me-2"></i>Profile</a></li>
+                            <li><a class="dropdown-item" href="/achievements"><i class="fas fa-medal me-2"></i>Achievements</a></li>
+                            <li><a class="dropdown-item" href="/settings"><i class="fas fa-cog me-2"></i>Settings</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" id="logoutBtn"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Guest Menu -->
+                    <div class="nav-item user-guest">
+                        <a class="nav-link btn btn-outline-light btn-sm me-2" href="/login">
+                            <i class="fas fa-sign-in-alt me-1"></i>Login
+                        </a>
+                        <a class="nav-link btn btn-light btn-sm" href="/register">
+                            <i class="fas fa-user-plus me-1"></i>Register
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Alerts -->
+        <div id="alertContainer" class="container mt-3"></div>
+        
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-light py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><i class="fas fa-dice me-2"></i>CryptoGaming Platform</h5>
+                    <p class="text-muted">Virtual crypto gambling and gaming experience with comprehensive gamification features.</p>
+                </div>
+                <div class="col-md-3">
+                    <h6>Platform</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="/about" class="text-muted">About</a></li>
+                        <li><a href="/rules" class="text-muted">Game Rules</a></li>
+                        <li><a href="/fairness" class="text-muted">Provably Fair</a></li>
+                        <li><a href="/api/docs" class="text-muted">API Docs</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h6>Support</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="/help" class="text-muted">Help Center</a></li>
+                        <li><a href="/contact" class="text-muted">Contact</a></li>
+                        <li><a href="/privacy" class="text-muted">Privacy</a></li>
+                        <li><a href="/terms" class="text-muted">Terms</a></li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="my-3">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="text-muted mb-0">&copy; 2025 CryptoGaming Platform. All rights reserved.</p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <small class="text-muted">Virtual gaming platform - No real money involved</small>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/auth.js"></script>
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/main.js"></script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

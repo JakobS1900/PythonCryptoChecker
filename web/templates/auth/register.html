@@ -1,0 +1,420 @@
+{% extends "base.html" %}
+
+{% block title %}Register - Crypto Gamification Platform{% endblock %}
+
+{% block body_class %}auth-page{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow-lg mt-5">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-user-plus display-4 text-success mb-3"></i>
+                        <h2 class="fw-bold text-gradient">Join the Adventure</h2>
+                        <p class="text-muted">Create your account and start gaming</p>
+                    </div>
+
+                    <form id="registerForm" novalidate>
+                        <div class="mb-3">
+                            <label for="username" class="form-label fw-semibold">
+                                <i class="fas fa-user me-2"></i>Username
+                            </label>
+                            <input type="text" class="form-control form-control-lg" id="username" 
+                                   name="username" required minlength="3" maxlength="30">
+                            <div class="invalid-feedback"></div>
+                            <div class="form-text">3-30 characters, letters, numbers, and underscores only</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label fw-semibold">
+                                <i class="fas fa-envelope me-2"></i>Email Address
+                            </label>
+                            <input type="email" class="form-control form-control-lg" id="email" 
+                                   name="email" required>
+                            <div class="invalid-feedback"></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="displayName" class="form-label fw-semibold">
+                                <i class="fas fa-id-card me-2"></i>Display Name
+                                <small class="text-muted">(Optional)</small>
+                            </label>
+                            <input type="text" class="form-control form-control-lg" id="displayName" 
+                                   name="display_name" maxlength="100">
+                            <div class="invalid-feedback"></div>
+                            <div class="form-text">How you'll appear to other players</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="password" class="form-label fw-semibold">
+                                <i class="fas fa-lock me-2"></i>Password
+                            </label>
+                            <div class="position-relative">
+                                <input type="password" class="form-control form-control-lg" id="password" 
+                                       name="password" required minlength="8" maxlength="128">
+                                <button type="button" class="btn btn-link position-absolute top-50 end-0 translate-middle-y" 
+                                        id="togglePassword">
+                                    <i class="fas fa-eye" id="passwordIcon"></i>
+                                </button>
+                            </div>
+                            <div class="invalid-feedback"></div>
+                            <div class="form-text">Minimum 8 characters</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="confirmPassword" class="form-label fw-semibold">
+                                <i class="fas fa-lock me-2"></i>Confirm Password
+                            </label>
+                            <div class="position-relative">
+                                <input type="password" class="form-control form-control-lg" id="confirmPassword" 
+                                       name="confirm_password" required>
+                                <button type="button" class="btn btn-link position-absolute top-50 end-0 translate-middle-y" 
+                                        id="toggleConfirmPassword">
+                                    <i class="fas fa-eye" id="confirmPasswordIcon"></i>
+                                </button>
+                            </div>
+                            <div class="invalid-feedback"></div>
+                        </div>
+
+                        <!-- Password Strength Indicator -->
+                        <div class="mb-3">
+                            <div class="password-strength">
+                                <div class="progress" style="height: 5px;">
+                                    <div class="progress-bar" role="progressbar" id="passwordStrength"></div>
+                                </div>
+                                <small class="form-text" id="passwordStrengthText">Enter a password</small>
+                            </div>
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="agreeTerms" required>
+                            <label class="form-check-label" for="agreeTerms">
+                                I agree to the <a href="/terms" target="_blank" class="text-decoration-none">Terms of Service</a> 
+                                and <a href="/privacy" target="_blank" class="text-decoration-none">Privacy Policy</a>
+                            </label>
+                            <div class="invalid-feedback"></div>
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="subscribeNewsletter">
+                            <label class="form-check-label" for="subscribeNewsletter">
+                                <i class="fas fa-envelope me-1"></i>
+                                Subscribe to updates and promotional offers
+                            </label>
+                        </div>
+
+                        <div class="d-grid gap-2 mb-3">
+                            <button type="submit" class="btn btn-success btn-lg" id="registerBtn">
+                                <i class="fas fa-user-plus me-2"></i>
+                                <span class="btn-text">Create Account</span>
+                                <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                            </button>
+                        </div>
+                    </form>
+
+                    <hr class="my-4">
+
+                    <div class="text-center">
+                        <p class="text-muted mb-3">Already have an account?</p>
+                        <a href="/login" class="btn btn-outline-primary btn-lg">
+                            <i class="fas fa-sign-in-alt me-2"></i>Sign In
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Benefits Section -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card border-0 glass-effect">
+                        <div class="card-body">
+                            <h6 class="fw-semibold text-white mb-3">
+                                <i class="fas fa-star me-2"></i>Why Join Us?
+                            </h6>
+                            <div class="row text-center">
+                                <div class="col-6 col-md-3 mb-2">
+                                    <i class="fas fa-gift text-warning mb-1"></i>
+                                    <small class="d-block text-white">1000 Free Coins</small>
+                                </div>
+                                <div class="col-6 col-md-3 mb-2">
+                                    <i class="fas fa-dice-d20 text-info mb-1"></i>
+                                    <small class="d-block text-white">Crypto Roulette</small>
+                                </div>
+                                <div class="col-6 col-md-3 mb-2">
+                                    <i class="fas fa-medal text-success mb-1"></i>
+                                    <small class="d-block text-white">Achievements</small>
+                                </div>
+                                <div class="col-6 col-md-3 mb-2">
+                                    <i class="fas fa-users text-purple mb-1"></i>
+                                    <small class="d-block text-white">Social Features</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const registerForm = document.getElementById('registerForm');
+    const registerBtn = document.getElementById('registerBtn');
+    const passwordInput = document.getElementById('password');
+    const confirmPasswordInput = document.getElementById('confirmPassword');
+    const usernameInput = document.getElementById('username');
+    const passwordStrengthBar = document.getElementById('passwordStrength');
+    const passwordStrengthText = document.getElementById('passwordStrengthText');
+
+    // Toggle password visibility
+    document.getElementById('togglePassword').addEventListener('click', function() {
+        togglePasswordField('password', 'passwordIcon');
+    });
+
+    document.getElementById('toggleConfirmPassword').addEventListener('click', function() {
+        togglePasswordField('confirmPassword', 'confirmPasswordIcon');
+    });
+
+    function togglePasswordField(inputId, iconId) {
+        const input = document.getElementById(inputId);
+        const icon = document.getElementById(iconId);
+        const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+        input.setAttribute('type', type);
+        icon.classList.toggle('fa-eye');
+        icon.classList.toggle('fa-eye-slash');
+    }
+
+    // Real-time username validation
+    usernameInput.addEventListener('input', debounce(validateUsername, 500));
+
+    // Password strength indicator
+    passwordInput.addEventListener('input', function() {
+        updatePasswordStrength(this.value);
+    });
+
+    // Confirm password validation
+    confirmPasswordInput.addEventListener('input', function() {
+        validatePasswordMatch();
+    });
+
+    // Handle form submission
+    registerForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        if (!validateForm()) {
+            return;
+        }
+
+        setLoading(true);
+        
+        try {
+            const formData = new FormData(registerForm);
+            const response = await apiClient.auth.register({
+                username: formData.get('username'),
+                email: formData.get('email'),
+                password: formData.get('password'),
+                display_name: formData.get('display_name') || null
+            });
+
+            if (response.success) {
+                showAlert('Account created successfully! You are now logged in.', 'success');
+                
+                // Store auth data
+                localStorage.setItem('access_token', response.data.access_token);
+                localStorage.setItem('refresh_token', response.data.refresh_token);
+                localStorage.setItem('user_data', JSON.stringify(response.data.user));
+                
+                // Redirect to dashboard
+                setTimeout(() => {
+                    window.location.href = '/dashboard';
+                }, 1500);
+            } else {
+                showAlert(response.message || 'Registration failed', 'danger');
+            }
+        } catch (error) {
+            console.error('Registration error:', error);
+            showAlert('Registration failed. Please try again.', 'danger');
+        } finally {
+            setLoading(false);
+        }
+    });
+
+    async function validateUsername() {
+        const username = usernameInput.value.trim();
+        if (username.length < 3) return;
+
+        try {
+            // Check username availability (would need an API endpoint)
+            // const response = await apiClient.auth.checkUsername(username);
+            // Implementation would go here
+        } catch (error) {
+            console.error('Username validation error:', error);
+        }
+    }
+
+    function updatePasswordStrength(password) {
+        const strength = calculatePasswordStrength(password);
+        const percentage = (strength / 5) * 100;
+        
+        passwordStrengthBar.style.width = percentage + '%';
+        
+        if (strength === 0) {
+            passwordStrengthBar.className = 'progress-bar';
+            passwordStrengthText.textContent = 'Enter a password';
+        } else if (strength <= 2) {
+            passwordStrengthBar.className = 'progress-bar bg-danger';
+            passwordStrengthText.textContent = 'Weak password';
+        } else if (strength <= 3) {
+            passwordStrengthBar.className = 'progress-bar bg-warning';
+            passwordStrengthText.textContent = 'Fair password';
+        } else if (strength <= 4) {
+            passwordStrengthBar.className = 'progress-bar bg-info';
+            passwordStrengthText.textContent = 'Good password';
+        } else {
+            passwordStrengthBar.className = 'progress-bar bg-success';
+            passwordStrengthText.textContent = 'Strong password';
+        }
+    }
+
+    function calculatePasswordStrength(password) {
+        let strength = 0;
+        
+        if (password.length >= 8) strength++;
+        if (password.length >= 12) strength++;
+        if (/[a-z]/.test(password)) strength++;
+        if (/[A-Z]/.test(password)) strength++;
+        if (/[0-9]/.test(password)) strength++;
+        if (/[^A-Za-z0-9]/.test(password)) strength++;
+        
+        return Math.min(strength, 5);
+    }
+
+    function validatePasswordMatch() {
+        const password = passwordInput.value;
+        const confirmPassword = confirmPasswordInput.value;
+        
+        if (confirmPassword && password !== confirmPassword) {
+            showFieldError(confirmPasswordInput, 'Passwords do not match');
+        } else {
+            clearFieldError(confirmPasswordInput);
+        }
+    }
+
+    function validateForm() {
+        const username = document.getElementById('username');
+        const email = document.getElementById('email');
+        const password = document.getElementById('password');
+        const confirmPassword = document.getElementById('confirmPassword');
+        const agreeTerms = document.getElementById('agreeTerms');
+        let isValid = true;
+
+        // Reset previous validation states
+        [username, email, password, confirmPassword, agreeTerms].forEach(input => {
+            clearFieldError(input);
+        });
+
+        // Validate username
+        if (!username.value.trim()) {
+            showFieldError(username, 'Username is required');
+            isValid = false;
+        } else if (username.value.length < 3) {
+            showFieldError(username, 'Username must be at least 3 characters');
+            isValid = false;
+        } else if (!/^[a-zA-Z0-9_]+$/.test(username.value)) {
+            showFieldError(username, 'Username can only contain letters, numbers, and underscores');
+            isValid = false;
+        }
+
+        // Validate email
+        if (!email.value.trim()) {
+            showFieldError(email, 'Email is required');
+            isValid = false;
+        } else if (!isValidEmail(email.value)) {
+            showFieldError(email, 'Please enter a valid email address');
+            isValid = false;
+        }
+
+        // Validate password
+        if (!password.value) {
+            showFieldError(password, 'Password is required');
+            isValid = false;
+        } else if (password.value.length < 8) {
+            showFieldError(password, 'Password must be at least 8 characters');
+            isValid = false;
+        }
+
+        // Validate password confirmation
+        if (!confirmPassword.value) {
+            showFieldError(confirmPassword, 'Please confirm your password');
+            isValid = false;
+        } else if (password.value !== confirmPassword.value) {
+            showFieldError(confirmPassword, 'Passwords do not match');
+            isValid = false;
+        }
+
+        // Validate terms agreement
+        if (!agreeTerms.checked) {
+            showFieldError(agreeTerms, 'You must agree to the terms and conditions');
+            isValid = false;
+        }
+
+        return isValid;
+    }
+
+    function showFieldError(field, message) {
+        field.classList.add('is-invalid');
+        const feedback = field.parentNode.querySelector('.invalid-feedback') || 
+                        field.nextElementSibling;
+        if (feedback) {
+            feedback.textContent = message;
+        }
+    }
+
+    function clearFieldError(field) {
+        field.classList.remove('is-invalid');
+        const feedback = field.parentNode.querySelector('.invalid-feedback') || 
+                        field.nextElementSibling;
+        if (feedback && feedback.classList.contains('invalid-feedback')) {
+            feedback.textContent = '';
+        }
+    }
+
+    function isValidEmail(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    }
+
+    function setLoading(loading) {
+        const btnText = registerBtn.querySelector('.btn-text');
+        const spinner = registerBtn.querySelector('.spinner-border');
+        
+        if (loading) {
+            registerBtn.disabled = true;
+            btnText.textContent = 'Creating Account...';
+            spinner.classList.remove('d-none');
+        } else {
+            registerBtn.disabled = false;
+            btnText.textContent = 'Create Account';
+            spinner.classList.add('d-none');
+        }
+    }
+
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+});
+</script>
+{% endblock %}

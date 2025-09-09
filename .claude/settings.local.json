@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__zen__zen_analysis",
+      "Bash(del README.MD)",
+      "Bash(del \"README.MD\")",
+      "Bash(python:*)",
+      "Bash(.venvScriptsactivate)",
+      "Bash(.venv/Scripts/python:*)",
+      "Bash(chmod:*)",
+      "Bash(.venv/Scripts/pip install:*)",
+      "Bash(timeout:*)",
+      "Bash(curl:*)",
+      "Bash(del crypto_trading.db)",
+      "mcp__deep-research__deep_research",
+      "WebSearch",
+      "Bash(pip install:*)",
+      "Bash(.venvScriptspip install python-dotenv)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
