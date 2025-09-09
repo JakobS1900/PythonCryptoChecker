@@ -171,7 +171,7 @@
                         </div>
                     </div>
                     
-                    <button class="btn btn-neon" onclick="refreshDashboard()">
+                    <button class="btn btn-neon" onclick="refreshDashboard()" id="refresh-btn">
                         <i class="fas fa-sync-alt me-2"></i>Refresh
                     </button>
                     <div id="effects-badge" class="mt-2"></div>
@@ -590,16 +590,20 @@
         function showSuccess(message) {
             if (window.animationManager) {
                 window.animationManager.animateNotification(message, 'success', 5000);
-            } else {
+            } else if (window.showAlert) {
                 window.showAlert(message, 'success');
+            } else {
+                alert(message);
             }
         }
 
         function showError(message) {
             if (window.animationManager) {
                 window.animationManager.animateNotification(message, 'error', 5000);
-            } else {
+            } else if (window.showAlert) {
                 window.showAlert(message, 'danger');
+            } else {
+                alert(message);
             }
         }
 
@@ -609,17 +613,20 @@
             const overviewElement = document.getElementById('portfolio-overview');
             
             if (show) {
-                loadingElement.style.display = 'block';
+                if (loadingElement) loadingElement.style.display = 'block';
                 if (contentElement) contentElement.style.display = 'none';
                 if (overviewElement) overviewElement.style.display = 'none';
             } else {
-                loadingElement.style.display = 'none';
+                if (loadingElement) loadingElement.style.display = 'none';
             }
         }
 
         function showMainContent() {
-            document.getElementById('portfolio-overview').style.display = 'block';
-            document.getElementById('main-content').style.display = 'block';
+            const overviewElement = document.getElementById('portfolio-overview');
+            const contentElement = document.getElementById('main-content');
+            
+            if (overviewElement) overviewElement.style.display = 'block';
+            if (contentElement) contentElement.style.display = 'block';
             
             // Trigger scroll animations
             if (window.animationManager) {
@@ -630,6 +637,26 @@
                         }
                     });
                 }, 100);
+            }
+        }
+
+        function refreshDashboard() {
+            try {
+                if (window.animationManager) {
+                    window.animationManager.animateNotification('Refreshing dashboard...', 'info', 2000);
+                }
+                
+                // Reload all data
+                loadPortfolioData();
+            } catch (error) {
+                console.error('Error refreshing dashboard:', error);
+                showError('Failed to refresh dashboard');
+            }
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                window.location.href = '/login';
             }
         }
 
@@ -820,20 +847,7 @@
             `;
         }
 
-        function refreshDashboard() {
-            if (window.animationManager) {
-                window.animationManager.animateNotification('Refreshing dashboard...', 'info', 2000);
-            }
-            
-            // Reload all data
-            loadPortfolioData();
-        }
 
-        function logout() {
-            if (confirm('Are you sure you want to logout?')) {
-                window.location.href = '/login';
-            }
-        }
 
         async function executeTrade() {
             const coin = document.getElementById('trade-coin').value;
@@ -867,15 +881,53 @@
             }
         }
 
+        // Fallback alert function if main.js doesn't load
+        if (!window.showAlert) {
+            window.showAlert = function(message, type) {
+                const alertContainer = document.getElementById('alertContainer');
+                if (alertContainer) {
+                    const alertId = 'alert-' + Date.now();
+                    const alertHTML = `
+                        <div id="${alertId}" class="alert alert-${type} alert-dismissible fade show" role="alert">
+                            ${message}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    `;
+                    alertContainer.insertAdjacentHTML('beforeend', alertHTML);
+                    
+                    setTimeout(() => {
+                        const alert = document.getElementById(alertId);
+                        if (alert) alert.remove();
+                    }, 5000);
+                } else {
+                    alert(message);
+                }
+            };
+        }
+
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
-            checkAuthenticationState();
-            loadPortfolioData();
-            setupEventListeners();
-            
-            // Initialize enhanced features
-            if (window.animationManager) {
-                console.log('Animation manager initialized');
+            try {
+                checkAuthenticationState();
+                loadPortfolioData();
+                setupEventListeners();
+                
+                // Initialize enhanced features
+                if (window.animationManager) {
+                    console.log('Animation manager initialized');
+                }
+            } catch (error) {
+                console.error('Error during initialization:', error);
+                // Show a basic error message
+                document.body.innerHTML = `
+                    <div class="container mt-5">
+                        <div class="alert alert-danger">
+                            <h4>Loading Error</h4>
+                            <p>There was an error loading the page. Please refresh and try again.</p>
+                            <button class="btn btn-primary" onclick="window.location.reload()">Refresh Page</button>
+                        </div>
+                    </div>
+                `;
             }
         });
 

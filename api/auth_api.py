@@ -3,10 +3,13 @@ Authentication API endpoints for user management.
 """
 
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends, status, UploadFile, File
 from fastapi.security import HTTPBearer
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
+import os
+import shutil
+from pathlib import Path
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.database_manager import get_db_session
@@ -273,6 +276,70 @@ async def update_user_profile(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to update profile"
         )
+
+
+@router.post("/profile/avatar")
+async def upload_profile_avatar(
+    file: UploadFile = File(...),
+    token: str = Depends(security),
+    session: AsyncSession = Depends(get_db_session)
+):
+    """Upload and set the current user's profile avatar.
+
+    - Accepts: JPEG/PNG/WebP up to ~5MB
+    - Stores under: web/static/uploads/avatars
+    - Updates: User.avatar_url
+    """
+    try:
+        user = await auth_manager.get_user_by_token(session, token.credentials)
+        if not user:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+
+        # Validate content type
+        allowed_types = {"image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp"}
+        content_type = (file.content_type or "").lower()
+        if content_type not in allowed_types:
+            raise HTTPException(status_code=400, detail="Unsupported image type. Use JPG, PNG, or WebP.")
+
+        # Ensure upload directory exists
+        base_dir = Path("web/static/uploads/avatars")
+        base_dir.mkdir(parents=True, exist_ok=True)
+
+        # Enforce size limit (~5MB) while streaming to disk
+        max_bytes = 5 * 1024 * 1024
+        ext = allowed_types[content_type]
+        safe_filename = f"{user.id}{ext}"
+        dest_path = base_dir / safe_filename
+
+        bytes_written = 0
+        with dest_path.open("wb") as out:
+            while True:
+                chunk = await file.read(1024 * 64)
+                if not chunk:
+                    break
+                bytes_written += len(chunk)
+                if bytes_written > max_bytes:
+                    try:
+                        out.close()
+                        dest_path.unlink(missing_ok=True)
+                    except Exception:
+                        pass
+                    raise HTTPException(status_code=413, detail="File too large (max 5MB)")
+                out.write(chunk)
+
+        # Update user profile
+        relative_url = f"/static/uploads/avatars/{safe_filename}"
+        user.avatar_url = relative_url
+        user.updated_at = datetime.utcnow()
+        await session.commit()
+
+        return {"message": "Avatar updated", "avatar_url": relative_url}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Avatar upload failed: {e}")
+        raise HTTPException(status_code=500, detail="Failed to upload avatar")
 
 
 @router.post("/change-password")
