@@ -1,0 +1,475 @@
+<!-- Enhanced Navigation Bar with Modern Design -->
+<nav class="navbar navbar-expand-lg navbar-dark fixed-top" style="background: rgba(31, 41, 55, 0.95); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+    <div class="container-fluid">
+        <!-- Brand Logo with Animation -->
+        <a class="navbar-brand d-flex align-items-center" href="/" style="font-weight: 700; font-size: 1.5rem;">
+            <div class="brand-icon me-3" style="width: 40px; height: 40px; background: linear-gradient(135deg, #f7931a, #ff6b35); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; box-shadow: 0 4px 15px rgba(247, 147, 26, 0.3);">
+                ₿
+            </div>
+            <span class="text-gradient" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                CryptoChecker
+            </span>
+        </a>
+
+        <!-- Mobile Toggle Button -->
+        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" style="box-shadow: none;">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Navigation Links -->
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link position-relative" href="/trading" id="nav-trading">
+                        <i class="fas fa-chart-line me-2"></i>Trading
+                        <span class="nav-indicator"></span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link position-relative" href="/gaming/roulette" id="nav-gaming">
+                        <i class="fas fa-dice me-2"></i>Gaming
+                        <span class="nav-indicator"></span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link position-relative" href="/gaming/inventory" id="nav-inventory">
+                        <i class="fas fa-box-open me-2"></i>Inventory
+                        <span class="nav-indicator"></span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link position-relative" href="/achievements" id="nav-achievements">
+                        <i class="fas fa-trophy me-2"></i>Achievements
+                        <span class="nav-indicator"></span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link position-relative" href="/social" id="nav-social">
+                        <i class="fas fa-users me-2"></i>Social
+                        <span class="nav-indicator"></span>
+                    </a>
+                </li>
+            </ul>
+
+            <!-- User Section -->
+            <div class="navbar-nav ms-auto">
+                <!-- Wallet Balance Display -->
+                <div class="nav-item d-flex align-items-center me-3" id="wallet-display" style="display: none !important;">
+                    <div class="wallet-balance" style="background: rgba(247, 147, 26, 0.2); border: 1px solid rgba(247, 147, 26, 0.3); border-radius: 20px; padding: 0.5rem 1rem; color: #fbbf24; font-weight: 600;">
+                        <i class="fas fa-gem me-2"></i>
+                        <span id="nav-gem-balance">0</span> GEM
+                    </div>
+                </div>
+
+                <!-- Notifications -->
+                <div class="nav-item dropdown me-3" id="notifications-dropdown" style="display: none;">
+                    <a class="nav-link position-relative" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-bell" style="font-size: 1.2rem;"></i>
+                        <span class="notification-badge" id="notification-count" style="display: none;">0</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" style="width: 320px; max-height: 400px; overflow-y: auto; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.2);">
+                        <li class="dropdown-header">
+                            <strong>Notifications</strong>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <div id="notifications-list">
+                            <li class="dropdown-item text-muted text-center py-3">
+                                No new notifications
+                            </li>
+                        </div>
+                    </ul>
+                </div>
+
+                <!-- User Menu (when logged in) -->
+                <div class="nav-item dropdown" id="user-menu" style="display: none;">
+                    <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
+                        <img src="/static/images/default-avatar.png" alt="Avatar" class="rounded-circle me-2" style="width: 32px; height: 32px; border: 2px solid rgba(255, 255, 255, 0.3);">
+                        <span id="username-display">Guest</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.2);">
+                        <li>
+                            <a class="dropdown-item" href="/dashboard">
+                                <i class="fas fa-tachometer-alt me-2 text-primary"></i>Dashboard
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="/profile">
+                                <i class="fas fa-user me-2 text-info"></i>Profile
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="/daily-quests">
+                                <i class="fas fa-tasks me-2 text-warning"></i>Daily Quests
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item" href="/settings">
+                                <i class="fas fa-cog me-2 text-secondary"></i>Settings
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="#" onclick="logout()">
+                                <i class="fas fa-sign-out-alt me-2 text-danger"></i>Logout
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Auth Buttons (when not logged in) -->
+                <div id="auth-buttons">
+                    <a href="/login" class="btn btn-outline-light me-2" style="border-radius: 20px; border-color: rgba(255, 255, 255, 0.3);">
+                        <i class="fas fa-sign-in-alt me-2"></i>Login
+                    </a>
+                    <a href="/register" class="btn btn-primary" style="border-radius: 20px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border: none;">
+                        <i class="fas fa-user-plus me-2"></i>Sign Up
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Enhanced Styles for Navbar -->
+<style>
+/* Navigation Indicator Animation */
+.nav-indicator {
+    position: absolute;
+    bottom: -1px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 2px;
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+}
+
+.nav-link:hover .nav-indicator,
+.nav-link.active .nav-indicator {
+    width: 80%;
+}
+
+.nav-link {
+    transition: all 0.3s ease;
+    border-radius: 8px;
+    margin: 0 0.25rem;
+}
+
+.nav-link:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-1px);
+}
+
+/* Brand Icon Animation */
+.brand-icon {
+    transition: all 0.3s ease;
+}
+
+.navbar-brand:hover .brand-icon {
+    transform: rotate(10deg) scale(1.1);
+    box-shadow: 0 6px 20px rgba(247, 147, 26, 0.4);
+}
+
+/* Wallet Balance Animation */
+.wallet-balance {
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.wallet-balance:hover {
+    background: rgba(247, 147, 26, 0.3) !important;
+    transform: scale(1.05);
+}
+
+/* Notification Badge */
+.notification-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #ef4444;
+    color: white;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: bold;
+    border: 2px solid #1f2937;
+    animation: notification-pulse 2s ease-in-out infinite;
+}
+
+@keyframes notification-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+/* Dropdown Enhancements */
+.dropdown-menu {
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    border: none;
+    margin-top: 0.5rem;
+}
+
+.dropdown-item {
+    transition: all 0.2s ease;
+    border-radius: 8px;
+    margin: 0.25rem 0.5rem;
+}
+
+.dropdown-item:hover {
+    background: rgba(79, 70, 229, 0.1);
+    transform: translateX(5px);
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 991px) {
+    .navbar-nav {
+        padding: 1rem 0;
+    }
+    
+    .nav-link {
+        padding: 0.75rem 1rem;
+        margin: 0.25rem 0;
+    }
+    
+    .wallet-balance {
+        margin: 1rem 0;
+        display: inline-block;
+    }
+}
+
+/* Navbar Scroll Effect */
+.navbar-scrolled {
+    background: rgba(31, 41, 55, 0.98) !important;
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+}
+</style>
+
+<!-- Enhanced Navbar JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize navbar functionality
+    initializeNavbar();
+    
+    // Update active navigation item based on current page
+    updateActiveNavItem();
+    
+    // Setup scroll effect
+    setupScrollEffect();
+    
+    // Load user data if authenticated
+    if (window.auth && window.auth.isAuthenticated()) {
+        loadNavbarUserData();
+    }
+});
+
+function initializeNavbar() {
+    // Check authentication state
+    checkAuthenticationState();
+    
+    // Setup wallet balance click handler
+    const walletBalance = document.querySelector('.wallet-balance');
+    if (walletBalance) {
+        walletBalance.addEventListener('click', () => {
+            window.location.href = '/gaming/inventory';
+        });
+    }
+}
+
+function updateActiveNavItem() {
+    const currentPath = window.location.pathname;
+    const navLinks = document.querySelectorAll('.nav-link');
+    
+    navLinks.forEach(link => {
+        link.classList.remove('active');
+        const href = link.getAttribute('href');
+        
+        if (href && (currentPath === href || currentPath.startsWith(href + '/'))) {
+            link.classList.add('active');
+        }
+    });
+}
+
+function setupScrollEffect() {
+    let lastScrollTop = 0;
+    const navbar = document.querySelector('.navbar');
+    
+    window.addEventListener('scroll', () => {
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        
+        if (scrollTop > 100) {
+            navbar.classList.add('navbar-scrolled');
+        } else {
+            navbar.classList.remove('navbar-scrolled');
+        }
+        
+        lastScrollTop = scrollTop;
+    });
+}
+
+async function loadNavbarUserData() {
+    try {
+        // Load wallet balance
+        const walletResponse = await fetch('/api/trading/gamification/wallet');
+        if (walletResponse.ok) {
+            const walletData = await walletResponse.json();
+            if (walletData.status === 'success') {
+                updateWalletDisplay(walletData.data.gem_coins);
+            }
+        }
+        
+        // Load notifications
+        loadNotifications();
+        
+        // Show user elements
+        document.getElementById('wallet-display').style.display = 'flex';
+        document.getElementById('notifications-dropdown').style.display = 'block';
+        
+    } catch (error) {
+        console.error('Failed to load navbar user data:', error);
+    }
+}
+
+function updateWalletDisplay(balance) {
+    const balanceElement = document.getElementById('nav-gem-balance');
+    if (balanceElement) {
+        // Animate balance change
+        const currentBalance = parseInt(balanceElement.textContent) || 0;
+        animateNumber(balanceElement, currentBalance, balance, 1000);
+    }
+}
+
+function animateNumber(element, start, end, duration) {
+    const startTime = performance.now();
+    const difference = end - start;
+    
+    function updateNumber(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        const current = Math.floor(start + (difference * progress));
+        element.textContent = window.utils.formatNumber(current);
+        
+        if (progress < 1) {
+            requestAnimationFrame(updateNumber);
+        }
+    }
+    
+    requestAnimationFrame(updateNumber);
+}
+
+async function loadNotifications() {
+    try {
+        const response = await fetch('/api/notifications');
+        if (response.ok) {
+            const data = await response.json();
+            updateNotificationsDisplay(data.notifications || []);
+        }
+    } catch (error) {
+        console.error('Failed to load notifications:', error);
+    }
+}
+
+function updateNotificationsDisplay(notifications) {
+    const countElement = document.getElementById('notification-count');
+    const listElement = document.getElementById('notifications-list');
+    
+    if (notifications.length > 0) {
+        countElement.textContent = notifications.length;
+        countElement.style.display = 'flex';
+        
+        const notificationsHTML = notifications.map(notification => `
+            <li class="dropdown-item notification-item" data-id="${notification.id}">
+                <div class="d-flex align-items-start">
+                    <i class="fas fa-${getNotificationIcon(notification.type)} me-3 mt-1 text-${getNotificationColor(notification.type)}"></i>
+                    <div class="flex-grow-1">
+                        <div class="fw-semibold">${notification.title}</div>
+                        <div class="small text-muted">${notification.message}</div>
+                        <div class="small text-muted">${window.utils.formatRelativeTime(notification.created_at)}</div>
+                    </div>
+                    ${!notification.read ? '<span class="badge bg-primary ms-2">New</span>' : ''}
+                </div>
+            </li>
+        `).join('');
+        
+        listElement.innerHTML = notificationsHTML;
+        
+        // Add click handlers to mark as read
+        document.querySelectorAll('.notification-item').forEach(item => {
+            item.addEventListener('click', () => {
+                markNotificationAsRead(item.dataset.id);
+            });
+        });
+    } else {
+        countElement.style.display = 'none';
+        listElement.innerHTML = `
+            <li class="dropdown-item text-muted text-center py-3">
+                No new notifications
+            </li>
+        `;
+    }
+}
+
+function getNotificationIcon(type) {
+    const icons = {
+        achievement: 'trophy',
+        friend_request: 'user-plus',
+        trade: 'exchange-alt',
+        system: 'cog',
+        reward: 'gift'
+    };
+    return icons[type] || 'bell';
+}
+
+function getNotificationColor(type) {
+    const colors = {
+        achievement: 'warning',
+        friend_request: 'info',
+        trade: 'success',
+        system: 'secondary',
+        reward: 'primary'
+    };
+    return colors[type] || 'info';
+}
+
+async function markNotificationAsRead(notificationId) {
+    try {
+        await fetch(`/api/notifications/${notificationId}/read`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+            }
+        });
+        
+        // Reload notifications
+        loadNotifications();
+    } catch (error) {
+        console.error('Failed to mark notification as read:', error);
+    }
+}
+
+function checkAuthenticationState() {
+    const isAuthenticated = window.auth && window.auth.isAuthenticated();
+    
+    document.getElementById('auth-buttons').style.display = isAuthenticated ? 'none' : 'block';
+    document.getElementById('user-menu').style.display = isAuthenticated ? 'block' : 'none';
+    
+    if (isAuthenticated) {
+        const userData = window.auth.getUserData();
+        if (userData) {
+            document.getElementById('username-display').textContent = userData.username || 'User';
+        }
+    }
+}
+
+function logout() {
+    if (window.auth) {
+        window.auth.logout();
+        window.location.href = '/';
+    }
+}
+</script>

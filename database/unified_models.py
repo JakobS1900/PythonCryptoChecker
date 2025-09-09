@@ -152,6 +152,12 @@ class User(Base):
     friendships_sent = relationship("Friendship", foreign_keys="Friendship.sender_id", back_populates="sender")
     friendships_received = relationship("Friendship", foreign_keys="Friendship.receiver_id", back_populates="receiver")
     daily_rewards = relationship("DailyReward", back_populates="user", uselist=False)
+    
+    # Trading relationships
+    portfolios = relationship("Portfolio", back_populates="user")
+    transactions = relationship("Transaction", back_populates="user")
+    orders = relationship("Order", back_populates="user")
+    trading_strategies = relationship("TradingStrategy", back_populates="user")
     game_stats = relationship("GameStats", back_populates="user", uselist=False)
     tutorial_progress = relationship("TutorialProgress", back_populates="user", uselist=False)
     user_onboarding = relationship("UserOnboarding", back_populates="user", uselist=False)
@@ -766,3 +772,261 @@ class GameConstants:
         "First Spin", "Lucky Streak", "High Roller", "Collector", 
         "Social Butterfly", "Daily Warrior", "Big Winner"
     ]
+
+
+# ==================== TRADING SYSTEM MODELS ====================
+# Import trading enums
+from enum import Enum as PyEnum
+
+class OrderType(PyEnum):
+    """Order types for trading."""
+    MARKET = "MARKET"
+    LIMIT = "LIMIT"
+    STOP_LOSS = "STOP_LOSS"
+    TAKE_PROFIT = "TAKE_PROFIT"
+
+
+class OrderSide(PyEnum):
+    """Order sides for trading."""
+    BUY = "BUY"
+    SELL = "SELL"
+
+
+class OrderStatus(PyEnum):
+    """Order status types."""
+    PENDING = "PENDING"
+    FILLED = "FILLED"
+    CANCELLED = "CANCELLED"
+    EXPIRED = "EXPIRED"
+
+
+class TransactionType(PyEnum):
+    """Transaction types."""
+    DEPOSIT = "DEPOSIT"
+    WITHDRAWAL = "WITHDRAWAL"
+    TRADE_BUY = "TRADE_BUY"
+    TRADE_SELL = "TRADE_SELL"
+    FEE = "FEE"
+
+
+class Portfolio(Base):
+    """Portfolio table for managing virtual trading portfolios."""
+    __tablename__ = "portfolios"
+    
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    name = Column(String(100), nullable=False)
+    description = Column(Text)
+    
+    initial_balance = Column(Float, nullable=False, default=100000.0)
+    current_balance = Column(Float, nullable=False, default=100000.0)
+    base_currency = Column(String(10), default="USD")
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    is_active = Column(Boolean, default=True)
+    
+    # Performance metrics
+    total_invested = Column(Float, default=0.0)
+    total_profit_loss = Column(Float, default=0.0)
+    total_trades = Column(Integer, default=0)
+    winning_trades = Column(Integer, default=0)
+    losing_trades = Column(Integer, default=0)
+    
+    # Relationships
+    user = relationship("User", back_populates="portfolios")
+    holdings = relationship("Holding", back_populates="portfolio")
+    transactions = relationship("Transaction", back_populates="portfolio")
+    orders = relationship("Order", back_populates="portfolio")
+    risk_policy = relationship("RiskPolicy", back_populates="portfolio", uselist=False)
+
+
+class Holding(Base):
+    """Holdings table for tracking owned coins."""
+    __tablename__ = "holdings"
+    
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    portfolio_id = Column(String, ForeignKey("portfolios.id"), nullable=False)
+    
+    coin_id = Column(String(50), nullable=False)
+    coin_symbol = Column(String(10), nullable=False)
+    quantity = Column(Float, nullable=False, default=0.0)
+    average_cost = Column(Float, nullable=False, default=0.0)
+    current_price = Column(Float, nullable=False, default=0.0)
+    
+    last_price_update = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    portfolio = relationship("Portfolio", back_populates="holdings")
+
+
+class Transaction(Base):
+    """Transactions table for tracking all portfolio activities."""
+    __tablename__ = "transactions"
+    
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    portfolio_id = Column(String, ForeignKey("portfolios.id"), nullable=False)
+    order_id = Column(String, ForeignKey("orders.id"))
+    
+    transaction_type = Column(String(10), nullable=False)
+    coin_id = Column(String(50))
+    coin_symbol = Column(String(10))
+    
+    quantity = Column(Float)
+    price = Column(Float)
+    amount = Column(Float, nullable=False)
+    fee = Column(Float, default=0.0)
+    
+    description = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    user = relationship("User", back_populates="transactions")
+    portfolio = relationship("Portfolio", back_populates="transactions")
+    order = relationship("Order", back_populates="transactions")
+
+
+class Order(Base):
+    """Orders table for managing buy/sell orders."""
+    __tablename__ = "orders"
+    
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    portfolio_id = Column(String, ForeignKey("portfolios.id"), nullable=False)
+    
+    coin_id = Column(String(50), nullable=False)
+    coin_symbol = Column(String(10), nullable=False)
+    
+    order_type = Column(String(11), nullable=False)  # MARKET, LIMIT, STOP_LOSS, TAKE_PROFIT
+    order_side = Column(String(4), nullable=False)   # BUY, SELL
+    
+    quantity = Column(Float, nullable=False)
+    price = Column(Float)  # For limit orders
+    stop_price = Column(Float)  # For stop orders
+    
+    status = Column(String(9), default=OrderStatus.PENDING.value)  # PENDING, FILLED, CANCELLED, EXPIRED
+    filled_quantity = Column(Float, default=0.0)
+    filled_price = Column(Float)
+    filled_at = Column(DateTime)
+    
+    notes = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    expires_at = Column(DateTime)
+    
+    # Relationships
+    user = relationship("User", back_populates="orders")
+    portfolio = relationship("Portfolio", back_populates="orders")
+    transactions = relationship("Transaction", back_populates="order")
+    oco_links = relationship("OCOLink", back_populates="order")
+
+
+class RiskPolicy(Base):
+    """Risk management policies for portfolios."""
+    __tablename__ = "risk_policies"
+    
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    portfolio_id = Column(String, ForeignKey("portfolios.id"), nullable=False, unique=True)
+    
+    # Position size limits
+    max_position_pct = Column(Float, default=10.0)  # Max % of portfolio per position
+    max_open_positions = Column(Integer, default=20)  # Max number of open positions
+    max_trade_value_pct = Column(Float, default=5.0)  # Max % of portfolio per trade
+    
+    # Default stops
+    default_sl_pct = Column(Float, default=5.0)  # Default stop loss %
+    default_tp_pct = Column(Float, default=10.0)  # Default take profit %
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    portfolio = relationship("Portfolio", back_populates="risk_policy")
+
+
+class TradingStrategy(Base):
+    """Trading strategies for backtesting and automation."""
+    __tablename__ = "trading_strategies"
+    
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    
+    name = Column(String(100), nullable=False)
+    description = Column(Text)
+    config = Column(Text)  # JSON configuration
+    
+    # Performance metrics
+    total_returns = Column(Float, default=0.0)
+    win_rate = Column(Float, default=0.0)
+    sharpe_ratio = Column(Float, default=0.0)
+    max_drawdown = Column(Float, default=0.0)
+    
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    user = relationship("User", back_populates="trading_strategies")
+    backtest_results = relationship("BacktestResult", back_populates="strategy")
+
+
+class BacktestResult(Base):
+    """Results from strategy backtesting."""
+    __tablename__ = "backtest_results"
+    
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    strategy_id = Column(String, ForeignKey("trading_strategies.id"), nullable=False)
+    
+    start_date = Column(DateTime, nullable=False)
+    end_date = Column(DateTime, nullable=False)
+    
+    # Capital
+    initial_capital = Column(Float, nullable=False)
+    final_capital = Column(Float, nullable=False)
+    
+    # Performance
+    total_return = Column(Float, nullable=False)
+    total_trades = Column(Integer, nullable=False)
+    winning_trades = Column(Integer, nullable=False)
+    losing_trades = Column(Integer, nullable=False)
+    win_rate = Column(Float, nullable=False)
+    max_drawdown = Column(Float, nullable=False)
+    sharpe_ratio = Column(Float)
+    volatility = Column(Float)
+    
+    # Detailed data
+    trades_data = Column(Text)  # JSON of all trades
+    equity_curve = Column(Text)  # JSON of equity curve
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    strategy = relationship("TradingStrategy", back_populates="backtest_results")
+
+
+class OCOGroup(Base):
+    """One-Cancels-Other order groups."""
+    __tablename__ = "oco_groups"
+    
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    created_at = Column(DateTime, default=datetime.utcnow)
+    closed_at = Column(DateTime)
+    
+    # Relationships
+    oco_links = relationship("OCOLink", back_populates="group")
+
+
+class OCOLink(Base):
+    """Links between OCO groups and orders."""
+    __tablename__ = "oco_links"
+    
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    group_id = Column(String, ForeignKey("oco_groups.id"), nullable=False)
+    order_id = Column(String, ForeignKey("orders.id"), nullable=False)
+    
+    # Relationships
+    group = relationship("OCOGroup", back_populates="oco_links")
+    order = relationship("Order", back_populates="oco_links")

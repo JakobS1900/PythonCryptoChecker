@@ -1,0 +1,541 @@
+/* ===== VISUAL ASSETS AND GRAPHICS FOR CRYPTO GAMING PLATFORM ===== */
+
+/* CSS-based Logo and Brand Elements */
+.brand-logo {
+    display: inline-flex;
+    align-items: center;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.brand-logo:hover {
+    transform: scale(1.05);
+    text-decoration: none;
+}
+
+.logo-icon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #f7931a 0%, #ff6b35 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 20px;
+    margin-right: 12px;
+    box-shadow: 0 4px 15px rgba(247, 147, 26, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.logo-icon::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transform: rotate(45deg);
+    animation: logo-shine 3s ease-in-out infinite;
+}
+
+@keyframes logo-shine {
+    0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+    50% { transform: translateX(0%) translateY(0%) rotate(45deg); }
+    100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+}
+
+.logo-text {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-size: 24px;
+}
+
+/* Cryptocurrency Visual Elements */
+.crypto-visual {
+    position: relative;
+    display: inline-block;
+}
+
+.crypto-symbol {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-weight: bold;
+    font-size: 14px;
+    color: white;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    position: relative;
+    overflow: hidden;
+}
+
+.crypto-symbol::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border-radius: 50%;
+    background: linear-gradient(45deg, rgba(255, 255, 255, 0.3), transparent, rgba(255, 255, 255, 0.3));
+    z-index: -1;
+}
+
+/* Individual Crypto Coin Styles */
+.crypto-btc {
+    background: radial-gradient(circle at 30% 30%, #ff8c00, #f7931a);
+}
+
+.crypto-eth {
+    background: radial-gradient(circle at 30% 30%, #8b5cf6, #627eea);
+}
+
+.crypto-ada {
+    background: radial-gradient(circle at 30% 30%, #3b82f6, #0033ad);
+}
+
+.crypto-sol {
+    background: radial-gradient(circle at 30% 30%, #14f195, #9945ff);
+}
+
+.crypto-dot {
+    background: radial-gradient(circle at 30% 30%, #f59e0b, #e6007a);
+}
+
+.crypto-doge {
+    background: radial-gradient(circle at 30% 30%, #f59e0b, #c2a633);
+}
+
+/* Gaming Visual Elements */
+.roulette-visual {
+    position: relative;
+    width: 400px;
+    height: 400px;
+    margin: 0 auto;
+}
+
+.roulette-wheel-visual {
+    width: 100%;
+    height: 100%;
+    border: 12px solid #fbbf24;
+    border-radius: 50%;
+    position: relative;
+    background: conic-gradient(
+        from 0deg,
+        #ef4444 0deg 9.7deg,
+        #1f2937 9.7deg 19.4deg,
+        #ef4444 19.4deg 29.1deg,
+        #1f2937 29.1deg 38.8deg,
+        #ef4444 38.8deg 48.5deg,
+        #1f2937 48.5deg 58.2deg,
+        #ef4444 58.2deg 67.9deg,
+        #1f2937 67.9deg 77.6deg,
+        #ef4444 77.6deg 87.3deg,
+        #1f2937 87.3deg 97deg,
+        #1f2937 97deg 106.7deg,
+        #ef4444 106.7deg 116.4deg,
+        #1f2937 116.4deg 126.1deg,
+        #ef4444 126.1deg 135.8deg,
+        #1f2937 135.8deg 145.5deg,
+        #ef4444 145.5deg 155.2deg,
+        #1f2937 155.2deg 164.9deg,
+        #ef4444 164.9deg 174.6deg,
+        #1f2937 174.6deg 184.3deg,
+        #ef4444 184.3deg 194deg,
+        #1f2937 194deg 203.7deg,
+        #ef4444 203.7deg 213.4deg,
+        #1f2937 213.4deg 223.1deg,
+        #ef4444 223.1deg 232.8deg,
+        #1f2937 232.8deg 242.5deg,
+        #1f2937 242.5deg 252.2deg,
+        #ef4444 252.2deg 261.9deg,
+        #1f2937 261.9deg 271.6deg,
+        #ef4444 271.6deg 281.3deg,
+        #1f2937 281.3deg 291deg,
+        #ef4444 291deg 300.7deg,
+        #1f2937 300.7deg 310.4deg,
+        #ef4444 310.4deg 320.1deg,
+        #1f2937 320.1deg 329.8deg,
+        #ef4444 329.8deg 339.5deg,
+        #1f2937 339.5deg 349.2deg,
+        #22c55e 349.2deg 360deg
+    );
+    box-shadow: 
+        0 0 50px rgba(247, 147, 26, 0.4),
+        inset 0 0 30px rgba(0, 0, 0, 0.2);
+    transition: transform 3s cubic-bezier(0.23, 1, 0.320, 1);
+}
+
+.roulette-pointer {
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 15px solid transparent;
+    border-right: 15px solid transparent;
+    border-top: 30px solid #fbbf24;
+    z-index: 10;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.roulette-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80px;
+    height: 80px;
+    background: radial-gradient(circle, #fbbf24, #f59e0b);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: white;
+    font-size: 24px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    z-index: 5;
+}
+
+/* Achievement Visual Elements */
+.achievement-visual {
+    position: relative;
+    display: inline-block;
+}
+
+.achievement-icon-visual {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 32px;
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.achievement-icon-visual.unlocked {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    animation: achievement-glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes achievement-glow {
+    0% { box-shadow: 0 8px 25px rgba(67, 233, 123, 0.3); }
+    100% { box-shadow: 0 8px 35px rgba(67, 233, 123, 0.6); }
+}
+
+.achievement-icon-visual.locked {
+    background: #6b7280;
+    opacity: 0.6;
+}
+
+.achievement-progress-ring {
+    position: absolute;
+    top: -4px;
+    left: -4px;
+    right: -4px;
+    bottom: -4px;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, #fbbf24 0deg, #fbbf24 var(--progress, 0deg), transparent var(--progress, 0deg));
+    z-index: -1;
+}
+
+/* Inventory Item Visuals */
+.item-visual {
+    position: relative;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.item-visual:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+}
+
+.item-image-placeholder {
+    width: 100%;
+    height: 150px;
+    background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 48px;
+    color: #9ca3af;
+    position: relative;
+    overflow: hidden;
+}
+
+.item-image-placeholder::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    animation: item-shimmer 2s ease-in-out infinite;
+}
+
+@keyframes item-shimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+.item-rarity-border {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+}
+
+.item-rarity-common .item-rarity-border { background: #9ca3af; }
+.item-rarity-uncommon .item-rarity-border { background: linear-gradient(90deg, #22c55e, #10b981); }
+.item-rarity-rare .item-rarity-border { background: linear-gradient(90deg, #3b82f6, #1d4ed8); }
+.item-rarity-epic .item-rarity-border { background: linear-gradient(90deg, #a855f7, #7c3aed); }
+.item-rarity-legendary .item-rarity-border { 
+    background: linear-gradient(90deg, #f59e0b, #fbbf24);
+    animation: legendary-shimmer 2s ease-in-out infinite alternate;
+}
+.item-rarity-mythic .item-rarity-border { 
+    background: linear-gradient(90deg, #ef4444, #f87171);
+    animation: mythic-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes legendary-shimmer {
+    0% { opacity: 0.8; }
+    100% { opacity: 1; }
+}
+
+@keyframes mythic-pulse {
+    0%, 100% { transform: scaleY(1); }
+    50% { transform: scaleY(1.5); }
+}
+
+/* Statistics Visual Elements */
+.stat-visual {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.stat-visual:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+}
+
+.stat-visual::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--stat-color, #4f46e5), var(--stat-color-light, #6366f1));
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--stat-color, #4f46e5), var(--stat-color-light, #6366f1));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 24px;
+    margin: 0 auto 1rem;
+    box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);
+}
+
+.stat-value {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: var(--stat-color, #4f46e5);
+    margin-bottom: 0.5rem;
+    line-height: 1;
+}
+
+.stat-label {
+    color: #6b7280;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 0.9rem;
+}
+
+/* Social Visual Elements */
+.friend-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 18px;
+    position: relative;
+    overflow: hidden;
+}
+
+.friend-avatar::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border-radius: 50%;
+    background: linear-gradient(45deg, rgba(255, 255, 255, 0.3), transparent);
+    z-index: -1;
+}
+
+.status-indicator {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid white;
+}
+
+.status-online { background: #22c55e; }
+.status-offline { background: #6b7280; }
+.status-away { background: #f59e0b; }
+
+/* Loading Visual Elements */
+.loading-visual {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+}
+
+.loading-spinner-visual {
+    width: 60px;
+    height: 60px;
+    border: 6px solid rgba(79, 70, 229, 0.2);
+    border-top: 6px solid #4f46e5;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.loading-dots-visual {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.loading-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #4f46e5;
+    animation: dot-bounce 1.4s ease-in-out infinite both;
+}
+
+.loading-dot:nth-child(1) { animation-delay: -0.32s; }
+.loading-dot:nth-child(2) { animation-delay: -0.16s; }
+.loading-dot:nth-child(3) { animation-delay: 0s; }
+
+@keyframes dot-bounce {
+    0%, 80%, 100% { transform: scale(0); }
+    40% { transform: scale(1); }
+}
+
+/* Background Patterns */
+.pattern-dots {
+    background-image: radial-gradient(circle, rgba(79, 70, 229, 0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+
+.pattern-grid {
+    background-image: 
+        linear-gradient(rgba(79, 70, 229, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(79, 70, 229, 0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+
+.pattern-diagonal {
+    background-image: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 10px,
+        rgba(79, 70, 229, 0.05) 10px,
+        rgba(79, 70, 229, 0.05) 20px
+    );
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .logo-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+    }
+    
+    .logo-text {
+        font-size: 20px;
+    }
+    
+    .roulette-visual {
+        width: 300px;
+        height: 300px;
+    }
+    
+    .achievement-icon-visual {
+        width: 60px;
+        height: 60px;
+        font-size: 24px;
+    }
+    
+    .stat-value {
+        font-size: 2rem;
+    }
+    
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        font-size: 20px;
+    }
+}
+
+@media (max-width: 576px) {
+    .roulette-visual {
+        width: 250px;
+        height: 250px;
+    }
+    
+    .stat-visual {
+        padding: 1.5rem;
+    }
+    
+    .stat-value {
+        font-size: 1.8rem;
+    }
+}

@@ -1,235 +1,309 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Roulette - Gaming Platform</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Enhanced Visual Styles -->
+    <link href="/static/css/main.css" rel="stylesheet">
+    <link href="/static/css/enhanced-theme.css" rel="stylesheet">
+    <link href="/static/css/icons.css" rel="stylesheet">
+    <link href="/static/css/visual-assets.css" rel="stylesheet">
+    <style>
+        body {
+            background: var(--gradient-primary);
+            background-attachment: fixed;
+        }
+        
+        .gaming-page {
+            min-height: 100vh;
+        }
+        
+        .game-controls {
+            position: sticky;
+            top: 100px;
+            z-index: 10;
+        }
+        
+        .bet-chip {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            margin: 0 auto;
+            transition: all 0.3s ease;
+            background: var(--gradient-gaming);
+            box-shadow: var(--shadow-gaming);
+        }
 
-{% block title %}Crypto Roulette - Gaming Platform{% endblock %}
+        .bet-chip:hover {
+            transform: scale(1.1);
+            box-shadow: var(--shadow-elevated);
+        }
+    </style>
+</head>
+<body class="gaming-page">
 
-{% block body_class %}gaming-page{% endblock %}
+    <!-- Enhanced Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top" style="background: rgba(31, 41, 55, 0.95); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                <div class="logo-icon me-3">₿</div>
+                <span class="logo-text">CryptoChecker</span>
+            </a>
+            
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/trading">
+                    <i class="fas fa-chart-line me-2"></i>Trading
+                </a>
+                <a class="nav-link active" href="/gaming/roulette">
+                    <i class="fas fa-dice me-2"></i>Gaming
+                </a>
+                <a class="nav-link" href="/gaming/inventory">
+                    <i class="fas fa-box-open me-2"></i>Inventory
+                </a>
+            </div>
+        </div>
+    </nav>
 
-{% block extra_css %}
-<style>
-.crypto-position {
-    position: absolute;
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 10px;
-    font-weight: bold;
-    color: white;
-    text-shadow: 1px 1px 1px rgba(0,0,0,0.5);
-    transform: translate(-50%, -50%);
-}
-
-.roulette-wheel.spinning {
-    animation: spin-wheel 3s cubic-bezier(0.23, 1, 0.320, 1) forwards;
-}
-
-@keyframes spin-wheel {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(var(--final-rotation, 1440deg)); }
-}
-
-.bet-chip {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-weight: bold;
-    margin: 0 auto;
-    transition: all 0.3s ease;
-}
-
-.bet-chip:hover {
-    transform: scale(1.1);
-}
-
-.game-controls {
-    position: sticky;
-    top: 100px;
-    z-index: 10;
-}
-</style>
-{% endblock %}
-
-{% block content %}
-<div class="container-fluid py-4">
-    <!-- Game Header -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card glass-effect border-0">
-                <div class="card-body text-center py-4">
-                    <h1 class="display-5 fw-bold text-white mb-3">
-                        <i class="fas fa-dice-d20 me-3"></i>Crypto Roulette
-                    </h1>
-                    <p class="lead text-white opacity-75 mb-0">
-                        Bet on your favorite cryptocurrencies and spin to win!
-                    </p>
+    <div class="container-fluid py-4" style="margin-top: 76px;">
+        <!-- Enhanced Game Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card-glass animate-on-scroll" data-animation="fadeInUp">
+                    <div class="text-center py-5">
+                        <div class="d-flex justify-content-center align-items-center mb-4">
+                            <div class="gaming-icon me-4" style="width: 80px; height: 80px; font-size: 32px;">
+                                <i class="fas fa-dice-d20"></i>
+                            </div>
+                            <div>
+                                <h1 class="display-4 fw-bold text-gradient mb-3">
+                                    Crypto Roulette
+                                </h1>
+                                <p class="lead text-white opacity-75 mb-0">
+                                    Bet on your favorite cryptocurrencies and spin to win!
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <!-- Quick Stats -->
+                        <div class="row justify-content-center">
+                            <div class="col-md-3 col-6 mb-3">
+                                <div class="stat-visual" style="--stat-color: #f59e0b; --stat-color-light: #fbbf24;">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-gem"></i>
+                                    </div>
+                                    <div class="stat-value" id="total-gems">0</div>
+                                    <div class="stat-label">Total GEMs</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6 mb-3">
+                                <div class="stat-visual" style="--stat-color: #22c55e; --stat-color-light: #10b981;">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-trophy"></i>
+                                    </div>
+                                    <div class="stat-value" id="total-wins">0</div>
+                                    <div class="stat-label">Total Wins</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div class="row">
-        <!-- Game Area -->
-        <div class="col-lg-8">
-            <!-- Roulette Wheel -->
-            <div class="card mb-4">
-                <div class="card-body text-center">
-                    <div class="roulette-container mb-4">
-                        <div class="roulette-wheel" id="rouletteWheel">
-                            <div class="roulette-center">
-                                <i class="fas fa-dice"></i>
+        <div class="row">
+            <!-- Enhanced Game Area -->
+            <div class="col-lg-8">
+                <!-- Enhanced Roulette Wheel -->
+                <div class="card-glass animate-on-scroll mb-4" data-animation="fadeInUp" data-delay="200">
+                    <div class="text-center py-4">
+                        <h4 class="mb-4 text-gradient">
+                            <i class="fas fa-dice me-3"></i>Roulette Wheel
+                        </h4>
+                        
+                        <div class="roulette-visual mb-4">
+                            <div class="roulette-wheel-enhanced" id="rouletteWheel">
+                                <div class="roulette-pointer"></div>
+                                <div class="roulette-center">
+                                    <i class="fas fa-dice"></i>
+                                </div>
+                                <!-- Crypto positions will be dynamically added -->
                             </div>
-                            <!-- Crypto positions will be dynamically added -->
                         </div>
+                        
+                        <div class="row justify-content-center">
+                            <div class="col-md-10">
+                                <div class="d-flex gap-3 justify-content-center flex-wrap">
+                                    <button class="btn btn-neon btn-lg" id="spinBtn" disabled style="min-width: 160px;">
+                                        <i class="fas fa-play me-2"></i>
+                                        <span class="btn-text">Spin Wheel</span>
+                                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
+                                    </button>
+                                    <button class="btn btn-neon btn-lg" id="clearBetsBtn" style="border-color: #f59e0b; color: #f59e0b; min-width: 140px;">
+                                        <i class="fas fa-times me-2"></i>Clear Bets
+                                    </button>
+                                    <button class="btn btn-neon btn-lg" onclick="showGameRules()" style="border-color: #8b5cf6; color: #8b5cf6; min-width: 120px;">
+                                        <i class="fas fa-question me-2"></i>Rules
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Enhanced Betting Grid -->
+                <div class="card-glass animate-on-scroll" data-animation="fadeInUp" data-delay="400">
+                    <div class="d-flex align-items-center mb-4">
+                        <div class="gaming-icon me-3" style="background: var(--gradient-crypto);">
+                            <i class="fas fa-coins"></i>
+                        </div>
+                        <h5 class="mb-0 text-gradient">Place Your Bets</h5>
                     </div>
                     
-                    <div class="row justify-content-center">
-                        <div class="col-md-8">
-                            <button class="btn btn-primary btn-lg me-3" id="spinBtn" disabled>
-                                <i class="fas fa-play me-2"></i>
-                                <span class="btn-text">Spin Wheel</span>
-                                <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
-                            </button>
-                            <button class="btn btn-warning btn-lg" id="clearBetsBtn">
-                                <i class="fas fa-times me-2"></i>Clear Bets
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Betting Grid -->
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="fas fa-coins me-2"></i>Place Your Bets
-                    </h5>
-                </div>
-                <div class="card-body">
                     <div class="betting-grid" id="bettingGrid">
-                        <!-- Betting options will be loaded here -->
-                        <div class="text-center py-4">
-                            <div class="spinner-border text-primary" role="status"></div>
-                            <div class="mt-2 text-muted">Loading betting options...</div>
+                        <!-- Enhanced betting options will be loaded here -->
+                        <div class="text-center py-5">
+                            <div class="loading-visual">
+                                <div class="loading-spinner-visual"></div>
+                            </div>
+                            <p class="mt-3 text-muted">Loading betting options...</p>
                         </div>
                     </div>
                 </div>
-            </div>
         </div>
 
-        <!-- Game Controls & Info -->
-        <div class="col-lg-4">
-            <!-- Game Controls -->
-            <div class="card game-controls mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="fas fa-cog me-2"></i>Game Controls
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <!-- Current Game Info -->
+            <!-- Enhanced Game Controls & Info -->
+            <div class="col-lg-4">
+                <!-- Enhanced Game Controls -->
+                <div class="card-glass game-controls animate-on-scroll mb-4" data-animation="fadeInUp" data-delay="300">
+                    <div class="d-flex align-items-center mb-4">
+                        <div class="gaming-icon me-3" style="background: var(--gradient-gaming);">
+                            <i class="fas fa-cog"></i>
+                        </div>
+                        <h5 class="mb-0 text-gradient">Game Controls</h5>
+                    </div>
+                    <!-- Enhanced Current Game Info -->
                     <div class="mb-4" id="gameInfo" style="display: none;">
-                        <h6 class="fw-semibold">Current Game</h6>
-                        <div class="d-flex justify-content-between">
-                            <small>Game ID:</small>
-                            <small id="currentGameId">-</small>
-                        </div>
-                        <div class="d-flex justify-content-between">
-                            <small>Total Bets:</small>
-                            <small id="totalBetAmount">0 GEM</small>
-                        </div>
-                        <div class="d-flex justify-content-between">
-                            <small>Potential Win:</small>
-                            <small id="potentialWinAmount">0 GEM</small>
+                        <div class="stat-visual mb-3" style="--stat-color: #4f46e5; --stat-color-light: #6366f1;">
+                            <h6 class="fw-semibold text-gradient mb-3">Current Game</h6>
+                            <div class="d-flex justify-content-between align-items-center mb-2 p-2" style="background: rgba(255, 255, 255, 0.1); border-radius: 8px;">
+                                <span class="small text-muted">Game ID:</span>
+                                <span class="small fw-semibold" id="currentGameId">-</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-2 p-2" style="background: rgba(255, 255, 255, 0.1); border-radius: 8px;">
+                                <span class="small text-muted">Total Bets:</span>
+                                <span class="small fw-semibold text-warning" id="totalBetAmount">0 GEM</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center p-2" style="background: rgba(255, 255, 255, 0.1); border-radius: 8px;">
+                                <span class="small text-muted">Potential Win:</span>
+                                <span class="small fw-semibold text-success" id="potentialWinAmount">0 GEM</span>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Bet Amount Input -->
-                    <div class="mb-3">
-                        <label for="betAmount" class="form-label fw-semibold">Bet Amount</label>
+                    <!-- Enhanced Bet Amount Input -->
+                    <div class="mb-4">
+                        <label for="betAmount" class="form-label fw-semibold text-gradient">Bet Amount</label>
                         <div class="input-group">
                             <input type="number" class="form-control bet-amount-input" 
-                                   id="betAmount" min="10" max="10000" value="100">
-                            <span class="input-group-text">
-                                <i class="fas fa-gem text-warning"></i>
+                                   id="betAmount" min="10" max="10000" value="100"
+                                   style="background: rgba(255, 255, 255, 0.9); border: 2px solid rgba(247, 147, 26, 0.3); border-radius: 12px 0 0 12px;">
+                            <span class="input-group-text" style="background: var(--gradient-warning); border: 2px solid rgba(247, 147, 26, 0.3); border-left: none; border-radius: 0 12px 12px 0; color: white;">
+                                <i class="fas fa-gem"></i>
                             </span>
                         </div>
                         <div class="form-text">Minimum: 10 GEM, Maximum: 10,000 GEM</div>
                     </div>
 
-                    <!-- Quick Bet Buttons -->
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Quick Amounts</label>
-                        <div class="d-flex gap-2">
-                            <button class="btn btn-sm btn-outline-primary" onclick="setBetAmount(100)">100</button>
-                            <button class="btn btn-sm btn-outline-primary" onclick="setBetAmount(500)">500</button>
-                            <button class="btn btn-sm btn-outline-primary" onclick="setBetAmount(1000)">1K</button>
-                            <button class="btn btn-sm btn-outline-primary" onclick="setBetAmount(5000)">5K</button>
+                    <!-- Enhanced Quick Bet Buttons -->
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold text-gradient">Quick Amounts</label>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button class="btn btn-neon btn-sm" onclick="setBetAmount(100)" style="border-color: #10b981; color: #10b981; min-width: 60px;">100</button>
+                            <button class="btn btn-neon btn-sm" onclick="setBetAmount(500)" style="border-color: #3b82f6; color: #3b82f6; min-width: 60px;">500</button>
+                            <button class="btn btn-neon btn-sm" onclick="setBetAmount(1000)" style="border-color: #8b5cf6; color: #8b5cf6; min-width: 60px;">1K</button>
+                            <button class="btn btn-neon btn-sm" onclick="setBetAmount(5000)" style="border-color: #f59e0b; color: #f59e0b; min-width: 60px;">5K</button>
                         </div>
                     </div>
 
-                    <!-- Wallet Balance -->
-                    <div class="mb-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span class="fw-semibold">Wallet Balance:</span>
-                            <span class="text-success fw-bold" id="walletBalance">0 GEM</span>
+                    <!-- Enhanced Wallet Balance -->
+                    <div class="mb-4">
+                        <div class="stat-visual" style="--stat-color: #f59e0b; --stat-color-light: #fbbf24;">
+                            <div class="d-flex justify-content-between align-items-center p-3" style="background: rgba(247, 147, 26, 0.2); border: 1px solid rgba(247, 147, 26, 0.3); border-radius: 12px;">
+                                <div class="d-flex align-items-center">
+                                    <div class="crypto-icon crypto-btc me-3" style="width: 32px; height: 32px; font-size: 14px;">💎</div>
+                                    <span class="fw-semibold text-gradient">Wallet Balance:</span>
+                                </div>
+                                <span class="fw-bold" style="color: #fbbf24;" id="walletBalance">0 GEM</span>
+                            </div>
                         </div>
-                        <button class="btn btn-sm btn-outline-info w-100 mt-2" onclick="refreshWallet()">
+                        <button class="btn btn-neon w-100 mt-3" onclick="refreshWallet()" style="border-color: #06b6d4; color: #06b6d4;">
                             <i class="fas fa-sync-alt me-2"></i>Refresh Balance
                         </button>
                     </div>
 
-                    <!-- Game Actions -->
-                    <div class="d-grid gap-2">
-                        <button class="btn btn-success" id="newGameBtn">
+                    <!-- Enhanced Game Actions -->
+                    <div class="d-grid gap-3">
+                        <button class="btn btn-neon" id="newGameBtn" style="border-color: #22c55e; color: #22c55e; padding: 0.75rem;">
                             <i class="fas fa-plus me-2"></i>New Game
                         </button>
-                        <button class="btn btn-info" onclick="showGameHistory()">
+                        <button class="btn btn-neon" onclick="showGameHistory()" style="border-color: #3b82f6; color: #3b82f6; padding: 0.75rem;">
                             <i class="fas fa-history me-2"></i>Game History
                         </button>
-                        <button class="btn btn-secondary" onclick="showGameRules()">
-                            <i class="fas fa-question me-2"></i>How to Play
-                        </button>
+                        <a class="btn btn-neon" href="/gaming/inventory" style="border-color: #8b5cf6; color: #8b5cf6; padding: 0.75rem; text-decoration: none;">
+                            <i class="fas fa-box-open me-2"></i>Inventory
+                        </a>
                     </div>
                 </div>
             </div>
 
-            <!-- Active Bets -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="fas fa-list me-2"></i>Active Bets
-                    </h5>
-                </div>
-                <div class="card-body">
+                <!-- Enhanced Active Bets -->
+                <div class="card-glass animate-on-scroll mb-4" data-animation="fadeInUp" data-delay="500">
+                    <div class="d-flex align-items-center mb-4">
+                        <div class="gaming-icon me-3" style="background: var(--gradient-success);">
+                            <i class="fas fa-list"></i>
+                        </div>
+                        <h5 class="mb-0 text-gradient">Active Bets</h5>
+                    </div>
+                    
                     <div id="activeBets">
-                        <div class="text-center text-muted py-3">
-                            No active bets
+                        <div class="text-center py-4">
+                            <div class="crypto-icon crypto-eth mb-3" style="width: 60px; height: 60px; font-size: 24px; margin: 0 auto; opacity: 0.5;">
+                                🎯
+                            </div>
+                            <p class="text-muted">No active bets</p>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Recent Results -->
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="fas fa-chart-line me-2"></i>Recent Results
-                    </h5>
-                </div>
-                <div class="card-body">
+                <!-- Enhanced Recent Results -->
+                <div class="card-glass animate-on-scroll" data-animation="fadeInUp" data-delay="600">
+                    <div class="d-flex align-items-center mb-4">
+                        <div class="achievement-icon-visual me-3" style="width: 48px; height: 48px; font-size: 20px;">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h5 class="mb-0 text-gradient">Recent Results</h5>
+                    </div>
+                    
                     <div id="recentResults">
-                        <div class="text-center text-muted py-3">
-                            No recent results
+                        <div class="text-center py-4">
+                            <div class="crypto-icon crypto-ada mb-3" style="width: 60px; height: 60px; font-size: 24px; margin: 0 auto; opacity: 0.5;">
+                                📊
+                            </div>
+                            <p class="text-muted">No recent results</p>
                         </div>
                     </div>
                 </div>
-            </div>
         </div>
     </div>
 </div>
@@ -291,73 +365,173 @@
         </div>
     </div>
 </div>
-{% endblock %}
+        </div>
+    </div>
 
-{% block extra_js %}
-<script>
-let currentGame = null;
-let activeBets = [];
-let wheelPositions = [];
-let isSpinning = false;
+    <!-- Enhanced Game Result Modal -->
+    <div class="modal fade" id="gameResultModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content" style="background: var(--gradient-primary); border: none; border-radius: 20px;">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title text-gradient">
+                        <i class="fas fa-trophy me-2"></i>Game Result
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-white">
+                    <div class="text-center mb-4">
+                        <div class="display-1 mb-3" id="resultEmoji">🎉</div>
+                        <h3 id="resultTitle" class="text-gradient">Congratulations!</h3>
+                        <p class="lead" id="resultMessage">You won!</p>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card-glass">
+                                <div class="text-center py-3">
+                                    <h5 class="text-gradient">Winning Number</h5>
+                                    <div class="display-4 fw-bold text-warning" id="winningNumber">0</div>
+                                    <div class="text-muted" id="winningCrypto">Bitcoin</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card-glass">
+                                <div class="text-center py-3">
+                                    <h5 class="text-gradient">Your Winnings</h5>
+                                    <div class="display-4 fw-bold text-success" id="totalWinnings">+0</div>
+                                    <div class="text-muted">GEM Coins</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <h6 class="text-gradient">Bet Results:</h6>
+                        <div id="betResults" class="card-glass p-3">
+                            <!-- Individual bet results will be shown here -->
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-neon" onclick="verifyGameFairness()" style="border-color: #06b6d4; color: #06b6d4;">
+                        <i class="fas fa-shield-alt me-2"></i>Verify Fairness
+                    </button>
+                    <button type="button" class="btn btn-neon" onclick="playAgain()" style="border-color: #22c55e; color: #22c55e;">
+                        <i class="fas fa-play me-2"></i>Play Again
+                    </button>
+                    <button type="button" class="btn btn-neon" data-bs-dismiss="modal" style="border-color: #6b7280; color: #6b7280;">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-document.addEventListener('DOMContentLoaded', function() {
-    initializeRouletteGame();
-});
-
-async function initializeRouletteGame() {
-    try {
-        showLoading('bettingGrid');
-        
-        // Load wheel info and betting options
-        await Promise.all([
-            loadWheelInfo(),
-            loadBettingOptions(),
-            loadWalletBalance(),
-            loadRecentResults()
-        ]);
-        
-        setupEventListeners();
-        
-    } catch (error) {
-        console.error('Failed to initialize roulette game:', error);
-        showAlert('Failed to load game. Please refresh the page.', 'danger');
-    } finally {
-        hideLoading('bettingGrid');
-    }
-}
-
-async function loadWheelInfo() {
-    try {
-        const response = await apiClient.gaming.getWheelInfo();
-        if (response.success) {
-            wheelPositions = response.data.positions;
-            createWheelPositions();
-        }
-    } catch (error) {
-        console.error('Failed to load wheel info:', error);
-    }
-}
-
-function createWheelPositions() {
-    const wheel = document.getElementById('rouletteWheel');
-    const radius = 170; // Radius for positioning crypto symbols
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     
-    wheelPositions.forEach((position, index) => {
-        const angle = (360 / wheelPositions.length) * index - 90; // Start from top
-        const radian = (angle * Math.PI) / 180;
-        const x = radius + radius * Math.cos(radian);
-        const y = radius + radius * Math.sin(radian);
-        
-        const positionElement = document.createElement('div');
-        positionElement.className = 'crypto-position';
-        positionElement.style.left = x + 'px';
-        positionElement.style.top = y + 'px';
-        positionElement.textContent = position.symbol;
-        positionElement.style.backgroundColor = getColorForPosition(position.number);
-        
-        wheel.appendChild(positionElement);
-    });
-}
+    <!-- Enhanced JavaScript -->
+    <script src="/static/js/main.js"></script>
+    <script src="/static/js/animations.js"></script>
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/auth.js"></script>
+    
+    <!-- Alert Container for Notifications -->
+    <div id="alertContainer" class="position-fixed" style="top: 100px; right: 20px; z-index: 9999; max-width: 400px;"></div>
+    <script>
+        let currentGame = null;
+        let activeBets = [];
+        let wheelPositions = [];
+        let isSpinning = false;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeRouletteGame();
+        });
+
+        async function initializeRouletteGame() {
+            try {
+                showLoading('bettingGrid');
+                
+                // Load wheel info and betting options
+                await Promise.all([
+                    loadWheelInfo(),
+                    loadBettingOptions(),
+                    loadWalletBalance(),
+                    loadRecentResults()
+                ]);
+                
+                setupEventListeners();
+                
+                // Initialize enhanced animations
+                if (window.animationManager) {
+                    console.log('Enhanced animations initialized');
+                }
+                
+            } catch (error) {
+                console.error('Failed to initialize roulette game:', error);
+                if (window.animationManager) {
+                    window.animationManager.animateNotification('Failed to load game. Please refresh the page.', 'error');
+                } else {
+                    alert('Failed to load game. Please refresh the page.');
+                }
+            } finally {
+                hideLoading('bettingGrid');
+            }
+        }
+
+        async function loadWheelInfo() {
+            try {
+                // Mock wheel positions for demo
+                wheelPositions = generateWheelPositions();
+                createEnhancedWheelPositions();
+            } catch (error) {
+                console.error('Failed to load wheel info:', error);
+            }
+        }
+
+        function generateWheelPositions() {
+            const cryptos = [
+                { number: 0, symbol: '0', name: 'Zero' },
+                { number: 1, symbol: 'BTC', name: 'Bitcoin' },
+                { number: 2, symbol: 'ETH', name: 'Ethereum' },
+                { number: 3, symbol: 'ADA', name: 'Cardano' },
+                { number: 4, symbol: 'SOL', name: 'Solana' },
+                { number: 5, symbol: 'DOT', name: 'Polkadot' },
+                { number: 6, symbol: 'DOGE', name: 'Dogecoin' }
+            ];
+            
+            // Extend to 37 positions
+            const positions = [];
+            for (let i = 0; i < 37; i++) {
+                const crypto = cryptos[i % cryptos.length];
+                positions.push({
+                    number: i,
+                    symbol: crypto.symbol,
+                    name: crypto.name
+                });
+            }
+            return positions;
+        }
+
+        function createEnhancedWheelPositions() {
+            const wheel = document.getElementById('rouletteWheel');
+            const radius = 180; // Radius for positioning crypto symbols
+            
+            wheelPositions.forEach((position, index) => {
+                const angle = (360 / wheelPositions.length) * index - 90; // Start from top
+                const radian = (angle * Math.PI) / 180;
+                const x = 200 + radius * Math.cos(radian);
+                const y = 200 + radius * Math.sin(radian);
+                
+                const positionElement = document.createElement('div');
+                positionElement.className = 'crypto-position-enhanced';
+                positionElement.style.left = x + 'px';
+                positionElement.style.top = y + 'px';
+                positionElement.textContent = position.symbol;
+                positionElement.style.backgroundColor = getColorForPosition(position.number);
+                
+                wheel.appendChild(positionElement);
+            });
+        }
 
 function getColorForPosition(number) {
     // Red numbers
@@ -382,122 +556,131 @@ async function loadBettingOptions() {
     }
 }
 
-function createBettingGrid(betTypes) {
-    const grid = document.getElementById('bettingGrid');
-    
-    const bettingHTML = `
-        <!-- Individual Crypto Bets -->
-        <div class="row mb-4">
-            <div class="col-12">
-                <h6 class="fw-semibold mb-3">Individual Cryptocurrencies (35:1)</h6>
-                <div class="row" id="cryptoBets">
-                    ${createCryptoBettingOptions()}
+        function createBettingGrid(betTypes) {
+            const grid = document.getElementById('bettingGrid');
+            
+            const bettingHTML = `
+                <!-- Enhanced Individual Crypto Bets -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h6 class="fw-semibold mb-4 text-gradient">
+                            <i class="fas fa-coins me-2"></i>Individual Cryptocurrencies (35:1)
+                        </h6>
+                        <div class="row" id="cryptoBets">
+                            ${createEnhancedCryptoBettingOptions()}
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </div>
-        
-        <!-- Color Bets -->
-        <div class="row mb-4">
-            <div class="col-12">
-                <h6 class="fw-semibold mb-3">Color Bets</h6>
+                
+                <!-- Enhanced Color Bets -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h6 class="fw-semibold mb-4 text-gradient">
+                            <i class="fas fa-palette me-2"></i>Color Bets
+                        </h6>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <div class="bet-option-enhanced" data-bet-type="CRYPTO_COLOR" data-bet-value="red">
+                                    <div class="bet-chip" style="background: linear-gradient(135deg, #ef4444, #f87171);">
+                                        RED
+                                    </div>
+                                    <div class="mt-3 fw-semibold text-gradient">Red (1:1)</div>
+                                    <div class="small text-muted">Pays even money</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="bet-option-enhanced" data-bet-type="CRYPTO_COLOR" data-bet-value="black">
+                                    <div class="bet-chip" style="background: linear-gradient(135deg, #374151, #4b5563);">
+                                        BLACK
+                                    </div>
+                                    <div class="mt-3 fw-semibold text-gradient">Black (1:1)</div>
+                                    <div class="small text-muted">Pays even money</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="bet-option-enhanced" data-bet-type="CRYPTO_COLOR" data-bet-value="green">
+                                    <div class="bet-chip" style="background: linear-gradient(135deg, #22c55e, #10b981);">
+                                        GREEN
+                                    </div>
+                                    <div class="mt-3 fw-semibold text-gradient">Green (35:1)</div>
+                                    <div class="small text-muted">Zero only</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Enhanced Other Bets -->
                 <div class="row">
-                    <div class="col-md-4 mb-3">
-                        <div class="bet-option" data-bet-type="CRYPTO_COLOR" data-bet-value="red">
-                            <div class="bet-chip" style="background-color: #ef4444;">
-                                RED
+                    <div class="col-12">
+                        <h6 class="fw-semibold mb-4 text-gradient">
+                            <i class="fas fa-dice me-2"></i>Number Bets
+                        </h6>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="bet-option-enhanced" data-bet-type="EVEN_ODD" data-bet-value="even">
+                            <div class="bet-chip" style="background: var(--gradient-crypto);">
+                                EVEN
                             </div>
-                            <div class="mt-2 fw-semibold">Red (1:1)</div>
-                            <div class="small text-muted">Pays even money</div>
+                            <div class="mt-3 fw-semibold text-gradient">Even Numbers (1:1)</div>
+                            <div class="small text-muted">2, 4, 6, 8, etc.</div>
                         </div>
                     </div>
-                    <div class="col-md-4 mb-3">
-                        <div class="bet-option" data-bet-type="CRYPTO_COLOR" data-bet-value="black">
-                            <div class="bet-chip" style="background-color: #374151;">
-                                BLACK
+                    <div class="col-md-6 mb-3">
+                        <div class="bet-option-enhanced" data-bet-type="EVEN_ODD" data-bet-value="odd">
+                            <div class="bet-chip" style="background: var(--gradient-gaming);">
+                                ODD
                             </div>
-                            <div class="mt-2 fw-semibold">Black (1:1)</div>
-                            <div class="small text-muted">Pays even money</div>
+                            <div class="mt-3 fw-semibold text-gradient">Odd Numbers (1:1)</div>
+                            <div class="small text-muted">1, 3, 5, 7, etc.</div>
                         </div>
                     </div>
-                    <div class="col-md-4 mb-3">
-                        <div class="bet-option" data-bet-type="CRYPTO_COLOR" data-bet-value="green">
-                            <div class="bet-chip" style="background-color: #22c55e;">
-                                GREEN
+                    <div class="col-md-6 mb-3">
+                        <div class="bet-option-enhanced" data-bet-type="HIGH_LOW" data-bet-value="low">
+                            <div class="bet-chip" style="background: var(--gradient-success);">
+                                1-18
                             </div>
-                            <div class="mt-2 fw-semibold">Green (35:1)</div>
-                            <div class="small text-muted">Zero only</div>
+                            <div class="mt-3 fw-semibold text-gradient">Low Numbers (1:1)</div>
+                            <div class="small text-muted">1 to 18</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="bet-option-enhanced" data-bet-type="HIGH_LOW" data-bet-value="high">
+                            <div class="bet-chip" style="background: var(--gradient-warning);">
+                                19-36
+                            </div>
+                            <div class="mt-3 fw-semibold text-gradient">High Numbers (1:1)</div>
+                            <div class="small text-muted">19 to 36</div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-        
-        <!-- Other Bets -->
-        <div class="row">
-            <div class="col-md-6 mb-3">
-                <div class="bet-option" data-bet-type="EVEN_ODD" data-bet-value="even">
-                    <div class="bet-chip" style="background-color: #3b82f6;">
-                        EVEN
-                    </div>
-                    <div class="mt-2 fw-semibold">Even Numbers (1:1)</div>
-                    <div class="small text-muted">2, 4, 6, 8, etc.</div>
-                </div>
-            </div>
-            <div class="col-md-6 mb-3">
-                <div class="bet-option" data-bet-type="EVEN_ODD" data-bet-value="odd">
-                    <div class="bet-chip" style="background-color: #7c3aed;">
-                        ODD
-                    </div>
-                    <div class="mt-2 fw-semibold">Odd Numbers (1:1)</div>
-                    <div class="small text-muted">1, 3, 5, 7, etc.</div>
-                </div>
-            </div>
-            <div class="col-md-6 mb-3">
-                <div class="bet-option" data-bet-type="HIGH_LOW" data-bet-value="low">
-                    <div class="bet-chip" style="background-color: #059669;">
-                        1-18
-                    </div>
-                    <div class="mt-2 fw-semibold">Low Numbers (1:1)</div>
-                    <div class="small text-muted">1 to 18</div>
-                </div>
-            </div>
-            <div class="col-md-6 mb-3">
-                <div class="bet-option" data-bet-type="HIGH_LOW" data-bet-value="high">
-                    <div class="bet-chip" style="background-color: #dc2626;">
-                        19-36
-                    </div>
-                    <div class="mt-2 fw-semibold">High Numbers (1:1)</div>
-                    <div class="small text-muted">19 to 36</div>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    grid.innerHTML = bettingHTML;
-}
+            `;
+            
+            grid.innerHTML = bettingHTML;
+        }
 
-function createCryptoBettingOptions() {
-    const popularCryptos = [
-        { name: 'Bitcoin', symbol: 'BTC', number: 1 },
-        { name: 'Ethereum', symbol: 'ETH', number: 2 },
-        { name: 'Cardano', symbol: 'ADA', number: 3 },
-        { name: 'Solana', symbol: 'SOL', number: 4 },
-        { name: 'Dogecoin', symbol: 'DOGE', number: 5 },
-        { name: 'Polkadot', symbol: 'DOT', number: 6 }
-    ];
-    
-    return popularCryptos.map(crypto => `
-        <div class="col-lg-2 col-md-3 col-4 mb-3">
-            <div class="bet-option" data-bet-type="SINGLE_CRYPTO" data-bet-value="${crypto.name.toLowerCase()}">
-                <div class="bet-chip" style="background-color: ${getColorForPosition(crypto.number)};">
-                    ${crypto.symbol}
+        function createEnhancedCryptoBettingOptions() {
+            const popularCryptos = [
+                { name: 'Bitcoin', symbol: 'BTC', number: 1, class: 'crypto-btc' },
+                { name: 'Ethereum', symbol: 'ETH', number: 2, class: 'crypto-eth' },
+                { name: 'Cardano', symbol: 'ADA', number: 3, class: 'crypto-ada' },
+                { name: 'Solana', symbol: 'SOL', number: 4, class: 'crypto-sol' },
+                { name: 'Dogecoin', symbol: 'DOGE', number: 5, class: 'crypto-doge' },
+                { name: 'Polkadot', symbol: 'DOT', number: 6, class: 'crypto-dot' }
+            ];
+            
+            return popularCryptos.map(crypto => `
+                <div class="col-lg-2 col-md-3 col-4 mb-3">
+                    <div class="bet-option-enhanced" data-bet-type="SINGLE_CRYPTO" data-bet-value="${crypto.name.toLowerCase()}">
+                        <div class="crypto-icon ${crypto.class} mb-3" style="width: 60px; height: 60px; font-size: 20px; margin: 0 auto;">
+                            ${crypto.symbol}
+                        </div>
+                        <div class="fw-semibold text-gradient">${crypto.name}</div>
+                        <div class="small text-muted mt-2">35:1 payout</div>
+                    </div>
                 </div>
-                <div class="mt-2 fw-semibold">${crypto.name}</div>
-                <div class="small text-muted">35:1 payout</div>
-            </div>
-        </div>
-    `).join('');
-}
+            `).join('');
+        }
 
 function setupEventListeners() {
     // Bet option clicks
@@ -606,15 +789,22 @@ async function spinWheel() {
     }
 }
 
-function animateWheelSpin(winningNumber) {
-    const wheel = document.getElementById('rouletteWheel');
-    const positionIndex = wheelPositions.findIndex(pos => pos.number === winningNumber);
-    const targetAngle = 360 - (360 / wheelPositions.length) * positionIndex;
-    const totalRotation = 1440 + targetAngle; // 4 full spins plus target
-    
-    wheel.style.setProperty('--final-rotation', totalRotation + 'deg');
-    wheel.classList.add('spinning');
-}
+        async function animateWheelSpin(winningNumber) {
+            const wheel = document.getElementById('rouletteWheel');
+            
+            if (window.animationManager) {
+                // Use enhanced animation manager
+                await window.animationManager.animateRouletteWheel(winningNumber, 3000);
+            } else {
+                // Fallback animation
+                const positionIndex = wheelPositions.findIndex(pos => pos.number === winningNumber);
+                const targetAngle = 360 - (360 / wheelPositions.length) * positionIndex;
+                const totalRotation = 1440 + targetAngle; // 4 full spins plus target
+                
+                wheel.style.transition = 'transform 3s cubic-bezier(0.23, 1, 0.320, 1)';
+                wheel.style.transform = `rotate(${totalRotation}deg)`;
+            }
+        }
 
 function showGameResult(result) {
     // Update modal content
@@ -849,4 +1039,118 @@ function playAgain() {
     setTimeout(createNewGame, 500);
 }
 </script>
-{% endblock %}
+{% endblock %}     
+   // Enhanced notification functions
+        function showAlert(message, type = 'info') {
+            if (window.animationManager) {
+                window.animationManager.animateNotification(message, type, 5000);
+            } else if (window.showAlert) {
+                window.showAlert(message, type);
+            } else {
+                alert(message);
+            }
+        }
+
+        function showLoading(elementId) {
+            const element = document.getElementById(elementId);
+            if (element && window.animationManager) {
+                window.animationManager.showLoadingAnimation(element, 'spinner');
+            }
+        }
+
+        function hideLoading(elementId) {
+            // Loading will be replaced by content
+        }
+
+        // Enhanced game functions
+        function showGameRules() {
+            if (window.showModal) {
+                window.showModal(
+                    'How to Play Crypto Roulette',
+                    `
+                    <div class="text-start">
+                        <h6 class="text-gradient mb-3">Game Rules:</h6>
+                        <ul class="list-unstyled">
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Place bets on individual cryptocurrencies (35:1 payout)</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Bet on colors: Red/Black (1:1), Green (35:1)</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Choose Even/Odd or High/Low numbers (1:1)</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Minimum bet: 10 GEM, Maximum: 10,000 GEM</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>All games are provably fair with SHA256 verification</li>
+                        </ul>
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            This is a virtual gaming environment. No real money is involved.
+                        </div>
+                    </div>
+                    `,
+                    [
+                        { text: 'Start Playing', type: 'primary', onclick: 'document.getElementById("newGameBtn").click()', dismiss: true }
+                    ]
+                );
+            }
+        }
+
+        function showGameHistory() {
+            showAlert('Game history feature coming soon!', 'info');
+        }
+
+        function verifyGameFairness() {
+            showAlert('Game fairness verification feature coming soon!', 'info');
+        }
+
+        function playAgain() {
+            document.getElementById('newGameBtn').click();
+            const modal = bootstrap.Modal.getInstance(document.getElementById('gameResultModal'));
+            if (modal) modal.hide();
+        }
+
+        function refreshWallet() {
+            loadWalletBalance();
+            showAlert('Wallet balance refreshed!', 'success');
+        }
+
+        // Mock API functions for demo
+        window.apiClient = {
+            gaming: {
+                getWheelInfo: () => Promise.resolve({ success: true, data: { positions: wheelPositions } }),
+                getBetTypes: () => Promise.resolve({ success: true, data: { bet_types: [] } }),
+                createSession: () => Promise.resolve({ 
+                    success: true, 
+                    data: { game_id: 'demo-' + Date.now() } 
+                }),
+                placeBet: (gameId, bet) => Promise.resolve({ 
+                    success: true, 
+                    data: { ...bet, id: Date.now(), potential_payout: bet.bet_amount * 2 } 
+                }),
+                spinWheel: (gameId) => {
+                    const winningNumber = Math.floor(Math.random() * 37);
+                    const winningCrypto = wheelPositions[winningNumber]?.name || 'Bitcoin';
+                    const netResult = Math.random() > 0.5 ? 100 : -50;
+                    
+                    return Promise.resolve({
+                        success: true,
+                        data: {
+                            winning_number: winningNumber,
+                            winning_crypto: winningCrypto,
+                            net_result: netResult,
+                            total_winnings: Math.max(0, netResult),
+                            bets_details: activeBets.map(bet => ({
+                                ...bet,
+                                won: Math.random() > 0.7,
+                                payout: bet.bet_amount * 2
+                            }))
+                        }
+                    });
+                },
+                getHistory: () => Promise.resolve({ success: true, data: { games: [] } })
+            },
+            inventory: {
+                getWallet: () => Promise.resolve({ 
+                    success: true, 
+                    data: { gem_coins: Math.floor(Math.random() * 10000) + 1000 } 
+                })
+            }
+        };
+    </script>
+</body>
+</html>
