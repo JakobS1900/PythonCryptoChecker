@@ -11,9 +11,10 @@ from sqlalchemy import select, update
 
 from .models import (
     VirtualWallet, VirtualCryptoHolding, CollectibleItem, UserInventory,
-    VirtualTransaction, DailyReward, RewardBundle, VirtualEconomyConstants, ActiveEffect,
+    VirtualTransaction, RewardBundle, VirtualEconomyConstants, ActiveEffect,
     CurrencyType, ItemRarity, ItemType, RewardType
 )
+from database import DailyReward
 from data_providers import DataManager
 from logger import logger
 

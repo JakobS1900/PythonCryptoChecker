@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Tower Game - CryptoChecker Gaming Platform{% endblock %}
+
+{% block extra_css %}
+<link href="/static/css/dashboard-enhanced.css" rel="stylesheet">
+<link href="/static/css/enhanced-theme.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card glass-effect border-0">
+                <div class="card-body text-center text-white">
+                    <h1 class="display-4 mb-3">
+                        <i class="fas fa-building text-info me-3"></i>
+                        Tower Game
+                    </h1>
+                    <p class="lead mb-0">Climb the tower of fortune and reach amazing heights!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card glass-effect border-0">
+                <div class="card-body text-white text-center py-5">
+                    <h3 class="mb-4">🏗️ Coming Soon!</h3>
+                    <p class="lead">The Tower game is under construction. Get ready to climb to victory!</p>
+                    <div class="mt-4">
+                        <a href="/gaming/roulette" class="btn btn-warning btn-lg me-3">
+                            <i class="fas fa-roulette me-2"></i>Play Roulette
+                        </a>
+                        <a href="/" class="btn btn-outline-light btn-lg">
+                            <i class="fas fa-home me-2"></i>Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card glass-effect border-0">
+                <div class="card-header border-0">
+                    <h4 class="text-white mb-0">🌟 Game Concept</h4>
+                </div>
+                <div class="card-body text-white">
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><i class="fas fa-arrow-up text-success me-2"></i>Climb floor by floor</li>
+                        <li class="mb-2"><i class="fas fa-gem text-purple me-2"></i>Find safe tiles</li>
+                        <li class="mb-2"><i class="fas fa-bomb text-danger me-2"></i>Avoid the traps</li>
+                        <li class="mb-2"><i class="fas fa-crown text-warning me-2"></i>Reach the top for maximum rewards</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="/static/js/main.js"></script>
+<script src="/static/js/auth.js"></script>
+{% endblock %}

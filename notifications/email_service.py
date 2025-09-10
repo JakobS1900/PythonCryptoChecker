@@ -23,8 +23,8 @@ class EmailService:
             "port": 587,
             "username": "",
             "password": "",
-            "from_email": "noreply@cryptogaming.com",
-            "from_name": "CryptoGaming Platform"
+            "from_email": "noreply@cryptochecker.com",
+            "from_name": "CryptoChecker Gaming Platform"
         }
         
         # Email templates
@@ -38,12 +38,12 @@ class EmailService:
         """Initialize email templates."""
         return {
             "welcome": {
-                "subject": "Welcome to CryptoGaming Platform!",
+                "subject": "Welcome to CryptoChecker Gaming Platform!",
                 "html_template": """
                 <html>
                 <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                     <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; text-align: center;">
-                        <h1 style="color: white; margin: 0;">🎰 Welcome to CryptoGaming!</h1>
+                        <h1 style="color: white; margin: 0;">🎰 Welcome to CryptoChecker!</h1>
                     </div>
                     
                     <div style="padding: 20px;">
@@ -77,7 +77,7 @@ class EmailService:
                     </div>
                     
                     <div style="background: #f8f9fa; padding: 15px; text-align: center; font-size: 12px; color: #666;">
-                        <p>CryptoGaming Platform - Virtual Gaming Experience</p>
+                        <p>CryptoChecker Gaming Platform - Virtual Gaming Experience</p>
                         <p>This email was sent to {email}. If you didn't create this account, please ignore this email.</p>
                     </div>
                 </body>
@@ -120,7 +120,7 @@ class EmailService:
                     </div>
                     
                     <div style="background: #f8f9fa; padding: 15px; text-align: center; font-size: 12px; color: #666;">
-                        <p>CryptoGaming Platform - We're glad you're back!</p>
+                        <p>CryptoChecker Gaming Platform - We're glad you're back!</p>
                     </div>
                 </body>
                 </html>
@@ -156,7 +156,7 @@ class EmailService:
                     </div>
                     
                     <div style="background: #f8f9fa; padding: 15px; text-align: center; font-size: 12px; color: #666;">
-                        <p>CryptoGaming Platform - Celebrating Your Success!</p>
+                        <p>CryptoChecker Gaming Platform - Celebrating Your Success!</p>
                     </div>
                 </body>
                 </html>
@@ -174,7 +174,7 @@ class EmailService:
                     
                     <div style="padding: 20px;">
                         <h2>Hey {username}!</h2>
-                        <p>Here's how your week went on CryptoGaming:</p>
+                        <p>Here's how your week went on CryptoChecker:</p>
                         
                         <div style="display: flex; flex-wrap: wrap; gap: 10px; margin: 20px 0;">
                             <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; flex: 1; min-width: 150px; text-align: center;">
@@ -199,7 +199,7 @@ class EmailService:
                     </div>
                     
                     <div style="background: #f8f9fa; padding: 15px; text-align: center; font-size: 12px; color: #666;">
-                        <p>CryptoGaming Platform - Weekly Summary</p>
+                        <p>CryptoChecker Gaming Platform - Weekly Summary</p>
                         <p><a href="{unsubscribe_url}" style="color: #666;">Unsubscribe from weekly summaries</a></p>
                     </div>
                 </body>
@@ -311,7 +311,7 @@ class EmailService:
         variables = {
             "username": username,
             "email": email,
-            "dashboard_url": dashboard_url or "https://cryptogaming.com/dashboard"
+            "dashboard_url": dashboard_url or "https://cryptochecker.com/dashboard"
         }
         
         return await self.send_email(
@@ -330,7 +330,7 @@ class EmailService:
             "days_absent": days_absent,
             "bonus_coins": bonus_coins,
             "bonus_extras": bonus_extras,
-            "dashboard_url": "https://cryptogaming.com/dashboard"
+            "dashboard_url": "https://cryptochecker.com/dashboard"
         }
         
         return await self.send_email(
@@ -348,8 +348,8 @@ class EmailService:
             "games_played": summary_data.get("games_played", 0),
             "coins_earned": summary_data.get("coins_earned", 0),
             "highlights": summary_data.get("highlights", ""),
-            "dashboard_url": "https://cryptogaming.com/dashboard",
-            "unsubscribe_url": f"https://cryptogaming.com/unsubscribe?user={user_id}"
+            "dashboard_url": "https://cryptochecker.com/dashboard",
+            "unsubscribe_url": f"https://cryptochecker.com/unsubscribe?user={user_id}"
         }
         
         return await self.send_email(
@@ -361,7 +361,7 @@ class EmailService:
         )
     
     def configure_smtp(self, server: str, port: int, username: str, password: str,
-                      from_email: str, from_name: str = "CryptoGaming Platform"):
+                      from_email: str, from_name: str = "CryptoChecker Gaming Platform"):
         """Configure SMTP settings."""
         self.smtp_config.update({
             "server": server,

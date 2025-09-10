@@ -3,628 +3,357 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crypto Analytics Platform</title>
+    <title>CryptoChecker - Gaming Platform</title>
+    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>₿</text></svg>">
     
-    <!-- Bootstrap CSS for quick styling -->
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     
+    <!-- Enhanced Visual Styles -->
+    <link href="/static/css/main.css" rel="stylesheet">
+    <link href="/static/css/enhanced-theme.css" rel="stylesheet">
+    <link href="/static/css/icons.css" rel="stylesheet">
+    <link href="/static/css/visual-assets.css" rel="stylesheet">
+    
     <style>
-        :root {
-            --primary-color: #2563eb;
-            --success-color: #059669;
-            --danger-color: #dc2626;
-            --warning-color: #d97706;
-            --dark-color: #1f2937;
-        }
-
         body {
-            background-color: #f8fafc;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--gradient-primary);
+            background-attachment: fixed;
+            min-height: 100vh;
         }
-
-        .header-gradient {
-            background: linear-gradient(135deg, var(--primary-color), #3b82f6);
-            color: white;
-            padding: 2rem 0;
+        
+        .hero-section {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
         }
-
-        .crypto-card {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .crypto-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-        }
-
-        .price-positive {
-            color: var(--success-color);
-        }
-
-        .price-negative {
-            color: var(--danger-color);
-        }
-
-        .loading-spinner {
-            display: none;
-        }
-
-        .search-container {
+        
+        .hero-content {
+            z-index: 2;
             position: relative;
         }
-
-        .websocket-status {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
+        
+        .feature-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
         }
-
-        .chart-container {
-            height: 400px;
-            background: white;
-            border-radius: 12px;
-            padding: 1rem;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        .stat-card {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 12px;
-            text-align: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        .stat-number {
-            font-size: 2rem;
-            font-weight: bold;
-            margin-bottom: 0.5rem;
-        }
-
-        .crypto-emoji {
-            font-size: 1.5rem;
-            margin-right: 0.5rem;
-        }
-
-        .update-time {
-            font-size: 0.875rem;
-            color: #6b7280;
+        
+        .feature-card:hover {
+            transform: translateY(-10px);
         }
     </style>
 </head>
 <body>
-    <!-- WebSocket Status Indicator -->
-    <div class="websocket-status">
-        <span class="badge bg-secondary" id="ws-status">Connecting...</span>
-    </div>
+    <!-- Enhanced Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top" style="background: rgba(31, 41, 55, 0.95); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                <div class="logo-icon me-3">₿</div>
+                <span class="logo-text">CryptoChecker</span>
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <div class="navbar-nav ms-auto">
+                    <a class="nav-link" href="/">
+                        <i class="fas fa-chart-line me-2"></i>Trading
+                    </a>
+                    <a class="nav-link" href="/gaming/roulette">
+                        <i class="fas fa-dice me-2"></i>Gaming
+                    </a>
+                    <a class="nav-link" href="/gaming/inventory">
+                        <i class="fas fa-box-open me-2"></i>Inventory
+                    </a>
+                    <!-- User Menu (when logged in) -->
+                    <div class="nav-item dropdown" id="user-menu" style="display: none;">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
+                            <img src="/static/images/default-avatar.png" alt="Avatar" class="rounded-circle me-2" style="width: 32px; height: 32px; border: 2px solid rgba(255, 255, 255, 0.3);" onerror="this.style.display='none'">
+                            <span id="username-display">Guest</span>
+                            <span class="ms-3 d-flex align-items-center">
+                                <i class="fas fa-gem text-warning me-1"></i>
+                                <span id="nav-gem-balance">0</span>
+                            </span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.2);">
+                            <li>
+                                <a class="dropdown-item" href="/">
+                                    <i class="fas fa-tachometer-alt me-2 text-primary"></i>Dashboard
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="/profile">
+                                    <i class="fas fa-user me-2 text-info"></i>Profile
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="/gaming/inventory">
+                                    <i class="fas fa-box-open me-2 text-warning"></i>Inventory
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="/settings">
+                                    <i class="fas fa-cog me-2 text-secondary"></i>Settings
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#" onclick="logout()">
+                                    <i class="fas fa-sign-out-alt me-2 text-danger"></i>Logout
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
 
-    <!-- Header -->
-    <div class="header-gradient">
+                    <!-- Auth Buttons (when not logged in) -->
+                    <div id="auth-buttons">
+                        <button class="btn btn-outline-light me-2" id="demo-login-btn">
+                            <i class="fas fa-sign-in-alt me-2"></i>Demo Login
+                        </button>
+                        <a href="/login" class="btn btn-primary" style="border-radius: 20px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border: none;">
+                            <i class="fas fa-user-plus me-2"></i>Sign Up
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
         <div class="container">
             <div class="row align-items-center">
-                <div class="col-md-6">
-                    <h1 class="mb-0">
-                        <i class="fas fa-chart-line me-3"></i>
-                        Crypto Analytics Platform
-                    </h1>
-                    <p class="mb-0 mt-2 opacity-75">Professional cryptocurrency analysis and real-time trading data</p>
+                <div class="col-lg-6">
+                    <div class="hero-content animate-on-scroll" data-animation="fadeInUp">
+                        <h1 class="display-3 fw-bold text-white mb-4">
+                            Welcome to <span class="text-gradient">CryptoChecker</span>
+                        </h1>
+                        <p class="lead text-white opacity-75 mb-5">
+                            Experience the ultimate crypto gaming and trading platform. Practice paper trading, 
+                            play exciting games, and earn rewards in a completely virtual environment.
+                        </p>
+                        
+                        <div class="d-flex gap-3 flex-wrap">
+                            <a href="/" class="btn btn-neon btn-lg">
+                                <i class="fas fa-chart-line me-2"></i>Start Trading
+                            </a>
+                            <a href="/gaming/roulette" class="btn btn-neon btn-lg" style="border-color: #f59e0b; color: #f59e0b;">
+                                <i class="fas fa-dice me-2"></i>Play Games
+                            </a>
+                        </div>
+                    </div>
                 </div>
-                <div class="col-md-6 text-md-end">
-                    <div class="d-flex align-items-center justify-content-md-end gap-3">
-                        <a href="/trading" class="btn btn-success">
-                            <i class="fas fa-chart-line me-2"></i>
-                            Paper Trading
-                        </a>
-                        <div class="search-container mt-3 mt-md-0">
-                            <input type="text" 
-                                   class="form-control form-control-lg" 
-                                   id="search-input" 
-                                   placeholder="Search cryptocurrencies..."
-                                   style="max-width: 300px;">
-                            <div class="loading-spinner position-absolute top-50 end-0 translate-middle-y me-3">
-                                <div class="spinner-border spinner-border-sm" role="status"></div>
+                
+                <div class="col-lg-6">
+                    <div class="text-center animate-on-scroll" data-animation="fadeInUp" data-delay="200">
+                        <div class="roulette-visual mb-4" style="transform: scale(0.8);">
+                            <div class="roulette-wheel-enhanced">
+                                <div class="roulette-pointer"></div>
+                                <div class="roulette-center">
+                                    <i class="fas fa-dice"></i>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-
-    <!-- Main Content -->
-    <div class="container my-5">
         
-        <!-- Statistics Grid -->
-        <div class="stats-grid" id="stats-grid">
-            <div class="stat-card">
-                <div class="stat-number text-primary" id="total-coins">-</div>
-                <div>Total Coins</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number text-success" id="gainers-count">-</div>
-                <div>24h Gainers</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number text-danger" id="losers-count">-</div>
-                <div>24h Losers</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number text-info" id="api-source">-</div>
-                <div>Data Source</div>
-            </div>
-        </div>
+        <!-- Background Pattern -->
+        <div class="position-absolute w-100 h-100 pattern-dots" style="opacity: 0.1; top: 0; left: 0;"></div>
+    </section>
 
-        <!-- Controls -->
-        <div class="row mb-4">
-            <div class="col-md-6">
-                <label for="currency-select" class="form-label">Display Currency:</label>
-                <select class="form-select" id="currency-select">
-                    <option value="usd">USD - US Dollar</option>
-                    <option value="eur">EUR - Euro</option>
-                    <option value="gbp">GBP - British Pound</option>
-                    <option value="jpy">JPY - Japanese Yen</option>
-                    <option value="btc">BTC - Bitcoin</option>
-                </select>
+    <!-- Features Section -->
+    <section class="py-5" style="background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px);">
+        <div class="container">
+            <div class="row">
+                <div class="col-12 text-center mb-5">
+                    <h2 class="display-5 fw-bold text-gradient mb-3">Platform Features</h2>
+                    <p class="lead text-white opacity-75">Everything you need for virtual crypto gaming and trading</p>
+                </div>
             </div>
-            <div class="col-md-6">
-                <label for="per-page-select" class="form-label">Coins per page:</label>
-                <select class="form-select" id="per-page-select">
-                    <option value="25">25</option>
-                    <option value="50" selected>50</option>
-                    <option value="100">100</option>
-                </select>
-            </div>
-        </div>
-
-        <!-- Loading Indicator -->
-        <div class="text-center my-5" id="main-loading">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-            <p class="mt-2">Loading cryptocurrency data...</p>
-        </div>
-
-        <!-- Coins Grid -->
-        <div class="row" id="coins-grid" style="display: none;">
-            <!-- Coins will be populated here -->
-        </div>
-
-        <!-- Pagination -->
-        <nav aria-label="Coins pagination" class="mt-4">
-            <ul class="pagination justify-content-center" id="pagination">
-                <!-- Pagination will be populated here -->
-            </ul>
-        </nav>
-
-        <!-- Conversion Tool -->
-        <div class="row mt-5">
-            <div class="col-lg-6 mx-auto">
-                <div class="crypto-card p-4">
-                    <h3 class="h4 mb-3">
-                        <i class="fas fa-exchange-alt text-primary me-2"></i>
-                        Currency Converter
-                    </h3>
-                    <form id="conversion-form">
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Amount</label>
-                                <input type="number" class="form-control" id="convert-amount" 
-                                       placeholder="100" min="0" step="0.01" required>
+            
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="card-glass feature-card h-100" onclick="window.location.href='/'">
+                        <div class="text-center py-4">
+                            <div class="gaming-icon mb-4" style="width: 80px; height: 80px; font-size: 32px; margin: 0 auto; background: var(--gradient-crypto);">
+                                <i class="fas fa-chart-line"></i>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">From Currency</label>
-                                <select class="form-select" id="convert-from">
-                                    <option value="USD">USD</option>
-                                    <option value="EUR">EUR</option>
-                                    <option value="GBP">GBP</option>
-                                    <option value="JPY">JPY</option>
-                                </select>
+                            <h4 class="text-gradient mb-3">Paper Trading</h4>
+                            <p class="text-white opacity-75">
+                                Practice trading with virtual money. Learn strategies and test your skills 
+                                without any real financial risk.
+                            </p>
+                            <div class="mt-4">
+                                <span class="badge bg-success me-2">Risk-Free</span>
+                                <span class="badge bg-info">Real-Time Data</span>
                             </div>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">To Cryptocurrency</label>
-                            <input type="text" class="form-control" id="convert-to" 
-                                   placeholder="bitcoin" required>
-                            <div class="form-text">Enter coin ID (e.g., bitcoin, ethereum) or symbol (e.g., BTC, ETH)</div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card-glass feature-card h-100" onclick="window.location.href='/gaming/roulette'">
+                        <div class="text-center py-4">
+                            <div class="gaming-icon mb-4" style="width: 80px; height: 80px; font-size: 32px; margin: 0 auto; background: var(--gradient-gaming);">
+                                <i class="fas fa-dice"></i>
+                            </div>
+                            <h4 class="text-gradient mb-3">Crypto Gaming</h4>
+                            <p class="text-white opacity-75">
+                                Play exciting crypto-themed games like roulette. Bet on your favorite 
+                                cryptocurrencies and win virtual rewards.
+                            </p>
+                            <div class="mt-4">
+                                <span class="badge bg-warning me-2">Provably Fair</span>
+                                <span class="badge bg-primary">Crypto Themed</span>
+                            </div>
                         </div>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-calculator me-2"></i>Convert
-                        </button>
-                    </form>
-                    <div id="conversion-result" class="mt-3" style="display: none;">
-                        <!-- Conversion result will appear here -->
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card-glass feature-card h-100" onclick="window.location.href='/gaming/inventory'">
+                        <div class="text-center py-4">
+                            <div class="gaming-icon mb-4" style="width: 80px; height: 80px; font-size: 32px; margin: 0 auto; background: var(--gradient-success);">
+                                <i class="fas fa-trophy"></i>
+                            </div>
+                            <h4 class="text-gradient mb-3">Gamification</h4>
+                            <p class="text-white opacity-75">
+                                Earn achievements, collect items, and level up. Complete daily quests 
+                                and unlock exclusive rewards.
+                            </p>
+                            <div class="mt-4">
+                                <span class="badge bg-success me-2">Achievements</span>
+                                <span class="badge bg-warning">Rewards</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
+    </section>
 
-    <!-- Footer -->
-    <footer class="bg-dark text-white py-4 mt-5">
-        <div class="container text-center">
-            <p class="mb-0">
-                <i class="fas fa-chart-line me-2"></i>
-                Crypto Analytics Platform v2.0.0 - 
-                <span class="update-time" id="last-updated">Loading...</span>
-            </p>
-            <p class="mb-0 mt-2">
-                <small>Real-time cryptocurrency data • Professional analytics • Built with FastAPI</small>
-            </p>
+    <!-- Stats Section -->
+    <section class="py-5">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-md-3 col-6">
+                    <div class="stat-visual" style="--stat-color: #f59e0b; --stat-color-light: #fbbf24;">
+                        <div class="stat-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-value">10K+</div>
+                        <div class="stat-label">Active Users</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-visual" style="--stat-color: #22c55e; --stat-color-light: #10b981;">
+                        <div class="stat-icon">
+                            <i class="fas fa-exchange-alt"></i>
+                        </div>
+                        <div class="stat-value">1M+</div>
+                        <div class="stat-label">Trades Executed</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-visual" style="--stat-color: #3b82f6; --stat-color-light: #60a5fa;">
+                        <div class="stat-icon">
+                            <i class="fas fa-dice"></i>
+                        </div>
+                        <div class="stat-value">500K+</div>
+                        <div class="stat-label">Games Played</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-visual" style="--stat-color: #8b5cf6; --stat-color-light: #a78bfa;">
+                        <div class="stat-icon">
+                            <i class="fas fa-trophy"></i>
+                        </div>
+                        <div class="stat-value">50K+</div>
+                        <div class="stat-label">Achievements Unlocked</div>
+                    </div>
+                </div>
+            </div>
         </div>
-    </footer>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-5" style="background: rgba(0, 0, 0, 0.2);">
+        <div class="container text-center">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <h2 class="display-5 fw-bold text-gradient mb-4">Ready to Start?</h2>
+                    <p class="lead text-white opacity-75 mb-5">
+                        Join thousands of users already enjoying our virtual crypto gaming platform. 
+                        No real money required - just pure entertainment and learning.
+                    </p>
+                    
+                    <div class="d-flex gap-3 justify-content-center flex-wrap">
+                        <a href="/" class="btn btn-neon btn-lg">
+                            <i class="fas fa-rocket me-2"></i>Get Started Now
+                        </a>
+                        <a href="/gaming/roulette" class="btn btn-neon btn-lg" style="border-color: #8b5cf6; color: #8b5cf6;">
+                            <i class="fas fa-play me-2"></i>Try Demo
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     
+    <!-- Enhanced JavaScript -->
+    <script src="/static/js/utils.js"></script>
+    <script src="/static/js/auth.js"></script>
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/mock-api.js"></script>
+    <script src="/static/js/main.js"></script>
+    <script src="/static/js/animations.js"></script>
+    
     <script>
-        // Application state
-        let currentPage = 1;
-        let currentCurrency = 'usd';
-        let currentPerPage = 50;
-        let allCoins = [];
-        let websocket = null;
-
-        // Initialize application
         document.addEventListener('DOMContentLoaded', function() {
-            initializeWebSocket();
-            loadCoins();
-            setupEventListeners();
-        });
-
-        // WebSocket connection
-        function initializeWebSocket() {
-            const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const wsUrl = `${wsProtocol}//${window.location.host}/ws/prices`;
-            
-            websocket = new WebSocket(wsUrl);
-            
-            websocket.onopen = function(event) {
-                console.log('WebSocket connected');
-                document.getElementById('ws-status').textContent = 'Live';
-                document.getElementById('ws-status').className = 'badge bg-success';
-            };
-            
-            websocket.onmessage = function(event) {
-                const data = JSON.parse(event.data);
-                if (data.type === 'price_update') {
-                    updatePricesFromWebSocket(data.coins);
-                }
-            };
-            
-            websocket.onclose = function(event) {
-                console.log('WebSocket disconnected');
-                document.getElementById('ws-status').textContent = 'Disconnected';
-                document.getElementById('ws-status').className = 'badge bg-warning';
-                
-                // Reconnect after 5 seconds
-                setTimeout(initializeWebSocket, 5000);
-            };
-            
-            websocket.onerror = function(error) {
-                console.error('WebSocket error:', error);
-                document.getElementById('ws-status').textContent = 'Error';
-                document.getElementById('ws-status').className = 'badge bg-danger';
-            };
-        }
-
-        // Event listeners
-        function setupEventListeners() {
-            // Currency change
-            document.getElementById('currency-select').addEventListener('change', function(e) {
-                currentCurrency = e.target.value;
-                currentPage = 1;
-                loadCoins();
-            });
-
-            // Per page change
-            document.getElementById('per-page-select').addEventListener('change', function(e) {
-                currentPerPage = parseInt(e.target.value);
-                currentPage = 1;
-                loadCoins();
-            });
-
-            // Search
-            let searchTimeout;
-            document.getElementById('search-input').addEventListener('input', function(e) {
-                clearTimeout(searchTimeout);
-                const query = e.target.value.trim();
-                
-                if (query.length >= 2) {
-                    searchTimeout = setTimeout(() => searchCoins(query), 500);
-                } else if (query.length === 0) {
-                    loadCoins();
-                }
-            });
-
-            // Conversion form
-            document.getElementById('conversion-form').addEventListener('submit', function(e) {
-                e.preventDefault();
-                performConversion();
-            });
-        }
-
-        // Load coins data
-        async function loadCoins() {
-            try {
-                showLoading(true);
-                
-                const response = await fetch(`/api/coins?page=${currentPage}&per_page=${currentPerPage}&currency=${currentCurrency}`);
-                
-                if (!response.ok) {
-                    throw new Error('Failed to fetch coins data');
-                }
-                
-                const data = await response.json();
-                allCoins = data.coins;
-                
-                displayCoins(data.coins);
-                displayPagination(data);
-                updateStats(data);
-                
-                document.getElementById('last-updated').textContent = `Last updated: ${new Date(data.last_updated).toLocaleTimeString()}`;
-                
-            } catch (error) {
-                console.error('Error loading coins:', error);
-                showError('Failed to load cryptocurrency data');
-            } finally {
-                showLoading(false);
-            }
-        }
-
-        // Search coins
-        async function searchCoins(query) {
-            try {
-                const response = await fetch(`/api/coins/search?query=${encodeURIComponent(query)}&currency=${currentCurrency}`);
-                
-                if (!response.ok) {
-                    throw new Error('Search failed');
-                }
-                
-                const data = await response.json();
-                displayCoins(data.results);
-                
-                // Hide pagination during search
-                document.getElementById('pagination').innerHTML = '';
-                
-            } catch (error) {
-                console.error('Error searching coins:', error);
-                showError('Search failed');
-            }
-        }
-
-        // Display coins
-        function displayCoins(coins) {
-            const grid = document.getElementById('coins-grid');
-            
-            if (coins.length === 0) {
-                grid.innerHTML = '<div class="col-12 text-center"><p>No cryptocurrencies found.</p></div>';
-                grid.style.display = 'block';
-                return;
+            // Initialize animations if available
+            if (window.animationManager) {
+                console.log('Animation manager initialized on home page');
             }
             
-            const coinsHTML = coins.map(coin => `
-                <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
-                    <div class="crypto-card p-3 h-100">
-                        <div class="d-flex align-items-center mb-2">
-                            <span class="crypto-emoji">${coin.emoji}</span>
-                            <div>
-                                <h6 class="mb-0">${coin.name}</h6>
-                                <small class="text-muted">${coin.symbol.toUpperCase()}</small>
-                            </div>
-                        </div>
-                        <div class="price-info">
-                            <div class="h5 mb-1" id="price-${coin.id}">
-                                ${formatPrice(coin.price)} ${currentCurrency.toUpperCase()}
-                            </div>
-                            <div class="small ${coin.price_change_24h >= 0 ? 'price-positive' : 'price-negative'}" id="change-${coin.id}">
-                                <i class="fas fa-${coin.price_change_24h >= 0 ? 'arrow-up' : 'arrow-down'}"></i>
-                                ${Math.abs(coin.price_change_24h).toFixed(2)}%
-                            </div>
-                        </div>
-                        ${coin.market_cap ? `
-                            <div class="mt-2 small text-muted">
-                                Market Cap: ${formatPrice(coin.market_cap)}
-                            </div>
-                        ` : ''}
-                    </div>
-                </div>
-            `).join('');
-            
-            grid.innerHTML = coinsHTML;
-            grid.style.display = 'block';
-        }
-
-        // Display pagination
-        function displayPagination(data) {
-            const pagination = document.getElementById('pagination');
-            
-            if (data.total_pages <= 1) {
-                pagination.innerHTML = '';
-                return;
-            }
-            
-            let paginationHTML = '';
-            
-            // Previous button
-            paginationHTML += `
-                <li class="page-item ${data.page === 1 ? 'disabled' : ''}">
-                    <a class="page-link" href="#" onclick="changePage(${data.page - 1}); return false;">Previous</a>
-                </li>
-            `;
-            
-            // Page numbers
-            const startPage = Math.max(1, data.page - 2);
-            const endPage = Math.min(data.total_pages, data.page + 2);
-            
-            for (let i = startPage; i <= endPage; i++) {
-                paginationHTML += `
-                    <li class="page-item ${i === data.page ? 'active' : ''}">
-                        <a class="page-link" href="#" onclick="changePage(${i}); return false;">${i}</a>
-                    </li>
-                `;
-            }
-            
-            // Next button
-            paginationHTML += `
-                <li class="page-item ${data.page === data.total_pages ? 'disabled' : ''}">
-                    <a class="page-link" href="#" onclick="changePage(${data.page + 1}); return false;">Next</a>
-                </li>
-            `;
-            
-            pagination.innerHTML = paginationHTML;
-        }
-
-        // Update statistics
-        function updateStats(data) {
-            document.getElementById('total-coins').textContent = data.total;
-            document.getElementById('api-source').textContent = data.api_source;
-            
-            // Count gainers and losers
-            const gainers = data.coins.filter(coin => coin.price_change_24h > 0).length;
-            const losers = data.coins.filter(coin => coin.price_change_24h < 0).length;
-            
-            document.getElementById('gainers-count').textContent = gainers;
-            document.getElementById('losers-count').textContent = losers;
-        }
-
-        // Update prices from WebSocket
-        function updatePricesFromWebSocket(coins) {
-            coins.forEach(coin => {
-                const priceElement = document.getElementById(`price-${coin.id}`);
-                const changeElement = document.getElementById(`change-${coin.id}`);
-                
-                if (priceElement) {
-                    priceElement.textContent = `${formatPrice(coin.price)} ${currentCurrency.toUpperCase()}`;
-                }
-                
-                if (changeElement) {
-                    changeElement.className = `small ${coin.change_24h >= 0 ? 'price-positive' : 'price-negative'}`;
-                    changeElement.innerHTML = `
-                        <i class="fas fa-${coin.change_24h >= 0 ? 'arrow-up' : 'arrow-down'}"></i>
-                        ${Math.abs(coin.change_24h).toFixed(2)}%
-                    `;
-                }
-            });
-        }
-
-        // Perform currency conversion
-        async function performConversion() {
-            try {
-                const amount = parseFloat(document.getElementById('convert-amount').value);
-                const fromCurrency = document.getElementById('convert-from').value;
-                const toCoin = document.getElementById('convert-to').value.trim();
-                
-                if (!amount || !toCoin) {
-                    showError('Please fill in all conversion fields');
-                    return;
-                }
-                
-                const response = await fetch('/api/convert', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        amount: amount,
-                        from_currency: fromCurrency,
-                        to_coin: toCoin
-                    })
+            // Animate stats on scroll
+            const stats = document.querySelectorAll('.stat-value');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        animateStatValue(entry.target);
+                        observer.unobserve(entry.target);
+                    }
                 });
-                
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.detail || 'Conversion failed');
+            });
+            
+            stats.forEach(stat => observer.observe(stat));
+        });
+        
+        function animateStatValue(element) {
+            const finalValue = element.textContent;
+            const numericValue = parseInt(finalValue.replace(/[^0-9]/g, '')) || 0;
+            const suffix = finalValue.replace(/[0-9]/g, '');
+            
+            let current = 0;
+            const increment = numericValue / 50;
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= numericValue) {
+                    current = numericValue;
+                    clearInterval(timer);
                 }
-                
-                const result = await response.json();
-                displayConversionResult(result);
-                
-            } catch (error) {
-                console.error('Conversion error:', error);
-                showError(error.message);
-            }
-        }
-
-        // Display conversion result
-        function displayConversionResult(result) {
-            const resultDiv = document.getElementById('conversion-result');
-            
-            resultDiv.innerHTML = `
-                <div class="alert alert-success">
-                    <h6>Conversion Result:</h6>
-                    <p class="mb-1">
-                        <strong>${result.amount_input} ${result.from_currency}</strong> = 
-                        <strong>${formatCrypto(result.crypto_amount)} ${result.to_coin.toUpperCase()}</strong>
-                    </p>
-                    <small class="text-muted">
-                        Rate: 1 ${result.to_coin.toUpperCase()} = ${formatPrice(result.price_per_unit)} ${result.from_currency}
-                    </small>
-                </div>
-            `;
-            
-            resultDiv.style.display = 'block';
-        }
-
-        // Utility functions
-        function changePage(page) {
-            currentPage = page;
-            loadCoins();
-        }
-
-        function formatPrice(price) {
-            return new Intl.NumberFormat('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: price < 1 ? 8 : 2
-            }).format(price);
-        }
-
-        function formatCrypto(amount) {
-            return new Intl.NumberFormat('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 8
-            }).format(amount);
-        }
-
-        function showLoading(show) {
-            document.getElementById('main-loading').style.display = show ? 'block' : 'none';
-            document.getElementById('coins-grid').style.display = show ? 'none' : 'block';
-        }
-
-        function showError(message) {
-            // Create a temporary toast notification
-            const toast = document.createElement('div');
-            toast.className = 'toast align-items-center text-white bg-danger border-0';
-            toast.style.position = 'fixed';
-            toast.style.top = '20px';
-            toast.style.left = '50%';
-            toast.style.transform = 'translateX(-50%)';
-            toast.style.zIndex = '9999';
-            toast.innerHTML = `
-                <div class="d-flex">
-                    <div class="toast-body">${message}</div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" onclick="this.parentElement.parentElement.remove()"></button>
-                </div>
-            `;
-            
-            document.body.appendChild(toast);
-            
-            // Auto remove after 5 seconds
-            setTimeout(() => {
-                if (toast.parentElement) {
-                    toast.remove();
-                }
-            }, 5000);
+                element.textContent = Math.floor(current) + suffix;
+            }, 30);
         }
     </script>
 </body>

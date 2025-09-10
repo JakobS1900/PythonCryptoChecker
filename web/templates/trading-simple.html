@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paper Trading - Crypto Analytics Platform</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Enhanced Visual Styles -->
+    <link href="/static/css/main.css" rel="stylesheet">
+    <link href="/static/css/enhanced-theme.css" rel="stylesheet">
+    <link href="/static/css/icons.css" rel="stylesheet">
+    <link href="/static/css/visual-assets.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Enhanced Header with Glassmorphism -->
+    <div class="trading-header" style="background: var(--gradient-primary); position: relative; overflow: hidden;">
+        <!-- Animated Background Pattern -->
+        <div class="position-absolute w-100 h-100 pattern-dots" style="opacity: 0.1;"></div>
+        
+        <div class="container position-relative">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <div class="d-flex align-items-center animate-on-scroll" data-animation="fadeInUp">
+                        <div class="logo-icon me-3">₿</div>
+                        <div>
+                            <h1 class="mb-0 text-gradient">Paper Trading Dashboard</h1>
+                            <p class="mb-0 mt-2 opacity-75">Practice trading with virtual money • Risk-free learning environment</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <div class="d-flex gap-3 justify-content-end align-items-center">
+                        <!-- Authentication Status -->
+                        <div id="auth-section">
+                            <!-- Show when not logged in -->
+                            <div id="not-logged-in" style="display: none;">
+                                <a href="/login" class="btn btn-neon me-2">
+                                    <i class="fas fa-sign-in-alt me-2"></i>Login
+                                </a>
+                                <a href="/register" class="btn btn-neon" style="border-color: #8b5cf6; color: #8b5cf6;">
+                                    <i class="fas fa-user-plus me-2"></i>Register
+                                </a>
+                            </div>
+                            
+                            <!-- Show when logged in -->
+                            <div id="logged-in" style="display: none;">
+                                <!-- User Info -->
+                                <div class="d-flex align-items-center me-3">
+                                    <div class="crypto-icon crypto-btc me-2" style="width: 32px; height: 32px; font-size: 12px;">💎</div>
+                                    <span class="text-warning fw-bold" id="user-gems">1,000 GEM</span>
+                                </div>
+                                
+                                <!-- Notification Bell -->
+                                <div class="position-relative me-2">
+                                    <button class="btn btn-neon" onclick="showNotifications()" style="border-color: #8b5cf6; color: #8b5cf6;">
+                                        <i class="fas fa-bell"></i>
+                                        <span class="notification-badge" id="notificationCount" style="display: none;">3</span>
+                                    </button>
+                                </div>
+                                
+                                <!-- User Menu -->
+                                <div class="dropdown me-2">
+                                    <button class="btn btn-neon dropdown-toggle" type="button" data-bs-toggle="dropdown" style="border-color: #22c55e; color: #22c55e;">
+                                        <i class="fas fa-user me-2"></i><span id="username-display">Demo User</span>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); border-radius: 12px;">
+                                        <li><a class="dropdown-item" href="/gaming/roulette"><i class="fas fa-dice me-2 text-warning"></i>Gaming</a></li>
+                                        <li><a class="dropdown-item" href="/gaming/inventory"><i class="fas fa-box-open me-2 text-info"></i>Inventory</a></li>
+                                        <li><a class="dropdown-item" href="/achievements"><i class="fas fa-trophy me-2 text-success"></i>Achievements</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item" href="#" onclick="logout()"><i class="fas fa-sign-out-alt me-2 text-danger"></i>Logout</a></li>
+                                    </ul>
+                                </div>
+                                
+                                <button class="btn btn-neon" onclick="refreshDashboard()">
+                                    <i class="fas fa-sync-alt me-2"></i>Refresh
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Always show home link -->
+                        <a href="/" class="btn btn-neon ms-2">
+                            <i class="fas fa-home me-2"></i>Home
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container my-4">
+        <!-- Enhanced Portfolio Overview -->
+        <div class="row mb-4 animate-on-scroll" data-animation="fadeInUp">
+            <div class="col-12">
+                <div class="card-glass">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div class="d-flex align-items-center">
+                            <div class="gaming-icon me-3">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div>
+                                <h3 class="mb-0 text-gradient">Demo Trading Portfolio</h3>
+                                <p class="mb-0 text-muted">Virtual trading environment</p>
+                            </div>
+                        </div>
+                        <span class="badge bg-success" style="padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.9rem;">
+                            <i class="fas fa-circle me-2" style="font-size: 0.6rem;"></i>Active
+                        </span>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-2 col-sm-6 mb-3">
+                            <div class="stat-visual stat-card-animated" style="--stat-color: #4f46e5; --stat-color-light: #6366f1;">
+                                <div class="stat-icon">
+                                    <i class="fas fa-wallet"></i>
+                                </div>
+                                <div class="stat-value" id="portfolio-value">$10,000.00</div>
+                                <div class="stat-label">Portfolio Value</div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-6 mb-3">
+                            <div class="stat-visual stat-card-animated" style="--stat-color: #10b981; --stat-color-light: #22c55e;">
+                                <div class="stat-icon">
+                                    <i class="fas fa-trending-up"></i>
+                                </div>
+                                <div class="stat-value" id="total-return">$500.00</div>
+                                <div class="stat-label">Total Return</div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-6 mb-3">
+                            <div class="stat-visual stat-card-animated" style="--stat-color: #f59e0b; --stat-color-light: #fbbf24;">
+                                <div class="stat-icon">
+                                    <i class="fas fa-percentage"></i>
+                                </div>
+                                <div class="stat-value" id="return-percentage">5.26%</div>
+                                <div class="stat-label">Return %</div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-6 mb-3">
+                            <div class="stat-visual" style="--stat-color: #06b6d4; --stat-color-light: #0891b2;">
+                                <div class="stat-icon">
+                                    <i class="fas fa-dollar-sign"></i>
+                                </div>
+                                <div class="stat-value">$2,500.00</div>
+                                <div class="stat-label">Cash Balance</div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-6 mb-3">
+                            <div class="stat-visual" style="--stat-color: #8b5cf6; --stat-color-light: #a855f7;">
+                                <div class="stat-icon">
+                                    <i class="fas fa-exchange-alt"></i>
+                                </div>
+                                <div class="stat-value">15</div>
+                                <div class="stat-label">Total Trades</div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-sm-6 mb-3">
+                            <div class="stat-visual" style="--stat-color: #ef4444; --stat-color-light: #f87171;">
+                                <div class="stat-icon">
+                                    <i class="fas fa-target"></i>
+                                </div>
+                                <div class="stat-value">73%</div>
+                                <div class="stat-label">Win Rate</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Portfolio Holdings -->
+            <div class="col-lg-8">
+                <div class="card-glass animate-on-scroll" data-animation="fadeInUp" data-delay="100">
+                    <h4 class="mb-4 d-flex align-items-center">
+                        <div class="crypto-icon crypto-btc me-3">₿</div>
+                        <span class="text-gradient">Current Holdings</span>
+                    </h4>
+                    
+                    <!-- Holdings Content -->
+                    <div id="holdings-content">
+                        <!-- Will be populated by JavaScript based on auth status -->
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="card-glass animate-on-scroll mt-4" data-animation="fadeInUp" data-delay="200">
+                    <h4 class="mb-4 d-flex align-items-center">
+                        <div class="gaming-icon me-3" style="background: var(--gradient-success);">
+                            <i class="fas fa-history"></i>
+                        </div>
+                        <span class="text-gradient">Recent Activity</span>
+                    </h4>
+                    
+                    <div class="text-center py-4">
+                        <div class="gaming-icon mb-3" style="width: 60px; height: 60px; font-size: 24px; margin: 0 auto; opacity: 0.5; background: var(--gradient-success);">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <p class="text-muted">Start trading to see your activity here!</p>
+                        <a href="/gaming/roulette" class="btn btn-neon" style="border-color: #22c55e; color: #22c55e;">
+                            <i class="fas fa-play me-2"></i>Try Gaming First
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trading Panel -->
+            <div class="col-lg-4">
+                <div class="card-glass animate-on-scroll" data-animation="fadeInUp" data-delay="100">
+                    <h4 class="mb-4 d-flex align-items-center">
+                        <div class="gaming-icon me-3" style="background: var(--gradient-crypto);">
+                            <i class="fas fa-exchange-alt"></i>
+                        </div>
+                        <span class="text-gradient">Quick Actions</span>
+                    </h4>
+                    
+                    <div class="d-grid gap-3">
+                        <a href="/gaming/roulette" class="btn btn-neon">
+                            <i class="fas fa-dice me-2"></i>Play Crypto Roulette
+                        </a>
+                        <a href="/gaming/inventory" class="btn btn-neon" style="border-color: #8b5cf6; color: #8b5cf6;">
+                            <i class="fas fa-box-open me-2"></i>View Inventory
+                        </a>
+                        <a href="/" class="btn btn-neon" style="border-color: #f59e0b; color: #f59e0b;">
+                            <i class="fas fa-home me-2"></i>Back to Home
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Wallet Info -->
+                <div class="card-glass animate-on-scroll mt-4" data-animation="fadeInUp" data-delay="200">
+                    <h5 class="mb-4 d-flex align-items-center">
+                        <div class="crypto-icon crypto-btc me-3" style="width: 40px; height: 40px;">💎</div>
+                        <span class="text-gradient">Virtual Wallet</span>
+                    </h5>
+                    
+                    <div class="d-flex justify-content-between align-items-center p-3" style="background: rgba(247, 147, 26, 0.2); border: 1px solid rgba(247, 147, 26, 0.3); border-radius: 12px;">
+                        <div class="d-flex align-items-center">
+                            <div class="crypto-icon crypto-btc me-3" style="width: 32px; height: 32px; font-size: 14px;">💎</div>
+                            <span class="fw-semibold">GEM Coins:</span>
+                        </div>
+                        <span class="fw-bold text-warning">1,000</span>
+                    </div>
+                    
+                    <div class="text-center mt-3">
+                        <small class="text-muted">Earn more GEMs by playing games!</small>
+                    </div>
+                </div>
+
+                <!-- Achievement Preview -->
+                <div class="card-glass animate-on-scroll mt-4" data-animation="fadeInUp" data-delay="300">
+                    <h5 class="mb-4 d-flex align-items-center">
+                        <div class="achievement-icon-visual me-3" style="width: 40px; height: 40px; font-size: 16px;">
+                            <i class="fas fa-trophy"></i>
+                        </div>
+                        <span class="text-gradient">Recent Achievements</span>
+                    </h5>
+                    
+                    <div class="achievement-item mb-3" style="background: rgba(34, 197, 94, 0.2); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 12px; padding: 1rem;">
+                        <div class="d-flex align-items-center">
+                            <div class="achievement-icon-visual unlocked me-3" style="width: 32px; height: 32px; font-size: 14px;">
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="fw-semibold text-success">First Login</div>
+                                <div class="small text-muted">Welcome to the platform!</div>
+                            </div>
+                            <div class="text-success fw-bold">+50 XP</div>
+                        </div>
+                    </div>
+                    
+                    <div class="achievement-item mb-3" style="background: rgba(59, 130, 246, 0.2); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 12px; padding: 1rem;">
+                        <div class="d-flex align-items-center">
+                            <div class="achievement-icon-visual unlocked me-3" style="width: 32px; height: 32px; font-size: 14px;">
+                                <i class="fas fa-eye"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="fw-semibold text-info">Portfolio Viewer</div>
+                                <div class="small text-muted">Viewed your portfolio</div>
+                            </div>
+                            <div class="text-info fw-bold">+25 XP</div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <a href="/achievements" class="btn btn-neon btn-sm" style="border-color: #fbbf24; color: #fbbf24;">
+                            <i class="fas fa-trophy me-2"></i>View All Achievements
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced Notification Modal -->
+    <div class="modal fade" id="notificationModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content" style="background: var(--gradient-primary); border: none; border-radius: 20px;">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title text-gradient">
+                        <i class="fas fa-bell me-2"></i>Notifications
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="notification-item mb-3" style="background: rgba(34, 197, 94, 0.2); border-radius: 12px; padding: 1rem;">
+                        <div class="d-flex align-items-start">
+                            <div class="gaming-icon me-3" style="width: 32px; height: 32px; font-size: 14px; background: var(--gradient-success);">
+                                <i class="fas fa-trophy"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="fw-semibold text-white">Achievement Unlocked!</div>
+                                <div class="small text-white opacity-75">You've earned the "Portfolio Viewer" achievement</div>
+                                <div class="small text-success mt-1">+25 XP earned</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="notification-item mb-3" style="background: rgba(59, 130, 246, 0.2); border-radius: 12px; padding: 1rem;">
+                        <div class="d-flex align-items-start">
+                            <div class="gaming-icon me-3" style="width: 32px; height: 32px; font-size: 14px; background: var(--gradient-crypto);">
+                                <i class="fas fa-coins"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="fw-semibold text-white">Daily Reward Available</div>
+                                <div class="small text-white opacity-75">Claim your daily 100 GEM bonus</div>
+                                <div class="small text-info mt-1">Click to claim</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="notification-item" style="background: rgba(245, 158, 11, 0.2); border-radius: 12px; padding: 1rem;">
+                        <div class="d-flex align-items-start">
+                            <div class="gaming-icon me-3" style="width: 32px; height: 32px; font-size: 14px; background: var(--gradient-warning);">
+                                <i class="fas fa-dice"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="fw-semibold text-white">New Game Available</div>
+                                <div class="small text-white opacity-75">Try the enhanced crypto roulette</div>
+                                <div class="small text-warning mt-1">Play now for bonus rewards</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-neon" onclick="markAllAsRead()" style="border-color: #22c55e; color: #22c55e;">
+                        <i class="fas fa-check me-2"></i>Mark All Read
+                    </button>
+                    <button type="button" class="btn btn-neon" data-bs-dismiss="modal" style="border-color: #6b7280; color: #6b7280;">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Action Button -->
+    <div class="floating-action-menu">
+        <button class="fab-main btn btn-neon" onclick="toggleFabMenu()" style="position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; border-radius: 50%; z-index: 1000; border-color: #4f46e5; color: #4f46e5;">
+            <i class="fas fa-plus" id="fabIcon"></i>
+        </button>
+        
+        <div class="fab-menu" id="fabMenu" style="position: fixed; bottom: 100px; right: 30px; z-index: 999; display: none;">
+            <a href="/gaming/roulette" class="fab-item btn btn-neon mb-3" style="width: 50px; height: 50px; border-radius: 50%; border-color: #f59e0b; color: #f59e0b; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-dice"></i>
+            </a>
+            <a href="/gaming/inventory" class="fab-item btn btn-neon mb-3" style="width: 50px; height: 50px; border-radius: 50%; border-color: #8b5cf6; color: #8b5cf6; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-box-open"></i>
+            </a>
+            <button class="fab-item btn btn-neon mb-3" onclick="refreshDashboard()" style="width: 50px; height: 50px; border-radius: 50%; border-color: #22c55e; color: #22c55e; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Enhanced JavaScript -->
+    <script src="/static/js/main.js"></script>
+    <script src="/static/js/animations.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Enhanced trading page loaded successfully');
+            
+            // Check authentication first
+            checkAuthenticationStatus();
+            
+            // Initialize animations if available
+            if (window.animationManager) {
+                console.log('Animation manager available');
+                
+                // Trigger scroll animations
+                setTimeout(() => {
+                    document.querySelectorAll('.animate-on-scroll').forEach(el => {
+                        if (window.animationManager) {
+                            window.animationManager.animateElement(el);
+                        }
+                    });
+                }, 100);
+            }
+            
+            // Start live data simulation only if authenticated
+            if (isUserAuthenticated()) {
+                startLiveDataSimulation();
+            }
+            
+            // Add interactive hover effects
+            addInteractiveEffects();
+        });
+        
+        function checkAuthenticationStatus() {
+            const isLoggedIn = isUserAuthenticated();
+            const username = localStorage.getItem('demo_username') || 'Demo User';
+            
+            if (isLoggedIn) {
+                // Show logged in UI
+                document.getElementById('not-logged-in').style.display = 'none';
+                document.getElementById('logged-in').style.display = 'flex';
+                document.getElementById('username-display').textContent = username;
+                
+                // Show realistic GEM amount for demo
+                document.getElementById('user-gems').textContent = '1,000 GEM';
+                
+                // Show actual holdings
+                showAuthenticatedHoldings();
+                
+                // Show notifications after delay
+                setTimeout(() => {
+                    document.getElementById('notificationCount').style.display = 'flex';
+                    document.getElementById('notificationCount').textContent = '3';
+                }, 3000);
+            } else {
+                // Show not logged in UI
+                document.getElementById('not-logged-in').style.display = 'flex';
+                document.getElementById('logged-in').style.display = 'none';
+                
+                // Show login prompt for holdings
+                showLoginPrompt();
+                
+                // Show login prompt notification
+                setTimeout(() => {
+                    if (window.animationManager) {
+                        window.animationManager.animateNotification('Please log in to access all features', 'info', 5000);
+                    }
+                }, 2000);
+            }
+        }
+        
+        function showAuthenticatedHoldings() {
+            document.getElementById('holdings-content').innerHTML = `
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="holding-item" style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 12px; padding: 1.5rem;">
+                            <div class="d-flex align-items-center">
+                                <div class="crypto-icon crypto-btc me-3">BTC</div>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1 text-gradient">Bitcoin</h6>
+                                    <div class="small text-muted">0.25 BTC • $47,000</div>
+                                </div>
+                                <div class="text-end">
+                                    <div class="fw-bold text-success">$11,750</div>
+                                    <div class="small text-success">+$500 (4.4%)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <div class="holding-item" style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 12px; padding: 1.5rem;">
+                            <div class="d-flex align-items-center">
+                                <div class="crypto-icon crypto-eth me-3">ETH</div>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1 text-gradient">Ethereum</h6>
+                                    <div class="small text-muted">2.5 ETH • $3,200</div>
+                                </div>
+                                <div class="text-end">
+                                    <div class="fw-bold text-success">$8,000</div>
+                                    <div class="small text-success">+$500 (6.7%)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function showLoginPrompt() {
+            document.getElementById('holdings-content').innerHTML = `
+                <div class="text-center py-5">
+                    <div class="gaming-icon mb-4" style="width: 80px; height: 80px; font-size: 32px; margin: 0 auto; opacity: 0.5; background: var(--gradient-crypto);">
+                        <i class="fas fa-lock"></i>
+                    </div>
+                    <h5 class="text-gradient mb-3">Login Required</h5>
+                    <p class="text-white opacity-75 mb-4">
+                        Please log in to view your portfolio holdings and start trading.
+                    </p>
+                    <div class="d-flex gap-3 justify-content-center">
+                        <a href="/login" class="btn btn-neon">
+                            <i class="fas fa-sign-in-alt me-2"></i>Login
+                        </a>
+                        <a href="/register" class="btn btn-neon" style="border-color: #8b5cf6; color: #8b5cf6;">
+                            <i class="fas fa-user-plus me-2"></i>Register
+                        </a>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function startLiveDataSimulation() {
+            // Only start simulation if user is authenticated
+            if (isUserAuthenticated()) {
+                // Simulate live portfolio updates
+                setInterval(() => {
+                    updatePortfolioValue();
+                    updateReturnValue();
+                    updateCryptoHoldings();
+                }, 5000); // Update every 5 seconds
+            }
+        }
+        
+        function isUserAuthenticated() {
+            // Check if user is logged in (simple check for demo)
+            return localStorage.getItem('demo_user_logged_in') === 'true';
+        }
+        
+        function updatePortfolioValue() {
+            const portfolioElement = document.getElementById('portfolio-value');
+            if (portfolioElement) {
+                const currentValue = 10000;
+                const variation = (Math.random() - 0.5) * 200; // ±$100 variation
+                const newValue = currentValue + variation;
+                
+                animateValueChange(portfolioElement, newValue, (val) => `$${val.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`);
+            }
+        }
+        
+        function updateReturnValue() {
+            const returnElement = document.getElementById('total-return');
+            const percentageElement = document.getElementById('return-percentage');
+            
+            if (returnElement && percentageElement) {
+                const variation = (Math.random() - 0.5) * 100; // ±$50 variation
+                const newReturn = 500 + variation;
+                const newPercentage = (newReturn / 10000) * 100;
+                
+                animateValueChange(returnElement, newReturn, (val) => `$${val.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`);
+                animateValueChange(percentageElement, newPercentage, (val) => `${val.toFixed(2)}%`);
+                
+                // Update colors based on positive/negative
+                const colorClass = newReturn >= 0 ? 'text-success' : 'text-danger';
+                returnElement.className = `stat-value ${colorClass}`;
+                percentageElement.className = `stat-value ${colorClass}`;
+            }
+        }
+        
+        function updateCryptoHoldings() {
+            // Simulate crypto price changes
+            const btcPrice = 47000 + (Math.random() - 0.5) * 2000;
+            const ethPrice = 3200 + (Math.random() - 0.5) * 200;
+            
+            // Update BTC holding
+            const btcElements = document.querySelectorAll('.crypto-btc').forEach(el => {
+                if (el.closest('.holding-item')) {
+                    const priceElement = el.closest('.holding-item').querySelector('.small.text-muted');
+                    if (priceElement) {
+                        priceElement.textContent = `0.25 BTC • $${btcPrice.toLocaleString()}`;
+                    }
+                }
+            });
+        }
+        
+        function animateValueChange(element, targetValue, formatter) {
+            const currentText = element.textContent;
+            const currentValue = parseFloat(currentText.replace(/[^0-9.-]/g, '')) || 0;
+            
+            const duration = 1000;
+            const startTime = performance.now();
+            
+            function updateValue(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                // Easing function
+                const easeOutCubic = 1 - Math.pow(1 - progress, 3);
+                const current = currentValue + (targetValue - currentValue) * easeOutCubic;
+                
+                element.textContent = formatter(current);
+                
+                if (progress < 1) {
+                    requestAnimationFrame(updateValue);
+                }
+            }
+            
+            requestAnimationFrame(updateValue);
+        }
+        
+        function addInteractiveEffects() {
+            // Add click effects to stat cards
+            document.querySelectorAll('.stat-visual').forEach(card => {
+                card.addEventListener('click', function() {
+                    // Add pulse animation
+                    this.style.animation = 'pulse 0.6s ease-in-out';
+                    setTimeout(() => {
+                        this.style.animation = '';
+                    }, 600);
+                    
+                    // Show notification
+                    if (window.animationManager) {
+                        window.animationManager.animateNotification('Portfolio metric updated!', 'info', 2000);
+                    }
+                });
+            });
+            
+            // Add hover effects to crypto holdings
+            document.querySelectorAll('.holding-item').forEach(item => {
+                item.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-5px) scale(1.02)';
+                    this.style.boxShadow = '0 15px 35px rgba(0, 0, 0, 0.2)';
+                });
+                
+                item.addEventListener('mouseleave', function() {
+                    this.style.transform = '';
+                    this.style.boxShadow = '';
+                });
+            });
+            
+            // Add click to copy functionality
+            document.querySelectorAll('.crypto-icon').forEach(icon => {
+                icon.addEventListener('click', function() {
+                    const cryptoName = this.textContent;
+                    if (navigator.clipboard) {
+                        navigator.clipboard.writeText(cryptoName);
+                        if (window.animationManager) {
+                            window.animationManager.animateNotification(`${cryptoName} copied to clipboard!`, 'success', 2000);
+                        }
+                    }
+                });
+            });
+        }
+        
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case 'r':
+                        e.preventDefault();
+                        refreshDashboard();
+                        break;
+                    case 'g':
+                        e.preventDefault();
+                        window.location.href = '/gaming/roulette';
+                        break;
+                    case 'h':
+                        e.preventDefault();
+                        window.location.href = '/';
+                        break;
+                    case 'n':
+                        e.preventDefault();
+                        showNotifications();
+                        break;
+                }
+            }
+        });
+        
+        // Enhanced functions
+        function refreshDashboard() {
+            if (window.animationManager) {
+                window.animationManager.animateNotification('Dashboard refreshed!', 'success', 2000);
+            }
+            
+            // Simulate refresh with animation
+            document.querySelectorAll('.stat-card-animated').forEach(card => {
+                card.style.animation = 'shimmer 1s ease-in-out';
+                setTimeout(() => {
+                    card.style.animation = '';
+                }, 1000);
+            });
+            
+            // Update values
+            setTimeout(() => {
+                updatePortfolioValue();
+                updateReturnValue();
+            }, 500);
+        }
+        
+        function showNotifications() {
+            const modal = new bootstrap.Modal(document.getElementById('notificationModal'));
+            modal.show();
+            
+            // Hide notification badge
+            document.getElementById('notificationCount').style.display = 'none';
+        }
+        
+        function markAllAsRead() {
+            if (window.animationManager) {
+                window.animationManager.animateNotification('All notifications marked as read', 'success', 2000);
+            }
+            
+            // Hide the modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('notificationModal'));
+            if (modal) modal.hide();
+        }
+        
+        // Show notification badge on load only if authenticated
+        setTimeout(() => {
+            if (isUserAuthenticated()) {
+                document.getElementById('notificationCount').style.display = 'flex';
+                document.getElementById('notificationCount').textContent = '3';
+            }
+        }, 3000);
+        
+        // Simulate new notifications only if authenticated
+        setInterval(() => {
+            if (isUserAuthenticated()) {
+                const badge = document.getElementById('notificationCount');
+                const currentCount = parseInt(badge.textContent) || 0;
+                if (currentCount < 5 && Math.random() < 0.3) { // 30% chance every 10 seconds
+                    badge.textContent = currentCount + 1;
+                    badge.style.display = 'flex';
+                    
+                    if (window.animationManager) {
+                        window.animationManager.animateNotification('New notification received!', 'info', 2000);
+                    }
+                }
+            }
+        }, 10000);
+        
+        // Logout function
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.removeItem('demo_user_logged_in');
+                localStorage.removeItem('demo_username');
+                
+                if (window.animationManager) {
+                    window.animationManager.animateNotification('Logged out successfully', 'success', 2000);
+                }
+                
+                setTimeout(() => {
+                    window.location.href = '/login';
+                }, 1000);
+            }
+        }
+        
+        // Floating Action Button functionality
+        let fabMenuOpen = false;
+        
+        function toggleFabMenu() {
+            const menu = document.getElementById('fabMenu');
+            const icon = document.getElementById('fabIcon');
+            
+            if (fabMenuOpen) {
+                menu.style.display = 'none';
+                icon.className = 'fas fa-plus';
+                icon.style.transform = 'rotate(0deg)';
+            } else {
+                menu.style.display = 'block';
+                icon.className = 'fas fa-times';
+                icon.style.transform = 'rotate(45deg)';
+                
+                // Animate menu items
+                const items = menu.querySelectorAll('.fab-item');
+                items.forEach((item, index) => {
+                    item.style.opacity = '0';
+                    item.style.transform = 'scale(0)';
+                    setTimeout(() => {
+                        item.style.transition = 'all 0.3s ease';
+                        item.style.opacity = '1';
+                        item.style.transform = 'scale(1)';
+                    }, index * 100);
+                });
+            }
+            
+            fabMenuOpen = !fabMenuOpen;
+        }
+        
+        // Close FAB menu when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.floating-action-menu') && fabMenuOpen) {
+                toggleFabMenu();
+            }
+        });
+    </script>
+</body>
+</html>

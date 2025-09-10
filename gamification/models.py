@@ -207,29 +207,6 @@ class ActiveEffect(Base):
     source_item_id = Column(String)          # Inventory/Item source (optional)
 
 
-class DailyReward(Base):
-    """Daily login reward tracking."""
-    __tablename__ = "daily_rewards"
-    
-    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_id = Column(String, ForeignKey("users.id"), nullable=False)
-    
-    # Streak tracking
-    current_streak = Column(Integer, default=0)
-    longest_streak = Column(Integer, default=0)
-    last_claim_date = Column(DateTime)
-    
-    # Reward progression (increases with streak)
-    next_reward_gems = Column(Float, default=50.0)
-    next_reward_xp = Column(Integer, default=25)
-    
-    # Statistics
-    total_logins = Column(Integer, default=0)
-    total_gems_from_daily = Column(Float, default=0.0)
-    
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
 
 @dataclass
 class RewardBundle:

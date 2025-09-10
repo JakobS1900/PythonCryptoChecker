@@ -5,7 +5,7 @@ Virtual currency, rewards, and collectible items system.
 
 from .models import (
     VirtualWallet, VirtualCryptoHolding, CollectibleItem, UserInventory,
-    VirtualTransaction, DailyReward, RewardBundle, VirtualEconomyConstants,
+    VirtualTransaction, RewardBundle, VirtualEconomyConstants,
     CurrencyType, ItemRarity, ItemType, RewardType
 )
 
@@ -19,7 +19,6 @@ __all__ = [
     "CollectibleItem",
     "UserInventory",
     "VirtualTransaction",
-    "DailyReward",
     "RewardBundle",
     "VirtualEconomyConstants",
     

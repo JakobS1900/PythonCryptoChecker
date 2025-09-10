@@ -26,7 +26,7 @@ class OnboardingManager:
         return [
             {
                 "step_id": "welcome",
-                "name": "Welcome to CryptoGaming",
+                "name": "Welcome to CryptoChecker",
                 "description": "Learn about the platform and what makes it special",
                 "type": "introduction",
                 "required": True,
@@ -36,7 +36,7 @@ class OnboardingManager:
                     "title": "Welcome to the Ultimate Crypto Gaming Experience!",
                     "sections": [
                         {
-                            "title": "What is CryptoGaming?",
+                            "title": "What is CryptoChecker?",
                             "content": "A virtual gambling and gaming platform where you can play crypto-themed games, collect items, and compete with friends - all without any real money involved!"
                         },
                         {
@@ -230,7 +230,7 @@ class OnboardingManager:
                     "sections": [
                         {
                             "title": "You're All Set!",
-                            "content": "Congratulations on completing the onboarding process! You now have all the knowledge needed to enjoy CryptoGaming to the fullest."
+                            "content": "Congratulations on completing the onboarding process! You now have all the knowledge needed to enjoy CryptoChecker to the fullest."
                         },
                         {
                             "title": "What's Next?",

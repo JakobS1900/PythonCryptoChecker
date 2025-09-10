@@ -7,7 +7,8 @@ from .unified_models import (
     Base, User, UserSession, VirtualWallet, VirtualCryptoHolding,
     VirtualTransaction, CollectibleItem, UserInventory, GameSession,
     GameBet, GameStats, Achievement, UserAchievement, Friendship,
-    DailyReward, Leaderboard, LeaderboardEntry,
+    DailyReward, Leaderboard, LeaderboardEntry, UserGameStats,
+    DailyChallenge, UserChallengeProgress,
     
     # Enums
     UserRole, UserStatus, CurrencyType, ItemRarity, ItemType,
@@ -27,7 +28,8 @@ __all__ = [
     "Base", "User", "UserSession", "VirtualWallet", "VirtualCryptoHolding",
     "VirtualTransaction", "CollectibleItem", "UserInventory", "GameSession",
     "GameBet", "GameStats", "Achievement", "UserAchievement", "Friendship",
-    "DailyReward", "Leaderboard", "LeaderboardEntry",
+    "DailyReward", "Leaderboard", "LeaderboardEntry", "UserGameStats",
+    "DailyChallenge", "UserChallengeProgress",
     
     # Enums
     "UserRole", "UserStatus", "CurrencyType", "ItemRarity", "ItemType",

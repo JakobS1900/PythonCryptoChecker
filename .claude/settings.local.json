@@ -15,7 +15,9 @@
       "mcp__deep-research__deep_research",
       "WebSearch",
       "Bash(pip install:*)",
-      "Bash(.venvScriptspip install python-dotenv)"
+      "Bash(.venvScriptspip install python-dotenv)",
+      "mcp__zen__zen_list_models",
+      "Bash(.venvScriptspip install fastapi uvicorn sqlalchemy asyncpg aiofiles python-multipart bcrypt passlib python-jose aiohttp)"
     ],
     "deny": [],
     "ask": []

@@ -35,7 +35,7 @@ class NotificationManager:
         """Initialize notification templates."""
         return {
             "welcome": {
-                "title": "Welcome to CryptoGaming!",
+                "title": "Welcome to CryptoChecker!",
                 "body": "Start your gaming journey with 1000 free GEM coins!",
                 "type": NotificationType.WELCOME,
                 "channels": ["in_app", "email"],

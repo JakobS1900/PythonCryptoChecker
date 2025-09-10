@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - CryptoChecker Gaming Platform</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Enhanced Visual Styles -->
+    <link href="/static/css/main.css" rel="stylesheet">
+    <link href="/static/css/enhanced-theme.css" rel="stylesheet">
+    <link href="/static/css/icons.css" rel="stylesheet">
+    <link href="/static/css/visual-assets.css" rel="stylesheet">
+    
+    <style>
+        body {
+            background: var(--gradient-primary);
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .register-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .register-card {
+            max-width: 500px;
+            width: 100%;
+            margin: 2rem;
+        }
+        
+        .form-control {
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid rgba(79, 70, 229, 0.2);
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus {
+            background: rgba(255, 255, 255, 1);
+            border-color: var(--crypto-blue);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+    </style>
+</head>
+<body>    <!
+-- Background Pattern -->
+    <div class="position-absolute w-100 h-100 pattern-dots" style="opacity: 0.1; top: 0; left: 0;"></div>
+    
+    <div class="register-container">
+        <div class="register-card">
+            <div class="card-glass">
+                <!-- Header -->
+                <div class="text-center mb-4">
+                    <div class="d-flex justify-content-center align-items-center mb-3">
+                        <div class="logo-icon me-3">₿</div>
+                        <h2 class="text-gradient mb-0">CryptoChecker</h2>
+                    </div>
+                    <h4 class="text-white mb-2">Join the Adventure</h4>
+                    <p class="text-white opacity-75">Create your account and start gaming</p>
+                </div>
+
+                <!-- Registration Form -->
+                <form id="registerForm">
+                    <div class="mb-3">
+                        <label class="form-label text-white fw-semibold">
+                            <i class="fas fa-user me-2"></i>Username
+                        </label>
+                        <input type="text" class="form-control" id="username" required>
+                        <div class="form-text">3-30 characters, letters, numbers, and underscores only</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-white fw-semibold">
+                            <i class="fas fa-envelope me-2"></i>Email Address
+                        </label>
+                        <input type="email" class="form-control" id="email" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-white fw-semibold">
+                            <i class="fas fa-id-card me-2"></i>Display Name (Optional)
+                        </label>
+                        <input type="text" class="form-control" id="displayName">
+                        <div class="form-text">How you'll appear to other players</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-white fw-semibold">
+                            <i class="fas fa-lock me-2"></i>Password
+                        </label>
+                        <input type="password" class="form-control" id="password" required>
+                        <div class="form-text">Minimum 6 characters</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-white fw-semibold">
+                            <i class="fas fa-lock me-2"></i>Confirm Password
+                        </label>
+                        <input type="password" class="form-control" id="confirmPassword" required>
+                        <div id="passwordMatch" class="form-text"></div>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="agreeTerms" required>
+                            <label class="form-check-label text-white" for="agreeTerms">
+                                I agree to the <a href="#" class="text-info">Terms of Service</a> and <a href="#" class="text-info">Privacy Policy</a>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="d-grid mb-3">
+                        <button type="submit" class="btn btn-login">
+                            <i class="fas fa-user-plus me-2"></i>Create Account
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Demo Account Section -->
+                <div class="demo-section" style="background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 12px; padding: 1.5rem; margin-top: 2rem;">
+                    <div class="text-center">
+                        <div class="gaming-icon mb-3" style="width: 48px; height: 48px; font-size: 20px; margin: 0 auto; background: var(--gradient-success);">
+                            <i class="fas fa-rocket"></i>
+                        </div>
+                        <h6 class="text-success fw-semibold mb-2">Skip Registration</h6>
+                        <p class="text-white opacity-75 small mb-3">
+                            Want to try the platform first? Use our demo account!
+                        </p>
+                        <button class="btn btn-neon w-100" onclick="useDemoAccount()" style="border-color: #22c55e; color: #22c55e;">
+                            <i class="fas fa-play me-2"></i>Use Demo Account
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Login Link -->
+                <div class="text-center mt-4">
+                    <p class="text-white opacity-75 mb-2">Already have an account?</p>
+                    <a href="/login" class="btn btn-neon" style="border-color: #8b5cf6; color: #8b5cf6;">
+                        <i class="fas fa-sign-in-alt me-2"></i>Sign In
+                    </a>
+                </div>
+
+                <!-- Back to Home -->
+                <div class="text-center mt-3">
+                    <a href="/" class="text-white opacity-75 text-decoration-none">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Home
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Enhanced JavaScript -->
+    <script src="/static/js/main.js"></script>
+    <script src="/static/js/animations.js"></script>
+    <script src="/static/js/auth.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Registration page loaded');
+            
+            // Clear old localStorage authentication data
+            localStorage.removeItem('demo_user_logged_in');
+            localStorage.removeItem('demo_username');
+            
+            setupFormValidation();
+            
+            // Check if already logged in via session
+            if (window.auth && window.auth.isAuthenticated()) {
+                console.log('User already authenticated, but allowing access to register page');
+                // Allow access to register page even if authenticated
+            }
+        });
+
+        function setupFormValidation() {
+            const form = document.getElementById('registerForm');
+            const password = document.getElementById('password');
+            const confirmPassword = document.getElementById('confirmPassword');
+            
+            // Password matching validation
+            confirmPassword.addEventListener('input', function() {
+                const matchDiv = document.getElementById('passwordMatch');
+                if (password.value !== confirmPassword.value) {
+                    matchDiv.textContent = 'Passwords do not match';
+                    matchDiv.className = 'form-text text-danger';
+                } else {
+                    matchDiv.textContent = 'Passwords match';
+                    matchDiv.className = 'form-text text-success';
+                }
+            });
+            
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                handleRegistration();
+            });
+        }
+
+        async function handleRegistration() {
+            const username = document.getElementById('username').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const agreeTerms = document.getElementById('agreeTerms').checked;
+
+            // Validation
+            if (!username || !email || !password || !confirmPassword) {
+                showAlert('Please fill in all required fields', 'warning');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                showAlert('Passwords do not match', 'danger');
+                return;
+            }
+
+            if (password.length < 6) {
+                showAlert('Password must be at least 6 characters', 'warning');
+                return;
+            }
+
+            if (!agreeTerms) {
+                showAlert('Please agree to the Terms of Service', 'warning');
+                return;
+            }
+
+            showLoading();
+            
+            try {
+                console.log('Sending registration request...');
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        email: email,
+                        password: password
+                    })
+                });
+
+                console.log('Response status:', response.status);
+                const data = await response.json();
+                console.log('Response data:', data);
+                
+                if (data.status === 'success') {
+                    showAlert('Account created successfully! Redirecting...', 'success');
+                    
+                    // Trigger auth check to update UI
+                    if (window.auth) {
+                        await window.auth.checkAuthStatus();
+                    }
+                    
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 1500);
+                } else {
+                    showAlert(data.message || 'Registration failed. Please try again.', 'error');
+                }
+            } catch (error) {
+                console.error('Registration error:', error);
+                showAlert('Registration failed. Please check your connection and try again.', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function useDemoAccount() {
+            showLoading();
+            
+            try {
+                const response = await fetch('/api/auth/demo-login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    showAlert('Demo account activated! Redirecting...', 'success');
+                    
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 1500);
+                } else {
+                    showAlert('Demo account activation failed. Please try again.', 'error');
+                }
+            } catch (error) {
+                console.error('Demo account error:', error);
+                showAlert('Demo account activation failed. Please try again.', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        let originalButtonText = '';
+        
+        function showLoading() {
+            const submitBtn = document.querySelector('.btn-login');
+            if (submitBtn) {
+                originalButtonText = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Creating Account...';
+                submitBtn.disabled = true;
+            }
+        }
+        
+        function hideLoading() {
+            const submitBtn = document.querySelector('.btn-login');
+            if (submitBtn && originalButtonText) {
+                submitBtn.innerHTML = originalButtonText;
+                submitBtn.disabled = false;
+            }
+        }
+
+        function showAlert(message, type) {
+            if (window.animationManager) {
+                window.animationManager.animateNotification(message, type, 3000);
+            } else if (window.showAlert) {
+                window.showAlert(message, type);
+            } else {
+                alert(message);
+            }
+        }
+    </script>
+</body>
+</html>

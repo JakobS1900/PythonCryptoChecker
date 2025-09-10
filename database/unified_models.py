@@ -163,6 +163,7 @@ class User(Base):
     user_onboarding = relationship("UserOnboarding", back_populates="user", uselist=False)
     notifications = relationship("Notification", back_populates="user")
     notification_preferences = relationship("NotificationPreferences", back_populates="user", uselist=False)
+    mini_game_stats = relationship("UserGameStats", back_populates="user", uselist=False)
 
 
 class UserSession(Base):
@@ -408,6 +409,7 @@ class GameStats(Base):
     updated_at = Column(DateTime, default=datetime.utcnow)
     
     # Relationships
+    # Link to User via the primary game stats relationship
     user = relationship("User", back_populates="game_stats")
 
 
@@ -1030,3 +1032,111 @@ class OCOLink(Base):
     # Relationships
     group = relationship("OCOGroup", back_populates="oco_links")
     order = relationship("Order", back_populates="oco_links")
+
+
+# ==================== MINI-GAMES SYSTEM MODELS ====================
+
+class UserGameStats(Base):
+    """Overall user statistics across all mini-games."""
+    __tablename__ = "user_game_stats"
+    
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, ForeignKey("users.id"), nullable=False, unique=True)
+    
+    # Overall Statistics
+    total_games_played = Column(Integer, default=0)
+    total_gems_earned = Column(Float, default=0.0)
+    total_xp_earned = Column(Integer, default=0)
+    total_time_played = Column(Float, default=0.0)  # seconds
+    
+    # Game Type Breakdown
+    memory_games = Column(Integer, default=0)
+    prediction_games = Column(Integer, default=0)
+    puzzle_games = Column(Integer, default=0)
+    math_games = Column(Integer, default=0)
+    wheel_spins = Column(Integer, default=0)
+    
+    # Achievement Tracking
+    perfect_games = Column(Integer, default=0)  # Games completed with 100% accuracy
+    speed_records = Column(Integer, default=0)  # Games completed in record time
+    streak_records = Column(Integer, default=0)  # Best streaks achieved
+    
+    # Skill Ratings (1-100)
+    memory_skill = Column(Float, default=50.0)
+    math_skill = Column(Float, default=50.0)
+    puzzle_skill = Column(Float, default=50.0)
+    prediction_skill = Column(Float, default=50.0)
+    
+    # Favorites and Preferences
+    favorite_game = Column(String)
+    preferred_difficulty = Column(String, default="MEDIUM")
+    
+    # Daily/Weekly Progress
+    daily_games_played = Column(Integer, default=0)
+    last_daily_reset = Column(DateTime)
+    weekly_gems_earned = Column(Float, default=0.0)
+    last_weekly_reset = Column(DateTime)
+    
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    user = relationship("User", back_populates="mini_game_stats")
+
+
+class UserChallengeProgress(Base):
+    """Track user progress on daily challenges."""
+    __tablename__ = "user_challenge_progress"
+    
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    challenge_id = Column(String, ForeignKey("daily_challenges.id"), nullable=False)
+    
+    # Progress
+    current_progress = Column(Float, default=0.0)
+    target_value = Column(Float, nullable=False)
+    is_completed = Column(Boolean, default=False)
+    completion_time = Column(DateTime)
+    
+    # Rewards
+    gems_earned = Column(Float, default=0.0)
+    xp_earned = Column(Integer, default=0)
+    
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    user = relationship("User")
+    challenge = relationship("DailyChallenge", back_populates="user_progress")
+
+
+class DailyChallenge(Base):
+    """Daily challenges for mini-games."""
+    __tablename__ = "daily_challenges"
+    
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    challenge_date = Column(DateTime, nullable=False)
+    
+    # Challenge Configuration
+    game_type = Column(String, nullable=False)  # Which mini-game
+    challenge_type = Column(String, nullable=False)  # Type of challenge
+    target_value = Column(Float, nullable=False)  # Target to achieve
+    description = Column(Text, nullable=False)
+    
+    # Rewards
+    gem_reward = Column(Float, default=100.0)
+    xp_reward = Column(Integer, default=50)
+    bonus_multiplier = Column(Float, default=1.0)
+    
+    # Status
+    is_active = Column(Boolean, default=True)
+    participants = Column(Integer, default=0)
+    completions = Column(Integer, default=0)
+    
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    user_progress = relationship("UserChallengeProgress", back_populates="challenge")

@@ -1,265 +1,368 @@
-/**
- * Authentication Management
- * Handles user authentication state and UI updates
- */
-
+// Simple Authentication System for Demo
 class AuthManager {
     constructor() {
         this.user = null;
-        this.isAuthenticated = false;
+        this.isLoggedIn = false;
+        this.balanceTimer = null;
+        this.balancePollMs = 30000; // 30s polling to prevent desync
         this.init();
     }
 
     init() {
-        this.checkAuthState();
-        this.updateUI();
+        // Check if user is already logged in
+        this.checkAuthStatus();
         
-        // Listen for storage changes (logout from other tabs)
-        window.addEventListener('storage', (e) => {
-            if (e.key === 'access_token' || e.key === 'user_data') {
-                this.checkAuthState();
-                this.updateUI();
+        // Setup event listeners
+        this.setupEventListeners();
+    }
+
+    setupEventListeners() {
+        // Use event delegation for dynamically created buttons
+        document.addEventListener('click', (e) => {
+            // Demo login button
+            if (e.target.id === 'demo-login-btn' || e.target.closest('#demo-login-btn')) {
+                e.preventDefault();
+                console.log('Demo login button clicked');
+                this.demoLogin();
+            }
+            
+            // Logout button (in dropdown)
+            if (e.target.id === 'logout-btn' || e.target.closest('#logout-btn') || 
+                (e.target.textContent && e.target.textContent.includes('Logout'))) {
+                e.preventDefault();
+                console.log('Logout button clicked');
+                this.logout();
+            }
+        });
+        
+        // Also listen for logout function calls from navbar
+        window.logout = () => {
+            console.log('Global logout function called');
+            this.logout();
+        };
+
+        // Keep wallet balance in sync when tab regains focus
+        window.addEventListener('focus', () => {
+            try {
+                if (this.isAuthenticated()) {
+                    this.loadWalletBalance();
+                }
+            } catch (err) {
+                console.debug('Focus sync skipped:', err);
+            }
+        });
+
+        // Also react to visibility changes (e.g., switching tabs)
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && this.isAuthenticated()) {
+                this.loadWalletBalance();
             }
         });
     }
 
-    checkAuthState() {
-        const token = localStorage.getItem('access_token');
-        const userData = localStorage.getItem('user_data');
-        
-        this.isAuthenticated = !!token;
-        this.user = userData ? JSON.parse(userData) : null;
-        
-        // Update API client token
-        if (window.apiClient) {
-            window.apiClient.token = token;
-            window.apiClient.refreshToken = localStorage.getItem('refresh_token');
-        }
-    }
-
-    updateUI() {
-        const userMenu = document.getElementById('userMenu');
-        if (!userMenu) return;
-
-        const authenticatedMenu = userMenu.querySelector('.user-authenticated');
-        const guestMenu = userMenu.querySelector('.user-guest');
-
-        if (this.isAuthenticated && this.user) {
-            // Show authenticated user menu
-            authenticatedMenu.classList.remove('d-none');
-            guestMenu.classList.add('d-none');
+    async demoLogin() {
+        try {
+            console.log('Starting demo login... BUNGA MUNGA MUNGA!');
             
-            // Update user information
-            this.updateUserDisplay();
-            this.setupLogoutHandler();
-        } else {
-            // Show guest menu
-            authenticatedMenu.classList.add('d-none');
-            guestMenu.classList.remove('d-none');
-        }
-    }
+            // REAL API CALL - Now that backend is ready!
+            const response = await fetch('/api/auth/demo-login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
 
-    updateUserDisplay() {
-        const userName = document.getElementById('userName');
-        const userLevel = document.getElementById('userLevel');
-        const userGems = document.getElementById('userGems');
-        const userAvatar = document.getElementById('userAvatar');
+            const data = await response.json();
+            console.log('Demo login response:', data);
+            
+            if (data.status === 'success') {
+                this.user = data.user;
+                this.isLoggedIn = true;
+                
+                // Store user data for persistence  
+                localStorage.setItem('demo_user', JSON.stringify(data.user));
+                localStorage.setItem('is_logged_in', 'true');
+                
+                this.updateUI();
+                this.showAlert('Demo login successful! Welcome to CryptoChecker.', 'success');
+                
+                // Trigger dashboard reload if we're on the home page
+                if (window.location.pathname === '/' || window.location.pathname === '/dashboard') {
+                    if (window.checkAuthenticationAndInitialize) {
+                        window.checkAuthenticationAndInitialize();
+                    }
+                }
 
-        if (userName) {
-            userName.textContent = this.user.display_name || this.user.username;
-        }
-        
-        if (userLevel) {
-            userLevel.textContent = this.user.current_level || 1;
-        }
-        
-        if (userGems && this.user.wallet) {
-            userGems.textContent = this.formatNumber(this.user.wallet.gem_coins || 0);
-        }
-        
-        if (userAvatar && this.user.avatar_url) {
-            userAvatar.src = this.user.avatar_url;
-        }
-    }
-
-    setupLogoutHandler() {
-        const logoutBtn = document.getElementById('logoutBtn');
-        if (logoutBtn) {
-            logoutBtn.onclick = (e) => {
-                e.preventDefault();
-                this.logout();
-            };
+                // Start balance polling after successful login
+                this.startBalancePolling();
+                
+                return { success: true, user: data.user };
+            } else {
+                this.showAlert('Login failed: ' + data.message, 'error');
+                return { success: false, error: data.message };
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            this.showAlert('Login failed. Please try again.', 'error');
+            return { success: false, error: error.message };
         }
     }
 
     async logout() {
         try {
-            // Call logout API
-            if (window.apiClient) {
-                await window.apiClient.auth.logout();
-            }
-        } catch (error) {
-            console.error('Logout API call failed:', error);
-        } finally {
-            // Clear local storage regardless of API success
-            this.clearAuthData();
+            console.log('Logging out... BUNGA MUNGA MUNGA!');
             
-            // Show success message
-            if (window.showAlert) {
-                showAlert('Logged out successfully', 'success');
+            // REAL API LOGOUT - Now that backend is ready!
+            const response = await fetch('/api/auth/logout', {
+                method: 'GET',  // Using GET as defined in the backend
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                this.user = null;
+                this.isLoggedIn = false;
+                
+                // Clear local storage
+                localStorage.removeItem('demo_user');
+                localStorage.removeItem('is_logged_in');
+                
+            this.updateUI();
+            this.showAlert('Logged out successfully.', 'info');
+            
+            // Redirect to home if on protected page
+            if (window.location.pathname !== '/' && window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+                window.location.href = '/';
             }
             
-            // Redirect to login page
-            setTimeout(() => {
-                window.location.href = '/login';
-            }, 1000);
+            // Trigger page reload for guest view
+            if (window.location.pathname === '/' || window.location.pathname === '/dashboard') {
+                if (window.checkAuthenticationAndInitialize) {
+                    window.checkAuthenticationAndInitialize();
+                }
+            }
+
+            // Stop polling on logout
+            this.stopBalancePolling();
+        }
+    } catch (error) {
+            console.error('Logout error:', error);
+            // Fallback logout
+            this.user = null;
+            this.isLoggedIn = false;
+            localStorage.removeItem('demo_user');
+            localStorage.removeItem('is_logged_in');
+            this.updateUI();
+            this.showAlert('Logged out.', 'info');
         }
     }
 
-    clearAuthData() {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        localStorage.removeItem('user_data');
-        
-        this.user = null;
-        this.isAuthenticated = false;
-        
-        if (window.apiClient) {
-            window.apiClient.token = null;
-            window.apiClient.refreshToken = null;
-        }
-    }
-
-    async refreshUserData() {
-        if (!this.isAuthenticated) return;
-        
+    async checkAuthStatus() {
         try {
-            const response = await window.apiClient.auth.getProfile();
-            if (response.success) {
-                this.user = response.data;
-                localStorage.setItem('user_data', JSON.stringify(this.user));
-                this.updateUserDisplay();
+            console.log('Checking auth status... BUNGA MUNGA MUNGA!');
+            
+            // REAL API AUTH CHECK - Now that backend is ready!
+            const response = await fetch('/api/auth/me');
+            if (response.ok) {
+                const data = await response.json();
+                console.log('Auth status response:', data);
+                if (data.status === 'success' && data.user) {
+                    this.user = data.user;
+                    this.isLoggedIn = true;
+                    console.log('✅ User is authenticated:', this.user);
+                    this.updateUI();
+                    return;
+                } else {
+                    console.log('❌ User not authenticated from API');
+                }
+            } else {
+                console.log('❌ Auth check failed with status:', response.status);
+            }
+            
+            // Fallback to localStorage if API fails
+            const isLoggedIn = localStorage.getItem('is_logged_in');
+            const userData = localStorage.getItem('demo_user');
+            
+            if (isLoggedIn === 'true' && userData) {
+                this.user = JSON.parse(userData);
+                this.isLoggedIn = true;
+                console.log('✅ User is authenticated (localStorage fallback):', this.user);
+                this.updateUI();
+                return;
+            }
+            
+            console.log('❌ User not authenticated');
+        } catch (error) {
+            // User not logged in, which is fine
+            console.log('❌ User not authenticated - error:', error);
+            
+            // Try localStorage fallback
+            const isLoggedIn = localStorage.getItem('is_logged_in');
+            const userData = localStorage.getItem('demo_user');
+            
+            if (isLoggedIn === 'true' && userData) {
+                this.user = JSON.parse(userData);
+                this.isLoggedIn = true;
+                console.log('✅ User is authenticated (localStorage fallback):', this.user);
+                this.updateUI();
+            }
+        }
+    }
+
+    updateUI() {
+        // Update authentication buttons
+        const authButtons = document.getElementById('auth-buttons');
+        const userMenu = document.getElementById('user-menu');
+        const walletDisplay = document.getElementById('wallet-display');
+        
+        if (this.isLoggedIn && this.user) {
+            // Hide auth buttons, show user menu
+            if (authButtons) {
+                authButtons.style.display = 'none';
+            }
+            if (userMenu) {
+                userMenu.style.display = 'block';
+            }
+            
+            // Always try to load wallet balance; wallet pill is optional
+            if (walletDisplay) {
+                walletDisplay.style.display = 'flex';
+            }
+            this.loadWalletBalance();
+            this.startBalancePolling();
+            
+            // Update username display if available
+            const usernameDisplay = document.getElementById('username-display');
+            if (usernameDisplay) {
+                usernameDisplay.textContent = this.user.username;
+            }
+            
+        } else {
+            // Show auth buttons, hide user menu
+            if (authButtons) {
+                authButtons.style.display = 'block';
+                authButtons.innerHTML = `
+                    <button class="btn btn-outline-light me-2" id="demo-login-btn">
+                        <i class="fas fa-sign-in-alt me-2"></i>Demo Login
+                    </button>
+                    <a href="/login" class="btn btn-primary" style="border-radius: 20px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border: none;">
+                        <i class="fas fa-user-plus me-2"></i>Sign Up
+                    </a>
+                `;
+            }
+            if (userMenu) {
+                userMenu.style.display = 'none';
+            }
+            
+            // Hide wallet display
+            if (walletDisplay) {
+                walletDisplay.style.display = 'none';
+            }
+
+            // Stop polling when not authenticated
+            this.stopBalancePolling();
+        }
+    }
+
+    async loadWalletBalance() {
+        try {
+            const response = await fetch('/api/trading/gamification/wallet');
+            if (response.ok) {
+                const data = await response.json();
+                if (data.status === 'success') {
+                    const balance = data.data.gem_coins;
+                    const balanceElement = document.getElementById('nav-gem-balance');
+                    if (balanceElement) {
+                        balanceElement.textContent = balance.toLocaleString();
+                    }
+                    
+                    // Also update wallet balance on roulette page
+                    const walletBalanceElement = document.getElementById('walletBalance');
+                    if (walletBalanceElement) {
+                        walletBalanceElement.textContent = balance.toLocaleString() + ' GEM';
+                    }
+                }
+            } else {
+                // Fallback for demo - use consistent balance
+                const balance = 5000; // Fixed demo balance
+                const balanceElement = document.getElementById('nav-gem-balance');
+                if (balanceElement) {
+                    balanceElement.textContent = balance.toLocaleString();
+                }
+                
+                const walletBalanceElement = document.getElementById('walletBalance');
+                if (walletBalanceElement) {
+                    walletBalanceElement.textContent = balance.toLocaleString() + ' GEM';
+                }
             }
         } catch (error) {
-            console.error('Failed to refresh user data:', error);
+            console.error('Failed to load wallet balance:', error);
+            // Fallback for demo - use consistent balance
+            const balance = 5000;
+            const balanceElement = document.getElementById('nav-gem-balance');
+            if (balanceElement) {
+                balanceElement.textContent = balance.toLocaleString();
+            }
+            
+            const walletBalanceElement = document.getElementById('walletBalance');
+            if (walletBalanceElement) {
+                walletBalanceElement.textContent = balance.toLocaleString() + ' GEM';
+            }
         }
     }
 
-    formatNumber(num) {
-        if (num >= 1000000) {
-            return (num / 1000000).toFixed(1) + 'M';
-        } else if (num >= 1000) {
-            return (num / 1000).toFixed(1) + 'K';
+    showAlert(message, type = 'info') {
+        // Use existing alert system if available
+        if (window.showAlert) {
+            window.showAlert(message, type);
+        } else if (window.animationManager) {
+            window.animationManager.animateNotification(message, type, 5000);
+        } else {
+            // Fallback to simple alert
+            alert(message);
         }
-        return num.toString();
     }
 
-    // Route protection
-    requireAuth(redirectPath = '/login') {
-        if (!this.isAuthenticated) {
-            window.location.href = redirectPath;
-            return false;
-        }
-        return true;
+    isAuthenticated() {
+        return this.isLoggedIn;
     }
 
-    requireGuest(redirectPath = '/dashboard') {
-        if (this.isAuthenticated) {
-            window.location.href = redirectPath;
-            return false;
-        }
-        return true;
+    getUserData() {
+        return this.user;
     }
 
-    hasRole(requiredRole) {
-        if (!this.user) return false;
-        
-        const roleHierarchy = {
-            'USER': 1,
-            'MODERATOR': 2,
-            'ADMIN': 3
-        };
-        
-        const userRoleLevel = roleHierarchy[this.user.role] || 0;
-        const requiredRoleLevel = roleHierarchy[requiredRole] || 0;
-        
-        return userRoleLevel >= requiredRoleLevel;
+    getUser() {
+        return this.user;
+    }
+
+    startBalancePolling() {
+        try {
+            if (this.balanceTimer) return; // already polling
+            this.balanceTimer = setInterval(() => {
+                if (this.isAuthenticated()) {
+                    this.loadWalletBalance();
+                }
+            }, this.balancePollMs);
+        } catch (e) {
+            console.debug('Balance polling not started:', e);
+        }
+    }
+
+    stopBalancePolling() {
+        if (this.balanceTimer) {
+            clearInterval(this.balanceTimer);
+            this.balanceTimer = null;
+        }
     }
 }
 
-// Initialize auth manager
+// Initialize auth manager when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    window.authManager = new AuthManager();
-    
-    // Auto-refresh user data every 5 minutes
-    setInterval(() => {
-        if (window.authManager.isAuthenticated) {
-            window.authManager.refreshUserData();
-        }
-    }, 5 * 60 * 1000);
+    window.auth = new AuthManager();
 });
 
-// Route-specific authentication checks
-document.addEventListener('DOMContentLoaded', function() {
-    const currentPath = window.location.pathname;
-    
-    // Pages that require authentication
-    const protectedPaths = [
-        '/dashboard',
-        '/gaming',
-        '/inventory',
-        '/social',
-        '/profile',
-        '/settings',
-        '/achievements'
-    ];
-    
-    // Pages that require guest status (redirect if logged in)
-    const guestOnlyPaths = [
-        '/login',
-        '/register'
-    ];
-    
-    // Admin-only paths
-    const adminPaths = [
-        '/admin'
-    ];
-    
-    // Wait for auth manager to initialize
-    setTimeout(() => {
-        if (!window.authManager) return;
-        
-        // Check protected routes
-        if (protectedPaths.some(path => currentPath.startsWith(path))) {
-            window.authManager.requireAuth();
-        }
-        
-        // Check guest-only routes
-        if (guestOnlyPaths.includes(currentPath)) {
-            window.authManager.requireGuest();
-        }
-        
-        // Check admin routes
-        if (adminPaths.some(path => currentPath.startsWith(path))) {
-            if (!window.authManager.requireAuth()) return;
-            
-            if (!window.authManager.hasRole('ADMIN')) {
-                if (window.showAlert) {
-                    showAlert('Access denied. Admin privileges required.', 'danger');
-                }
-                setTimeout(() => {
-                    window.location.href = '/dashboard';
-                }, 2000);
-            }
-        }
-    }, 100);
-});
-
-// Utility functions for authentication
-window.auth = {
-    isAuthenticated: () => window.authManager?.isAuthenticated || false,
-    getUser: () => window.authManager?.user || null,
-    hasRole: (role) => window.authManager?.hasRole(role) || false,
-    logout: () => window.authManager?.logout(),
-    refreshUserData: () => window.authManager?.refreshUserData()
-};
+// Export for use in other scripts
+window.AuthManager = AuthManager;

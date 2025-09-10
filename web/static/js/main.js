@@ -4,8 +4,9 @@
  */
 
 // ===== GLOBAL UTILITIES =====
+// Note: Utils are now loaded from utils.js - commenting out duplicate
 
-window.utils = {
+/*window.utils = {
     // Format numbers with appropriate suffixes
     formatNumber: (num) => {
         if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
@@ -72,7 +73,7 @@ window.utils = {
     generateId: () => {
         return Math.random().toString(36).substr(2, 9);
     }
-};
+};*/
 
 // ===== ALERT SYSTEM =====
 
@@ -390,28 +391,33 @@ document.addEventListener('DOMContentLoaded', function() {
     const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
     popoverTriggerList.map(popoverTriggerEl => new bootstrap.Popover(popoverTriggerEl));
 
-    // Initialize WebSocket for authenticated users
+    // Initialize WebSocket for authenticated users (disabled for demo)
     setTimeout(() => {
         if (window.auth && window.auth.isAuthenticated()) {
-            window.wsManager = new WebSocketManager();
-            window.wsManager.connect();
+            console.log('WebSocket disabled for demo mode');
+            // window.wsManager = new WebSocketManager();
+            // window.wsManager.connect();
 
-            // Listen for real-time updates
-            window.wsManager.on('notification', (data) => {
-                window.showAlert(data.message, data.type || 'info');
-            });
+            // Listen for real-time updates (only if wsManager exists)
+            if (window.wsManager) {
+                window.wsManager.on('notification', (data) => {
+                    window.showAlert(data.message, data.type || 'info');
+                });
 
-            window.wsManager.on('friend_request', (data) => {
-                window.showAlert(`Friend request from ${data.username}`, 'info');
-                // Update friend requests UI if visible
-                if (typeof updateFriendRequests === 'function') {
-                    updateFriendRequests();
-                }
-            });
+                window.wsManager.on('friend_request', (data) => {
+                    window.showAlert(`Friend request from ${data.username}`, 'info');
+                    // Update friend requests UI if visible
+                    if (typeof updateFriendRequests === 'function') {
+                        updateFriendRequests();
+                    }
+                });
 
-            window.wsManager.on('achievement_unlocked', (data) => {
-                window.showAlert(`🏆 Achievement unlocked: ${data.name}!`, 'success', 10000);
-            });
+                window.wsManager.on('achievement_unlocked', (data) => {
+                    window.showAlert(`🏆 Achievement unlocked: ${data.name}!`, 'success', 10000);
+                });
+            } else {
+                console.log('WebSocket manager not initialized - real-time features disabled');
+            }
         }
     }, 1000);
 

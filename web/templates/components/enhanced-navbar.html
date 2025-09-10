@@ -20,12 +20,6 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav me-auto">
                 <li class="nav-item">
-                    <a class="nav-link position-relative" href="/trading" id="nav-trading">
-                        <i class="fas fa-chart-line me-2"></i>Trading
-                        <span class="nav-indicator"></span>
-                    </a>
-                </li>
-                <li class="nav-item">
                     <a class="nav-link position-relative" href="/gaming/roulette" id="nav-gaming">
                         <i class="fas fa-dice me-2"></i>Gaming
                         <span class="nav-indicator"></span>
@@ -53,13 +47,6 @@
 
             <!-- User Section -->
             <div class="navbar-nav ms-auto">
-                <!-- Wallet Balance Display -->
-                <div class="nav-item d-flex align-items-center me-3" id="wallet-display" style="display: none !important;">
-                    <div class="wallet-balance" style="background: rgba(247, 147, 26, 0.2); border: 1px solid rgba(247, 147, 26, 0.3); border-radius: 20px; padding: 0.5rem 1rem; color: #fbbf24; font-weight: 600;">
-                        <i class="fas fa-gem me-2"></i>
-                        <span id="nav-gem-balance">0</span> GEM
-                    </div>
-                </div>
 
                 <!-- Notifications -->
                 <div class="nav-item dropdown me-3" id="notifications-dropdown" style="display: none;">
@@ -85,10 +72,14 @@
                     <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
                         <img src="/static/images/default-avatar.png" alt="Avatar" class="rounded-circle me-2" style="width: 32px; height: 32px; border: 2px solid rgba(255, 255, 255, 0.3);">
                         <span id="username-display">Guest</span>
+                        <span class="ms-3 d-flex align-items-center">
+                            <i class="fas fa-gem text-warning me-1"></i>
+                            <span id="nav-gem-balance">0</span>
+                        </span>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.2);">
                         <li>
-                            <a class="dropdown-item" href="/dashboard">
+                            <a class="dropdown-item" href="/">
                                 <i class="fas fa-tachometer-alt me-2 text-primary"></i>Dashboard
                             </a>
                         </li>
@@ -326,8 +317,8 @@ async function loadNavbarUserData() {
         loadNotifications();
         
         // Show user elements
-        document.getElementById('wallet-display').style.display = 'flex';
-        document.getElementById('notifications-dropdown').style.display = 'block';
+        const notif = document.getElementById('notifications-dropdown');
+        if (notif) notif.style.display = 'block';
         
     } catch (error) {
         console.error('Failed to load navbar user data:', error);

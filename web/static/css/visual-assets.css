@@ -118,8 +118,8 @@
 /* Gaming Visual Elements */
 .roulette-visual {
     position: relative;
-    width: 400px;
-    height: 400px;
+    width: 450px;
+    height: 450px;
     margin: 0 auto;
 }
 
@@ -504,8 +504,8 @@
     }
     
     .roulette-visual {
-        width: 300px;
-        height: 300px;
+        width: 350px;
+        height: 350px;
     }
     
     .achievement-icon-visual {
@@ -527,8 +527,8 @@
 
 @media (max-width: 576px) {
     .roulette-visual {
-        width: 250px;
-        height: 250px;
+        width: 300px;
+        height: 300px;
     }
     
     .stat-visual {

@@ -138,14 +138,6 @@
                     </div>
                 </div>
                 <div class="col-md-4 text-md-end">
-                    <!-- Wallet Balance Display -->
-                    <div id="wallet-display" class="mb-3" style="display: none;">
-                        <div class="wallet-balance" style="background: rgba(247, 147, 26, 0.2); border: 1px solid rgba(247, 147, 26, 0.3); border-radius: 20px; padding: 0.5rem 1rem; color: #fbbf24; font-weight: 600; display: inline-block;">
-                            <i class="fas fa-gem me-2"></i>
-                            <span id="header-gem-balance">0</span> GEM
-                        </div>
-                    </div>
-                    
                     <!-- Authentication buttons - show when not logged in -->
                     <div id="auth-buttons" class="d-none">
                         <a href="/login" class="btn btn-neon me-2">
@@ -159,9 +151,13 @@
                             <button class="btn btn-outline-light dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" style="border-radius: 20px; backdrop-filter: blur(10px); background: rgba(255, 255, 255, 0.1);">
                                 <i class="fas fa-user me-2"></i>
                                 <span id="username-display">Guest</span>
+                                <span class="ms-3 d-inline-flex align-items-center">
+                                    <i class="fas fa-gem text-warning me-1"></i>
+                                    <span id="nav-gem-balance">0</span>
+                                </span>
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 12px;">
-                                <li><a class="dropdown-item" href="/dashboard"><i class="fas fa-tachometer-alt me-2 text-primary"></i>Dashboard</a></li>
+                                <li><a class="dropdown-item" href="/"><i class="fas fa-tachometer-alt me-2 text-primary"></i>Dashboard</a></li>
                                 <li><a class="dropdown-item" href="/gaming/inventory"><i class="fas fa-box-open me-2 text-info"></i>Inventory</a></li>
                                 <li><a class="dropdown-item" href="/gaming/roulette"><i class="fas fa-dice me-2 text-warning"></i>Gaming</a></li>
                                 <li><a class="dropdown-item" href="/achievements"><i class="fas fa-trophy me-2 text-success"></i>Achievements</a></li>
@@ -884,6 +880,7 @@
         // Fallback alert function if main.js doesn't load
         if (!window.showAlert) {
             window.showAlert = function(message, type) {
+                console.log(`Alert: ${message} (${type})`);
                 const alertContainer = document.getElementById('alertContainer');
                 if (alertContainer) {
                     const alertId = 'alert-' + Date.now();
@@ -905,31 +902,65 @@
             };
         }
 
-        // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
+        // Safe initialization with error handling
+        function safeInit() {
             try {
+                console.log('Starting safe initialization...');
+                
+                // Check if required elements exist
+                const requiredElements = ['portfolio-overview', 'main-content', 'main-loading'];
+                const missingElements = requiredElements.filter(id => !document.getElementById(id));
+                
+                if (missingElements.length > 0) {
+                    console.warn('Missing elements:', missingElements);
+                }
+                
                 checkAuthenticationState();
                 loadPortfolioData();
                 setupEventListeners();
                 
-                // Initialize enhanced features
-                if (window.animationManager) {
-                    console.log('Animation manager initialized');
-                }
+                console.log('Initialization completed successfully');
+                
             } catch (error) {
                 console.error('Error during initialization:', error);
-                // Show a basic error message
-                document.body.innerHTML = `
-                    <div class="container mt-5">
-                        <div class="alert alert-danger">
-                            <h4>Loading Error</h4>
-                            <p>There was an error loading the page. Please refresh and try again.</p>
-                            <button class="btn btn-primary" onclick="window.location.reload()">Refresh Page</button>
+                
+                // Show user-friendly error message
+                const container = document.querySelector('.container');
+                if (container) {
+                    container.innerHTML = `
+                        <div class="row justify-content-center mt-5">
+                            <div class="col-md-8">
+                                <div class="card-glass text-center py-5">
+                                    <div class="gaming-icon mb-4" style="width: 80px; height: 80px; font-size: 32px; margin: 0 auto; background: var(--gradient-warning);">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    </div>
+                                    <h3 class="text-gradient mb-3">Loading Issue</h3>
+                                    <p class="text-white opacity-75 mb-4">
+                                        We're having trouble loading some features. The page is still functional, 
+                                        but some advanced features may not work properly.
+                                    </p>
+                                    <div class="d-flex gap-3 justify-content-center">
+                                        <button class="btn btn-neon" onclick="window.location.reload()">
+                                            <i class="fas fa-refresh me-2"></i>Refresh Page
+                                        </button>
+                                        <a href="/" class="btn btn-neon" style="border-color: #8b5cf6; color: #8b5cf6;">
+                                            <i class="fas fa-home me-2"></i>Go Home
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                `;
+                    `;
+                }
             }
-        });
+        }
+
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', safeInit);
+        } else {
+            safeInit();
+        }
 
         function setupEventListeners() {
             // Trade form submission
@@ -1207,7 +1238,7 @@
                 if (headerBalance) {
                     animateStatValue('header-gem-balance', walletData.gem_coins, window.utils.formatNumber);
                 }
-                document.getElementById('wallet-display').style.display = 'block';
+                // Navbar gem counter updates via auth.js; no header wallet pill
             }
         }
 
@@ -1301,25 +1332,6 @@
                 `;
             }).join('');
             
-            holdingsList.innerHTML = holdingsHTML;
-        }
-                            <div>${formatCurrency(holding.current_price)}</div>
-                        </div>
-                        <div class="col-md-2">
-                            <div class="small text-muted">Market Value</div>
-                            <div>${formatCurrency(holding.market_value)}</div>
-                        </div>
-                        <div class="col-md-1">
-                            <div class="small text-muted">P&L</div>
-                            <div class="${holding.profit_loss >= 0 ? 'positive' : 'negative'}">
-                                ${formatCurrency(holding.profit_loss)}
-                                <div class="small">(${holding.profit_loss_percentage.toFixed(1)}%)</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-
             holdingsList.innerHTML = holdingsHTML;
         }
 
