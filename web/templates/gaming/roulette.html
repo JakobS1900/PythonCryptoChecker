@@ -1,2003 +1,675 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crypto Roulette - Gaming Platform</title>
-    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>₿</text></svg>">
+{% extends "base.html" %}
+{% block title %}Crypto Roulette - Gaming Platform{% endblock %}
+{% block body_class %}gaming-page{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Enhanced CS:GO Roulette Styling */
+.gaming-page {
+    background: linear-gradient(135deg, #0f1419 0%, #1a1a2e 50%, #16213e 100%);
+    min-height: 100vh;
+}
+
+.roulette-main-container {
+    background: transparent;
+    padding: 20px 0;
+}
+
+/* CS:GO Style Header */
+.roulette-header {
+    background: rgba(0, 0, 0, 0.7);
+    border-bottom: 2px solid #fbbf24;
+    padding: 15px 0;
+    margin-bottom: 20px;
+}
+
+.roulette-title {
+    color: #fbbf24;
+    font-size: 2rem;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* Roulette Wheel Container */
+.roulette-wheel-section {
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 15px;
+    padding: 30px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+.wheel-container {
+    position: relative;
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    background: radial-gradient(circle, #1a1a2e 0%, #0f1419 100%);
+    border-radius: 20px;
+    padding: 20px;
+    overflow: hidden;
+}
+
+/* Numbers Strip (Horizontal Layout) */
+#wheelsHolder {
+    position: relative;
+    width: 100%;
+    height: 80px;
+    background: #16213e;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 2px solid #fbbf24;
+}
+
+.wheel {
+    display: flex;
+    height: 100%;
+    transition: transform 6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.chunk {
+    min-width: 70px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.2rem;
+    border-right: 1px solid rgba(255, 255, 255, 0.2);
+    position: relative;
+}
+
+.green-number {
+    background: linear-gradient(45deg, #10b981, #059669);
+    color: white;
+}
+
+.red-number {
+    background: linear-gradient(45deg, #ef4444, #dc2626);
+    color: white;
+}
+
+.black-number {
+    background: linear-gradient(45deg, #374151, #1f2937);
+    color: white;
+}
+
+.winning-segment {
+    animation: winningPulse 2s ease-in-out;
+    border: 3px solid #fbbf24 !important;
+}
+
+@keyframes winningPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.spinning-effects {
+    animation: spinGlow 6s ease-in-out;
+}
+
+@keyframes spinGlow {
+    0%, 100% { box-shadow: 0 0 20px rgba(251, 191, 36, 0.3); }
+    50% { box-shadow: 0 0 40px rgba(251, 191, 36, 0.8); }
+}
+
+/* Previous Rolls */
+.previous-rolls {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.numbers-display {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.number-chip {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.9rem;
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Betting Interface */
+.betting-section {
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 15px;
+    padding: 25px;
+    border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+.betting-grid {
+    display: grid;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.bet-category {
+    background: rgba(22, 33, 62, 0.8);
+    border-radius: 10px;
+    padding: 15px;
+    border: 1px solid rgba(251, 191, 36, 0.2);
+}
+
+.bet-category h5 {
+    color: #fbbf24;
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+.bet-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.bet-btn {
+    padding: 10px 15px;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 60px;
+    text-align: center;
+}
+
+.bet-btn:hover {
+    background: rgba(251, 191, 36, 0.2);
+    border-color: #fbbf24;
+    transform: translateY(-2px);
+}
+
+.bet-btn.bet-placed {
+    background: #fbbf24;
+    color: #0f1419;
+    border-color: #fbbf24;
+}
+
+/* Number Grid */
+.number-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(50px, 1fr));
+    gap: 8px;
+    max-width: 600px;
+}
+
+/* Color Betting */
+.color-betting .bet-btn {
+    min-width: 120px;
+    padding: 15px;
+}
+
+.red-btn {
+    background: linear-gradient(45deg, #ef4444, #dc2626);
+}
+
+.black-btn {
+    background: linear-gradient(45deg, #374151, #1f2937);
+}
+
+.green-btn {
+    background: linear-gradient(45deg, #10b981, #059669);
+}
+
+/* Game Controls */
+.game-controls {
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 15px;
+    padding: 25px;
+    border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+.bet-amount-section {
+    margin-bottom: 20px;
+}
+
+.bet-amount-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+}
+
+.bet-amount-btn {
+    padding: 8px 16px;
+    border: 2px solid #fbbf24;
+    border-radius: 6px;
+    background: transparent;
+    color: #fbbf24;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.bet-amount-btn:hover,
+.bet-amount-btn.active {
+    background: #fbbf24;
+    color: #0f1419;
+}
+
+.balance-display {
+    background: rgba(16, 185, 129, 0.2);
+    border: 1px solid #10b981;
+    border-radius: 8px;
+    padding: 15px;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.action-btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    flex: 1;
+    min-width: 120px;
+}
+
+.spin-btn {
+    background: linear-gradient(45deg, #10b981, #059669);
+    color: white;
+}
+
+.spin-btn:hover {
+    background: linear-gradient(45deg, #059669, #047857);
+    transform: translateY(-2px);
+}
+
+.clear-btn {
+    background: linear-gradient(45deg, #ef4444, #dc2626);
+    color: white;
+}
+
+.clear-btn:hover {
+    background: linear-gradient(45deg, #dc2626, #b91c1c);
+    transform: translateY(-2px);
+}
+
+.repeat-btn {
+    background: linear-gradient(45deg, #8b5cf6, #7c3aed);
+    color: white;
+}
+
+.repeat-btn:hover {
+    background: linear-gradient(45deg, #7c3aed, #6d28d9);
+    transform: translateY(-2px);
+}
+
+/* Active Bets Display */
+.active-bets-section {
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 15px;
+    padding: 20px;
+    border: 1px solid rgba(251, 191, 36, 0.3);
+    margin-top: 20px;
+}
+
+.bet-item {
+    background: rgba(22, 33, 62, 0.6);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 10px;
+    border-left: 4px solid #fbbf24;
+}
+
+.bet-summary {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    gap: 15px;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+/* Notifications */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 15px 20px;
+    border-radius: 8px;
+    border-left: 4px solid #fbbf24;
+    z-index: 1000;
+    transform: translateX(400px);
+    transition: transform 0.3s ease;
+    max-width: 350px;
+}
+
+.notification.show {
+    transform: translateX(0);
+}
+
+.notification-success {
+    border-left-color: #10b981;
+}
+
+.notification-error {
+    border-left-color: #ef4444;
+}
+
+.notification-warning {
+    border-left-color: #f59e0b;
+}
+
+/* Modal Styling */
+.game-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.game-modal.show {
+    opacity: 1;
+}
+
+.modal-content {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    border-radius: 15px;
+    padding: 30px;
+    max-width: 500px;
+    width: 90%;
+    border: 2px solid #fbbf24;
+    position: relative;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+.modal-header h3 {
+    color: #fbbf24;
+    margin: 0;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: #fbbf24;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 5px 10px;
+}
+
+.close-btn:hover {
+    background: rgba(251, 191, 36, 0.2);
+    border-radius: 4px;
+}
+
+.result-info {
+    text-align: center;
+    color: white;
+}
+
+.payout-item {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 10px;
+    border-radius: 8px;
+    margin: 10px 0;
+    display: flex;
+    justify-content: space-between;
+}
+
+.provably-fair {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(251, 191, 36, 0.3);
+    font-size: 0.9rem;
+}
+
+/* Floating Chip Animation */
+.floating-chip {
+    position: fixed;
+    background: #fbbf24;
+    color: #0f1419;
+    padding: 4px 8px;
+    border-radius: 50%;
+    font-weight: bold;
+    font-size: 0.8rem;
+    pointer-events: none;
+    z-index: 1500;
+    animation: floatUp 1.5s ease-out forwards;
+}
+
+@keyframes floatUp {
+    0% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-100px) scale(0.5);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .betting-grid {
+        grid-template-columns: 1fr;
+    }
     
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    .number-grid {
+        grid-template-columns: repeat(6, 1fr);
+    }
     
-    <!-- Enhanced Visual Styles -->
-    <link href="/static/css/main.css" rel="stylesheet">
-    <link href="/static/css/enhanced-theme.css" rel="stylesheet">
-    <link href="/static/css/icons.css" rel="stylesheet">
-    <link href="/static/css/visual-assets.css" rel="stylesheet">
-    <style>
-        body {
-            background: var(--gradient-primary);
-            background-attachment: fixed;
-        }
-        
-        .gaming-page {
-            min-height: 100vh;
-        }
-        
-        .game-controls {
-            position: sticky;
-            top: 100px;
-            z-index: 10;
-        }
-        
-        .bet-chip {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            margin: 0 auto;
-            transition: all 0.3s ease;
-            background: var(--gradient-gaming);
-            box-shadow: var(--shadow-gaming);
-        }
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .action-btn {
+        min-width: auto;
+    }
+}
+</style>
+{% endblock %}
 
-        .bet-chip:hover {
-            transform: scale(1.1);
-            box-shadow: var(--shadow-elevated);
-        }
-
-        .bet-option-enhanced {
-            cursor: pointer;
-            transition: all 0.3s ease;
-            padding: 1rem;
-            border-radius: 12px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 2px solid transparent;
-        }
-
-        .bet-option-enhanced:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: rgba(79, 70, 229, 0.5);
-            transform: translateY(-2px);
-        }
-
-        .bet-option-enhanced.selected {
-            background: rgba(79, 70, 229, 0.2);
-            border-color: #4f46e5;
-            box-shadow: 0 0 20px rgba(79, 70, 229, 0.3);
-        }
-
-        .bet-option-enhanced.selected .bet-chip {
-            transform: scale(1.1);
-            box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
-        }
-
-        /* Enhanced Roulette Wheel Animations */
-        .roulette-wheel-enhanced {
-            width: 400px;
-            height: 400px;
-            border: 12px solid #fbbf24;
-            border-radius: 50%;
-            position: relative;
-            margin: 0 auto;
-            background: conic-gradient(
-                from 0deg,
-                #ef4444 0deg 9.7deg,
-                #1f2937 9.7deg 19.4deg,
-                #ef4444 19.4deg 29.1deg,
-                #1f2937 29.1deg 38.8deg,
-                #ef4444 38.8deg 48.5deg,
-                #1f2937 48.5deg 58.2deg,
-                #ef4444 58.2deg 67.9deg,
-                #1f2937 67.9deg 77.6deg,
-                #ef4444 77.6deg 87.3deg,
-                #1f2937 87.3deg 97deg,
-                #ef4444 97deg 106.7deg,
-                #1f2937 106.7deg 116.4deg,
-                #ef4444 116.4deg 126.1deg,
-                #1f2937 126.1deg 135.8deg,
-                #ef4444 135.8deg 145.5deg,
-                #1f2937 145.5deg 155.2deg,
-                #ef4444 155.2deg 164.9deg,
-                #1f2937 164.9deg 174.6deg,
-                #ef4444 174.6deg 184.3deg,
-                #1f2937 184.3deg 194deg,
-                #ef4444 194deg 203.7deg,
-                #1f2937 203.7deg 213.4deg,
-                #ef4444 213.4deg 223.1deg,
-                #1f2937 223.1deg 232.8deg,
-                #ef4444 232.8deg 242.5deg,
-                #1f2937 242.5deg 252.2deg,
-                #ef4444 252.2deg 261.9deg,
-                #1f2937 261.9deg 271.6deg,
-                #ef4444 271.6deg 281.3deg,
-                #1f2937 281.3deg 291deg,
-                #ef4444 291deg 300.7deg,
-                #1f2937 300.7deg 310.4deg,
-                #ef4444 310.4deg 320.1deg,
-                #1f2937 320.1deg 329.8deg,
-                #ef4444 329.8deg 339.5deg,
-                #1f2937 339.5deg 349.2deg,
-                #22c55e 349.2deg 360deg
-            );
-            box-shadow: 
-                0 0 40px rgba(247, 147, 26, 0.5),
-                inset 0 0 30px rgba(0, 0, 0, 0.2);
-            transition: transform 0.1s ease-out;
-            transform-origin: center;
-        }
-
-        .roulette-wheel-enhanced.spinning {
-            animation: roulette-spin 4s cubic-bezier(0.23, 1, 0.320, 1) forwards;
-        }
-
-        .roulette-wheel-enhanced.idle-spin {
-            animation: roulette-idle 8s linear infinite;
-        }
-
-        @keyframes roulette-spin {
-            0% { 
-                transform: rotate(0deg);
-                filter: blur(0px);
-            }
-            20% { 
-                transform: rotate(360deg);
-                filter: blur(1px);
-            }
-            60% { 
-                transform: rotate(1080deg);
-                filter: blur(2px);
-            }
-            90% { 
-                transform: rotate(1440deg);
-                filter: blur(1px);
-            }
-            100% { 
-                transform: rotate(var(--final-rotation, 1440deg));
-                filter: blur(0px);
-            }
-        }
-
-        @keyframes roulette-idle {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .roulette-pointer {
-            position: absolute;
-            top: -20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 0;
-            height: 0;
-            border-left: 15px solid transparent;
-            border-right: 15px solid transparent;
-            border-top: 35px solid #fbbf24;
-            z-index: 10;
-            filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.4));
-            animation: pointer-glow 2s ease-in-out infinite alternate;
-        }
-
-        @keyframes pointer-glow {
-            0% { filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.4)); }
-            100% { filter: drop-shadow(0 3px 12px rgba(251, 191, 36, 0.8)); }
-        }
-
-        .roulette-center {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 80px;
-            height: 80px;
-            background: radial-gradient(circle, #fbbf24, #f59e0b);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            color: white;
-            font-size: 24px;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
-            z-index: 5;
-            border: 4px solid #fff;
-        }
-
-        .wheel-numbers {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-        }
-
-        .wheel-number {
-            position: absolute;
-            width: 32px;
-            height: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 13px;
-            color: white;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9);
-            transform-origin: center;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 4px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(2px);
-        }
-
-        .wheel-number.red {
-            background: rgba(239, 68, 68, 0.8);
-            border-color: rgba(239, 68, 68, 0.6);
-        }
-
-        .wheel-number.black {
-            background: rgba(31, 41, 55, 0.9);
-            border-color: rgba(75, 85, 99, 0.6);
-        }
-
-        .wheel-number.green {
-            background: rgba(34, 197, 94, 0.8);
-            border-color: rgba(34, 197, 94, 0.6);
-        }
-
-        /* Particle effects for wins */
-        .win-particles {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            pointer-events: none;
-            z-index: 20;
-        }
-
-        .particle {
-            position: absolute;
-            width: 6px;
-            height: 6px;
-            background: #fbbf24;
-            border-radius: 50%;
-            animation: particle-burst 1s ease-out forwards;
-        }
-
-        @keyframes particle-burst {
-            0% {
-                transform: translate(0, 0) scale(1);
-                opacity: 1;
-            }
-            100% {
-                transform: translate(var(--dx), var(--dy)) scale(0);
-                opacity: 0;
-            }
-        }
-
-        /* Responsive adjustments for smaller screens */
-        @media (max-width: 768px) {
-            .roulette-wheel-enhanced {
-                width: 320px;
-                height: 320px;
-                border-width: 10px;
-            }
-            
-            .roulette-center {
-                width: 70px;
-                height: 70px;
-                font-size: 20px;
-            }
-            
-            .wheel-number {
-                width: 28px;
-                height: 18px;
-                font-size: 11px;
-            }
-        }
-
-        @media (max-width: 576px) {
-            .roulette-wheel-enhanced {
-                width: 280px;
-                height: 280px;
-                border-width: 8px;
-            }
-            
-            .roulette-center {
-                width: 60px;
-                height: 60px;
-                font-size: 18px;
-            }
-            
-            .roulette-pointer {
-                border-left-width: 12px;
-                border-right-width: 12px;
-                border-top-width: 28px;
-            }
-            
-            .wheel-number {
-                width: 24px;
-                height: 16px;
-                font-size: 10px;
-            }
-        }
-    </style>
-</head>
-<body class="gaming-page">
-
-    <!-- Enhanced Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark fixed-top" style="background: rgba(31, 41, 55, 0.95); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
-        <div class="container-fluid">
-            <a class="navbar-brand d-flex align-items-center" href="/">
-                <div class="logo-icon me-3">₿</div>
-                <span class="logo-text">CryptoChecker</span>
-            </a>
-            
-            <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="/">
-                    <i class="fas fa-chart-line me-2"></i>Trading
-                </a>
-                <a class="nav-link active" href="/gaming/roulette">
-                    <i class="fas fa-dice me-2"></i>Gaming
-                </a>
-                <a class="nav-link" href="/gaming/inventory">
-                    <i class="fas fa-box-open me-2"></i>Inventory
-                </a>
-                
-                <!-- User Menu (when logged in) -->
-                <div class="nav-item dropdown" id="user-menu" style="display: none;">
-                    <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
-                        <img src="/static/images/default-avatar.png" alt="Avatar" class="rounded-circle me-2" style="width: 32px; height: 32px; border: 2px solid rgba(255, 255, 255, 0.3);" onerror="this.style.display='none'">
-                        <span id="username-display">Guest</span>
-                        <span class="ms-3 d-flex align-items-center">
-                            <i class="fas fa-gem text-warning me-1"></i>
-                            <span id="nav-gem-balance">0</span>
-                        </span>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.2);">
-                        <li>
-                            <a class="dropdown-item" href="/">
-                                <i class="fas fa-tachometer-alt me-2 text-primary"></i>Dashboard
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="/profile">
-                                <i class="fas fa-user me-2 text-info"></i>Profile
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="/gaming/inventory">
-                                <i class="fas fa-box-open me-2 text-warning"></i>Inventory
-                            </a>
-                        </li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li>
-                            <a class="dropdown-item" href="/settings">
-                                <i class="fas fa-cog me-2 text-secondary"></i>Settings
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="#" onclick="logout()">
-                                <i class="fas fa-sign-out-alt me-2 text-danger"></i>Logout
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-
-                <!-- Auth Buttons (when not logged in) -->
-                <div id="auth-buttons">
-                    <button class="btn btn-outline-light me-2" id="demo-login-btn">
-                        <i class="fas fa-sign-in-alt me-2"></i>Demo Login
-                    </button>
-                    <a href="/login" class="btn btn-primary" style="border-radius: 20px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border: none;">
-                        <i class="fas fa-user-plus me-2"></i>Sign Up
-                    </a>
+{% block content %}
+<div class="roulette-main-container">
+    <!-- Header -->
+    <div class="roulette-header">
+        <div class="container">
+            <div class="row">
+                <div class="col-12 text-center">
+                    <h1 class="roulette-title">🎰 CS:GO Crypto Roulette</h1>
+                    <p class="text-light mb-0">Professional crypto roulette with provably fair mechanics</p>
                 </div>
             </div>
         </div>
-    </nav>
+    </div>
 
-    <div class="container-fluid py-4" style="margin-top: 76px;">
-        <!-- Enhanced Game Header -->
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="card-glass animate-on-scroll" data-animation="fadeInUp">
-                    <div class="text-center py-5">
-                        <div class="d-flex justify-content-center align-items-center mb-4">
-                            <div class="gaming-icon me-4" style="width: 80px; height: 80px; font-size: 32px;">
-                                <i class="fas fa-dice-d20"></i>
-                            </div>
-                            <div>
-                                <h1 class="display-4 fw-bold text-gradient mb-3">
-                                    Crypto Roulette
-                                </h1>
-                                <p class="lead text-white opacity-75 mb-0">
-                                    Bet on your favorite cryptocurrencies and spin to win!
-                                </p>
-                            </div>
-                        </div>
-                        
-                        <!-- Quick Stats -->
-                        <div class="row justify-content-center">
-                            <div class="col-md-3 col-6 mb-3">
-                                <div class="stat-visual" style="--stat-color: #f59e0b; --stat-color-light: #fbbf24;">
-                                    <div class="stat-icon">
-                                        <i class="fas fa-gem"></i>
-                                    </div>
-                                    <div class="stat-value" id="total-gems">0</div>
-                                    <div class="stat-label">Total GEMs</div>
-                                </div>
-                            </div>
-                            <div class="col-md-3 col-6 mb-3">
-                                <div class="stat-visual" style="--stat-color: #22c55e; --stat-color-light: #10b981;">
-                                    <div class="stat-icon">
-                                        <i class="fas fa-trophy"></i>
-                                    </div>
-                                    <div class="stat-value" id="total-wins">0</div>
-                                    <div class="stat-label">Total Wins</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
+    <div class="container">
         <div class="row">
-            <!-- Enhanced Game Area -->
+            <!-- Main Game Area -->
             <div class="col-lg-8">
-                <!-- Enhanced Roulette Wheel -->
-                <div class="card-glass animate-on-scroll mb-4" data-animation="fadeInUp" data-delay="200">
-                    <div class="text-center py-4">
-                        <h4 class="mb-4 text-gradient">
-                            <i class="fas fa-dice me-3"></i>Roulette Wheel
-                        </h4>
+                <!-- Roulette Wheel Section -->
+                <div class="roulette-wheel-section">
+                    <div class="wheel-container">
+                        <h4 class="text-center text-light mb-3">🎲 Roulette Wheel</h4>
                         
-                        <div class="roulette-visual mb-4">
-                            <div class="roulette-wheel-enhanced idle-spin" id="rouletteWheel">
-                                <div class="roulette-pointer"></div>
-                                <div class="wheel-numbers" id="wheelNumbers">
-                                    <!-- Numbers will be dynamically generated -->
-                                </div>
-                                <div class="roulette-center">
-                                    <i class="fas fa-dice"></i>
-                                </div>
-                                <!-- Crypto positions will be dynamically added -->
-                            </div>
-                            <div class="win-particles" id="winParticles"></div>
+                        <!-- Horizontal Number Strip -->
+                        <div id="wheelsHolder">
+                            <!-- Numbers will be generated by JavaScript -->
                         </div>
                         
-                        <div class="row justify-content-center">
-                            <div class="col-md-10">
-                                <div class="d-flex gap-3 justify-content-center flex-wrap">
-                                    <button class="btn btn-neon btn-lg" id="spinBtn" disabled style="min-width: 160px;">
-                                        <i class="fas fa-play me-2"></i>
-                                        <span class="btn-text">Spin Wheel</span>
-                                        <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
-                                    </button>
-                                    <button class="btn btn-neon btn-lg" id="clearBetsBtn" style="border-color: #f59e0b; color: #f59e0b; min-width: 140px;">
-                                        <i class="fas fa-times me-2"></i>Clear Bets
-                                    </button>
-                                    <button class="btn btn-neon btn-lg" onclick="showGameRules()" style="border-color: #8b5cf6; color: #8b5cf6; min-width: 120px;">
-                                        <i class="fas fa-question me-2"></i>Rules
-                                    </button>
-                                </div>
+                        <!-- Previous Rolls -->
+                        <div class="previous-rolls" id="last-numbers">
+                            <h5 class="text-light mb-2">Previous Rolls:</h5>
+                            <div class="numbers-display">
+                                <!-- Previous numbers will be displayed here -->
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Enhanced Betting Grid -->
-                <div class="card-glass animate-on-scroll" data-animation="fadeInUp" data-delay="400">
-                    <div class="d-flex align-items-center mb-4">
-                        <div class="gaming-icon me-3" style="background: var(--gradient-crypto);">
-                            <i class="fas fa-coins"></i>
-                        </div>
-                        <h5 class="mb-0 text-gradient">Place Your Bets</h5>
-                    </div>
+                <!-- Betting Interface -->
+                <div class="betting-section">
+                    <h4 class="text-light mb-3">🎯 Place Your Bets</h4>
                     
-                    <div class="betting-grid" id="bettingGrid">
-                        <!-- Enhanced betting options will be loaded here -->
-                        <div class="text-center py-5">
-                            <div class="loading-visual">
-                                <div class="loading-spinner-visual"></div>
+                    <div class="betting-grid">
+                        <!-- Number Betting -->
+                        <div class="bet-category">
+                            <h5>Individual Numbers (35:1)</h5>
+                            <div class="bet-buttons number-grid" id="number-betting">
+                                <!-- Numbers 0-36 will be generated by JavaScript -->
                             </div>
-                            <p class="mt-3 text-muted">Loading betting options...</p>
+                        </div>
+
+                        <!-- Color Betting -->
+                        <div class="bet-category color-betting">
+                            <h5>Color Betting</h5>
+                            <div class="bet-buttons">
+                                <button class="bet-btn color-btn red-btn" data-color="red">Red (1:1)</button>
+                                <button class="bet-btn color-btn black-btn" data-color="black">Black (1:1)</button>
+                                <button class="bet-btn color-btn green-btn" data-color="green">Green (35:1)</button>
+                            </div>
+                        </div>
+
+                        <!-- Category Betting -->
+                        <div class="bet-category">
+                            <h5>Category Betting (2:1)</h5>
+                            <div class="bet-buttons">
+                                <button class="bet-btn category-btn" data-category="defi">DeFi Tokens</button>
+                                <button class="bet-btn category-btn" data-category="gaming">Gaming Coins</button>
+                                <button class="bet-btn category-btn" data-category="layer1">Layer 1</button>
+                                <button class="bet-btn category-btn" data-category="privacy">Privacy Coins</button>
+                            </div>
+                        </div>
+
+                        <!-- Traditional Betting -->
+                        <div class="bet-category">
+                            <h5>Traditional Betting (1:1)</h5>
+                            <div class="bet-buttons">
+                                <button class="bet-btn traditional-btn" data-type="even">Even</button>
+                                <button class="bet-btn traditional-btn" data-type="odd">Odd</button>
+                                <button class="bet-btn traditional-btn" data-type="low">Low (1-18)</button>
+                                <button class="bet-btn traditional-btn" data-type="high">High (19-36)</button>
+                            </div>
                         </div>
                     </div>
                 </div>
-        </div>
+            </div>
 
-            <!-- Enhanced Game Controls & Info -->
+            <!-- Sidebar with Game Controls -->
             <div class="col-lg-4">
-                <!-- Enhanced Game Controls -->
-                <div class="card-glass game-controls animate-on-scroll mb-4" data-animation="fadeInUp" data-delay="300">
-                    <div class="d-flex align-items-center mb-4">
-                        <div class="gaming-icon me-3" style="background: var(--gradient-gaming);">
-                            <i class="fas fa-cog"></i>
-                        </div>
-                        <h5 class="mb-0 text-gradient">Game Controls</h5>
+                <!-- Game Controls -->
+                <div class="game-controls">
+                    <!-- Balance Display -->
+                    <div class="balance-display">
+                        <h5 class="text-success mb-1">💰 Wallet Balance</h5>
+                        <div class="h4 text-light" id="user-balance">1,000 GEM</div>
                     </div>
-                    <!-- Enhanced Current Game Info -->
-                    <div class="mb-4" id="gameInfo" style="display: none;">
-                        <div class="stat-visual mb-3" style="--stat-color: #4f46e5; --stat-color-light: #6366f1;">
-                            <h6 class="fw-semibold text-gradient mb-3">Current Game</h6>
-                            <div class="d-flex justify-content-between align-items-center mb-2 p-2" style="background: rgba(255, 255, 255, 0.1); border-radius: 8px;">
-                                <span class="small text-muted">Game ID:</span>
-                                <span class="small fw-semibold" id="currentGameId">-</span>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center mb-2 p-2" style="background: rgba(255, 255, 255, 0.1); border-radius: 8px;">
-                                <span class="small text-muted">Total Bets:</span>
-                                <span class="small fw-semibold text-warning" id="totalBetAmount">0 GEM</span>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center p-2" style="background: rgba(255, 255, 255, 0.1); border-radius: 8px;">
-                                <span class="small text-muted">Potential Win:</span>
-                                <span class="small fw-semibold text-success" id="potentialWinAmount">0 GEM</span>
-                            </div>
+
+                    <!-- Bet Amount Selection -->
+                    <div class="bet-amount-section">
+                        <h5 class="text-light">💎 Bet Amount</h5>
+                        <div class="bet-amount-buttons">
+                            <button class="bet-amount-btn" data-amount="10">10</button>
+                            <button class="bet-amount-btn" data-amount="25">25</button>
+                            <button class="bet-amount-btn" data-amount="50">50</button>
+                            <button class="bet-amount-btn active" data-amount="100">100</button>
+                            <button class="bet-amount-btn" data-amount="250">250</button>
+                            <button class="bet-amount-btn" data-amount="500">500</button>
+                        </div>
+                        <div class="text-center mt-2">
+                            <span class="text-light">Current: </span>
+                            <span class="text-warning h5" id="bet-amount-display">100 GEM</span>
                         </div>
                     </div>
 
-                    <!-- Enhanced Bet Amount Input -->
-                    <div class="mb-4">
-                        <label for="betAmount" class="form-label fw-semibold text-gradient">Bet Amount</label>
-                        <div class="input-group">
-                            <input type="number" class="form-control bet-amount-input" 
-                                   id="betAmount" min="10" max="10000" value="100"
-                                   style="background: rgba(255, 255, 255, 0.9); border: 2px solid rgba(247, 147, 26, 0.3); border-radius: 12px 0 0 12px;">
-                            <span class="input-group-text" style="background: var(--gradient-warning); border: 2px solid rgba(247, 147, 26, 0.3); border-left: none; border-radius: 0 12px 12px 0; color: white;">
-                                <i class="fas fa-gem"></i>
-                            </span>
-                        </div>
-                        <div class="form-text">Minimum: 10 GEM, Maximum: 10,000 GEM</div>
+                    <!-- Action Buttons -->
+                    <div class="action-buttons">
+                        <button id="spin-btn" class="action-btn spin-btn">🎲 Spin Wheel</button>
+                        <button id="clear-bets" class="action-btn clear-btn">🗑️ Clear All</button>
+                        <button id="repeat-last" class="action-btn repeat-btn">🔄 Repeat</button>
                     </div>
 
-                    <!-- Enhanced Quick Bet Buttons -->
-                    <div class="mb-4">
-                        <label class="form-label fw-semibold text-gradient">Quick Amounts</label>
-                        <div class="d-flex gap-2 flex-wrap">
-                            <button class="btn btn-neon btn-sm" onclick="setBetAmount(100)" style="border-color: #10b981; color: #10b981; min-width: 60px;">100</button>
-                            <button class="btn btn-neon btn-sm" onclick="setBetAmount(500)" style="border-color: #3b82f6; color: #3b82f6; min-width: 60px;">500</button>
-                            <button class="btn btn-neon btn-sm" onclick="setBetAmount(1000)" style="border-color: #8b5cf6; color: #8b5cf6; min-width: 60px;">1K</button>
-                            <button class="btn btn-neon btn-sm" onclick="setBetAmount(5000)" style="border-color: #f59e0b; color: #f59e0b; min-width: 60px;">5K</button>
+                    <!-- Game Status -->
+                    <div class="text-center mt-3">
+                        <div id="betting-time" class="text-warning h6">20s</div>
+                        <div class="progress" style="height: 8px;">
+                            <div id="betting-bar" class="progress-bar bg-warning" style="width: 100%;"></div>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Enhanced Wallet Balance -->
-                    <div class="mb-4">
-                        <div class="stat-visual" style="--stat-color: #f59e0b; --stat-color-light: #fbbf24;">
-                            <div class="d-flex justify-content-between align-items-center p-3" style="background: rgba(247, 147, 26, 0.2); border: 1px solid rgba(247, 147, 26, 0.3); border-radius: 12px;">
-                                <div class="d-flex align-items-center">
-                                    <div class="crypto-icon crypto-btc me-3" style="width: 32px; height: 32px; font-size: 14px;">💎</div>
-                                    <span class="fw-semibold text-gradient">Wallet Balance:</span>
-                                </div>
-                                <span class="fw-bold" style="color: #fbbf24;" id="walletBalance">0 GEM</span>
-                            </div>
-                        </div>
-                        <button class="btn btn-neon w-100 mt-3" onclick="refreshWallet()" style="border-color: #06b6d4; color: #06b6d4;">
-                            <i class="fas fa-sync-alt me-2"></i>Refresh Balance
-                        </button>
-                        
-                        <!-- Free Earning Options -->
-                        <div class="mt-3">
-                            <small class="text-muted d-block mb-2">Free GEMs:</small>
-                            <div class="d-flex gap-2 mb-2">
-                                <button class="btn btn-sm btn-neon" onclick="claimFreeSpinBonus()" id="freeSpinBtn" style="border-color: #22c55e; color: #22c55e; flex: 1;">
-                                    <i class="fas fa-gift me-1"></i>Free Spin
-                                </button>
-                                <button class="btn btn-sm btn-neon" onclick="claimHourlyBonus()" id="hourlyBtn" style="border-color: #06b6d4; color: #06b6d4; flex: 1;">
-                                    <i class="fas fa-clock me-1"></i>Hourly
-                                </button>
-                            </div>
-                            <div class="d-flex gap-2">
-                                <a href="/gaming/rewards" class="btn btn-sm btn-neon" style="border-color: #8b5cf6; color: #8b5cf6; flex: 1; text-decoration: none;">
-                                    <i class="fas fa-calendar me-1"></i>Daily
-                                </a>
-                                <button class="btn btn-sm btn-neon" onclick="adjustBalance(100)" style="border-color: #f59e0b; color: #f59e0b; flex: 1;">
-                                    <i class="fas fa-plus me-1"></i>Demo
-                                </button>
-                            </div>
-                        </div>
+                <!-- Active Bets -->
+                <div class="active-bets-section">
+                    <h5 class="text-light mb-3">🎯 Your Bets</h5>
+                    <div id="active-bets">
+                        <div class="text-center text-muted py-3">No active bets</div>
                     </div>
-
-                    <!-- Enhanced Game Actions -->
-                    <div class="d-grid gap-3">
-                        <button class="btn btn-neon" id="newGameBtn" style="border-color: #22c55e; color: #22c55e; padding: 0.75rem;">
-                            <i class="fas fa-plus me-2"></i>New Game
-                        </button>
-                        <button class="btn btn-neon" onclick="showGameHistory()" style="border-color: #3b82f6; color: #3b82f6; padding: 0.75rem;">
-                            <i class="fas fa-history me-2"></i>Game History
-                        </button>
-                        <a class="btn btn-neon" href="/gaming/inventory" style="border-color: #8b5cf6; color: #8b5cf6; padding: 0.75rem; text-decoration: none;">
-                            <i class="fas fa-box-open me-2"></i>Inventory
-                        </a>
+                    
+                    <div class="bet-summary">
+                        <div>
+                            <span class="text-light">Total Bet:</span>
+                            <span class="text-warning h6" id="total-bet-amount">0 GEM</span>
+                        </div>
+                        <div>
+                            <span class="text-light">Potential Win:</span>
+                            <span class="text-success h6" id="potential-win-amount">0 GEM</span>
+                        </div>
                     </div>
                 </div>
             </div>
-
-                <!-- Enhanced Active Bets -->
-                <div class="card-glass animate-on-scroll mb-4" data-animation="fadeInUp" data-delay="500">
-                    <div class="d-flex align-items-center mb-4">
-                        <div class="gaming-icon me-3" style="background: var(--gradient-success);">
-                            <i class="fas fa-list"></i>
-                        </div>
-                        <h5 class="mb-0 text-gradient">Active Bets</h5>
-                    </div>
-                    
-                    <div id="activeBets">
-                        <div class="text-center py-4">
-                            <div class="crypto-icon crypto-eth mb-3" style="width: 60px; height: 60px; font-size: 24px; margin: 0 auto; opacity: 0.5;">
-                                🎯
-                            </div>
-                            <p class="text-muted">No active bets</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Enhanced Recent Results -->
-                <div class="card-glass animate-on-scroll" data-animation="fadeInUp" data-delay="600">
-                    <div class="d-flex align-items-center mb-4">
-                        <div class="achievement-icon-visual me-3" style="width: 48px; height: 48px; font-size: 20px;">
-                            <i class="fas fa-chart-line"></i>
-                        </div>
-                        <h5 class="mb-0 text-gradient">Recent Results</h5>
-                    </div>
-                    
-                    <div id="recentResults">
-                        <div class="text-center py-4">
-                            <div class="crypto-icon crypto-ada mb-3" style="width: 60px; height: 60px; font-size: 24px; margin: 0 auto; opacity: 0.5;">
-                                📊
-                            </div>
-                            <p class="text-muted">No recent results</p>
-                        </div>
-                    </div>
-                </div>
         </div>
     </div>
 </div>
 
-<!-- Game Result Modal -->
-<div class="modal fade" id="gameResultModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">
-                    <i class="fas fa-trophy me-2"></i>Game Result
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="text-center mb-4">
-                    <div class="display-1 mb-3" id="resultEmoji">🎉</div>
-                    <h3 id="resultTitle">Congratulations!</h3>
-                    <p class="lead" id="resultMessage">You won!</p>
-                </div>
-                
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="card bg-light">
-                            <div class="card-body text-center">
-                                <h5>Winning Number</h5>
-                                <div class="display-4 fw-bold" id="winningNumber">0</div>
-                                <div class="text-muted" id="winningCrypto">Bitcoin</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card bg-light">
-                            <div class="card-body text-center">
-                                <h5>Your Winnings</h5>
-                                <div class="display-4 fw-bold text-success" id="totalWinnings">+0</div>
-                                <div class="text-muted">GEM Coins</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="mt-4">
-                    <h6>Bet Results:</h6>
-                    <div id="betResults">
-                        <!-- Individual bet results will be shown here -->
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-primary" onclick="verifyGameFairness()">
-                    <i class="fas fa-shield-alt me-2"></i>Verify Fairness
-                </button>
-                <button type="button" class="btn btn-success" onclick="playAgain()">
-                    <i class="fas fa-play me-2"></i>Play Again
-                </button>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
-        </div>
-    </div>
+<!-- Include JavaScript -->
+<script src="/static/js/enhanced-roulette.js"></script>
 
-    <!-- Enhanced Game Result Modal -->
-    <div class="modal fade" id="gameResultModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content" style="background: var(--gradient-primary); border: none; border-radius: 20px;">
-                <div class="modal-header border-0">
-                    <h5 class="modal-title text-gradient">
-                        <i class="fas fa-trophy me-2"></i>Game Result
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body text-white">
-                    <div class="text-center mb-4">
-                        <div class="display-1 mb-3" id="resultEmoji">🎉</div>
-                        <h3 id="resultTitle" class="text-gradient">Congratulations!</h3>
-                        <p class="lead" id="resultMessage">You won!</p>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="card-glass">
-                                <div class="text-center py-3">
-                                    <h5 class="text-gradient">Winning Number</h5>
-                                    <div class="display-4 fw-bold text-warning" id="winningNumber">0</div>
-                                    <div class="text-muted" id="winningCrypto">Bitcoin</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="card-glass">
-                                <div class="text-center py-3">
-                                    <h5 class="text-gradient">Your Winnings</h5>
-                                    <div class="display-4 fw-bold text-success" id="totalWinnings">+0</div>
-                                    <div class="text-muted">GEM Coins</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="mt-4">
-                        <h6 class="text-gradient">Bet Results:</h6>
-                        <div id="betResults" class="card-glass p-3">
-                            <!-- Individual bet results will be shown here -->
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer border-0">
-                    <button type="button" class="btn btn-neon" onclick="verifyGameFairness()" style="border-color: #06b6d4; color: #06b6d4;">
-                        <i class="fas fa-shield-alt me-2"></i>Verify Fairness
-                    </button>
-                    <button type="button" class="btn btn-neon" onclick="playAgain()" style="border-color: #22c55e; color: #22c55e;">
-                        <i class="fas fa-play me-2"></i>Play Again
-                    </button>
-                    <button type="button" class="btn btn-neon" data-bs-dismiss="modal" style="border-color: #6b7280; color: #6b7280;">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <!-- Enhanced JavaScript -->
-    <script src="/static/js/utils.js"></script>
-    <script src="/static/js/main.js"></script>
-    <script src="/static/js/animations.js"></script>
-    <script src="/static/js/api.js"></script>
-    <script src="/static/js/auth.js"></script>
-    
-    <!-- Alert Container for Notifications -->
-    <div id="alertContainer" class="position-fixed" style="top: 100px; right: 20px; z-index: 9999; max-width: 400px;"></div>
-    <script>
-        let currentGame = null;
-        let activeBets = [];
-        let wheelPositions = [];
-        let isSpinning = false;
-        
-        // Balance management system
-        let currentBalance = 5000; // Starting balance
-        
-        function getCurrentBalance() {
-            return currentBalance;
-        }
-        
-        function updateBalance(amount) {
-            currentBalance += amount;
-            // Update all balance displays
-            updateBalanceDisplays();
-        }
-        
-        function updateBalanceDisplays() {
-            const balanceElement = document.getElementById('walletBalance');
-            if (balanceElement) {
-                balanceElement.textContent = window.utils.formatNumber(currentBalance) + ' GEM';
-            }
-            
-            const navBalance = document.getElementById('nav-gem-balance');
-            if (navBalance) {
-                navBalance.textContent = window.utils.formatNumber(currentBalance);
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeRouletteGame();
-        });
-
-        async function initializeRouletteGame() {
-            try {
-                showLoading('bettingGrid');
-                
-                // Load wheel info and betting options
-                await Promise.all([
-                    loadWheelInfo(),
-                    loadBettingOptions(),
-                    loadWalletBalance(),
-                    loadRecentResults()
-                ]);
-                
-                setupEventListeners();
-                
-                // Create wheel numbers
-                createWheelNumbers();
-                
-                // Auto-start a new game
-                setTimeout(() => {
-                    createNewGame();
-                }, 1000);
-                
-                // Initialize enhanced animations
-                if (window.animationManager) {
-                    console.log('Enhanced animations initialized');
-                }
-                
-            } catch (error) {
-                console.error('Failed to initialize roulette game:', error);
-                if (window.animationManager) {
-                    window.animationManager.animateNotification('Failed to load game. Please refresh the page.', 'error');
-                } else {
-                    alert('Failed to load game. Please refresh the page.');
-                }
-            } finally {
-                hideLoading('bettingGrid');
-            }
-        }
-
-        async function loadWheelInfo() {
-            try {
-                // Mock wheel positions for demo
-                wheelPositions = generateWheelPositions();
-            } catch (error) {
-                console.error('Failed to load wheel info:', error);
-            }
-        }
-
-        function generateWheelPositions() {
-            const cryptos = [
-                { number: 0, symbol: '0', name: 'Zero' },
-                { number: 1, symbol: 'BTC', name: 'Bitcoin' },
-                { number: 2, symbol: 'ETH', name: 'Ethereum' },
-                { number: 3, symbol: 'ADA', name: 'Cardano' },
-                { number: 4, symbol: 'SOL', name: 'Solana' },
-                { number: 5, symbol: 'DOT', name: 'Polkadot' },
-                { number: 6, symbol: 'DOGE', name: 'Dogecoin' }
-            ];
-            
-            // Extend to 37 positions
-            const positions = [];
-            for (let i = 0; i < 37; i++) {
-                const crypto = cryptos[i % cryptos.length];
-                positions.push({
-                    number: i,
-                    symbol: crypto.symbol,
-                    name: crypto.name
-                });
-            }
-            return positions;
-        }
-
-
-
-function getColorForPosition(number) {
-    // Red numbers
-    const redNumbers = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
-    if (redNumbers.includes(number)) return '#ef4444';
-    
-    // Green (0)
-    if (number === 0) return '#22c55e';
-    
-    // Black (remaining numbers)
-    return '#374151';
-}
-
-async function loadBettingOptions() {
-    try {
-        const response = await apiClient.gaming.getBetTypes();
-        if (response.success) {
-            createBettingGrid(response.data.bet_types);
-        }
-    } catch (error) {
-        console.error('Failed to load betting options:', error);
-    }
-}
-
-        function createBettingGrid(betTypes) {
-            const grid = document.getElementById('bettingGrid');
-            
-            const bettingHTML = `
-                <!-- Enhanced Individual Crypto Bets -->
-                <div class="row mb-4">
-                    <div class="col-12">
-                        <h6 class="fw-semibold mb-4 text-gradient">
-                            <i class="fas fa-coins me-2"></i>Individual Cryptocurrencies (35:1)
-                        </h6>
-                        <div class="row" id="cryptoBets">
-                            ${createEnhancedCryptoBettingOptions()}
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Enhanced Color Bets -->
-                <div class="row mb-4">
-                    <div class="col-12">
-                        <h6 class="fw-semibold mb-4 text-gradient">
-                            <i class="fas fa-palette me-2"></i>Color Bets
-                        </h6>
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <div class="bet-option-enhanced" data-bet-type="CRYPTO_COLOR" data-bet-value="red">
-                                    <div class="bet-chip" style="background: linear-gradient(135deg, #ef4444, #f87171);">
-                                        RED
-                                    </div>
-                                    <div class="mt-3 fw-semibold text-gradient">Red (1:1)</div>
-                                    <div class="small text-muted">Pays even money</div>
-                                </div>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <div class="bet-option-enhanced" data-bet-type="CRYPTO_COLOR" data-bet-value="black">
-                                    <div class="bet-chip" style="background: linear-gradient(135deg, #374151, #4b5563);">
-                                        BLACK
-                                    </div>
-                                    <div class="mt-3 fw-semibold text-gradient">Black (1:1)</div>
-                                    <div class="small text-muted">Pays even money</div>
-                                </div>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <div class="bet-option-enhanced" data-bet-type="CRYPTO_COLOR" data-bet-value="green">
-                                    <div class="bet-chip" style="background: linear-gradient(135deg, #22c55e, #10b981);">
-                                        GREEN
-                                    </div>
-                                    <div class="mt-3 fw-semibold text-gradient">Green (35:1)</div>
-                                    <div class="small text-muted">Zero only</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Enhanced Other Bets -->
-                <div class="row">
-                    <div class="col-12">
-                        <h6 class="fw-semibold mb-4 text-gradient">
-                            <i class="fas fa-dice me-2"></i>Number Bets
-                        </h6>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <div class="bet-option-enhanced" data-bet-type="EVEN_ODD" data-bet-value="even">
-                            <div class="bet-chip" style="background: var(--gradient-crypto);">
-                                EVEN
-                            </div>
-                            <div class="mt-3 fw-semibold text-gradient">Even Numbers (1:1)</div>
-                            <div class="small text-muted">2, 4, 6, 8, etc.</div>
-                        </div>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <div class="bet-option-enhanced" data-bet-type="EVEN_ODD" data-bet-value="odd">
-                            <div class="bet-chip" style="background: var(--gradient-gaming);">
-                                ODD
-                            </div>
-                            <div class="mt-3 fw-semibold text-gradient">Odd Numbers (1:1)</div>
-                            <div class="small text-muted">1, 3, 5, 7, etc.</div>
-                        </div>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <div class="bet-option-enhanced" data-bet-type="HIGH_LOW" data-bet-value="low">
-                            <div class="bet-chip" style="background: var(--gradient-success);">
-                                1-18
-                            </div>
-                            <div class="mt-3 fw-semibold text-gradient">Low Numbers (1:1)</div>
-                            <div class="small text-muted">1 to 18</div>
-                        </div>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <div class="bet-option-enhanced" data-bet-type="HIGH_LOW" data-bet-value="high">
-                            <div class="bet-chip" style="background: var(--gradient-warning);">
-                                19-36
-                            </div>
-                            <div class="mt-3 fw-semibold text-gradient">High Numbers (1:1)</div>
-                            <div class="small text-muted">19 to 36</div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            grid.innerHTML = bettingHTML;
-        }
-
-        function createEnhancedCryptoBettingOptions() {
-            const popularCryptos = [
-                { name: 'Bitcoin', symbol: 'BTC', number: 1, class: 'crypto-btc' },
-                { name: 'Ethereum', symbol: 'ETH', number: 2, class: 'crypto-eth' },
-                { name: 'Cardano', symbol: 'ADA', number: 3, class: 'crypto-ada' },
-                { name: 'Solana', symbol: 'SOL', number: 4, class: 'crypto-sol' },
-                { name: 'Dogecoin', symbol: 'DOGE', number: 5, class: 'crypto-doge' },
-                { name: 'Polkadot', symbol: 'DOT', number: 6, class: 'crypto-dot' }
-            ];
-            
-            return popularCryptos.map(crypto => `
-                <div class="col-lg-2 col-md-3 col-4 mb-3">
-                    <div class="bet-option-enhanced" data-bet-type="SINGLE_CRYPTO" data-bet-value="${crypto.name.toLowerCase()}">
-                        <div class="crypto-icon ${crypto.class} mb-3" style="width: 60px; height: 60px; font-size: 20px; margin: 0 auto;">
-                            ${crypto.symbol}
-                        </div>
-                        <div class="fw-semibold text-gradient">${crypto.name}</div>
-                        <div class="small text-muted mt-2">35:1 payout</div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-function setupEventListeners() {
-    // Bet option clicks
-    document.addEventListener('click', function(e) {
-        const betOption = e.target.closest('.bet-option-enhanced');
-        if (betOption && !isSpinning) {
-            placeBet(betOption);
-        }
-    });
-    
-    // Game control buttons
-    document.getElementById('newGameBtn').addEventListener('click', createNewGame);
-    document.getElementById('spinBtn').addEventListener('click', spinWheel);
-    document.getElementById('clearBetsBtn').addEventListener('click', clearAllBets);
-    
-    // Bet amount validation
-    document.getElementById('betAmount').addEventListener('input', validateBetAmount);
-}
-
-async function createNewGame() {
-    try {
-        const response = await apiClient.gaming.createSession({
-            game_type: 'CLASSIC_CRYPTO'
-        });
-        
-        if (response.success) {
-            currentGame = response.data;
-            activeBets = [];
-            
-            document.getElementById('gameInfo').style.display = 'block';
-            document.getElementById('currentGameId').textContent = currentGame.game_id.substring(0, 8);
-            document.getElementById('newGameBtn').disabled = true;
-            document.getElementById('spinBtn').disabled = false;
-            
-            updateActiveBets();
-            showAlert('New game created! Place your bets.', 'success');
-        }
-    } catch (error) {
-        console.error('Failed to create new game:', error);
-        showAlert('Failed to create new game. Please try again.', 'danger');
-    }
-}
-
-async function placeBet(betOption) {
-    console.log('placeBet called with:', betOption);
-    
-    if (!currentGame) {
-        showAlert('Please start a new game first.', 'warning');
-        return;
+<script>
+// Additional initialization
+document.addEventListener('DOMContentLoaded', function() {
+    // Generate number betting grid
+    const numberBetting = document.getElementById('number-betting');
+    for (let i = 0; i <= 36; i++) {
+        const btn = document.createElement('button');
+        btn.className = `bet-btn number-btn ${i === 0 ? 'green-number' : (
+            [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36].includes(i) ? 'red-number' : 'black-number'
+        )}`;
+        btn.dataset.number = i;
+        btn.textContent = i;
+        numberBetting.appendChild(btn);
     }
     
-    const betType = betOption.dataset.betType;
-    const betValue = betOption.dataset.betValue;
-    const betAmount = parseFloat(document.getElementById('betAmount').value);
-    
-    console.log('Bet details:', { betType, betValue, betAmount });
-    
-    if (isNaN(betAmount) || betAmount < 10 || betAmount > 10000) {
-        showAlert('Bet amount must be between 10 and 10,000 GEM.', 'warning');
-        return;
-    }
-    
-    // Check if user has enough balance
-    const totalCurrentBets = activeBets.reduce((sum, bet) => sum + bet.bet_amount, 0);
-    if (totalCurrentBets + betAmount > currentBalance) {
-        showAlert(`Insufficient balance. You have ${window.utils.formatNumber(currentBalance)} GEM available.`, 'warning');
-        return;
-    }
-    
-    try {
-        const response = await apiClient.gaming.placeBet(currentGame.game_id, {
-            bet_type: betType,
-            bet_value: betValue,
-            bet_amount: betAmount
-        });
-        
-        if (response.success) {
-            activeBets.push(response.data);
-            betOption.classList.add('selected');
-            updateActiveBets();
-            showAlert(`Bet placed: ${betAmount} GEM on ${betValue}`, 'success');
-        }
-    } catch (error) {
-        console.error('Failed to place bet:', error);
-        showAlert('Failed to place bet. Please try again.', 'danger');
-    }
-}
-
-async function spinWheel() {
-    if (!currentGame || activeBets.length === 0) {
-        showAlert('Please place at least one bet before spinning.', 'warning');
-        return;
-    }
-    
-    // Show countdown
-    await showSpinCountdown();
-    
-    isSpinning = true;
-    setSpinningState(true);
-    
-    try {
-        const response = await apiClient.gaming.spinWheel(currentGame.game_id);
-        
-        if (response.success) {
-            const result = response.data;
-            
-            // Animate wheel spin
-            await animateWheelSpin(result.winning_number);
-            
-            // Show result after animation
-            setTimeout(() => {
-                showGameResult(result);
-                resetGame();
-            }, 500);
-        }
-    } catch (error) {
-        console.error('Failed to spin wheel:', error);
-        showAlert('Failed to spin wheel. Please try again.', 'danger');
-        setSpinningState(false);
-    }
-}
-
-async function showSpinCountdown() {
-    const wheel = document.getElementById('rouletteWheel');
-    const center = wheel.querySelector('.roulette-center');
-    const originalContent = center.innerHTML;
-    
-    // Countdown from 3
-    for (let i = 3; i > 0; i--) {
-        center.innerHTML = `<span style="font-size: 24px; font-weight: bold;">${i}</span>`;
-        center.style.background = 'radial-gradient(circle, #ef4444, #dc2626)';
-        
-        // Play countdown sound if available
-        if (window.audioManager) {
-            window.audioManager.playSound('countdown-tick');
-        }
-        
-        await new Promise(resolve => setTimeout(resolve, 800));
-    }
-    
-    // Show "GO!"
-    center.innerHTML = '<span style="font-size: 18px; font-weight: bold;">GO!</span>';
-    center.style.background = 'radial-gradient(circle, #22c55e, #16a34a)';
-    
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    // Reset center
-    center.innerHTML = originalContent;
-    center.style.background = 'radial-gradient(circle, #fbbf24, #f59e0b)';
-}
-
-        async function animateWheelSpin(winningNumber) {
-            const wheel = document.getElementById('rouletteWheel');
-            
-            // Stop idle animation
-            wheel.classList.remove('idle-spin');
-            
-            // Calculate target rotation based on roulette number positions
-            const rouletteNumbers = [
-                0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5,
-                24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26
-            ];
-            
-            const positionIndex = rouletteNumbers.findIndex(num => num === winningNumber);
-            const segmentAngle = 360 / rouletteNumbers.length;
-            const targetAngle = 360 - (segmentAngle * positionIndex);
-            const totalRotation = 1800 + targetAngle; // 5 full spins plus target for more drama
-            
-            // Set CSS custom property for final rotation
-            wheel.style.setProperty('--final-rotation', `${totalRotation}deg`);
-            
-            // Add spinning class to trigger animation
-            wheel.classList.add('spinning');
-            
-            // Add sound effect if available
-            if (window.audioManager) {
-                window.audioManager.playSound('wheel-spin');
-            }
-            
-            // Wait for animation to complete
-            await new Promise(resolve => setTimeout(resolve, 4000));
-            
-            // Remove spinning class
-            wheel.classList.remove('spinning');
-            
-            // Add win particles if player won
-            const result = activeBets.some(bet => bet.won);
-            if (result) {
-                createWinParticles();
-            }
-        }
-
-        function createWinParticles() {
-            const container = document.getElementById('winParticles');
-            container.innerHTML = '';
-            
-            // Create 20 particles
-            for (let i = 0; i < 20; i++) {
-                const particle = document.createElement('div');
-                particle.className = 'particle';
-                
-                // Random direction and distance
-                const angle = (Math.PI * 2 * i) / 20;
-                const distance = 100 + Math.random() * 100;
-                const dx = Math.cos(angle) * distance;
-                const dy = Math.sin(angle) * distance;
-                
-                particle.style.setProperty('--dx', `${dx}px`);
-                particle.style.setProperty('--dy', `${dy}px`);
-                
-                // Random delay
-                particle.style.animationDelay = `${Math.random() * 0.5}s`;
-                
-                container.appendChild(particle);
-            }
-            
-            // Clean up particles after animation
-            setTimeout(() => {
-                container.innerHTML = '';
-            }, 1500);
-        }
-
-        function createWheelNumbers() {
-            const numbersContainer = document.getElementById('wheelNumbers');
-            if (!numbersContainer) return;
-            
-            numbersContainer.innerHTML = '';
-            
-            // Standard roulette numbers in order with colors
-            const rouletteNumbers = [
-                0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5,
-                24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26
-            ];
-            
-            // Define red numbers (rest are black, except 0 which is green)
-            const redNumbers = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
-            
-            rouletteNumbers.forEach((number, index) => {
-                const numberElement = document.createElement('div');
-                numberElement.className = 'wheel-number';
-                numberElement.textContent = number;
-                
-                // Add color class
-                if (number === 0) {
-                    numberElement.classList.add('green');
-                } else if (redNumbers.includes(number)) {
-                    numberElement.classList.add('red');
-                } else {
-                    numberElement.classList.add('black');
-                }
-                
-                // Position around the wheel - closer to the edge
-                const angle = (360 / rouletteNumbers.length) * index;
-                const radius = 160; // Increased distance from center for larger wheel
-                const x = Math.cos((angle - 90) * Math.PI / 180) * radius;
-                const y = Math.sin((angle - 90) * Math.PI / 180) * radius;
-                
-                // Center the number element
-                numberElement.style.left = `calc(50% + ${x}px - 16px)`;
-                numberElement.style.top = `calc(50% + ${y}px - 10px)`;
-                
-                // Rotate the number to align with the wheel segment
-                numberElement.style.transform = `rotate(${angle}deg)`;
-                
-                numbersContainer.appendChild(numberElement);
-            });
-        }
-
-function showGameResult(result) {
-    // Update modal content
-    document.getElementById('winningNumber').textContent = result.winning_number;
-    document.getElementById('winningCrypto').textContent = result.winning_crypto;
-    
-    // Show net result (total winnings minus total losses)
-    const netDisplay = result.net_result >= 0 ? `+${result.net_result}` : `${result.net_result}`;
-    document.getElementById('totalWinnings').textContent = netDisplay;
-    
-    // Set result message based on net result
-    if (result.net_result > 0) {
-        document.getElementById('resultEmoji').textContent = '🎉';
-        document.getElementById('resultTitle').textContent = 'Congratulations!';
-        document.getElementById('resultMessage').textContent = `Net profit: ${result.net_result} GEM!`;
-    } else if (result.net_result === 0) {
-        document.getElementById('resultEmoji').textContent = '😐';
-        document.getElementById('resultTitle').textContent = 'Break Even!';
-        document.getElementById('resultMessage').textContent = 'You broke even this round.';
-    } else {
-        document.getElementById('resultEmoji').textContent = '😞';
-        document.getElementById('resultTitle').textContent = 'Better luck next time!';
-        document.getElementById('resultMessage').textContent = `Net loss: ${Math.abs(result.net_result)} GEM.`;
-    }
-    
-    // Show detailed bet results
-    const betResults = document.getElementById('betResults');
-    betResults.innerHTML = result.bets_details.map(bet => `
-        <div class="d-flex justify-content-between align-items-center mb-2 p-2" style="background: rgba(255, 255, 255, 0.05); border-radius: 8px;">
-            <div>
-                <strong>${bet.bet_value}</strong>
-                <small class="text-muted d-block">${bet.bet_type.replace('_', ' ')}</small>
-                <small class="text-info">Bet: ${bet.bet_amount} GEM</small>
-            </div>
-            <div class="text-end">
-                ${bet.won ? 
-                    `<div class="badge bg-success mb-1">WON</div><br><span class="text-success fw-bold">+${bet.payout} GEM</span>` :
-                    `<div class="badge bg-danger mb-1">LOST</div><br><span class="text-danger">-${bet.bet_amount} GEM</span>`
-                }
-            </div>
-        </div>
-    `).join('');
-    
-    // Add summary at the bottom
-    betResults.innerHTML += `
-        <div class="mt-3 pt-3 border-top border-secondary">
-            <div class="d-flex justify-content-between">
-                <span>Total Winnings:</span>
-                <span class="text-success">+${result.total_winnings || 0} GEM</span>
-            </div>
-            <div class="d-flex justify-content-between">
-                <span>Total Losses:</span>
-                <span class="text-danger">-${result.total_losses || 0} GEM</span>
-            </div>
-            <div class="d-flex justify-content-between fw-bold border-top border-secondary pt-2 mt-2">
-                <span>Net Result:</span>
-                <span class="${result.net_result >= 0 ? 'text-success' : 'text-danger'}">${netDisplay} GEM</span>
-            </div>
-        </div>
-    `;
-    
-    // Process bet result on backend and update balance
-    processBetResult(result.net_result, currentGame ? currentGame.game_id : 'unknown');
-    
-    // Show modal
-    const modal = new bootstrap.Modal(document.getElementById('gameResultModal'));
-    modal.show();
-}
-
-async function processBetResult(netResult, gameId) {
-    try {
-        // Send bet result to backend for processing
-        const response = await fetch('/api/trading/gamification/wallet/process-bet-result', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                net_result: netResult,
-                game_id: gameId
-            })
-        });
-        
-        if (response.ok) {
-            const data = await response.json();
-            if (data.status === 'success') {
-                // Update local balance to match backend
-                currentBalance = data.data.new_balance;
-                updateBalanceDisplays();
-                
-                console.log(`Bet result processed: ${netResult} GEM, new balance: ${currentBalance}`);
-            } else {
-                console.error('Failed to process bet result:', data.message);
-                // Fallback to local update
-                updateBalance(netResult);
-            }
-        } else {
-            console.error('Failed to process bet result - server error');
-            // Fallback to local update
-            updateBalance(netResult);
-        }
-    } catch (error) {
-        console.error('Error processing bet result:', error);
-        // Fallback to local update
-        updateBalance(netResult);
-    }
-}
-
-function resetGame() {
-    currentGame = null;
-    activeBets = [];
-    isSpinning = false;
-    
-    document.getElementById('gameInfo').style.display = 'none';
-    document.getElementById('newGameBtn').disabled = false;
-    document.getElementById('spinBtn').disabled = true;
-    
-    // Clear selected bets
-    document.querySelectorAll('.bet-option-enhanced.selected').forEach(option => {
-        option.classList.remove('selected');
-    });
-    
-    // Reset wheel rotation and restart idle animation
-    const wheel = document.getElementById('rouletteWheel');
-    wheel.classList.remove('spinning');
-    wheel.style.transform = 'rotate(0deg)';
-    
-    // Restart idle animation after a short delay
-    setTimeout(() => {
-        wheel.classList.add('idle-spin');
-    }, 500);
-    
-    updateActiveBets();
-    setSpinningState(false);
-}
-
-function updateActiveBets() {
-    const container = document.getElementById('activeBets');
-    
-    if (activeBets.length === 0) {
-        container.innerHTML = '<div class="text-center text-muted py-3">No active bets</div>';
-        document.getElementById('totalBetAmount').textContent = '0 GEM';
-        document.getElementById('potentialWinAmount').textContent = '0 GEM';
-        return;
-    }
-    
-    const totalBet = activeBets.reduce((sum, bet) => sum + bet.bet_amount, 0);
-    const potentialWin = activeBets.reduce((sum, bet) => sum + bet.potential_payout, 0);
-    
-    document.getElementById('totalBetAmount').textContent = totalBet + ' GEM';
-    document.getElementById('potentialWinAmount').textContent = potentialWin + ' GEM';
-    
-    const betsHTML = activeBets.map(bet => `
-        <div class="d-flex justify-content-between align-items-center mb-2">
-            <div>
-                <strong>${bet.bet_value}</strong>
-                <small class="text-muted d-block">${bet.bet_type}</small>
-            </div>
-            <div class="text-end">
-                <div class="fw-semibold">${bet.bet_amount} GEM</div>
-                <small class="text-muted">Pays: ${bet.potential_payout}</small>
-            </div>
-        </div>
-    `).join('');
-    
-    container.innerHTML = betsHTML;
-}
-
-async function loadWalletBalance() {
-    try {
-        // Always get the latest balance from the backend
-        const response = await fetch('/api/trading/gamification/wallet');
-        if (response.ok) {
-            const data = await response.json();
-            if (data.status === 'success') {
-                // Update local balance to match backend
-                currentBalance = data.data.gem_coins;
-                updateBalanceDisplays();
-                return;
-            }
-        }
-        
-        // Fallback: use current balance if API fails
-        updateBalanceDisplays();
-        
-    } catch (error) {
-        console.error('Failed to load wallet balance:', error);
-        // Use current balance as fallback
-        updateBalanceDisplays();
-    }
-}
-
-async function loadRecentResults() {
-    try {
-        const response = await apiClient.gaming.getHistory(5);
-        if (response.success && response.data.games.length > 0) {
-            const resultsHTML = response.data.games.map(game => `
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <div>
-                        <div class="fw-semibold">${game.winning_crypto}</div>
-                        <small class="text-muted">#${game.winning_number}</small>
-                    </div>
-                    <div class="text-end">
-                        <span class="badge ${game.net_result >= 0 ? 'bg-success' : 'bg-danger'}">
-                            ${game.net_result >= 0 ? '+' : ''}${game.net_result}
-                        </span>
-                    </div>
-                </div>
-            `).join('');
-            
-            document.getElementById('recentResults').innerHTML = resultsHTML;
-        }
-    } catch (error) {
-        console.error('Failed to load recent results:', error);
-    }
-}
-
-// Utility functions
-function setBetAmount(amount) {
-    document.getElementById('betAmount').value = amount;
-}
-
-function validateBetAmount() {
-    const amount = parseFloat(document.getElementById('betAmount').value);
-    const input = document.getElementById('betAmount');
-    
-    if (amount < 10 || amount > 10000) {
-        input.classList.add('is-invalid');
-    } else {
-        input.classList.remove('is-invalid');
-    }
-}
-
-function clearAllBets() {
-    if (activeBets.length === 0) return;
-    
-    if (confirm('Are you sure you want to clear all bets?')) {
-        activeBets = [];
-        document.querySelectorAll('.bet-option-enhanced.selected').forEach(option => {
-            option.classList.remove('selected');
-        });
-        updateActiveBets();
-        showAlert('All bets cleared.', 'info');
-    }
-}
-
-function setSpinningState(spinning) {
-    isSpinning = spinning;
-    
-    const spinBtn = document.getElementById('spinBtn');
-    const wheel = document.getElementById('rouletteWheel');
-    
-    document.getElementById('newGameBtn').disabled = spinning;
-    document.getElementById('clearBetsBtn').disabled = spinning;
-    
-    if (spinning) {
-        spinBtn.disabled = true;
-        spinBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Spinning...';
-        
-        // Add visual effects to wheel
-        wheel.style.boxShadow = '0 0 50px rgba(247, 147, 26, 0.8), inset 0 0 30px rgba(0, 0, 0, 0.2)';
-        
-        // Disable betting options
-        document.querySelectorAll('.bet-option-enhanced').forEach(option => {
-            option.style.pointerEvents = 'none';
-            option.style.opacity = '0.6';
-        });
-    } else {
-        spinBtn.disabled = !currentGame || activeBets.length === 0;
-        spinBtn.innerHTML = '<i class="fas fa-play me-2"></i>Spin Wheel';
-        
-        // Reset visual effects
-        wheel.style.boxShadow = '0 0 30px rgba(247, 147, 26, 0.4), inset 0 0 20px rgba(0, 0, 0, 0.2)';
-        
-        // Re-enable betting options
-        document.querySelectorAll('.bet-option-enhanced').forEach(option => {
-            option.style.pointerEvents = 'auto';
-            option.style.opacity = '1';
-        });
-    }
-}
-
-
-
-function showGameHistory() {
-    window.location.href = '/gaming/history';
-}
-
-function showGameRules() {
-    window.showModal('How to Play Crypto Roulette', `
-        <div class="text-start">
-            <h6>Game Rules:</h6>
-            <ul>
-                <li>Create a new game to start playing</li>
-                <li>Place bets on individual cryptocurrencies, colors, or number ranges</li>
-                <li>Click "Spin Wheel" to determine the winning result</li>
-                <li>Winning bets are paid according to their odds</li>
-            </ul>
-            
-            <h6>Bet Types & Payouts:</h6>
-            <ul>
-                <li><strong>Individual Crypto:</strong> 35:1 payout</li>
-                <li><strong>Red/Black:</strong> 1:1 payout</li>
-                <li><strong>Green (Zero):</strong> 35:1 payout</li>
-                <li><strong>Even/Odd:</strong> 1:1 payout</li>
-                <li><strong>High/Low:</strong> 1:1 payout</li>
-            </ul>
-            
-            <h6>Provably Fair:</h6>
-            <p>All games use cryptographic hashing to ensure fairness. You can verify each game result after spinning.</p>
-        </div>
-    `);
-}
-
-function verifyGameFairness() {
-    if (currentGame) {
-        window.location.href = `/gaming/verify/${currentGame.game_id}`;
-    }
-}
-
-function playAgain() {
-    const modal = bootstrap.Modal.getInstance(document.getElementById('gameResultModal'));
-    modal.hide();
-    setTimeout(createNewGame, 500);
-}
-
-// Enhanced notification functions
-function showAlert(message, type = 'info') {
-    console.log(`Alert [${type}]: ${message}`);
-    
-    if (window.animationManager) {
-        window.animationManager.animateNotification(message, type, 5000);
-    } else if (window.showAlert && window.showAlert !== showAlert) {
-        window.showAlert(message, type);
-    } else {
-        // Fallback: create a simple toast notification
-        createSimpleToast(message, type);
-    }
-}
-
-function createSimpleToast(message, type) {
-    const toast = document.createElement('div');
-    toast.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show`;
-    toast.style.cssText = 'position: fixed; top: 100px; right: 20px; z-index: 9999; max-width: 400px;';
-    toast.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
-    
-    document.body.appendChild(toast);
-    
-    // Auto-remove after 5 seconds
-    setTimeout(() => {
-        if (toast.parentNode) {
-            toast.parentNode.removeChild(toast);
-        }
-    }, 5000);
-}
-
-function showLoading(elementId) {
-    const element = document.getElementById(elementId);
-    if (element && window.animationManager) {
-        window.animationManager.showLoadingAnimation(element, 'spinner');
-    }
-}
-
-function hideLoading(elementId) {
-    // Loading will be replaced by content
-}
-
-// Enhanced game functions
-function showGameRules() {
-    if (window.showModal) {
-        window.showModal(
-            'How to Play Crypto Roulette',
-            `
-            <div class="text-start">
-                <h6 class="text-gradient mb-3">Game Rules:</h6>
-                <ul class="list-unstyled">
-                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Place bets on individual cryptocurrencies (35:1 payout)</li>
-                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Bet on colors: Red/Black (1:1), Green (35:1)</li>
-                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Choose Even/Odd or High/Low numbers (1:1)</li>
-                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Minimum bet: 10 GEM, Maximum: 10,000 GEM</li>
-                    <li class="mb-2"><i class="fas fa-check text-success me-2"></i>All games are provably fair with SHA256 verification</li>
-                </ul>
-                <div class="alert alert-info mt-3">
-                    <i class="fas fa-info-circle me-2"></i>
-                    This is a virtual gaming environment. No real money is involved.
-                </div>
-            </div>
-            `,
-            [
-                { text: 'Start Playing', type: 'primary', onclick: 'document.getElementById("newGameBtn").click()', dismiss: true }
-            ]
-        );
-    }
-}
-
-function showGameHistory() {
-    showAlert('Game history feature coming soon!', 'info');
-}
-
-function verifyGameFairness() {
-    showAlert('Game fairness verification feature coming soon!', 'info');
-}
-
-async function refreshWallet() {
-    try {
-        // Show loading state
-        const refreshBtn = document.querySelector('button[onclick="refreshWallet()"]');
-        const originalText = refreshBtn.innerHTML;
-        refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Refreshing...';
-        refreshBtn.disabled = true;
-        
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Get fresh balance from server
-        await loadWalletBalance();
-        
-        // Restore button
-        refreshBtn.innerHTML = originalText;
-        refreshBtn.disabled = false;
-        
-        showAlert('Wallet balance refreshed to server value!', 'success');
-        
-    } catch (error) {
-        console.error('Failed to refresh wallet:', error);
-        showAlert('Failed to refresh wallet balance.', 'danger');
-        
-        // Restore button on error
-        const refreshBtn = document.querySelector('button[onclick="refreshWallet()"]');
-        if (refreshBtn) {
-            refreshBtn.innerHTML = '<i class="fas fa-sync-alt me-2"></i>Refresh Balance';
-            refreshBtn.disabled = false;
-        }
-    }
-}
-
-async function adjustBalance(amount) {
-    try {
-        const response = await fetch('/api/trading/gamification/wallet/adjust', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ amount: amount })
-        });
-        
-        if (response.ok) {
-            const data = await response.json();
-            if (data.status === 'success') {
-                // Update local balance to match backend
-                currentBalance = data.data.gem_coins;
-                updateBalanceDisplays();
-                
-                // Show success message
-                const action = amount > 0 ? 'added' : 'removed';
-                const absAmount = Math.abs(amount);
-                showAlert(`${action.charAt(0).toUpperCase() + action.slice(1)} ${absAmount} GEM ${amount > 0 ? 'to' : 'from'} wallet! 💎`, 'success');
-                
-                // Add visual effect
-                const balanceElement = document.getElementById('walletBalance');
-                if (balanceElement) {
-                    balanceElement.style.transform = 'scale(1.2)';
-                    balanceElement.style.transition = 'transform 0.4s ease';
-                    setTimeout(() => {
-                        balanceElement.style.transform = 'scale(1)';
-                    }, 400);
-                }
-            } else {
-                showAlert('Failed to adjust balance: ' + data.message, 'error');
-            }
-        } else {
-            showAlert('Failed to adjust balance', 'error');
-        }
-    } catch (error) {
-        console.error('Adjust balance error:', error);
-        showAlert('Failed to adjust balance', 'error');
-    }
-}
-
-async function claimFreeSpinBonus() {
-    try {
-        // Check if free spin is available (every 30 minutes)
-        const lastFreeSpin = localStorage.getItem('lastFreeSpin');
-        const now = Date.now();
-        const thirtyMinutes = 30 * 60 * 1000; // 30 minutes in milliseconds
-        
-        if (lastFreeSpin && (now - parseInt(lastFreeSpin)) < thirtyMinutes) {
-            const remaining = Math.ceil((thirtyMinutes - (now - parseInt(lastFreeSpin))) / 60000);
-            showAlert(`Free spin available in ${remaining} minutes! ⏰`, 'warning');
-            return;
-        }
-        
-        // Generate random bonus (50-200 GEM)
-        const bonus = Math.floor(Math.random() * 151) + 50; // 50-200
-        
-        // Update balance via API
-        const response = await fetch('/api/trading/gamification/wallet/adjust', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ amount: bonus })
-        });
-        
-        if (response.ok) {
-            const data = await response.json();
-            if (data.status === 'success') {
-                currentBalance = data.data.gem_coins;
-                updateBalanceDisplays();
-                
-                // Store last claim time
-                localStorage.setItem('lastFreeSpin', now.toString());
-                
-                // Update button
-                const btn = document.getElementById('freeSpinBtn');
-                btn.innerHTML = '<i class="fas fa-check me-1"></i>Claimed';
-                btn.disabled = true;
-                
-                // Re-enable after 30 minutes
-                setTimeout(() => {
-                    btn.innerHTML = '<i class="fas fa-gift me-1"></i>Free Spin';
-                    btn.disabled = false;
-                }, thirtyMinutes);
-                
-                showAlert(`Free spin bonus! +${bonus} GEM! 🎁`, 'success');
-            }
-        }
-    } catch (error) {
-        console.error('Free spin error:', error);
-        showAlert('Failed to claim free spin', 'error');
-    }
-}
-
-async function claimHourlyBonus() {
-    try {
-        const response = await fetch('/api/rewards/claim-hourly', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        if (response.ok) {
-            const data = await response.json();
-            if (data.status === 'success') {
-                currentBalance = data.data.new_balance;
-                updateBalanceDisplays();
-                
-                // Update button
-                const btn = document.getElementById('hourlyBtn');
-                btn.innerHTML = '<i class="fas fa-check me-1"></i>Got it!';
-                btn.disabled = true;
-                
-                // Re-enable after 1 hour
-                setTimeout(() => {
-                    btn.innerHTML = '<i class="fas fa-clock me-1"></i>Hourly';
-                    btn.disabled = false;
-                }, 3600000); // 1 hour
-                
-                showAlert(`Hourly bonus! +${data.data.amount} GEM! ⏰`, 'success');
-            } else {
-                showAlert(data.message || 'Hourly bonus not ready yet', 'warning');
-            }
-        }
-    } catch (error) {
-        console.error('Hourly bonus error:', error);
-        showAlert('Failed to claim hourly bonus', 'error');
-    }
-}
-
-// Mock API functions for demo
-window.apiClient = {
-    gaming: {
-        getWheelInfo: () => Promise.resolve({ success: true, data: { positions: wheelPositions } }),
-        getBetTypes: () => Promise.resolve({ success: true, data: { bet_types: [] } }),
-        createSession: () => Promise.resolve({ 
-            success: true, 
-            data: { game_id: 'demo-' + Date.now() } 
-        }),
-        placeBet: (gameId, bet) => {
-            // Calculate realistic potential payout based on bet type
-            let potentialPayout = 0;
-            switch (bet.bet_type) {
-                case 'SINGLE_CRYPTO':
-                    potentialPayout = bet.bet_amount * 35; // 35:1 for single number
-                    break;
-                case 'CRYPTO_COLOR':
-                    potentialPayout = bet.bet_value === 'green' ? bet.bet_amount * 35 : bet.bet_amount * 2;
-                    break;
-                case 'EVEN_ODD':
-                case 'HIGH_LOW':
-                    potentialPayout = bet.bet_amount * 2; // 1:1 payout
-                    break;
-                default:
-                    potentialPayout = bet.bet_amount * 2;
-            }
-            
-            return Promise.resolve({ 
-                success: true, 
-                data: { ...bet, id: Date.now(), potential_payout: potentialPayout } 
-            });
-        },
-        spinWheel: (gameId) => {
-            const winningNumber = Math.floor(Math.random() * 37);
-            const winningPosition = wheelPositions[winningNumber] || { number: winningNumber, name: 'Bitcoin' };
-            
-            // Calculate actual bet results based on roulette rules
-            let totalWinnings = 0;
-            let totalLosses = 0;
-            
-            const betResults = activeBets.map(bet => {
-                let won = false;
-                let payout = 0;
-                
-                // Check if bet won based on actual roulette rules
-                switch (bet.bet_type) {
-                    case 'SINGLE_CRYPTO':
-                        won = winningPosition.name.toLowerCase() === bet.bet_value.toLowerCase();
-                        payout = won ? bet.bet_amount * 35 : 0; // 35:1 payout for single number
-                        break;
-                    case 'CRYPTO_COLOR':
-                        const isRed = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36].includes(winningNumber);
-                        const isBlack = [2, 4, 6, 8, 10, 11, 13, 15, 17, 20, 22, 24, 26, 28, 29, 31, 33, 35].includes(winningNumber);
-                        const isGreen = winningNumber === 0;
-                        
-                        if (bet.bet_value === 'red' && isRed) won = true;
-                        else if (bet.bet_value === 'black' && isBlack) won = true;
-                        else if (bet.bet_value === 'green' && isGreen) won = true;
-                        
-                        payout = won ? (bet.bet_value === 'green' ? bet.bet_amount * 35 : bet.bet_amount * 2) : 0;
-                        break;
-                    case 'EVEN_ODD':
-                        if (winningNumber === 0) won = false; // 0 is neither even nor odd
-                        else if (bet.bet_value === 'even' && winningNumber % 2 === 0) won = true;
-                        else if (bet.bet_value === 'odd' && winningNumber % 2 === 1) won = true;
-                        
-                        payout = won ? bet.bet_amount * 2 : 0;
-                        break;
-                    case 'HIGH_LOW':
-                        if (winningNumber === 0) won = false; // 0 is neither high nor low
-                        else if (bet.bet_value === 'low' && winningNumber >= 1 && winningNumber <= 18) won = true;
-                        else if (bet.bet_value === 'high' && winningNumber >= 19 && winningNumber <= 36) won = true;
-                        
-                        payout = won ? bet.bet_amount * 2 : 0;
-                        break;
-                }
-                
-                if (won) {
-                    totalWinnings += payout;
-                } else {
-                    totalLosses += bet.bet_amount;
-                }
-                
-                return {
-                    ...bet,
-                    won: won,
-                    payout: payout
-                };
-            });
-            
-            const netResult = totalWinnings - totalLosses;
-            
-            return Promise.resolve({
-                success: true,
-                data: {
-                    winning_number: winningNumber,
-                    winning_crypto: winningPosition.name,
-                    net_result: netResult,
-                    total_winnings: totalWinnings,
-                    total_losses: totalLosses,
-                    bets_details: betResults
-                }
-            });
-        },
-        getHistory: () => Promise.resolve({ success: true, data: { games: [] } })
-    },
-    inventory: {
-        getWallet: () => Promise.resolve({ 
-            success: true, 
-            data: { gem_coins: getCurrentBalance() } 
-        })
-    }
-};
+    console.log('CS:GO Roulette interface initialized successfully');
+});
 </script>
+{% endblock %}

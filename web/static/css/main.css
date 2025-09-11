@@ -26,6 +26,14 @@ body {
     min-height: 100vh;
 }
 
+/* Ensure collapsed nav doesn't overlay clicks on mobile only */
+@media (max-width: 991.98px) {
+  #navbarNav.collapse:not(.show),
+  #navbarNav.collapse:not(.show) * {
+      pointer-events: none;
+  }
+}
+
 .main-content {
     margin-top: 76px;
     min-height: calc(100vh - 200px);

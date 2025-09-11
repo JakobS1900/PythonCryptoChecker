@@ -75,6 +75,13 @@
                         <button class="btn btn-warning" onclick="shareAchievement()">
                             <i class="fas fa-share me-2"></i>Share Achievement
                         </button>
+                        <button class="btn btn-outline-secondary" id="nudgeBotsBtn">
+                            <i class="fas fa-robot me-2"></i>Show Demo Requests
+                        </button>
+                        <div class="form-check form-switch mt-2">
+                            <input class="form-check-input" type="checkbox" id="allowBotsSwitch" checked>
+                            <label class="form-check-label" for="allowBotsSwitch">Allow bot friend requests</label>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -389,6 +396,7 @@ function initializeSocialHub() {
     loadReceivedGifts();
     loadUserStatus();
     populateGiftRecipients();
+    loadBotsSettings();
 }
 
 function setupEventListeners() {
@@ -434,6 +442,43 @@ function setupEventListeners() {
         e.preventDefault();
         saveStatus();
     });
+
+    // Bots controls
+    const allowSwitch = document.getElementById('allowBotsSwitch');
+    const nudgeBtn = document.getElementById('nudgeBotsBtn');
+    if (nudgeBtn) {
+        nudgeBtn.addEventListener('click', async () => {
+            try {
+                const r = await fetch('/api/social/bots/nudge', { method: 'POST' });
+                const d = await r.json();
+                if (d.status === 'success') {
+                    loadFriendRequests();
+                } else {
+                    alert(d.message || 'Failed to nudge bots');
+                }
+            } catch (e) { alert('Failed to nudge bots'); }
+        });
+    }
+    if (allowSwitch) {
+        allowSwitch.addEventListener('change', async () => {
+            try {
+                const r = await fetch('/api/social/bots/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ allow_bots: allowSwitch.checked }) });
+                const d = await r.json();
+                if (d.status !== 'success') alert(d.message || 'Failed to update setting');
+            } catch(e) { alert('Failed to update setting'); }
+        });
+    }
+}
+
+async function loadBotsSettings(){
+    try {
+        const r = await fetch('/api/social/bots/settings');
+        const d = await r.json();
+        if (d.status === 'success' && d.data) {
+            const sw = document.getElementById('allowBotsSwitch');
+            if (sw) sw.checked = !!d.data.allow_bots;
+        }
+    } catch (e) { /* ignore */ }
 }
 
 async function loadSocialStats() {

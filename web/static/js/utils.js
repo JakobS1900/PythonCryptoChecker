@@ -167,7 +167,7 @@ window.utils = {
      * @param {number} duration - Duration in milliseconds
      */
     showAlert: function(message, type = 'info', duration = 5000) {
-        console.log(`🚨 Alert (${type}): ${message} - BUNGA MUNGA!`);
+        console.log(`🚨 Alert (${type}): ${message}`);
         
         // Create alert element
         const alertContainer = document.getElementById('alertContainer') || document.body;
@@ -238,5 +238,5 @@ window.showAlert = window.utils.showAlert;
 
 // Initialize utils when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Utils initialized - BUNGA MUNGA MUNGA!');
+    console.log('Utils initialized.');
 });

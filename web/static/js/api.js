@@ -19,6 +19,7 @@ class APIClient {
                 'Content-Type': 'application/json',
                 ...options.headers
             },
+            credentials: 'same-origin', // Include cookies for session-based auth
             ...options
         };
 

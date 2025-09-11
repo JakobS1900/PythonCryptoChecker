@@ -2,6 +2,111 @@
 
 All notable changes to the CryptoChecker Gaming Platform are documented in this file.
 
+## [2.2.0] - 2025-09-11 - "Trading Restored, GEM Economy, Roulette Cleanup"
+
+### 💹 Trading & GEM Economy
+- Restored Trading interface at `/trading` with portfolio, holdings, orders, transactions.
+- Quick Trade uses real-time crypto prices; USD amount converts to coin quantity based on live price.
+- GEM wallet integration: Buy/Sell adjusts GEM using configurable conversion rate.
+- New env `GEM_USD_RATE_USD_PER_GEM` (default 0.01 ⇒ 1 GEM = $0.01 ⇒ 1000 GEM = $10).
+- Fixed router inclusion so endpoints are correctly exposed under `/api/trading/...`.
+
+### 🎰 Roulette UI Cleanup
+- Removed conflicting script include; classic bets only (number, color, even/odd, high/low).
+- Added clean layout overrides for wheel/pointer/number overlay; Spin enables after placing bets.
+
+### 🔐 Authentication & UX
+- Eliminated invisible/logout misfires by limiting logout handler to explicit controls.
+- `/api/auth/login` accepts `username_or_email` and returns appropriate 4xx/5xx status codes.
+
+### 🏠 Stability & ORM Fixes
+- Home route 500s resolved via startup constants/stubs and graceful template fallback.
+- Removed cross-registry SQLAlchemy relationships to `User` in gamification models to prevent mapper errors.
+
+## [2.1.1] - 2025-01-13 - "Critical Authentication & Inventory Fixes"
+
+### 🔧 Critical Bug Fixes
+
+#### Authentication System Recovery
+- **CRITICAL**: Fixed SyntaxError caused by duplicate `usernameDisplay` variable declarations in auth.js
+- **CRITICAL**: Added missing authentication methods to EnhancedAPIClient (login, register, logout, profile management)
+- **MAJOR**: Fixed "Cannot read properties of undefined (reading 'register')" error preventing user registration
+- **MAJOR**: Standardized authentication API response format across all endpoints
+- **MINOR**: Fixed login redirect loop from `/dashboard` to `/` causing infinite redirects
+- **MINOR**: Corrected template references to use proper auth/login.html and auth/register.html files
+
+#### Inventory System Recovery  
+- **CRITICAL**: Fixed "Cannot read properties of undefined (reading 'debounce')" error in inventory search
+- **CRITICAL**: Added utils.js to base.html script loading order for proper dependency resolution
+- **MAJOR**: Fixed "Cannot read properties of undefined (reading 'length')" in inventory item display
+- **MAJOR**: Enhanced inventory stats calculation from hardcoded zeros to dynamic real-time data
+- **MINOR**: Improved API response structure handling with flexible parsing
+
+#### Session & Data Management
+- **MAJOR**: Enhanced user session initialization with complete gaming and financial data
+- **MINOR**: Added proper error handling and graceful fallback mechanisms
+- **MINOR**: Improved console logging and debugging capabilities
+
+### 🚀 Enhancements
+
+#### User Experience Improvements
+- **Real-time Statistics**: Inventory stats now update dynamically based on actual item data
+- **Error Recovery**: User-friendly error messages with fallback functionality
+- **Enhanced Debugging**: Comprehensive console logging for development and troubleshooting
+
+#### Technical Improvements
+- **Code Quality**: Eliminated duplicate code and improved error handling patterns
+- **API Consistency**: Standardized response formats across authentication and inventory systems
+- **Documentation**: Updated comprehensive documentation reflecting current system state
+
+### 🔄 Technical Details
+
+#### Files Modified
+- `web/static/js/auth.js` - Fixed duplicate variable declarations
+- `web/static/js/mock-api.js` - Added complete authentication proxy methods
+- `web/templates/base.html` - Fixed script loading order for dependencies
+- `web/templates/inventory/inventory.html` - Enhanced error handling and stats calculation
+- `main.py` - Updated authentication endpoints with consistent response format
+
+#### API Changes
+- Authentication endpoints now return `{success: true, data: {...}}` format consistently
+- Enhanced session initialization with complete user gaming and financial data
+- Improved error responses with detailed messaging
+
+## [2.1.0] - 2025-01-10 - "Platform Recovery & Statistics Fix"
+
+### 🔧 Bug Fixes
+
+#### Critical Fixes
+- **Dashboard Statistics**: Fixed dashboard stats cards showing accurate user data instead of "0" values
+- **Inventory System**: Restored complete inventory functionality with proper API integration
+- **Authentication Flow**: Fixed session-based authentication and JWT token integration
+- **Navigation Errors**: Eliminated all 404 errors by adding missing route handlers
+
+#### API Improvements
+- **Session Management**: Fixed disconnect between frontend JWT and backend session authentication
+- **Real-time Stats**: Gaming statistics now use actual session data instead of mock data
+- **Inventory Integration**: Added missing inventory methods to EnhancedAPIClient
+- **Error Handling**: Enhanced error recovery with graceful fallback mechanisms
+
+#### User Experience
+- **Login State Detection**: Fixed authentication timing issues with waitForAuth() function
+- **Demo Account**: Enhanced demo login with realistic pre-populated user data
+- **Branding Consistency**: Achieved 100% consistent "CryptoChecker" branding across all pages
+- **Template Routing**: Fixed inventory page routing to proper template file
+
+### 🎯 Enhancements
+
+#### Leveling System
+- **XP Calculation**: Implemented exponential level progression system
+- **Level Display**: Real-time level updates based on experience points
+- **Progress Tracking**: Visual progress indicators for level advancement
+
+#### Documentation
+- **README Update**: Comprehensive rewrite covering all platform features and architecture
+- **API Documentation**: Updated endpoint listings and integration guides
+- **Development Guide**: Enhanced setup and deployment instructions
+
 ## [2.0.0] - 2025-09-09 - "Enhanced Gaming & Authentication"
 
 ### 🎮 Gaming Features

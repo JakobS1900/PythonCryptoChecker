@@ -152,23 +152,18 @@ class GameSession(Base):
     bets = relationship("GameBet", back_populates="game_session", cascade="all, delete-orphan")
     
     def generate_result(self) -> int:
-        """Generate provably fair result using cryptographic hashing."""
+        """Generate provably fair result using enhanced cryptographic hashing."""
         if self.status != GameStatus.ACTIVE:
             raise ValueError("Game session is not active")
         
-        # Create combined seed for randomness
-        combined_input = f"{self.server_seed}:{self.client_seed}:{self.nonce}"
+        # Generate enhanced result
+        winning_number, hash_result = EnhancedProvablyFairGenerator.generate_enhanced_result(
+            self.server_seed, self.client_seed, self.nonce
+        )
         
-        # Generate hash
-        hash_result = hashlib.sha256(combined_input.encode()).hexdigest()
-        self.spin_hash = hash_result
-        
-        # Convert hash to number 0-36
-        # Use first 8 characters of hash as hex number
-        hex_value = int(hash_result[:8], 16)
-        winning_number = hex_value % 37  # 0-36
-        
+        # Store results
         self.winning_number = winning_number
+        self.spin_hash = hash_result
         self.winning_crypto = CryptoRouletteWheel.WHEEL_POSITIONS[winning_number]["crypto"]
         self.spin_time = datetime.utcnow()
         self.status = GameStatus.SPINNING.value
@@ -176,22 +171,18 @@ class GameSession(Base):
         return winning_number
     
     def verify_result(self) -> bool:
-        """Verify the game result using the revealed server seed."""
+        """Verify the game result using enhanced provably fair verification."""
         if not self.server_seed or not self.spin_hash:
             return False
         
-        # Recreate the hash
-        combined_input = f"{self.server_seed}:{self.client_seed}:{self.nonce}"
-        expected_hash = hashlib.sha256(combined_input.encode()).hexdigest()
-        
-        if expected_hash != self.spin_hash:
-            return False
-        
-        # Verify winning number
-        hex_value = int(expected_hash[:8], 16)
-        expected_number = hex_value % 37
-        
-        return expected_number == self.winning_number
+        # Use enhanced verification
+        return EnhancedProvablyFairGenerator.verify_enhanced_fairness(
+            self.server_seed,
+            self.client_seed,
+            self.nonce,
+            self.spin_hash,
+            self.winning_number
+        )
 
 
 class GameBet(Base):
@@ -306,22 +297,22 @@ class RoulettePayouts:
         return cls.PAYOUT_ODDS.get(bet_type, 1.0)
 
 
-class ProvablyFairGenerator:
-    """Provably fair random number generation."""
+class EnhancedProvablyFairGenerator:
+    """Enhanced provably fair random number generation with CS:GO-inspired security."""
     
     @staticmethod
     def generate_server_seed() -> str:
-        """Generate cryptographically secure server seed."""
+        """Generate cryptographically secure server seed (64 chars)."""
         return secrets.token_hex(32)  # 64 character hex string
     
     @staticmethod
     def hash_server_seed(server_seed: str) -> str:
-        """Create hash of server seed to show players."""
+        """Create hash of server seed to show players before game."""
         return hashlib.sha256(server_seed.encode()).hexdigest()
     
     @staticmethod
     def generate_client_seed(user_input: str = None) -> str:
-        """Generate client seed from user input or random."""
+        """Generate client seed from user input or random (16 chars)."""
         if user_input:
             # Hash user input for consistency
             return hashlib.sha256(user_input.encode()).hexdigest()[:16]
@@ -330,23 +321,61 @@ class ProvablyFairGenerator:
             return secrets.token_hex(8)  # 16 character hex string
     
     @staticmethod
-    def verify_fairness(
+    def generate_enhanced_result(
+        server_seed: str,
+        client_seed: str,
+        nonce: int
+    ) -> tuple[int, str]:
+        """Generate result using enhanced multi-iteration hashing."""
+        # Combine seeds and nonce
+        combined_input = f"{server_seed}:{client_seed}:{nonce}"
+        
+        # Multiple hash iterations for enhanced security (CS:GO inspired)
+        hash_result = hashlib.sha256(combined_input.encode()).hexdigest()
+        
+        # Additional hash iterations to prevent prediction
+        for iteration in range(5):
+            hash_result = hashlib.sha256(f"{hash_result}:{iteration}".encode()).hexdigest()
+        
+        # Use multiple segments of hash for better distribution
+        segment1 = int(hash_result[:8], 16)
+        segment2 = int(hash_result[8:16], 16)
+        segment3 = int(hash_result[16:24], 16)
+        
+        # Combine segments with XOR for enhanced randomness
+        final_value = segment1 ^ segment2 ^ segment3
+        
+        # Convert to roulette position (0-36)
+        winning_number = final_value % 37
+        
+        return winning_number, hash_result
+    
+    @staticmethod
+    def verify_enhanced_fairness(
         server_seed: str,
         client_seed: str,
         nonce: int,
         expected_hash: str,
         expected_result: int
     ) -> bool:
-        """Verify that a game result was fair."""
-        # Recreate the hash
-        combined_input = f"{server_seed}:{client_seed}:{nonce}"
-        actual_hash = hashlib.sha256(combined_input.encode()).hexdigest()
-        
-        if actual_hash != expected_hash:
+        """Verify enhanced provably fair result."""
+        try:
+            # Recreate the enhanced result
+            actual_result, actual_hash = EnhancedProvablyFairGenerator.generate_enhanced_result(
+                server_seed, client_seed, nonce
+            )
+            
+            # Verify both hash and result match
+            return actual_hash == expected_hash and actual_result == expected_result
+        except Exception:
             return False
-        
-        # Verify result
-        hex_value = int(actual_hash[:8], 16)
-        actual_result = hex_value % 37
-        
-        return actual_result == expected_result
+    
+    @staticmethod
+    def create_verification_url(server_seed: str, client_seed: str, nonce: int) -> str:
+        """Create verification URL for transparency."""
+        return f"/verify-fairness?server_seed={server_seed}&client_seed={client_seed}&nonce={nonce}"
+
+
+class ProvablyFairGenerator(EnhancedProvablyFairGenerator):
+    """Backward compatibility alias for existing code."""
+    pass

@@ -80,6 +80,7 @@ config.local.py
 logs/
 cache/
 data/
+web/static/uploads/
 
 # Future database files
 *.db

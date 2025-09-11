@@ -7,11 +7,13 @@ from fastapi.security import HTTPBearer
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 from database.database_manager import get_db_session
 from database.unified_models import GameType, BetType
 from gaming.roulette_engine import RouletteEngine
 from gaming.game_variants import GameVariants
+from gaming.websocket_manager import websocket_manager
 from achievements.achievement_engine import achievement_engine
 from auth.auth_manager import AuthenticationManager
 from logger import logger
@@ -34,6 +36,7 @@ class PlaceBetRequest(BaseModel):
     bet_type: str = Field(..., description="Type of bet (SINGLE_CRYPTO, CRYPTO_COLOR, etc.)")
     bet_value: str = Field(..., description="Value being bet on (bitcoin, red, even, etc.)")
     bet_amount: float = Field(..., gt=0, description="Amount in GEM coins")
+    live_betting: bool = Field(default=True, description="Enable real-time WebSocket updates")
 
 
 class GameSessionResponse(BaseModel):
@@ -45,6 +48,8 @@ class GameSessionResponse(BaseModel):
     nonce: int
     total_bet_amount: float
     created_at: str
+    websocket_url: str
+    room_stats: Dict[str, Any]
 
 
 class GameResultResponse(BaseModel):
@@ -516,3 +521,124 @@ async def get_bet_types():
         },
         "payout_odds": RoulettePayouts.PAYOUT_ODDS
     }
+
+
+# ==================== ENHANCED ROULETTE ENDPOINTS ====================
+
+@router.post("/gaming/roulette/place_bet")
+async def place_roulette_bet(
+    request: PlaceBetRequest,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db_session)
+):
+    """Place bet on roulette game - Enhanced endpoint for JavaScript."""
+    try:
+        # Create or get active game session for user
+        game_session = await roulette_engine.get_or_create_active_session(
+            session=session,
+            user_id=user_id,
+            game_type=GameType.CRYPTO_ROULETTE
+        )
+        
+        bet_type = BetType(request.bet_type)
+        
+        game_bet = await roulette_engine.place_bet(
+            session=session,
+            game_session_id=game_session.id,
+            user_id=user_id,
+            bet_type=bet_type,
+            bet_value=request.bet_value,
+            bet_amount=request.bet_amount
+        )
+        
+        # Get updated user balance
+        from database import User
+        result = await session.execute(select(User).where(User.id == user_id))
+        user = result.scalar_one()
+        
+        return {
+            "success": True,
+            "bet_id": game_bet.id,
+            "bet_type": game_bet.bet_type,
+            "bet_value": game_bet.bet_value,
+            "amount": game_bet.bet_amount,
+            "potential_payout": game_bet.potential_payout,
+            "odds": game_bet.payout_odds,
+            "new_balance": user.current_balance if hasattr(user, 'current_balance') else 1000,
+            "game_id": game_session.id,
+            "placed_at": game_bet.placed_at.isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to place roulette bet: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+
+@router.post("/gaming/roulette/spin")
+async def spin_roulette_wheel(
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db_session)
+):
+    """Spin roulette wheel and get results - Enhanced endpoint for JavaScript."""
+    try:
+        # Get user's active game session
+        game_session = await roulette_engine.get_active_session(
+            session=session,
+            user_id=user_id
+        )
+        
+        if not game_session:
+            return {
+                "success": False,
+                "error": "No active game session found. Please place a bet first."
+            }
+        
+        # Spin the wheel
+        result = await roulette_engine.spin_wheel(
+            session=session,
+            game_session_id=game_session.id,
+            user_id=user_id
+        )
+        
+        # Trigger achievement checks
+        won_game = result["total_winnings"] > result["total_bet"]
+        
+        await achievement_engine.check_user_achievements(
+            session, user_id, "game_played", 
+            {"game_id": game_session.id, "won": won_game}
+        )
+        
+        if won_game:
+            await achievement_engine.check_user_achievements(
+                session, user_id, "game_won", 
+                {"game_id": game_session.id, "winnings": result["total_winnings"]}
+            )
+        
+        # Get updated user balance
+        from database import User
+        user_result = await session.execute(select(User).where(User.id == user_id))
+        user = user_result.scalar_one()
+        
+        return {
+            "success": True,
+            "winning_number": result["winning_number"],
+            "payouts": result.get("payouts", []),
+            "total_payout": result["total_winnings"],
+            "total_bet": result["total_bet"],
+            "net_result": result["total_winnings"] - result["total_bet"],
+            "new_balance": user.current_balance if hasattr(user, 'current_balance') else 1000,
+            "server_seed": result.get("server_seed"),
+            "client_seed": result.get("client_seed"),
+            "nonce": result.get("nonce"),
+            "game_id": game_session.id
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to spin roulette wheel: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }

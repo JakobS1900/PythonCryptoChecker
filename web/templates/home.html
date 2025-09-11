@@ -174,6 +174,23 @@
     100% { transform: translateX(100%); }
 }
 
+/* Sparkline */
+.sparkline {
+    width: 100%;
+    height: 30px;
+    display: block;
+    opacity: 0.9;
+}
+.sparkline path.line {
+    stroke: #4facfe;
+    stroke-width: 2;
+    fill: none;
+}
+.sparkline path.fill {
+    fill: url(#sparkGrad);
+    opacity: 0.25;
+}
+
 /* Quick Action Buttons */
 .quick-action-btn {
     background: rgba(255, 255, 255, 0.1);
@@ -337,6 +354,41 @@
 <!-- Main Dashboard Content -->
 <div class="container-fluid py-4">
     <div class="row g-4">
+        <!-- Platform Live Stats (always visible) -->
+        <div class="col-12">
+            <div class="card-glass-enhanced p-3">
+                <div class="row g-3 text-center">
+                    <div class="col-6 col-md-3">
+                        <div class="stat-widget-enhanced">
+                            <div class="stat-value-enhanced" id="platformTotalUsers">0</div>
+                            <div class="stat-label-enhanced"><i class="fas fa-users me-1"></i>Total Users</div>
+                            <svg class="sparkline" id="sparkUsers" viewBox="0 0 100 30" preserveAspectRatio="none"></svg>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="stat-widget-enhanced">
+                            <div class="stat-value-enhanced" id="platformActivePlayers">0</div>
+                            <div class="stat-label-enhanced"><i class="fas fa-user-astronaut me-1"></i>Active Players</div>
+                            <svg class="sparkline" id="sparkActive" viewBox="0 0 100 30" preserveAspectRatio="none"></svg>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="stat-widget-enhanced">
+                            <div class="stat-value-enhanced" id="platformTotalGames">0</div>
+                            <div class="stat-label-enhanced"><i class="fas fa-gamepad me-1"></i>Total Games</div>
+                            <svg class="sparkline" id="sparkGames" viewBox="0 0 100 30" preserveAspectRatio="none"></svg>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="stat-widget-enhanced">
+                            <div class="stat-value-enhanced" id="platformGemsAwarded">0</div>
+                            <div class="stat-label-enhanced"><i class="fas fa-gem me-1"></i>GEMs Awarded</div>
+                            <svg class="sparkline" id="sparkGems" viewBox="0 0 100 30" preserveAspectRatio="none"></svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <!-- Quick Actions -->
         <div class="col-lg-3 col-md-6">
             <div class="card-glass-enhanced p-4 h-100">
@@ -552,6 +604,154 @@
 
 {% block extra_js %}
 <script>
+(function(){
+  const els = {
+    users: document.getElementById('platformTotalUsers'),
+    active: document.getElementById('platformActivePlayers'),
+    games: document.getElementById('platformTotalGames'),
+    gems: document.getElementById('platformGemsAwarded'),
+  };
+
+  const state = {
+    current: { users: 0, active: 0, games: 0, gems: 0 },
+    target: { users: 0, active: 0, games: 0, gems: 0 },
+    lastSync: 0,
+    history: {
+      users: [],
+      active: [],
+      games: [],
+      gems: []
+    },
+    maxPoints: 60
+  };
+
+  function format(n){
+    try { return n.toLocaleString(); } catch(e) { return String(n); }
+  }
+
+  function updateDOM(){
+    if (els.users) els.users.textContent = format(state.current.users);
+    if (els.active) els.active.textContent = format(state.current.active);
+    if (els.games) els.games.textContent = format(state.current.games);
+    if (els.gems) els.gems.textContent = format(state.current.gems);
+  }
+
+  function stepTowardsTarget(){
+    // Smooth increments with small per-tick steps
+    const keys = ['users','active','games','gems'];
+    keys.forEach(k => {
+      const cur = state.current[k];
+      const tgt = state.target[k];
+      if (cur < tgt) {
+        // Increment by a fraction of the remaining distance (ceil min 1)
+        const delta = Math.max(1, Math.ceil((tgt - cur) * 0.02));
+        state.current[k] = Math.min(tgt, cur + delta);
+      } else if (cur > tgt) {
+        state.current[k] = tgt; // snap if overshoot
+      } else {
+        // add gentle drift to keep numbers alive between syncs
+        const drift = (k === 'gems') ? 5 : (k === 'games' ? 1 : 0);
+        if (drift) state.current[k] += drift;
+      }
+    });
+    updateDOM();
+
+    // Append to history and redraw sparklines
+    pushHistory('users', state.current.users);
+    pushHistory('active', state.current.active);
+    pushHistory('games', state.current.games);
+    pushHistory('gems', state.current.gems);
+    drawSpark('sparkUsers', state.history.users, '#4facfe');
+    drawSpark('sparkActive', state.history.active, '#22c55e');
+    drawSpark('sparkGames', state.history.games, '#f59e0b');
+    drawSpark('sparkGems', state.history.gems, '#a78bfa');
+  }
+
+  async function syncFromServer(){
+    try {
+      const r = await fetch('/api/platform/stats');
+      if (!r.ok) return;
+      const d = await r.json();
+      if (d && d.status === 'success' && d.data) {
+        state.target.users = d.data.total_users || state.target.users;
+        state.target.active = d.data.active_players || state.target.active;
+        state.target.games = d.data.total_games || state.target.games;
+        state.target.gems = d.data.gems_awarded || state.target.gems;
+        // Initialize current to a bit below target on first sync for nicer animation
+        if (!state.lastSync) {
+          state.current.users = Math.max(0, state.target.users - 50);
+          state.current.active = Math.max(0, state.target.active - 5);
+          state.current.games = Math.max(0, state.target.games - 500);
+          state.current.gems = Math.max(0, state.target.gems - 5000);
+          updateDOM();
+        }
+        state.lastSync = Date.now();
+      }
+    } catch (e) {
+      // ignore network errors; continue animating current values
+    }
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) syncFromServer();
+  });
+  window.addEventListener('focus', syncFromServer);
+
+  // Start loops
+  syncFromServer();
+  setInterval(syncFromServer, 15000); // refresh targets every 15s
+  setInterval(stepTowardsTarget, 1000); // animate every second
+
+  function pushHistory(key, value){
+    const arr = state.history[key];
+    arr.push(value);
+    if (arr.length > state.maxPoints) arr.shift();
+  }
+
+  function drawSpark(id, data, color){
+    const el = document.getElementById(id);
+    if (!el || data.length < 2) return;
+    const w = 100, h = 30, pad = 2;
+    const min = Math.min.apply(null, data);
+    const max = Math.max.apply(null, data);
+    const span = Math.max(1, max - min);
+    const stepX = (w - pad*2) / (state.maxPoints - 1);
+    // Build path
+    let d = '';
+    for (let i = 0; i < data.length; i++) {
+      const x = pad + i * stepX;
+      const y = pad + (h - pad*2) - ((data[i] - min) / span) * (h - pad*2);
+      d += (i === 0 ? 'M' : 'L') + x.toFixed(2) + ' ' + y.toFixed(2) + ' ';
+    }
+    // Build fill path to baseline
+    let df = d + `L ${pad + (data.length-1)*stepX} ${h-pad} L ${pad} ${h-pad} Z`;
+
+    // Inject defs gradient once
+    if (!el.querySelector('defs')){
+      const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
+      const grad = document.createElementNS('http://www.w3.org/2000/svg','linearGradient');
+      grad.setAttribute('id','sparkGrad'); grad.setAttribute('x1','0'); grad.setAttribute('x2','0'); grad.setAttribute('y1','0'); grad.setAttribute('y2','1');
+      const s1 = document.createElementNS('http://www.w3.org/2000/svg','stop'); s1.setAttribute('offset','0%'); s1.setAttribute('stop-color', color); s1.setAttribute('stop-opacity','0.6');
+      const s2 = document.createElementNS('http://www.w3.org/2000/svg','stop'); s2.setAttribute('offset','100%'); s2.setAttribute('stop-color', color); s2.setAttribute('stop-opacity','0');
+      grad.appendChild(s1); grad.appendChild(s2); defs.appendChild(grad); el.appendChild(defs);
+    }
+
+    // Update paths
+    let pathLine = el.querySelector('path.line');
+    if (!pathLine){ pathLine = document.createElementNS('http://www.w3.org/2000/svg','path'); pathLine.setAttribute('class','line'); el.appendChild(pathLine); }
+    pathLine.setAttribute('d', d);
+    pathLine.setAttribute('stroke', color);
+
+    let pathFill = el.querySelector('path.fill');
+    if (!pathFill){ pathFill = document.createElementNS('http://www.w3.org/2000/svg','path'); pathFill.setAttribute('class','fill'); el.appendChild(pathFill); }
+    pathFill.setAttribute('d', df);
+  }
+})();
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<script>
 // Enhanced dashboard functionality with modern UI
 document.addEventListener('DOMContentLoaded', function() {
     initializeEnhancedDashboard();
@@ -566,8 +766,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
 async function initializeEnhancedDashboard() {
     try {
-        // Check authentication status
+        // Wait for auth manager to be available and complete its check
+        await waitForAuth();
+        
+        // Check authentication status after auth manager is ready
         const isAuthenticated = window.auth ? window.auth.isAuthenticated() : false;
+        console.log('Dashboard: User authenticated?', isAuthenticated);
         
         if (isAuthenticated) {
             showUserInterface();
@@ -582,6 +786,20 @@ async function initializeEnhancedDashboard() {
     } catch (error) {
         console.error('Failed to initialize dashboard:', error);
         showGuestInterface();
+    }
+}
+
+async function waitForAuth() {
+    // Wait for auth manager to be available
+    let attempts = 0;
+    while (!window.auth && attempts < 20) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        attempts++;
+    }
+    
+    if (window.auth) {
+        // Wait a bit more for the auth check to complete
+        await new Promise(resolve => setTimeout(resolve, 500));
     }
 }
 
@@ -621,28 +839,53 @@ async function loadUserStats() {
         if (!user) return;
 
         // Update basic stats
+        console.log('📊 Loading user stats for:', user);
         document.getElementById('userGemBalance').textContent = 
             window.utils.formatNumber(user.gem_coins || 0);
-        document.getElementById('userLevel').textContent = user.level || 1;
-        document.getElementById('currentLevel').textContent = user.level || 1;
+        document.getElementById('userLevel').textContent = user.current_level || user.level || 1;
+        
+        // Update currentLevel if element exists
+        const currentLevelEl = document.getElementById('currentLevel');
+        if (currentLevelEl) {
+            currentLevelEl.textContent = user.current_level || user.level || 1;
+        }
 
         // Load detailed gaming stats if API is available
         if (window.apiClient && window.apiClient.gaming) {
+            console.log('📊 Loading gaming stats from API...');
             const gamingStatsResponse = await window.apiClient.gaming.getStats();
+            console.log('📊 Gaming stats response:', gamingStatsResponse);
+            
             if (gamingStatsResponse.success) {
                 const stats = gamingStatsResponse.data;
+                console.log('📊 Updating dashboard with stats:', stats);
+                
                 document.getElementById('totalWins').textContent = 
                     window.utils.formatNumber(stats.total_wins || 0);
                 document.getElementById('achievementsCount').textContent = 
                     window.utils.formatNumber(stats.achievements_count || 0);
-                document.getElementById('gamesPlayed').textContent = 
-                    window.utils.formatNumber(stats.total_games || 0);
                 
-                const winRate = stats.total_games > 0 
-                    ? ((stats.total_wins / stats.total_games) * 100).toFixed(1)
-                    : 0;
-                document.getElementById('winRate').textContent = winRate + '%';
-                document.getElementById('currentStreak').textContent = stats.current_streak || 0;
+                // Update additional stats if elements exist
+                const gamesPlayedEl = document.getElementById('gamesPlayed');
+                if (gamesPlayedEl) {
+                    gamesPlayedEl.textContent = window.utils.formatNumber(stats.total_games || 0);
+                }
+                
+                // Update additional stats if elements exist
+                const winRateEl = document.getElementById('winRate');
+                if (winRateEl) {
+                    const winRate = stats.total_games > 0 
+                        ? ((stats.total_wins / stats.total_games) * 100).toFixed(1)
+                        : 0;
+                    winRateEl.textContent = winRate + '%';
+                }
+                
+                const currentStreakEl = document.getElementById('currentStreak');
+                if (currentStreakEl) {
+                    currentStreakEl.textContent = stats.current_streak || 0;
+                }
+            } else {
+                console.warn('❌ Gaming stats API failed:', gamingStatsResponse.error);
             }
         }
 
@@ -655,8 +898,10 @@ async function loadUserStats() {
 }
 
 function updateExperienceProgress(user) {
-    const currentLevel = user.level || 1;
+    const currentLevel = user.current_level || user.level || 1;
     const totalExperience = user.total_experience || 0;
+    
+    console.log('🎯 Updating XP progress:', { currentLevel, totalExperience });
     
     // Calculate experience needed for current level
     const baseExp = 1000;
@@ -787,9 +1032,21 @@ function initializeEventListeners() {
     // Demo login button
     const demoBtn = document.getElementById('demoLoginBtn');
     if (demoBtn) {
-        demoBtn.addEventListener('click', function() {
-            // Simulate demo login
-            window.location.href = '/gaming';
+        demoBtn.addEventListener('click', async function() {
+            console.log('Demo login button clicked');
+            // Use the auth manager's demo login functionality
+            if (window.auth) {
+                try {
+                    const result = await window.auth.demoLogin();
+                    if (result.success) {
+                        // Refresh the dashboard to show user interface
+                        showUserInterface();
+                        await loadDashboardData();
+                    }
+                } catch (error) {
+                    console.error('Demo login failed:', error);
+                }
+            }
         });
     }
     

@@ -76,8 +76,7 @@ class VirtualWallet(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    # Relationships
-    user = relationship("User", back_populates="wallet")
+    # Relationships (avoid cross-Base relationship to User)
     virtual_crypto_holdings = relationship("VirtualCryptoHolding", back_populates="wallet")
     transaction_history = relationship("VirtualTransaction", back_populates="wallet")
 
@@ -155,8 +154,7 @@ class UserInventory(Base):
     is_equipped = Column(Boolean, default=False)  # For cosmetics
     is_favorite = Column(Boolean, default=False)
     
-    # Relationships
-    user = relationship("User", back_populates="inventory")
+    # Relationships (avoid cross-Base relationship to User)
     item = relationship("CollectibleItem", back_populates="user_items")
 
 

@@ -164,9 +164,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 localStorage.setItem('refresh_token', response.data.refresh_token);
                 localStorage.setItem('user_data', JSON.stringify(response.data.user));
                 
-                // Redirect to dashboard
+                // Redirect to home (dashboard)
                 setTimeout(() => {
-                    window.location.href = '/dashboard';
+                    window.location.href = '/';
                 }, 1000);
             } else {
                 showAlert(response.message || 'Login failed', 'danger');
@@ -196,7 +196,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 localStorage.setItem('user_data', JSON.stringify(response.data.user));
                 
                 setTimeout(() => {
-                    window.location.href = '/dashboard';
+                    window.location.href = '/';
                 }, 1000);
             } else {
                 showAlert('Demo account not available', 'warning');

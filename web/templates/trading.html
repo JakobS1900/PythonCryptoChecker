@@ -14,6 +14,7 @@
     <link href="/static/css/enhanced-theme.css" rel="stylesheet">
     <link href="/static/css/icons.css" rel="stylesheet">
     <link href="/static/css/visual-assets.css" rel="stylesheet">
+    <link href="/static/css/trading-clean.css" rel="stylesheet">
     
     <style>
         :root {
@@ -116,7 +117,100 @@
         }
     </style>
 </head>
-<body>
+<body class="trading-page">
+    <!-- Global Navbar (consistent with base.html) -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                <i class="fas fa-dice me-2"></i>
+                <span class="fw-bold">CryptoChecker</span>
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">
+                            <i class="fas fa-home me-1"></i>Home
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-dice-d20 me-1"></i>Gaming
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/gaming/roulette"><i class="fas fa-circle-dot me-2"></i>Crypto Roulette</a></li>
+                            <li><a class="dropdown-item" href="/gaming/dice"><i class="fas fa-dice me-2"></i>Dice Game</a></li>
+                            <li><a class="dropdown-item" href="/gaming/crash"><i class="fas fa-rocket me-2"></i>Crash Game</a></li>
+                            <li><a class="dropdown-item" href="/gaming/plinko"><i class="fas fa-circle me-2"></i>Plinko</a></li>
+                            <li><a class="dropdown-item" href="/gaming/tower"><i class="fas fa-building me-2"></i>Tower</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/trading">
+                            <i class="fas fa-exchange-alt me-1"></i>Trading
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/inventory">
+                            <i class="fas fa-briefcase me-1"></i>Inventory
+                        </a>
+                    </li>
+                </ul>
+                
+                <!-- Auth UI Hooks (aligned with /static/js/auth.js) -->
+                <div class="navbar-nav" id="auth-buttons">
+                    <div class="nav-item">
+                        <button class="nav-link btn btn-outline-light btn-sm me-2" id="demo-login-btn">
+                            <i class="fas fa-sign-in-alt me-1"></i>Demo Login
+                        </button>
+                    </div>
+                    <div class="nav-item">
+                        <a class="nav-link btn btn-light btn-sm" href="/register">
+                            <i class="fas fa-user-plus me-1"></i>Register
+                        </a>
+                    </div>
+                    <div class="nav-item ms-2">
+                        <a class="nav-link btn btn-outline-light btn-sm" href="/login">
+                            <i class="fas fa-right-to-bracket me-1"></i>Login
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Authenticated User Menu Container -->
+                <div class="navbar-nav" id="user-menu" style="display: none;">
+                    <div class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
+                            <img src="/static/images/default-avatar.png" class="rounded-circle me-2" width="32" height="32" id="userAvatar" onerror="this.onerror=null;this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2732%27 height=%2732%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%276%27 fill=%27%23222%27/%3E%3C/svg%3E'">
+                            <div class="d-flex flex-column">
+                                <span class="fw-semibold" id="username-display">Username</span>
+                                <small class="text-light opacity-75">Level <span id="userLevel">1</span></small>
+                            </div>
+                            <div class="ms-3 text-end">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-gem text-warning me-1"></i>
+                                    <span id="nav-gem-balance">0</span>
+                                </div>
+                            </div>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="/"><i class="fas fa-user me-2"></i>Dashboard</a></li>
+                            <li><a class="dropdown-item" href="/achievements"><i class="fas fa-medal me-2"></i>Achievements</a></li>
+                            <li><a class="dropdown-item" href="/settings"><i class="fas fa-cog me-2"></i>Settings</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" id="logout-btn" data-action="logout"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Spacer for fixed navbar -->
+    <div style="height: 76px;"></div>
     <!-- Enhanced Header with Glassmorphism -->
     <div class="trading-header" style="background: var(--gradient-primary); position: relative; overflow: hidden;">
         <!-- Animated Background Pattern -->
@@ -138,35 +232,6 @@
                     </div>
                 </div>
                 <div class="col-md-4 text-md-end">
-                    <!-- Authentication buttons - show when not logged in -->
-                    <div id="auth-buttons" class="d-none">
-                        <a href="/login" class="btn btn-neon me-2">
-                            <i class="fas fa-sign-in-alt me-2"></i>Login
-                        </a>
-                    </div>
-                    
-                    <!-- User menu - show when logged in -->
-                    <div id="user-menu" class="d-none">
-                        <div class="dropdown d-inline-block me-2">
-                            <button class="btn btn-outline-light dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" style="border-radius: 20px; backdrop-filter: blur(10px); background: rgba(255, 255, 255, 0.1);">
-                                <i class="fas fa-user me-2"></i>
-                                <span id="username-display">Guest</span>
-                                <span class="ms-3 d-inline-flex align-items-center">
-                                    <i class="fas fa-gem text-warning me-1"></i>
-                                    <span id="nav-gem-balance">0</span>
-                                </span>
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 12px;">
-                                <li><a class="dropdown-item" href="/"><i class="fas fa-tachometer-alt me-2 text-primary"></i>Dashboard</a></li>
-                                <li><a class="dropdown-item" href="/gaming/inventory"><i class="fas fa-box-open me-2 text-info"></i>Inventory</a></li>
-                                <li><a class="dropdown-item" href="/gaming/roulette"><i class="fas fa-dice me-2 text-warning"></i>Gaming</a></li>
-                                <li><a class="dropdown-item" href="/achievements"><i class="fas fa-trophy me-2 text-success"></i>Achievements</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="#" onclick="logout()"><i class="fas fa-sign-out-alt me-2 text-danger"></i>Logout</a></li>
-                            </ul>
-                        </div>
-                    </div>
-                    
                     <button class="btn btn-neon" onclick="refreshDashboard()" id="refresh-btn">
                         <i class="fas fa-sync-alt me-2"></i>Refresh
                     </button>
@@ -305,7 +370,7 @@
             </div>
 
             <!-- Enhanced Trading Panel -->
-            <div class="col-lg-4">
+            <div class="col-lg-4 trading-sidebar">
                 <div class="card-glass animate-on-scroll" data-animation="fadeInUp" data-delay="100">
                     <h4 class="mb-4 d-flex align-items-center">
                         <div class="gaming-icon me-3" style="background: var(--gradient-crypto);">
@@ -349,7 +414,11 @@
                             <label class="form-label fw-semibold">Amount (USD)</label>
                             <input type="number" class="form-control bet-amount-input" id="trade-amount" 
                                    placeholder="1000" min="1" step="0.01" required>
-                            <div class="form-text">Enter the USD amount to trade</div>
+                            <div class="form-text">
+                                Enter USD amount to trade. Conversion uses real-time price. 
+                                <br>GEM conversion: 1 GEM = ${{ '%.4f'|format(gem_usd_rate) }} 
+                                (1000 GEM = ${{ '%.2f'|format(gem_usd_rate*1000) }}).
+                            </div>
                         </div>
 
                         <div class="mb-3">
@@ -446,7 +515,7 @@
                         </div>
                     </div>
                     <div class="text-end mt-3">
-                        <a class="btn btn-neon btn-sm" href="/gaming/inventory" style="border-color: #10b981; color: #10b981;">
+                        <a class="btn btn-neon btn-sm" href="/inventory" style="border-color: #10b981; color: #10b981;">
                             <i class="fas fa-box-open me-2"></i>View Full Inventory
                         </a>
                     </div>
@@ -537,7 +606,12 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    
+
+    <!-- Core scripts (match base.html order for auth state) -->
+    <script src="/static/js/utils.js"></script>
+    <script src="/static/js/auth.js"></script>
+    <script src="/static/js/api.js"></script>
+
     <!-- Enhanced JavaScript -->
     <script src="/static/js/main.js"></script>
     <script src="/static/js/animations.js"></script>
@@ -546,6 +620,8 @@
     <div id="alertContainer" class="position-fixed" style="top: 100px; right: 20px; z-index: 9999; max-width: 400px;"></div>
     
     <script>
+        // Expose GEM rate to client scripts
+        window.GEM_USD_RATE = {{ '%.6f'|format(gem_usd_rate) }};
         // Application state
         let portfolioData = null;
         let currentHoldings = [];
@@ -650,28 +726,15 @@
             }
         }
 
-        function logout() {
-            if (confirm('Are you sure you want to logout?')) {
-                window.location.href = '/login';
-            }
-        }
+        // Use global logout from auth.js
 
         function checkAuthenticationState() {
-            // For demo purposes, assume user is logged in
-            const isAuthenticated = true;
-            
-            const authButtons = document.getElementById('auth-buttons');
-            const userMenu = document.getElementById('user-menu');
-            
-            if (authButtons) authButtons.style.display = isAuthenticated ? 'none' : 'block';
-            if (userMenu) userMenu.style.display = isAuthenticated ? 'block' : 'none';
-            
-            if (isAuthenticated) {
-                const usernameDisplay = document.getElementById('username-display');
-                if (usernameDisplay) {
-                    usernameDisplay.textContent = 'Demo User';
+            // Defer to auth.js which calls /api/auth/me and updates UI
+            try {
+                if (window.auth && window.auth.checkAuthStatus) {
+                    window.auth.checkAuthStatus();
                 }
-            }
+            } catch (e) { console.debug('Auth check skipped:', e); }
         }
 
         function updateWalletDisplay() {
@@ -821,7 +884,7 @@
                         <i class="fas fa-flask"></i>
                     </div>
                     <p class="text-muted">No consumables available</p>
-                    <a href="/gaming/inventory" class="btn btn-neon btn-sm" style="border-color: #10b981; color: #10b981;">
+                    <a href="/inventory" class="btn btn-neon btn-sm" style="border-color: #10b981; color: #10b981;">
                         <i class="fas fa-shopping-cart me-2"></i>Visit Shop
                     </a>
                 </div>

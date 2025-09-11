@@ -4,6 +4,73 @@
 
 {% block body_class %}inventory-page{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* Enhanced gaming visuals merged into canonical inventory */
+    body.inventory-page {
+        background: var(--gradient-primary);
+        background-attachment: fixed;
+    }
+
+    .inventory-item {
+        background: rgba(255, 255, 255, 0.03);
+        border: 2px solid rgba(255, 255, 255, 0.06);
+        border-radius: 16px;
+        padding: 1.25rem;
+        transition: all 0.25s ease;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .inventory-item:hover {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(79, 70, 229, 0.28);
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    }
+
+    .inventory-item.consumable { border-color: rgba(34,197,94,0.5); }
+    .inventory-item.collectible { border-color: rgba(168,85,247,0.5); }
+    .inventory-item.equipment { border-color: rgba(59,130,246,0.5); }
+
+    .item-icon {
+        width: 72px; height: 72px; border-radius: 50%;
+        display:flex; align-items:center; justify-content:center; font-size:1.6rem;
+        margin:0 auto 0.75rem; background:var(--gradient-crypto);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+    }
+
+    .item-rarity { position:absolute; top:10px; right:10px; padding:0.2rem 0.5rem; border-radius:16px; font-size:0.75rem; font-weight:700; text-transform:uppercase; }
+    .rarity-common { background: rgba(156,163,175,0.85); color: #fff; }
+    .rarity-uncommon { background: rgba(34,197,94,0.85); color: #fff; }
+    .rarity-rare { background: rgba(59,130,246,0.85); color: #fff; }
+    .rarity-epic { background: rgba(168,85,247,0.85); color: #fff; }
+    .rarity-legendary { background: rgba(245,158,11,0.85); color: #111; }
+
+    .item-quantity { position:absolute; bottom:10px; right:10px; background: rgba(0,0,0,0.6); color:#fff; padding:0.25rem 0.5rem; border-radius:12px; font-weight:700; }
+
+    .filter-tabs { background: rgba(255,255,255,0.03); border-radius:20px; padding:0.5rem; margin-bottom:1.25rem; }
+    .filter-tab { background: transparent; border: none; color: rgba(255,255,255,0.75); padding:0.6rem 1rem; border-radius:12px; }
+    .filter-tab.active { background: var(--gradient-primary); color: #fff; box-shadow: 0 6px 20px rgba(0,0,0,0.2); }
+
+    .stats-card {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.05);
+        border-radius: 14px;
+        padding: 1rem;
+        text-align: center;
+    }
+
+    .use-item-btn { background: var(--gradient-success); border:none; color:#fff; padding:0.45rem 0.9rem; border-radius:18px; }
+
+    @media (max-width: 768px) {
+        .inventory-page { padding-top: 100px; }
+        .filter-tabs { overflow-x:auto; white-space:nowrap; }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid py-4">
     <!-- Header -->
@@ -58,7 +125,9 @@
                         <select class="form-select" id="categoryFilter">
                             <option value="">All Categories</option>
                             <option value="trading_cards">Trading Cards</option>
+                            <option value="collectibles">Collectibles</option>
                             <option value="accessories">Accessories</option>
+                            <option value="equipment">Equipment</option>
                             <option value="consumables">Consumables</option>
                             <option value="special">Special Items</option>
                         </select>
@@ -113,32 +182,32 @@
             <!-- Stats Bar -->
             <div class="row mb-4">
                 <div class="col-md-3">
-                    <div class="card text-center">
-                        <div class="card-body py-3">
+                    <div class="stats-card">
+                        <div class="py-3">
                             <h4 class="text-primary mb-1" id="totalItems">0</h4>
                             <small class="text-muted">Total Items</small>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="card text-center">
-                        <div class="card-body py-3">
+                    <div class="stats-card">
+                        <div class="py-3">
                             <h4 class="text-success mb-1" id="uniqueItems">0</h4>
                             <small class="text-muted">Unique Items</small>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="card text-center">
-                        <div class="card-body py-3">
+                    <div class="stats-card">
+                        <div class="py-3">
                             <h4 class="text-warning mb-1" id="rareItems">0</h4>
                             <small class="text-muted">Rare+ Items</small>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="card text-center">
-                        <div class="card-body py-3">
+                    <div class="stats-card">
+                        <div class="py-3">
                             <h4 class="text-info mb-1" id="equippedItems">0</h4>
                             <small class="text-muted">Equipped</small>
                         </div>
@@ -147,6 +216,14 @@
             </div>
 
             <!-- Items Container -->
+            <!-- Filter Tabs (merged from gaming template) -->
+            <div class="filter-tabs d-flex justify-content-center mb-3">
+                <button class="filter-tab active" data-filter="">All Items</button>
+                <button class="filter-tab" data-filter="consumables">Consumables</button>
+                <button class="filter-tab" data-filter="collectibles">Collectibles</button>
+                <button class="filter-tab" data-filter="equipment">Equipment</button>
+            </div>
+
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Your Items</h5>
@@ -373,6 +450,11 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="/static/js/utils.js"></script>
+<script src="/static/js/api.js"></script>
+<script src="/static/js/main.js"></script>
+<script src="/static/js/animations.js"></script>
+<script src="/static/js/auth.js"></script>
 <script>
 let currentPage = 1;
 let currentFilters = {};
@@ -387,7 +469,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function initializeInventory() {
     loadInventory();
-    loadInventoryStats();
+    updateInventoryStats([]);
 }
 
 function setupEventListeners() {
@@ -410,6 +492,18 @@ function setupEventListeners() {
             this.classList.add('selected');
         });
     });
+
+    // Filter tabs (gaming-style)
+    document.querySelectorAll('.filter-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            // set category filter and apply
+            const filter = this.dataset.filter || '';
+            document.getElementById('categoryFilter').value = filter;
+            applyFilters();
+        });
+    });
 }
 
 async function loadInventory() {
@@ -421,29 +515,55 @@ async function loadInventory() {
             ...currentFilters
         };
         
+        console.log('🎒 Loading inventory with params:', params);
+        
         const response = await apiClient.inventory.getItems(
             params.page, 
             params.rarity, 
             params.category
         );
         
+        console.log('🎒 Inventory response:', response);
+        
         if (response.success) {
-            displayInventoryItems(response.data.items);
+            // Handle different response structures
+            const items = response.data?.items || response.data || [];
+            displayInventoryItems(items);
+            updateInventoryStats(items);
             updatePagination(response.data.pagination);
+            console.log('✅ Inventory loaded successfully');
+        } else {
+            console.warn('❌ Inventory load failed:', response.error);
+            showInventoryError(response.error || 'Failed to load inventory');
         }
     } catch (error) {
-        console.error('Failed to load inventory:', error);
-        showAlert('Failed to load inventory', 'danger');
+        console.error('❌ Inventory load error:', error);
+        showInventoryError('Unable to connect to inventory system');
     } finally {
         hideLoading('inventoryContainer');
     }
+}
+
+function showInventoryError(message) {
+    const container = document.getElementById('inventoryContainer');
+    container.innerHTML = `
+        <div class="text-center py-5">
+            <i class="fas fa-exclamation-triangle text-warning display-1 mb-3"></i>
+            <h5 class="text-muted">Unable to Load Inventory</h5>
+            <p class="text-muted">${message}</p>
+            <button class="btn btn-primary" onclick="loadInventory()">
+                <i class="fas fa-sync-alt me-2"></i>Try Again
+            </button>
+        </div>
+    `;
 }
 
 function displayInventoryItems(items) {
     const container = document.getElementById('inventoryContainer');
     const viewMode = document.querySelector('input[name="viewMode"]:checked').value;
     
-    if (items.length === 0) {
+    // Ensure items is an array and handle undefined/null cases
+    if (!items || !Array.isArray(items) || items.length === 0) {
         container.innerHTML = `
             <div class="text-center py-5">
                 <i class="fas fa-box-open text-muted display-1 mb-3"></i>
@@ -616,13 +736,27 @@ async function loadItemDetails(itemId) {
     }
 }
 
-async function loadInventoryStats() {
-    // This would typically load from API
-    // For now, we'll calculate from loaded items
-    document.getElementById('totalItems').textContent = '0';
-    document.getElementById('uniqueItems').textContent = '0';
-    document.getElementById('rareItems').textContent = '0';
-    document.getElementById('equippedItems').textContent = '0';
+function updateInventoryStats(items) {
+    // Calculate stats from loaded items
+    if (!items || !Array.isArray(items)) {
+        document.getElementById('totalItems').textContent = '0';
+        document.getElementById('uniqueItems').textContent = '0';
+        document.getElementById('rareItems').textContent = '0';
+        document.getElementById('equippedItems').textContent = '0';
+        return;
+    }
+
+    const totalItems = items.reduce((sum, item) => sum + (item.quantity || 1), 0);
+    const uniqueItems = items.length;
+    const rareItems = items.filter(item => 
+        ['RARE', 'EPIC', 'LEGENDARY', 'MYTHIC'].includes(item.rarity)
+    ).length;
+    const equippedItems = items.filter(item => item.is_equipped).length;
+
+    document.getElementById('totalItems').textContent = totalItems;
+    document.getElementById('uniqueItems').textContent = uniqueItems;
+    document.getElementById('rareItems').textContent = rareItems;
+    document.getElementById('equippedItems').textContent = equippedItems;
 }
 
 function applyFilters() {
@@ -945,9 +1079,36 @@ function showPackResults(packType) {
 }
 
 // Utility Functions
+function showLoading(containerId) {
+    const container = document.getElementById(containerId);
+    if (container) {
+        container.innerHTML = `
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status"></div>
+                <div class="mt-3 text-muted">Loading...</div>
+            </div>
+        `;
+    }
+}
+
+function hideLoading(containerId) {
+    // Loading is hidden when content is replaced
+}
+
+function showAlert(message, type = 'info') {
+    // Use window.utils.showAlert if available, otherwise use simple alert
+    if (window.utils && window.utils.showAlert) {
+        window.utils.showAlert(message, type);
+    } else {
+        // Fallback to basic alert
+        console.log(`${type.toUpperCase()}: ${message}`);
+        alert(message);
+    }
+}
+
 function refreshInventory() {
     loadInventory();
-    loadInventoryStats();
+    updateInventoryStats([]);
 }
 
 function selectMultiple() {

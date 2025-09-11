@@ -1,0 +1,33 @@
+/* Clean overrides for the Roulette page layout and alignment */
+
+/* Prefer the enhanced wheel/card section; hide legacy containers if present */
+#roulette-wheel-container,
+#betting-board,
+#live-bets-feed,
+#chat-system { display: none !important; }
+
+/* Layout spacing and alignment */
+.roulette-visual { display: flex; flex-direction: column; align-items: center; }
+#rouletteWheel { margin: 0 auto; }
+
+/* Ensure wheel sizing and pointer alignment */
+#rouletteWheel.roulette-wheel-enhanced { width: 420px; height: 420px; max-width: 90vw; }
+.roulette-pointer { top: -16px; }
+
+/* Numbers overlay fine-tune */
+#wheelNumbers .wheel-number { width: 30px; height: 20px; font-size: 12px; }
+
+/* Buttons state clarity */
+#spinBtn[disabled] { opacity: 0.6; cursor: not-allowed; }
+
+/* Betting grid visual tidy */
+.betting-grid .bet-option-enhanced { min-height: 120px; }
+.betting-grid .bet-option-enhanced .bet-chip { width: 48px; height: 48px; }
+
+/* Active bets list consistency */
+#activeBets .bet-item, #activeBets .d-flex { padding: 8px 10px; border-radius: 8px; background: rgba(255,255,255,0.06); margin-bottom: 8px; }
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  #rouletteWheel.roulette-wheel-enhanced { width: 320px; height: 320px; }
+}

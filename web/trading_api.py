@@ -7,6 +7,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 from datetime import datetime
+import os
 import sys
 import os
 
@@ -30,6 +31,9 @@ from sqlalchemy import select as _select
 
 # Create router
 router = APIRouter(prefix="/api/trading", tags=["Trading"])
+
+# GEM conversion: USD per GEM (default: 0.01 => 1000 GEM = 10 USD)
+GEM_USD_RATE = float(os.getenv("GEM_USD_RATE_USD_PER_GEM", "0.01"))
 
 # Pydantic models for API requests/responses
 class CreateUserRequest(BaseModel):
@@ -582,21 +586,59 @@ async def quick_trade(
         if amount <= 0:
             raise HTTPException(status_code=400, detail="Amount must be positive")
         
-        # Get coin symbol from our data
+        # Get coin symbol from our data (with local fallback mapping)
         from data_providers import DataManager
         data_manager = DataManager()
         coins_data, _ = data_manager.get_top_coins("usd", limit=100)
-        
+
         coin_symbol = None
         for coin in coins_data:
             if coin.id == coin_id:
                 coin_symbol = coin.symbol.upper()
                 break
-        
+        if not coin_symbol:
+            # Fallback mapping for common IDs when external data is unavailable
+            fallback_map = {
+                "bitcoin": "BTC",
+                "ethereum": "ETH",
+                "ripple": "XRP",
+                "binancecoin": "BNB",
+                "solana": "SOL",
+                "cardano": "ADA",
+                "dogecoin": "DOGE",
+                "polygon": "MATIC"
+            }
+            coin_symbol = fallback_map.get(coin_id)
         if not coin_symbol:
             raise HTTPException(status_code=404, detail=f"Cryptocurrency '{coin_id}' not found")
         
-        # Place market order
+        # Determine current price and convert USD 'amount' to coin quantity
+        current_price = await trading_engine._get_current_price(coin_id)
+        if not current_price:
+            raise HTTPException(status_code=400, detail=f"Unable to get current price for {coin_id}")
+
+        coin_quantity = amount / current_price
+
+        # For BUY, ensure sufficient GEM balance (1 GEM = GEM_USD_RATE USD)
+        if action.lower() == "buy" and VirtualWallet is not None:
+            try:
+                async with AsyncSessionLocal() as session:
+                    res = await session.execute(__import__('sqlalchemy').select(VirtualWallet).where(VirtualWallet.user_id == user_id))
+                    wallet = res.scalar_one_or_none()
+                    if wallet is None:
+                        wallet = VirtualWallet(user_id=user_id)
+                        session.add(wallet)
+                        await session.commit()
+                        await session.refresh(wallet)
+                    required_gems = float(amount) / GEM_USD_RATE
+                    if wallet.gem_coins < required_gems:
+                        raise HTTPException(status_code=400, detail=f"Insufficient GEM balance. Require {required_gems:.0f} GEM for ${amount:.2f}")
+            except HTTPException:
+                raise
+            except Exception as e:
+                logger.warning(f"GEM wallet precheck skipped: {e}")
+
+        # Place market order with computed quantity
         result = await trading_engine.place_order(
             user_id=user_id,
             portfolio_id=portfolio_id,
@@ -604,11 +646,27 @@ async def quick_trade(
             coin_symbol=coin_symbol,
             order_type=OrderType.MARKET,
             order_side=OrderSide.BUY if action.lower() == "buy" else OrderSide.SELL,
-            quantity=amount,
-            notes=f"Quick {action} via API"
+            quantity=coin_quantity,
+            notes=f"Quick {action} via API (${amount:.2f})"
         )
         order = result.get("order")
         
+        # GEM wallet integration: adjust gem balance on quick trades (1 GEM == 1 USD assumption)
+        if VirtualWallet is not None:
+            try:
+                async with AsyncSessionLocal() as session:
+                    from sqlalchemy import select as _select
+                    res = await session.execute(_select(VirtualWallet).where(VirtualWallet.user_id == user_id))
+                    wallet = res.scalar_one_or_none()
+                    if wallet:
+                        # Convert USD amount to GEM using USD per GEM rate
+                        gems_delta = float(amount) / GEM_USD_RATE
+                        delta = gems_delta if action.lower() == "sell" else -gems_delta
+                        wallet.gem_coins = max(0.0, float(wallet.gem_coins) + delta)
+                        await session.commit()
+            except Exception as e:
+                logger.warning(f"GEM wallet adjustment skipped: {e}")
+
         return {
             "status": "success",
             "data": {

@@ -20,18 +20,21 @@ class AuthManager {
         // Use event delegation for dynamically created buttons
         document.addEventListener('click', (e) => {
             // Demo login button
-            if (e.target.id === 'demo-login-btn' || e.target.closest('#demo-login-btn')) {
+            const demoBtn = e.target.closest('#demo-login-btn');
+            if (demoBtn) {
                 e.preventDefault();
                 console.log('Demo login button clicked');
                 this.demoLogin();
+                return;
             }
-            
-            // Logout button (in dropdown)
-            if (e.target.id === 'logout-btn' || e.target.closest('#logout-btn') || 
-                (e.target.textContent && e.target.textContent.includes('Logout'))) {
+
+            // Strict logout click handling only for explicit logout controls
+            const logoutEl = e.target.closest('#logout-btn, a[data-action="logout"], button[data-action="logout"]');
+            if (logoutEl) {
                 e.preventDefault();
                 console.log('Logout button clicked');
                 this.logout();
+                return;
             }
         });
         
@@ -62,7 +65,7 @@ class AuthManager {
 
     async demoLogin() {
         try {
-            console.log('Starting demo login... BUNGA MUNGA MUNGA!');
+            console.log('Starting demo login...');
             
             // REAL API CALL - Now that backend is ready!
             const response = await fetch('/api/auth/demo-login', {
@@ -110,7 +113,7 @@ class AuthManager {
 
     async logout() {
         try {
-            console.log('Logging out... BUNGA MUNGA MUNGA!');
+            console.log('Logging out...');
             
             // REAL API LOGOUT - Now that backend is ready!
             const response = await fetch('/api/auth/logout', {
@@ -162,7 +165,7 @@ class AuthManager {
 
     async checkAuthStatus() {
         try {
-            console.log('Checking auth status... BUNGA MUNGA MUNGA!');
+            console.log('Checking auth status...');
             
             // REAL API AUTH CHECK - Now that backend is ready!
             const response = await fetch('/api/auth/me');
@@ -233,12 +236,21 @@ class AuthManager {
             }
             this.loadWalletBalance();
             this.startBalancePolling();
-            
-            // Update username display if available
+
+            // Update username and avatar if available
             const usernameDisplay = document.getElementById('username-display');
-            if (usernameDisplay) {
+            if (usernameDisplay && this.user && this.user.username) {
                 usernameDisplay.textContent = this.user.username;
             }
+            if (this.user && this.user.avatar_url) {
+                const avatar = document.getElementById('userAvatar');
+                if (avatar) avatar.src = this.user.avatar_url;
+                document.querySelectorAll('#user-menu img').forEach(img => {
+                    try { img.src = this.user.avatar_url; } catch(e) {}
+                });
+            }
+            
+            // Username display is already handled above
             
         } else {
             // Show auth buttons, hide user menu

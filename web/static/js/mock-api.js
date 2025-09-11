@@ -1,6 +1,6 @@
 /**
  * Mock API Implementation for Development
- * BUNGA MUNGA MUNGA! - Fixes those 404 errors sackula!
+ * Development mock layer to avoid 404s during integration.
  * Provides realistic mock data for dashboard features
  */
 
@@ -8,7 +8,7 @@ class MockAPIClient {
     constructor() {
         this.isDevelopmentMode = true; // Set to false when real API is ready
         this.mockDelay = 300; // Simulate network delay
-        console.log('🎭 Mock API Client initialized - BUNGA MUNGA MUNGA!');
+        console.log('🎭 Mock API Client initialized.');
     }
 
     // ===== MOCK DATA GENERATORS =====
@@ -240,7 +240,7 @@ class MockAPIClient {
     // ===== MOCK API METHODS =====
 
     async getActivityFeed(limit = 10) {
-        console.log('🎭 Mock API: getActivityFeed called - BUNGA MUNGA!');
+        console.log('🎭 Mock API: getActivityFeed called');
         await this.delay();
         
         const activities = this.generateMockActivity();
@@ -257,7 +257,7 @@ class MockAPIClient {
     }
 
     async getOnlineFriends() {
-        console.log('🎭 Mock API: getOnlineFriends called - BUNGA MUNGA!');
+        console.log('🎭 Mock API: getOnlineFriends called');
         await this.delay();
         
         const friends = this.generateMockFriends();
@@ -272,7 +272,7 @@ class MockAPIClient {
     }
 
     async getLeaderboard(type = 'level', limit = 5) {
-        console.log(`🎭 Mock API: getLeaderboard(${type}) called - BUNGA MUNGA!`);
+        console.log(`🎭 Mock API: getLeaderboard(${type}) called`);
         await this.delay();
         
         const leaderboard = this.generateMockLeaderboard();
@@ -290,7 +290,7 @@ class MockAPIClient {
     }
 
     async getGamingStats() {
-        console.log('🎭 Mock API: getGamingStats called - BUNGA MUNGA!');
+        console.log('🎭 Mock API: getGamingStats called');
         await this.delay();
         
         return {
@@ -300,7 +300,7 @@ class MockAPIClient {
     }
 
     async getUserProfile() {
-        console.log('🎭 Mock API: getUserProfile called - BUNGA MUNGA!');
+        console.log('🎭 Mock API: getUserProfile called');
         await this.delay();
         
         return {
@@ -310,7 +310,7 @@ class MockAPIClient {
     }
 
     async getSocialStats() {
-        console.log('🎭 Mock API: getSocialStats called - BUNGA MUNGA!');
+        console.log('🎭 Mock API: getSocialStats called');
         await this.delay();
         
         return {
@@ -351,11 +351,44 @@ class EnhancedAPIClient {
         
         console.log('🚀 Enhanced API Client initialized!');
         if (this.useMockData) {
-            console.log('🎭 Using MOCK DATA for development - BUNGA MUNGA MUNGA!');
+            console.log('🎭 Using MOCK DATA for development.');
         } else {
             console.log('🔥 Using REAL APIs - CLAUDESACKULA FIXED IT!');
         }
     }
+    
+    // ===== AUTHENTICATION METHODS (PROXY TO REAL API) =====
+    auth = {
+        login: async (credentials) => {
+            console.log('🔐 Enhanced API: Proxying login to real API');
+            return await this.realAPI.auth.login(credentials);
+        },
+        
+        register: async (userData) => {
+            console.log('🔐 Enhanced API: Proxying register to real API');
+            return await this.realAPI.auth.register(userData);
+        },
+        
+        logout: async () => {
+            console.log('🔐 Enhanced API: Proxying logout to real API');
+            return await this.realAPI.auth.logout();
+        },
+        
+        getProfile: async () => {
+            console.log('🔐 Enhanced API: Proxying getProfile to real API');
+            return await this.realAPI.auth.getProfile();
+        },
+        
+        updateProfile: async (profileData) => {
+            console.log('🔐 Enhanced API: Proxying updateProfile to real API');
+            return await this.realAPI.auth.updateProfile(profileData);
+        },
+        
+        changePassword: async (passwordData) => {
+            console.log('🔐 Enhanced API: Proxying changePassword to real API');
+            return await this.realAPI.auth.changePassword(passwordData);
+        }
+    };
 
     // ===== ENHANCED SOCIAL METHODS WITH FALLBACK =====
     
@@ -368,7 +401,7 @@ class EnhancedAPIClient {
             try {
                 return await this.realAPI.social.getActivityFeed(limit);
             } catch (error) {
-                console.warn('⚠️ Real API failed, falling back to mock data - AHHH SHIT!');
+                console.warn('⚠️ Real API failed, falling back to mock data.');
                 return await this.mockAPI.getActivityFeed(limit);
             }
         },
@@ -381,7 +414,7 @@ class EnhancedAPIClient {
             try {
                 return await this.realAPI.social.getOnlineFriends();
             } catch (error) {
-                console.warn('⚠️ Real API failed, falling back to mock data - AHHH SHIT!');
+                console.warn('⚠️ Real API failed, falling back to mock data.');
                 return await this.mockAPI.getOnlineFriends();
             }
         },
@@ -394,7 +427,7 @@ class EnhancedAPIClient {
             try {
                 return await this.realAPI.social.getLeaderboard(type, limit);
             } catch (error) {
-                console.warn('⚠️ Real API failed, falling back to mock data - AHHH SHIT!');
+                console.warn('⚠️ Real API failed, falling back to mock data.');
                 return await this.mockAPI.getLeaderboard(type, limit);
             }
         },
@@ -407,7 +440,7 @@ class EnhancedAPIClient {
             try {
                 return await this.realAPI.social.getSocialStats();
             } catch (error) {
-                console.warn('⚠️ Real API failed, falling back to mock data - AHHH SHIT!');
+                console.warn('⚠️ Real API failed, falling back to mock data.');
                 return await this.mockAPI.getSocialStats();
             }
         }
@@ -424,8 +457,118 @@ class EnhancedAPIClient {
             try {
                 return await this.realAPI.gaming.getStats();
             } catch (error) {
-                console.warn('⚠️ Real API failed, falling back to mock data - AHHH SHIT!');
+                console.warn('⚠️ Real API failed, falling back to mock data.');
                 return await this.mockAPI.getGamingStats();
+            }
+        }
+    };
+
+    // ===== ENHANCED INVENTORY METHODS WITH FALLBACK =====
+    
+    inventory = {
+        getItems: async (page = 1, rarity = null, category = null) => {
+            console.log('🎒 Fetching inventory items...', { page, rarity, category });
+            try {
+                return await this.realAPI.inventory.getItems(page, rarity, category);
+            } catch (error) {
+                console.warn('⚠️ Inventory API failed:', error);
+                // Return empty inventory as fallback
+                return {
+                    success: true,
+                    data: {
+                        items: [],
+                        pagination: {
+                            current_page: 1,
+                            total_pages: 1,
+                            total_items: 0
+                        }
+                    }
+                };
+            }
+        },
+
+        getItem: async (itemId) => {
+            try {
+                return await this.realAPI.inventory.getItem(itemId);
+            } catch (error) {
+                console.warn('⚠️ Get item API failed:', error);
+                return { success: false, error: error.message };
+            }
+        },
+
+        equipItem: async (itemId, slot = null) => {
+            try {
+                return await this.realAPI.inventory.equipItem(itemId, slot);
+            } catch (error) {
+                console.warn('⚠️ Equip item API failed:', error);
+                return { success: false, error: error.message };
+            }
+        },
+
+        useItem: async (itemId, quantity = 1) => {
+            try {
+                return await this.realAPI.inventory.useItem(itemId, quantity);
+            } catch (error) {
+                console.warn('⚠️ Use item API failed:', error);
+                return { success: false, error: error.message };
+            }
+        },
+
+        sellItem: async (itemId, quantity = 1) => {
+            try {
+                return await this.realAPI.inventory.sellItem(itemId, quantity);
+            } catch (error) {
+                console.warn('⚠️ Sell item API failed:', error);
+                return { success: false, error: error.message };
+            }
+        },
+
+        getTrades: async (status = null) => {
+            try {
+                return await this.realAPI.inventory.getTrades(status);
+            } catch (error) {
+                console.warn('⚠️ Get trades API failed:', error);
+                return {
+                    success: true,
+                    data: []
+                };
+            }
+        },
+
+        respondToTrade: async (tradeId, action) => {
+            try {
+                return await this.realAPI.inventory.respondToTrade(tradeId, action);
+            } catch (error) {
+                console.warn('⚠️ Respond to trade API failed:', error);
+                return { success: false, error: error.message };
+            }
+        },
+
+        cancelTrade: async (tradeId) => {
+            try {
+                return await this.realAPI.inventory.cancelTrade(tradeId);
+            } catch (error) {
+                console.warn('⚠️ Cancel trade API failed:', error);
+                return { success: false, error: error.message };
+            }
+        },
+
+        getMarketplace: async (page = 1, rarity = null, category = null) => {
+            try {
+                return await this.realAPI.inventory.getMarketplace(page, rarity, category);
+            } catch (error) {
+                console.warn('⚠️ Marketplace API failed:', error);
+                return {
+                    success: true,
+                    data: {
+                        items: [],
+                        pagination: {
+                            current_page: 1,
+                            total_pages: 1,
+                            total_items: 0
+                        }
+                    }
+                };
             }
         }
     };
@@ -440,7 +583,7 @@ class EnhancedAPIClient {
         try {
             return await this.realAPI.auth.getProfile();
         } catch (error) {
-            console.warn('⚠️ Real API failed, falling back to mock data - AHHH SHIT!');
+            console.warn('⚠️ Real API failed, falling back to mock data.');
             return await this.mockAPI.getUserProfile();
         }
     }
@@ -449,7 +592,7 @@ class EnhancedAPIClient {
     
     toggleMockMode(useMock = true) {
         this.useMockData = useMock;
-        console.log(`🔄 Mock mode ${useMock ? 'ENABLED' : 'DISABLED'} - BUNGA MUNGA!`);
+        console.log(`🔄 Mock mode ${useMock ? 'ENABLED' : 'DISABLED'}`);
     }
 
     setMockDelay(ms) {
@@ -470,7 +613,7 @@ if (typeof window !== 'undefined') {
         disable: () => window.apiClient.toggleMockMode(false),
         setDelay: (ms) => window.apiClient.setMockDelay(ms),
         test: async () => {
-            console.log('🧪 Testing Mock API - BUNGA MUNGA MUNGA!');
+            console.log('🧪 Testing Mock API');
             const activity = await window.apiClient.social.getActivityFeed(3);
             const friends = await window.apiClient.social.getOnlineFriends();
             const leaderboard = await window.apiClient.social.getLeaderboard('level', 3);
@@ -478,7 +621,7 @@ if (typeof window !== 'undefined') {
         }
     };
     
-    console.log('🎉 Enhanced API Client ready! Use window.mockAPI.test() to test - BUNGA MUNGA MUNGA!');
+    console.log('🎉 Enhanced API Client ready! Use window.mockAPI.test() to test.');
 }
 
 // Export for module environments

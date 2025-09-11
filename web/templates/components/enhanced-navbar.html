@@ -26,7 +26,7 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link position-relative" href="/gaming/inventory" id="nav-inventory">
+                    <a class="nav-link position-relative" href="/inventory" id="nav-inventory">
                         <i class="fas fa-box-open me-2"></i>Inventory
                         <span class="nav-indicator"></span>
                     </a>
@@ -70,7 +70,7 @@
                 <!-- User Menu (when logged in) -->
                 <div class="nav-item dropdown" id="user-menu" style="display: none;">
                     <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
-                        <img src="/static/images/default-avatar.png" alt="Avatar" class="rounded-circle me-2" style="width: 32px; height: 32px; border: 2px solid rgba(255, 255, 255, 0.3);">
+                        <img id="userAvatar" src="/static/images/default-avatar.png" alt="Avatar" class="rounded-circle me-2" style="width: 32px; height: 32px; border: 2px solid rgba(255, 255, 255, 0.3);">
                         <span id="username-display">Guest</span>
                         <span class="ms-3 d-flex align-items-center">
                             <i class="fas fa-gem text-warning me-1"></i>
@@ -266,7 +266,7 @@ function initializeNavbar() {
     const walletBalance = document.querySelector('.wallet-balance');
     if (walletBalance) {
         walletBalance.addEventListener('click', () => {
-            window.location.href = '/gaming/inventory';
+            window.location.href = '/inventory';
         });
     }
 }

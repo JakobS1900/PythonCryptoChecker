@@ -17,7 +17,14 @@
       "Bash(pip install:*)",
       "Bash(.venvScriptspip install python-dotenv)",
       "mcp__zen__zen_list_models",
-      "Bash(.venvScriptspip install fastapi uvicorn sqlalchemy asyncpg aiofiles python-multipart bcrypt passlib python-jose aiohttp)"
+      "Bash(.venvScriptspip install fastapi uvicorn sqlalchemy asyncpg aiofiles python-multipart bcrypt passlib python-jose aiohttp)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:api.github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(\".venv/Scripts/python.exe\" test_imports_fixed.py)",
+      "Bash(\".venv/Scripts/python.exe\" test_server.py)",
+      "Bash(\".venv/Scripts/python.exe\":*)",
+      "mcp__zen__zen_gemini_query"
     ],
     "deny": [],
     "ask": []

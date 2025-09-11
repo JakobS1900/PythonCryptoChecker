@@ -1,0 +1,49 @@
+/* Clean layout for Trading page */
+
+.trading-page .trading-header {
+  margin-bottom: 1rem;
+}
+
+.trading-page .trading-sidebar {
+  position: sticky;
+  top: 92px;
+}
+
+.trading-page .card-glass {
+  margin-bottom: 1rem;
+}
+
+.trading-page .stat-visual .stat-value {
+  font-weight: 700;
+}
+
+/* Section heading alignment */
+.trading-page .card-glass h4,
+.trading-page .card-glass h5 {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+}
+
+/* Lists tidy */
+#holdings-list > *,
+#open-orders-list > *,
+#transactions-list > * {
+  padding: .5rem .75rem;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.06);
+  margin-bottom: .5rem;
+}
+
+/* Quick Trade spacing */
+#trade-form .form-label { font-weight: 600; }
+#trade-form .btn-group .btn { width: 50%; }
+
+/* Wallet summary and conversion note */
+#wallet-summary .d-flex { gap: .75rem; }
+.trading-page .form-text { opacity: .85; }
+
+/* Mobile tweaks */
+@media (max-width: 992px) {
+  .trading-page .trading-sidebar { position: static; }
+}
