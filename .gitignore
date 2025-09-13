@@ -1,70 +1,113 @@
-# Byte-compiled / optimized / DLL files
+# =============================================================================
+# CryptoChecker Gaming Platform - Optimized .gitignore
+# Keep only essential production code, exclude tests/docs/AI tools
+# =============================================================================
+
+# Python Runtime Files
 __pycache__/
 *.py[cod]
 *$py.class
-
-# C extensions
 *.so
 
-# Distribution / packaging
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-pip-wheel-metadata/
-share/python-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
-
-# PyInstaller
-*.manifest
-*.spec
-
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
-
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py,cover
-.hypothesis/
-.pytest_cache/
-
-# Virtual environments
-.env
-.venv
-env/
+# Virtual Environments & Dependencies
+.env*
+.venv/
 venv/
+env/
 ENV/
 env.bak/
 venv.bak/
+.Python
+pip-wheel-metadata/
+*.egg-info/
+.installed.cfg
+*.egg
 
-# IDEs
+# Development & Testing Files (EXCLUDED FROM REPO)
+test_*.py
+*_test*.py
+*test*.py
+api_smoke_tests.py
+simple_agents_test.py
+
+# Documentation Files (EXCLUDED - Too many, keep only essentials)
+# Keep: README.md, CLAUDE.md only
+*.md
+!README.md
+!CLAUDE.md
+
+# AI Development Tools & Agents (EXCLUDED FROM REPO)
+agents/
+agents_config.py
+ULTIMATE_AGENTS_SUMMARY.md
+AgentUse.md
+
+# Development Artifacts (EXCLUDED)
+temp_*.py
+*_temp.py
+*_fixed.py
+*_debug.py
+simple_*.py
+run_server_simple.py
+main_fixed.py
+
+# Database Files (Runtime Only)
+*.db
+*.sqlite
+*.sqlite3
+crypto_gaming.db
+users.db
+
+# Logs & Runtime Data
+*.log
+logs/
+debug_sessions.log
+context_knowledge.log
+construction_projects.log
+agents_test_results.json
+
+# Development Tools & Configuration
+.prohibited_words.txt
+prohibited_words.txt
+error.txt
+errors.txt
+Error.txt
+*.error
+*.err
+
+# IDE & Editor Files
 .vscode/
 .idea/
 *.swp
 *.swo
+.DS_Store
+Thumbs.db
 
-# OS
+# Build & Distribution
+build/
+dist/
+*.egg-info/
+.tox/
+.pytest_cache/
+htmlcov/
+.coverage*
+coverage.xml
+
+# Security & Configuration
+secrets.json
+api_keys.json
+config.local.py
+.env.local
+*.pem
+*.key
+
+# Upload & Cache Directories
+web/static/uploads/
+cache/
+data/
+temp/
+
+# OS Files
 .DS_Store
 .DS_Store?
 ._*
@@ -73,20 +116,28 @@ venv.bak/
 ehthumbs.db
 Thumbs.db
 
-# Application specific
-config.local.py
-.env.local
-*.log
-logs/
-cache/
-data/
-web/static/uploads/
-
-# Future database files
-*.db
-*.sqlite
-*.sqlite3
-
-# Future API keys and secrets
-secrets.json
-api_keys.json
+# =============================================================================
+# PRODUCTION FILES INCLUDED IN REPO:
+# =============================================================================
+# Core Application:
+#   - main.py (primary server)
+#   - run.py, run_server.py (launchers)
+#   - config.py, app_config.py (configuration)
+#   - requirements.txt (dependencies)
+#
+# Source Code Directories:
+#   - api/ (REST API endpoints)
+#   - auth/ (authentication system)
+#   - database/ (models and ORM)
+#   - gaming/ (game engines)
+#   - web/ (frontend templates and static files)
+#
+# Utilities:
+#   - models.py, utils.py, logger.py
+#   - data_providers.py
+#   - setup.py, __init__.py
+#
+# Essential Documentation:
+#   - README.md (project overview)
+#   - CLAUDE.md (development instructions)
+# =============================================================================

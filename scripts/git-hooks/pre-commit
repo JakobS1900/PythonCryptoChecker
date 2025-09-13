@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+python3 "$REPO_ROOT/scripts/check_prohibited_words.py"
+STATUS=$?
+if [ $STATUS -ne 0 ]; then
+  echo "\nCommit blocked: remove prohibited words listed in .prohibited_words.txt"
+  exit $STATUS
+fi
+
+python3 "$REPO_ROOT/scripts/check_markdown_policy.py"
+STATUS=$?
+if [ $STATUS -ne 0 ]; then
+  echo "\nCommit blocked: unauthorized Markdown file(s). See .allowed_markdown.txt"
+  exit $STATUS
+fi
+
+exit 0

@@ -35,80 +35,81 @@ def create_game():
     db.session.commit()
     return game
 
-@gaming_bp.route('/api/roulette/place_bet', methods=['POST'])
-@login_required
-@user_session_required
-def place_bet():
-    """Place a bet on roulette"""
-    data = request.get_json()
-    if not data or 'type' not in data or 'value' not in data or 'amount' not in data:
-        return jsonify({'success': False, 'message': 'Missing required fields'}), 400
-    
-    bet_type = data['type']
-    bet_value = data['value']
-    amount = int(data['amount'])
-    
-    # Validate bet amount
-    if amount < 10 or amount > 10000:
-        return jsonify({'success': False, 'message': 'Invalid bet amount'}), 400
-    
-    # Check user balance
-    if current_user.gems < amount:
-        return jsonify({'success': False, 'message': 'Insufficient balance'}), 400
-    
-    # Calculate multiplier based on bet type
-    multipliers = {
-        'number': 35,
-        'color': 14 if bet_value == 'green' else 2,
-        'parity': 2,
-        'range': 2
-    }
-    multiplier = multipliers.get(bet_type, 2)
-    
-    # Create bet record
-    bet = Bet(
-        user_id=current_user.id,
-        game_type='roulette',
-        bet_type=bet_type,
-        bet_value=bet_value,
-        amount=amount,
-        potential_win=amount * multiplier
-    )
-    
-    try:
-        db.session.add(bet)
-        # Deduct bet amount from user balance
-        current_user.gems -= amount
-        db.session.commit()
-        
-        # Record transaction
-        transaction = Transaction(
-            user_id=current_user.id,
-            type='bet',
-            amount=-amount,
-            description=f'Roulette bet: {amount} on {bet_value}',
-            balance=current_user.gems
-        )
-        db.session.add(transaction)
-        db.session.commit()
-        
-        # Notify client of balance update
-        emit('balance_update', {'balance': current_user.gems}, room=str(current_user.id))
-        
-        return jsonify({
-            'success': True,
-            'bet': {
-                'id': bet.id,
-                'type': bet.bet_type,
-                'value': bet.bet_value,
-                'amount': bet.amount,
-                'potential_win': bet.potential_win
-            }
-        })
-        
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'success': False, 'message': 'Failed to place bet'}), 500
+# DISABLED: Conflicting route - replaced by api/gaming_api.py endpoint with demo mode support
+# @gaming_bp.route('/api/roulette/place_bet', methods=['POST'])
+# @login_required
+# @user_session_required
+# def place_bet():
+#     """Place a bet on roulette"""
+#     data = request.get_json()
+#     if not data or 'type' not in data or 'value' not in data or 'amount' not in data:
+#         return jsonify({'success': False, 'message': 'Missing required fields'}), 400
+#     
+#     bet_type = data['type']
+#     bet_value = data['value']
+#     amount = int(data['amount'])
+#     
+#     # Validate bet amount
+#     if amount < 10 or amount > 10000:
+#         return jsonify({'success': False, 'message': 'Invalid bet amount'}), 400
+#     
+#     # Check user balance
+#     if current_user.gems < amount:
+#         return jsonify({'success': False, 'message': 'Insufficient balance'}), 400
+#     
+#     # Calculate multiplier based on bet type
+#     multipliers = {
+#         'number': 35,
+#         'color': 14 if bet_value == 'green' else 2,
+#         'parity': 2,
+#         'range': 2
+#     }
+#     multiplier = multipliers.get(bet_type, 2)
+#     
+#     # Create bet record
+#     bet = Bet(
+#         user_id=current_user.id,
+#         game_type='roulette',
+#         bet_type=bet_type,
+#         bet_value=bet_value,
+#         amount=amount,
+#         potential_win=amount * multiplier
+#     )
+#     
+#     try:
+#         db.session.add(bet)
+#         # Deduct bet amount from user balance
+#         current_user.gems -= amount
+#         db.session.commit()
+#         
+#         # Record transaction
+#         transaction = Transaction(
+#             user_id=current_user.id,
+#             type='bet',
+#             amount=-amount,
+#             description=f'Roulette bet: {amount} on {bet_value}',
+#             balance=current_user.gems
+#         )
+#         db.session.add(transaction)
+#         db.session.commit()
+#         
+#         # Notify client of balance update
+#         emit('balance_update', {'balance': current_user.gems}, room=str(current_user.id))
+#         
+#         return jsonify({
+#             'success': True,
+#             'bet': {
+#                 'id': bet.id,
+#                 'type': bet.bet_type,
+#                 'value': bet.bet_value,
+#                 'amount': bet.amount,
+#                 'potential_win': bet.potential_win
+#             }
+#         })
+#         
+#     except Exception as e:
+#         db.session.rollback()
+#         return jsonify({'success': False, 'message': 'Failed to place bet'}), 500
 
 @gaming_bp.route('/api/roulette/spin', methods=['POST'])
 @login_required

@@ -8,66 +8,67 @@ import time
 
 gaming_api = Blueprint('gaming_api', __name__)
 
-@gaming_api.route('/gaming/roulette/place_bet', methods=['POST'])
-@login_required
-@user_session_required
-def place_roulette_bet():
-    """Place a bet in the roulette game"""
-    data = request.get_json()
-    
-    if not data or 'color' not in data or 'amount' not in data:
-        return jsonify({'success': False, 'message': 'Missing required fields'}), 400
-    
-    color = data['color']
-    amount = int(data['amount'])
-    
-    # Validate color and amount
-    if color not in ['red', 'black', 'green']:
-        return jsonify({'success': False, 'message': 'Invalid color'}), 400
-        
-    if amount < 10 or amount > 10000:
-        return jsonify({'success': False, 'message': 'Invalid bet amount'}), 400
-        
-    # Check if user has enough GEMs
-    if current_user.gems < amount:
-        return jsonify({'success': False, 'message': 'Not enough GEMs'}), 400
-        
-    # Create and save bet
-    bet = Bet(
-        user_id=current_user.id,
-        game_type='roulette',
-        bet_type='color',
-        bet_value=color,
-        amount=amount
-    )
-    
-    # Calculate potential win
-    multiplier = 14 if color == 'green' else 2
-    bet.potential_win = amount * multiplier
-    
-    try:
-        db.session.add(bet)
-        # Deduct GEMs from user
-        current_user.gems -= amount
-        db.session.commit()
-        
-        # Update client
-        emit_to_user(current_user.id, 'gem_balance_update', {'new_balance': current_user.gems})
-        
-        return jsonify({
-            'success': True, 
-            'bet': {
-                'id': bet.id,
-                'type': bet.bet_type,
-                'value': bet.bet_value,
-                'amount': bet.amount,
-                'potential_win': bet.potential_win
-            }
-        })
-        
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'success': False, 'message': 'Failed to place bet'}), 500
+# DISABLED: Conflicting route - replaced by api/gaming_api.py endpoint with demo mode support
+# @gaming_api.route('/gaming/roulette/place_bet', methods=['POST'])
+# @login_required
+# @user_session_required
+# def place_roulette_bet():
+#     """Place a bet in the roulette game"""
+#     data = request.get_json()
+#     
+#     if not data or 'color' not in data or 'amount' not in data:
+#         return jsonify({'success': False, 'message': 'Missing required fields'}), 400
+#     
+#     color = data['color']
+#     amount = int(data['amount'])
+#     
+#     # Validate color and amount
+#     if color not in ['red', 'black', 'green']:
+#         return jsonify({'success': False, 'message': 'Invalid color'}), 400
+#         
+#     if amount < 10 or amount > 10000:
+#         return jsonify({'success': False, 'message': 'Invalid bet amount'}), 400
+#         
+#     # Check if user has enough GEMs
+#     if current_user.gems < amount:
+#         return jsonify({'success': False, 'message': 'Not enough GEMs'}), 400
+#         
+#     # Create and save bet
+#     bet = Bet(
+#         user_id=current_user.id,
+#         game_type='roulette',
+#         bet_type='color',
+#         bet_value=color,
+#         amount=amount
+#     )
+#     
+#     # Calculate potential win
+#     multiplier = 14 if color == 'green' else 2
+#     bet.potential_win = amount * multiplier
+#     
+#     try:
+#         db.session.add(bet)
+#         # Deduct GEMs from user
+#         current_user.gems -= amount
+#         db.session.commit()
+#         
+#         # Update client
+#         emit_to_user(current_user.id, 'gem_balance_update', {'new_balance': current_user.gems})
+#         
+#         return jsonify({
+#             'success': True, 
+#             'bet': {
+#                 'id': bet.id,
+#                 'type': bet.bet_type,
+#                 'value': bet.bet_value,
+#                 'amount': bet.amount,
+#                 'potential_win': bet.potential_win
+#             }
+#         })
+#         
+#     except Exception as e:
+#         db.session.rollback()
+#         return jsonify({'success': False, 'message': 'Failed to place bet'}), 500
 
 @gaming_api.route('/gaming/roulette/spin', methods=['POST'])
 @login_required

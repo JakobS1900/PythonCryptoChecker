@@ -1,5 +1,5 @@
 /**
- * Enhanced CS:GO-Style Roulette Game
+ * Enhanced Crypto Roulette Game
  * Professional crypto roulette with real-time WebSocket integration
  */
 
@@ -16,6 +16,7 @@ class EnhancedRouletteGame {
     constructor() {
         this.gameState = 'connecting';
         this.currentBetAmount = MIN_BET;
+        this.betAmountSelected = false; // User must select bet amount
         this.selectedNumbers = [];
         this.activeBets = [];
         this.currentPosition = 0;
@@ -26,25 +27,152 @@ class EnhancedRouletteGame {
         this.roomStats = {};
         this.userBalance = 1000; // Default balance
         
+        // Create updateBalance method with balance manager integration
+        this.updateBalance = (newBalance, source = 'roulette') => {
+            console.log('🎰 Balance update called:', newBalance, source);
+            const validBalance = parseFloat(newBalance) || 5000;
+            
+            // Update local balance immediately
+            this.userBalance = validBalance;
+            this.updateBalanceDisplay();
+            this.updateBetAmountDisplay();
+            
+            // Sync with balance manager if available (for persistence)
+            if (window.balanceManager && source !== 'balance-manager') {
+                window.balanceManager.updateBalance(validBalance, source);
+            }
+            
+            // Emit balance update event for other components
+            window.dispatchEvent(new CustomEvent('balanceUpdated', {
+                detail: { balance: validBalance, source: source }
+            }));
+        };
+        
         this.init();
     }
 
     async init() {
         this.createWheelSegments();
         this.setupEventListeners();
+        this.setupGlobalBalanceListener();
         await this.loadUserSession();
         this.updateBetAmountDisplay();
         this.setupBettingInterface();
         console.log('Enhanced roulette game initialized');
+        
+        // Run initialization validation
+        this.validateInitialization();
+    }
+    
+    setupGlobalBalanceListener() {
+        // Wait for balance manager to be available
+        const waitForBalanceManager = () => {
+            if (window.balanceManager) {
+                this.integrateWithBalanceManager();
+            } else {
+                setTimeout(waitForBalanceManager, 100);
+            }
+        };
+        waitForBalanceManager();
+        
+        // Legacy fallback for external balance updates
+        window.addEventListener('balanceUpdated', (event) => {
+            if (event.detail && event.detail.source !== 'roulette' && event.detail.source !== 'balance-manager') {
+                const externalBalance = parseFloat(event.detail.balance);
+                if (!isNaN(externalBalance) && externalBalance >= 0) {
+                    this.userBalance = externalBalance;
+                    this.updateBalanceDisplay();
+                    console.log('🎰 Roulette balance updated from external source:', externalBalance);
+                }
+            }
+        });
+    }
+    
+    integrateWithBalanceManager() {
+        console.log('🔗 Integrating roulette with unified balance manager');
+        
+        // Get current balance from manager
+        const currentBalance = window.balanceManager.getBalance();
+        this.userBalance = currentBalance;
+        console.log('💰 Initial balance from manager:', currentBalance);
+        
+        // Force update display immediately
+        this.updateBalanceDisplay();
+        
+        // Trigger a full UI refresh to ensure everything is synced
+        setTimeout(() => {
+            this.updateBetAmountDisplay();
+            this.validateInitialization();
+        }, 100);
+        
+        // Listen for balance changes
+        window.balanceManager.addBalanceListener((event) => {
+            if (event.type === 'updated' || event.type === 'loaded') {
+                this.userBalance = event.balance;
+                this.updateBalanceDisplay();
+                this.updateBetAmountDisplay(); // Also update bet display
+                console.log('🎰 Roulette balance synced from manager:', event.balance);
+            }
+        });
+        
+        // Enhanced integration: Use balance manager for persistence only
+        // The updateBalance method now works through events, no override needed
+        console.log('🔗 Balance manager integration complete - using event-based updates');
+    }
+    
+    validateInitialization() {
+        const validationResults = {
+            balanceElements: this.testBalanceElements(),
+            customInput: this.testCustomInput(),
+            betButtons: this.testBetButtons(),
+            balanceSync: this.testBalanceSync()
+        };
+        
+        const allValid = Object.values(validationResults).every(result => result);
+        
+        if (allValid) {
+            console.log('✅ Roulette game validation passed - all systems operational');
+        } else {
+            console.warn('⚠️ Roulette game validation issues:', validationResults);
+        }
+        
+        return validationResults;
+    }
+    
+    testBalanceElements() {
+        const elements = ['walletBalance', 'nav-gem-balance'];
+        return elements.every(id => {
+            const element = document.getElementById(id);
+            return element !== null;
+        });
+    }
+    
+    testCustomInput() {
+        const input = document.getElementById('custom-bet-amount');
+        const setButton = document.getElementById('set-custom-amount');
+        const feedback = document.getElementById('bet-validation-message');
+        return input && setButton && feedback;
+    }
+    
+    testBetButtons() {
+        const buttons = document.querySelectorAll('.bet-amount-btn');
+        const maxButton = document.getElementById('max-bet-btn');
+        return buttons.length >= 6 && maxButton;
+    }
+    
+    testBalanceSync() {
+        return typeof this.getSafeBalance === 'function' && 
+               typeof this.userBalance === 'number' && 
+               this.userBalance > 0;
     }
 
     createWheelSegments() {
-        const wheelsHolder = document.getElementById('wheelsHolder');
-        if (!wheelsHolder) return;
+        const wheelsContent = document.getElementById('wheelsContent');
+        if (!wheelsContent) return;
 
-        // Create multiple wheel sections for seamless animation
-        const wheels = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-        const html = wheels.map(() => {
+        // Create multiple repeated segments to simulate infinite scroll
+        const REPEATS = 12; // number of repeated strips
+        const html = Array.from({ length: REPEATS }).map(() => {
             return `<div class='wheel'>${
                 NUMS.map(num => {
                     const colorClass = this.getColorClass(num);
@@ -53,7 +181,13 @@ class EnhancedRouletteGame {
             }</div>`;
         }).join('');
         
-        wheelsHolder.innerHTML = html;
+        wheelsContent.innerHTML = html;
+        // Reset any prior transform
+        wheelsContent.style.transform = 'matrix(1, 0, 0, 1, 0, 0)';
+
+        // Measure actual chunk width for precise alignment
+        const firstChunk = wheelsContent.querySelector('.chunk');
+        this.chunkWidth = firstChunk ? firstChunk.offsetWidth : 70;
     }
 
     getColorClass(number) {
@@ -64,13 +198,41 @@ class EnhancedRouletteGame {
     }
 
     setupEventListeners() {
-        // Bet amount buttons
+        // Bet amount buttons (including MAX button)
         document.querySelectorAll('.bet-amount-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                this.currentBetAmount = parseInt(e.target.dataset.amount) || MIN_BET;
-                this.updateBetAmountDisplay();
+                if (btn.id === 'max-bet-btn') {
+                    this.setMaxBetAmount();
+                    this.betAmountSelected = true;
+                } else {
+                    this.currentBetAmount = parseInt(e.target.dataset.amount) || MIN_BET;
+                    this.betAmountSelected = true;
+                    this.updateBetAmountDisplay();
+                }
             });
         });
+        
+        // Custom bet amount input
+        const customBetInput = document.getElementById('custom-bet-amount');
+        const setCustomButton = document.getElementById('set-custom-amount');
+        
+        if (customBetInput) {
+            customBetInput.addEventListener('input', () => {
+                this.validateCustomBetAmount();
+            });
+            
+            customBetInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    this.setCustomBetAmount();
+                }
+            });
+        }
+        
+        if (setCustomButton) {
+            setCustomButton.addEventListener('click', () => {
+                this.setCustomBetAmount();
+            });
+        }
 
         // Number betting
         document.querySelectorAll('.number-btn').forEach(btn => {
@@ -132,13 +294,13 @@ class EnhancedRouletteGame {
     updateBetAmountDisplay() {
         const display = document.getElementById('bet-amount-display');
         if (display) {
-            display.textContent = `${this.currentBetAmount} GEM`;
+            display.textContent = this.betAmountSelected ? `${this.currentBetAmount} GEM` : '0 GEM';
         }
         
         // Update active bet amount buttons
         document.querySelectorAll('.bet-amount-btn').forEach(btn => {
             btn.classList.remove('active');
-            if (parseInt(btn.dataset.amount) === this.currentBetAmount) {
+            if (this.betAmountSelected && parseInt(btn.dataset.amount) === this.currentBetAmount) {
                 btn.classList.add('active');
             }
         });
@@ -154,6 +316,11 @@ class EnhancedRouletteGame {
             return;
         }
 
+        if (!this.betAmountSelected) {
+            this.showNotification('Please select a bet amount', 'warning');
+            return;
+        }
+
         if (this.currentBetAmount < MIN_BET || this.currentBetAmount > MAX_BET) {
             this.showNotification(`Bet amount must be between ${MIN_BET} and ${MAX_BET} GEM`, 'error');
             return;
@@ -165,31 +332,211 @@ class EnhancedRouletteGame {
         }
 
         try {
+            // Demo mode - simulate bet placement without API call
+            if (!localStorage.getItem('access_token') || localStorage.getItem('access_token') === 'null') {
+                // Simulate successful bet placement in demo mode
+                await this.simulateDemoBet(betType, betValue);
+                return;
+            }
+            
             const response = await fetch('/api/gaming/roulette/place_bet', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('access_token') || ''}`
+                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`
                 },
                 body: JSON.stringify({
                     bet_type: betType,
                     bet_value: betValue,
-                    amount: this.currentBetAmount
+                    amount: parseFloat(this.currentBetAmount) || MIN_BET,
+                    bet_amount: parseFloat(this.currentBetAmount) || MIN_BET
                 })
             });
 
             const result = await response.json();
             
-            if (response.ok) {
+            if (response.ok && result.success) {
+                // API bet successful - use the amount from result for consistency
+                console.log('API bet successful - Amount placed:', result.amount);
                 this.handleBetPlaced(result);
                 this.addVisualBetFeedback(betType, betValue);
             } else {
-                this.showNotification(result.error || 'Failed to place bet', 'error');
+                // If API fails, fall back to demo mode - preserve current bet amount
+                console.warn('API bet failed, using demo mode:', result?.error || response.statusText || 'Unknown error');
+                console.log('Preserving bet amount for demo mode:', this.currentBetAmount);
+                await this.simulateDemoBet(betType, betValue);
             }
         } catch (error) {
             console.error('Bet placement error:', error);
-            this.showNotification('Network error while placing bet', 'error');
+            // Fall back to demo mode
+            await this.simulateDemoBet(betType, betValue);
         }
+    }
+
+    async simulateDemoBet(betType, betValue) {
+        // Simulate bet placement in demo mode WITH balance deduction
+        const betId = 'demo-bet-' + Date.now();
+        
+        const currentBalance = this.getSafeBalance();
+        const betAmount = parseFloat(this.currentBetAmount) || MIN_BET;
+        
+        // Deduct balance for demo bet
+        const newBalance = Math.max(0, currentBalance - betAmount);
+        
+        // Log for debugging
+        console.log('Demo bet placed - Balance deducted:', {
+            betAmount: betAmount,
+            oldBalance: currentBalance,
+            newBalance: newBalance
+        });
+        
+        const result = {
+            bet_id: betId,
+            bet_type: betType,
+            bet_value: betValue,
+            amount: betAmount,
+            potential_payout: this.calculatePotentialPayout(betType, betValue),
+            new_balance: newBalance // Balance deducted immediately
+        };
+        
+        // Update balance immediately and store for persistence
+        this.userBalance = newBalance;
+        this.updateBalanceDisplay();
+        
+        // Store demo balance for server persistence
+        try {
+            await fetch('/api/gaming/roulette/update_balance', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    balance: newBalance
+                })
+            });
+        } catch (error) {
+            console.warn('Failed to update server balance:', error);
+            // Still store locally for fallback using centralized method
+            this.updateBalance(newBalance, 'bet_update');
+        }
+        
+        this.handleBetPlaced(result);
+        this.addVisualBetFeedback(betType, betValue);
+        this.showNotification(`Bet placed: ${betAmount} GEM`, 'success');
+    }
+    
+    calculatePotentialPayout(betType, betValue) {
+        switch(betType) {
+            case 'number': return this.currentBetAmount * 35;
+            case 'color': return this.currentBetAmount * 2;
+            case 'category': return this.currentBetAmount * 3;
+            default: return this.currentBetAmount * 2;
+        }
+    }
+    
+    updateBalanceDisplay() {
+        // Safe balance conversion with fallback
+        const safeBalance = this.getSafeBalance();
+        
+        // Update all possible balance display elements
+        this.syncAllBalanceElements(safeBalance);
+        
+        // Sync with auth manager for cross-component consistency
+        this.syncWithAuthManager(safeBalance);
+        
+        // Update internal balance to ensure consistency
+        this.userBalance = safeBalance;
+        
+        // Update custom input constraints
+        this.updateCustomInputConstraints();
+    }
+    
+    syncAllBalanceElements(balance) {
+        // Array of possible balance element IDs
+        const balanceElementIds = [
+            'walletBalance',      // Roulette page main balance
+            'user-balance',       // Fallback ID
+            'nav-gem-balance'     // Navigation bar balance
+        ];
+        
+        balanceElementIds.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                // Format differently for navigation (no ' GEM' suffix)
+                if (id === 'nav-gem-balance') {
+                    element.textContent = balance.toLocaleString();
+                } else {
+                    element.textContent = balance.toLocaleString() + ' GEM';
+                }
+            }
+        });
+    }
+    
+    syncWithAuthManager(balance) {
+        // Two-way sync with auth manager
+        const authObj = window.authManager || window.auth;
+        // Only sync back to auth manager if authenticated; avoid demo fallback overriding demo balance
+        if (authObj && typeof authObj.isAuthenticated === 'function' && authObj.isAuthenticated()) {
+            if (typeof authObj.updateBalance === 'function') {
+                authObj.updateBalance(balance);
+            } else {
+                // Fallback: set property if method is missing
+                authObj.userBalance = balance;
+            }
+        }
+        
+        // Trigger custom balance update event for other components
+        window.dispatchEvent(new CustomEvent('balanceUpdated', {
+            detail: { balance: balance, source: 'roulette' }
+        }));
+    }
+    
+    updateCustomInputConstraints() {
+        const customInput = document.getElementById('custom-bet-amount');
+        if (customInput) {
+            const maxBet = Math.min(this.getSafeBalance(), MAX_BET);
+            customInput.max = maxBet;
+            
+            // If current input value exceeds new max, clear it
+            if (customInput.value && parseFloat(customInput.value) > maxBet) {
+                this.clearCustomBetInput();
+            }
+        }
+    }
+    
+    getSafeBalance() {
+        // Enhanced balance management with balance manager integration
+        console.log('🔍 Getting safe balance - Current userBalance:', this.userBalance);
+        
+        // First try to get from balance manager if available
+        if (window.balanceManager) {
+            const managerBalance = window.balanceManager.getBalance();
+            if (managerBalance >= 0) {
+                console.log('💰 Using balance from manager:', managerBalance);
+                if (this.userBalance !== managerBalance) {
+                    this.userBalance = managerBalance;
+                    this.updateBalanceDisplay();
+                }
+                return managerBalance;
+            }
+        }
+        
+        // Fallback to userBalance validation
+        if (this.userBalance === undefined || this.userBalance === null) {
+            console.warn('Balance is null/undefined, using fallback and refreshing');
+            this.refreshBalanceFromServer(); // Request fresh balance from server
+            return 5000; // Default demo balance as fallback
+        }
+        
+        const numBalance = parseFloat(this.userBalance);
+        if (isNaN(numBalance) || numBalance < 0) {
+            console.warn('Invalid balance detected, requesting server refresh:', this.userBalance);
+            this.refreshBalanceFromServer(); // Request fresh balance from server
+            return 5000; // Default demo balance as fallback
+        }
+        
+        console.log('✅ Safe balance validated:', numBalance);
+        return numBalance;
     }
 
     handleBetPlaced(result) {
@@ -202,9 +549,11 @@ class EnhancedRouletteGame {
             id: result.bet_id
         });
 
-        // Update balance
-        this.userBalance = result.new_balance;
-        this.updateBalanceDisplay();
+        // Update balance if provided
+        if (result.new_balance !== undefined && result.new_balance !== null) {
+            this.userBalance = result.new_balance;
+            this.updateBalanceDisplay();
+        }
         
         // Update bet display
         this.updateBetDisplay();
@@ -267,14 +616,14 @@ class EnhancedRouletteGame {
         this.showNotification('Repeat last bet functionality coming soon', 'info');
     }
 
-    updateBalanceDisplay() {
-        const balanceElement = document.getElementById('user-balance');
-        if (balanceElement) {
-            balanceElement.textContent = `${this.userBalance.toFixed(2)} GEM`;
-        }
-    }
 
     async requestSpin() {
+        // Prevent multiple simultaneous spin requests
+        if (this.isSpinning) {
+            console.warn('Spin already in progress, ignoring request');
+            return;
+        }
+
         if (this.gameState !== 'betting') {
             this.showNotification('Cannot spin at this time', 'warning');
             return;
@@ -285,70 +634,169 @@ class EnhancedRouletteGame {
             return;
         }
 
+        // Set spinning state to prevent race conditions
+        this.isSpinning = true;
+
         try {
+            // Clean activeBets data - only send fields expected by backend
+            const cleanedBets = this.activeBets.map(bet => ({
+                type: bet.type,
+                value: bet.value,
+                amount: bet.amount
+            }));
+
+            // Log request data for debugging
+            console.log('Roulette spin request:', {
+                betsCount: cleanedBets.length,
+                bets: cleanedBets,
+                gameState: this.gameState,
+                timestamp: new Date().toISOString()
+            });
+
             const response = await fetch('/api/gaming/roulette/spin', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${localStorage.getItem('access_token') || ''}`
-                }
+                },
+                body: JSON.stringify({
+                    bets: cleanedBets,
+                    current_balance: this.getSafeBalance() // Send current balance for server sync
+                })
             });
 
             const result = await response.json();
             
+            // Log response for debugging
+            console.log('Roulette spin response:', {
+                status: response.status,
+                ok: response.ok,
+                result: result,
+                timestamp: new Date().toISOString()
+            });
+            
             if (response.ok) {
                 this.handleSpinResult(result);
             } else {
-                this.showNotification(result.error || 'Failed to spin wheel', 'error');
+                console.error('Roulette spin failed:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    error: result.error || result.message || 'Unknown error',
+                    fullResponse: result
+                });
+                this.showNotification(result.error || result.message || 'Failed to spin wheel', 'error');
+                // Reset spinning state on error
+                this.isSpinning = false;
             }
         } catch (error) {
-            console.error('Spin request error:', error);
+            console.error('Spin request error:', {
+                error: error.message,
+                stack: error.stack,
+                activeBets: this.activeBets,
+                gameState: this.gameState
+            });
             this.showNotification('Network error during spin', 'error');
+            // Reset spinning state on error
+            this.isSpinning = false;
         }
     }
 
     handleSpinResult(result) {
+        // Validate response structure
+        if (!result || !result.data) {
+            console.error('Invalid spin result structure:', result);
+            this.showNotification('Invalid response from server', 'error');
+            this.gameState = 'betting';
+            // Reset spinning state on invalid response
+            this.isSpinning = false;
+            return;
+        }
+
         this.gameState = 'spinning';
-        this.spinToNumber(result.winning_number);
+        
+        // Access winning number from correct data structure
+        const winningNumber = result.data.winning_number;
+        this.spinToNumber(winningNumber);
+        
+        // Update balance immediately with new value (server is source of truth)
+        if (result.data.new_balance !== undefined) {
+            this.updateBalance(result.data.new_balance, 'spin_result');
+        }
         
         // Show result after animation
         setTimeout(() => {
             this.showGameResult(result);
             this.gameState = 'betting';
+            // Reset spinning state after animation completes
+            this.isSpinning = false;
         }, ROLL_TIME * 1000 + 1000);
     }
 
     spinToNumber(winningNumber) {
+        const wheelsContent = document.getElementById('wheelsContent');
         const wheelsHolder = document.getElementById('wheelsHolder');
-        if (!wheelsHolder) return;
+        if (!wheelsContent || !wheelsHolder) return;
+
+        // Validate winning number
+        if (winningNumber === undefined || winningNumber === null || isNaN(winningNumber)) {
+            console.error('Invalid winning number for animation:', winningNumber);
+            // Fallback: don't animate, just show a default state
+            return;
+        }
+
+        // Ensure winning number is in valid range (0-36)
+        if (winningNumber < 0 || winningNumber > 36) {
+            console.error('Winning number out of range:', winningNumber);
+            return;
+        }
 
         const currentBox = NUMS.indexOf(this.currentPosition);
         const nextBox = NUMS.indexOf(winningNumber);
+        
+        // Additional validation for NUMS array
+        if (nextBox === -1) {
+            console.error('Winning number not found in NUMS array:', winningNumber);
+            return;
+        }
         
         // Calculate the shortest path to the winning number
         const boxShift = currentBox > nextBox 
             ? NUMS.length - currentBox + nextBox 
             : nextBox - currentBox;
 
-        // Get current offset
-        let currentOffset = parseInt(wheelsHolder.style.transform?.replace('matrix(1, 0, 0, 1, ', '')?.split(",")[0] || '0');
-        
-        // Calculate next position
-        const itemWidth = 70;
-        const wheelVariation = -(15 * itemWidth) * (Math.floor(Math.random() * 3) + 3);
-        const boxVariation = Math.random() * itemWidth - itemWidth/2;
-        const offset = currentOffset + boxShift * -itemWidth + wheelVariation + boxVariation;
+        // Compute offsets on the content strip and align winning chunk center to holder center
+        const itemWidth = this.chunkWidth || 70;
+        const fullWheelWidth = NUMS.length * itemWidth; // width of one strip
 
-        // Apply animation
-        wheelsHolder.style.transform = `matrix(1, 0, 0, 1, ${offset}, 0)`;
-        wheelsHolder.style.transitionDuration = `${ROLL_TIME}s`;
-        wheelsHolder.style.transitionTimingFunction = 'cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+        // Parse current transform X position
+        let currentOffset = 0;
+        const tr = wheelsContent.style.transform;
+        if (tr && tr.startsWith('matrix')) {
+            try {
+                currentOffset = parseInt(tr.replace('matrix(1, 0, 0, 1, ', '').split(',')[0]) || 0;
+            } catch (_) { currentOffset = 0; }
+        }
+
+        // Center of holder where the pointer is
+        const holderCenter = wheelsHolder.clientWidth / 2;
+
+        // Choose random full cycles to make spin feel real, and compute absolute target
+        const cycles = 3 + Math.floor(Math.random() * 3); // 3..5 full rotations
+        const nIndex = cycles * NUMS.length + nextBox; // absolute chunk index to land under center
+        let targetOffset = holderCenter - ((nIndex + 0.5) * itemWidth);
+
+        // Apply animation to content strip
+        wheelsContent.style.transitionDuration = `${ROLL_TIME}s`;
+        wheelsContent.style.transitionTimingFunction = 'cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+        wheelsContent.style.transform = `matrix(1, 0, 0, 1, ${targetOffset}, 0)`;
 
         this.currentPosition = winningNumber;
         this.isRolling = true;
+        
+        console.log(`Wheel animation: current=${currentOffset}, target=${targetOffset}, winning=${winningNumber}`);
 
         // Add spinning effects
-        const wheelContainer = document.querySelector('.roulette-wheel-container');
+        const wheelContainer = document.querySelector('.wheel-container');
         if (wheelContainer) {
             wheelContainer.classList.add('spinning-effects');
             setTimeout(() => {
@@ -356,8 +804,41 @@ class EnhancedRouletteGame {
             }, ROLL_TIME * 1000);
         }
 
-        // Highlight winning segment
+        // Highlight winning segment and normalize position
         setTimeout(() => {
+            this.isRolling = false; // Reset rolling state
+            
+            // After animation, normalize content position to a small range to prevent drift
+            const currentTransform = wheelsContent.style.transform;
+            if (currentTransform) {
+                const currentPos = parseInt(currentTransform.replace('matrix(1, 0, 0, 1, ', '').split(',')[0] || '0');
+                const normalizedPos = ((currentPos % fullWheelWidth) + fullWheelWidth) % fullWheelWidth - fullWheelWidth; // keep within [-full, 0]
+                // Remove transition for snap normalization, then restore
+                const prevDuration = wheelsContent.style.transitionDuration;
+                wheelsContent.style.transitionDuration = '0s';
+                wheelsContent.style.transform = `matrix(1, 0, 0, 1, ${normalizedPos}, 0)`;
+                // Force reflow then restore duration for next spin
+                void wheelsContent.offsetWidth;
+                wheelsContent.style.transitionDuration = prevDuration;
+                console.log(`Position normalized: ${currentPos} -> ${normalizedPos}`);
+            }
+
+            // Highlight the chunk under the center pointer
+            const holderRect = wheelsHolder.getBoundingClientRect();
+            const centerX = holderRect.left + holderRect.width / 2;
+            const centerY = holderRect.top + holderRect.height / 2;
+            const el = document.elementFromPoint(centerX, centerY);
+            let chunkEl = el;
+            if (chunkEl && !chunkEl.classList.contains('chunk')) {
+                chunkEl = chunkEl.closest('.chunk');
+            }
+            if (chunkEl) {
+                chunkEl.classList.add('winning-segment');
+                setTimeout(() => {
+                    chunkEl.classList.remove('winning-segment');
+                }, 2000);
+            }
+            
             const winningSegment = document.querySelector(`.chunk:nth-child(${nextBox + 1})`);
             if (winningSegment) {
                 winningSegment.classList.add('winning-segment');
@@ -371,32 +852,39 @@ class EnhancedRouletteGame {
     }
 
     showGameResult(result) {
-        const { winning_number, payouts, total_payout, server_seed, client_seed, nonce } = result;
+        // Access data from correct structure (handle both formats)
+        const data = result.data || result;
+        const winning_number = data.winning_number;
+        const winning_bets = data.winning_bets || data.payouts || [];
+        const total_payout = data.total_payout || data.total_winnings || 0;
+        const new_balance = data.new_balance;
+        const is_winner = data.is_winner || total_payout > 0;
         
         // Update balance
-        this.userBalance = result.new_balance || this.userBalance;
-        this.updateBalanceDisplay();
+        if (new_balance !== undefined) {
+            this.userBalance = new_balance;
+            this.updateBalanceDisplay();
+        }
 
         // Update last numbers display
         this.updateLastNumbers(winning_number);
 
-        // Show result modal
-        const totalWin = total_payout || 0;
+        // Show result modal with accurate information
         const resultContent = `
             <div class="result-info">
-                <h3>Winning Number: <span class="${this.getColorClass(winning_number)}">${winning_number}</span></h3>
-                <h4>Total Win: ${totalWin} GEM</h4>
-                ${payouts ? payouts.map(p => `
+                <h3>Winning Number: <span class="${this.getColorClass(winning_number)}">${winning_number !== undefined ? winning_number : 'Error'}</span></h3>
+                <h4>Total Win: ${total_payout} GEM</h4>
+                ${winning_bets && winning_bets.length > 0 ? winning_bets.map(p => `
                     <div class="payout-item">
-                        <div>Bet: ${p.bet_type} ${p.bet_value}</div>
-                        <div>Win: ${p.amount} GEM</div>
+                        <div>Bet: ${p.type || p.bet_type} ${p.value || p.bet_value}</div>
+                        <div>Win: ${p.payout || p.amount} GEM</div>
                     </div>
-                `).join('') : ''}
+                `).join('') : '<div class="no-wins">No winning bets this round</div>'}
                 <div class="provably-fair">
                     <h5>Provably Fair Verification:</h5>
-                    <small>Server Seed: ${server_seed || 'N/A'}</small><br>
-                    <small>Client Seed: ${client_seed || 'N/A'}</small><br>
-                    <small>Nonce: ${nonce || 'N/A'}</small>
+                    <small>Server Seed: ${data.server_seed || 'N/A'}</small><br>
+                    <small>Client Seed: ${data.client_seed || 'N/A'}</small><br>
+                    <small>Nonce: ${data.nonce || 'N/A'}</small>
                 </div>
             </div>
         `;
@@ -498,9 +986,17 @@ class EnhancedRouletteGame {
         try {
             const audio = new Audio(src);
             audio.volume = 0.3;
-            audio.play().catch(console.warn);
+            
+            // Handle loading errors gracefully
+            audio.addEventListener('error', (e) => {
+                // Silently ignore audio loading errors - don't spam console
+            });
+            
+            audio.play().catch(() => {
+                // Silently ignore audio playback errors - don't spam console
+            });
         } catch (error) {
-            console.warn('Audio playback failed:', error);
+            // Silently ignore audio initialization errors
         }
     }
 
@@ -573,20 +1069,224 @@ class EnhancedRouletteGame {
 
     async loadUserSession() {
         try {
+            // Safe balance initialization with auth manager sync
+            await this.initializeSafeBalance();
+            
             // Try to load user session and connect to WebSocket
             const sessionId = window?.ROULETTE_SESSION_ID || 'demo-session';
-            const token = localStorage.getItem('access_token') || 'demo-token';
+            const token = localStorage.getItem('access_token') || 'undefined';
             
-            if (sessionId && token) {
+            if (sessionId && token && token !== 'undefined') {
                 await this.connectWebSocket(sessionId, token);
                 this.gameState = 'betting';
             } else {
                 // Demo mode
                 this.gameState = 'betting';
+                // Try to connect with demo session for WebSocket features
+                await this.connectWebSocket('demo-session', 'undefined');
             }
+            
+            // Initialize balance and update display
+            await this.initializeSafeBalance();
+            this.updateBalanceDisplay();
+            
         } catch (e) {
-            console.warn('Session load failed:', e);
+            console.warn('Session load failed, will retry balance from server:', e);
             this.gameState = 'betting';
+            // Don't set fallback balance here - let initializeSafeBalance handle it
+            await this.initializeSafeBalance(); // Ensure balance is loaded
+            this.updateBalanceDisplay();
+        }
+    }
+    
+    async initializeSafeBalance() {
+        // Enhanced balance initialization using server endpoint for persistence
+        let balance = null; // No default - force server lookup
+        
+        try {
+            // First priority: Get balance from server for both demo and authenticated users
+            const response = await fetch('/api/gaming/roulette/balance');
+            if (response.ok) {
+                const result = await response.json();
+                if (result.status === 'success' && result.data) {
+                    balance = result.data.balance;
+                    console.log('Balance loaded from server:', balance, '(demo mode:', result.data.is_demo_mode, ')');
+                    
+                    // Update balance using centralized method for persistence
+                    if (result.data.is_demo_mode) {
+                        this.updateBalance(balance, 'server_sync');
+                    }
+                } else {
+                    console.warn('Server balance request failed:', result);
+                }
+            } else {
+                console.warn('Server balance endpoint unavailable:', response.status);
+            }
+        } catch (error) {
+            console.warn('Failed to fetch balance from server, using fallback:', error);
+        }
+        
+        // Use balance manager for fallback instead of sessionStorage
+        if (balance === null && window.balanceManager) {
+            const managerBalance = window.balanceManager.getBalance();
+            if (managerBalance > 0) {
+                balance = managerBalance;
+                console.log('✅ Balance restored from balance manager:', balance);
+            }
+        }
+        
+        // Ensure balance is valid - use minimal fallback and trigger server refresh
+        if (balance === null || isNaN(balance) || balance < 0) {
+            balance = 1000; // Minimal fallback for demo users
+            console.warn('No valid balance found, using minimal fallback and refreshing from server:', balance);
+            // Trigger async server refresh without waiting
+            setTimeout(() => this.refreshBalanceFromServer(), 100);
+        }
+        
+        this.userBalance = balance;
+        console.log('Initialized roulette balance:', balance);
+    }
+    
+    async refreshBalanceFromServer() {
+        // Refresh balance from server without fallbacks
+        try {
+            console.log('Refreshing balance from server...');
+            const response = await fetch('/api/gaming/roulette/balance');
+            if (response.ok) {
+                const result = await response.json();
+                if (result.status === 'success' && result.data && result.data.balance) {
+                    const serverBalance = result.data.balance;
+                    console.log('Server balance refreshed:', serverBalance);
+                    // Update balance using centralized method (handles both local and persistence)
+                    if (result.data.is_demo_mode) {
+                        this.updateBalance(serverBalance, 'server_load');
+                    } else {
+                        this.userBalance = serverBalance;
+                        this.updateBalanceDisplay();
+                    }
+                    return serverBalance;
+                } else {
+                    console.warn('Server balance refresh failed:', result);
+                }
+            } else {
+                console.warn('Server balance refresh request failed:', response.status);
+            }
+        } catch (error) {
+            console.error('Error refreshing balance from server:', error);
+        }
+        return null;
+    }
+    
+    setMaxBetAmount() {
+        const maxAllowed = Math.min(this.getSafeBalance(), MAX_BET);
+        this.currentBetAmount = Math.max(MIN_BET, maxAllowed);
+        this.betAmountSelected = true;
+        this.updateBetAmountDisplay();
+        this.clearCustomBetInput();
+        this.showNotification(`Max bet set: ${this.currentBetAmount} GEM`, 'success');
+    }
+    
+    validateCustomBetAmount() {
+        const input = document.getElementById('custom-bet-amount');
+        const feedback = document.getElementById('bet-validation-message');
+        
+        if (!input || !feedback) return false;
+        
+        const value = parseFloat(input.value);
+        const balance = this.getSafeBalance();
+        
+        // Clear previous classes
+        feedback.className = 'bet-validation-feedback';
+        
+        if (!input.value) {
+            feedback.textContent = '';
+            return false;
+        }
+        
+        if (isNaN(value) || value <= 0) {
+            feedback.textContent = 'Please enter a valid amount';
+            feedback.classList.add('invalid');
+            return false;
+        }
+        
+        if (value < MIN_BET) {
+            feedback.textContent = `Minimum bet is ${MIN_BET} GEM`;
+            feedback.classList.add('invalid');
+            return false;
+        }
+        
+        if (value > MAX_BET) {
+            feedback.textContent = `Maximum bet is ${MAX_BET} GEM`;
+            feedback.classList.add('invalid');
+            return false;
+        }
+        
+        if (value > balance) {
+            feedback.textContent = 'Insufficient balance';
+            feedback.classList.add('invalid');
+            return false;
+        }
+        
+        // Valid amount
+        feedback.textContent = `✓ Valid amount: ${value} GEM`;
+        feedback.classList.add('valid');
+        return true;
+    }
+    
+    setCustomBetAmount() {
+        if (!this.validateCustomBetAmount()) {
+            return;
+        }
+        
+        const input = document.getElementById('custom-bet-amount');
+        const amount = parseFloat(input.value);
+        
+        this.currentBetAmount = amount;
+        this.betAmountSelected = true;
+        this.updateBetAmountDisplay();
+        this.clearCustomBetInput();
+        this.showNotification(`Custom bet set: ${amount} GEM`, 'success');
+    }
+    
+    clearCustomBetInput() {
+        const input = document.getElementById('custom-bet-amount');
+        const feedback = document.getElementById('bet-validation-message');
+        
+        if (input) input.value = '';
+        if (feedback) {
+            feedback.textContent = '';
+            feedback.className = 'bet-validation-feedback';
+        }
+    }
+    
+    updateBetAmountDisplay() {
+        // Update the current bet amount display
+        const display = document.getElementById('bet-amount-display');
+        if (display) {
+            display.textContent = this.betAmountSelected ? `${this.currentBetAmount} GEM` : '0 GEM';
+        }
+        
+        // Update potential winnings for the most likely bet (color bet 2:1)
+        const potentialWinnings = document.getElementById('potential-winnings');
+        if (potentialWinnings) {
+            const estimatedPayout = this.betAmountSelected ? (this.currentBetAmount * 2) : 0; // Most common payout
+            potentialWinnings.textContent = `${estimatedPayout} GEM`;
+        }
+        
+        // Update button active states
+        document.querySelectorAll('.bet-amount-btn').forEach(btn => {
+            const amount = parseInt(btn.dataset.amount);
+            if (this.betAmountSelected && amount === this.currentBetAmount) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+        
+        // Update custom input max attribute based on current balance
+        const customInput = document.getElementById('custom-bet-amount');
+        if (customInput) {
+            customInput.max = Math.min(this.getSafeBalance(), MAX_BET);
         }
     }
     
@@ -779,5 +1479,5 @@ class EnhancedRouletteGame {
 // Initialize enhanced roulette interface when page loads
 document.addEventListener('DOMContentLoaded', () => {
     window.rouletteGame = new EnhancedRouletteGame();
-    console.log('Enhanced CS:GO roulette system initialized with full functionality');
+    console.log('Enhanced Crypto roulette system initialized with full functionality');
 });

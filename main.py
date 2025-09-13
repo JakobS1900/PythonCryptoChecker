@@ -652,6 +652,27 @@ async def websocket_endpoint(websocket: WebSocket):
         pass
 
 
+@app.websocket("/ws/roulette/{session_id}")
+async def websocket_roulette_endpoint(websocket: WebSocket, session_id: str):
+    """WebSocket endpoint for real-time roulette gaming."""
+    try:
+        # Import the websocket handler
+        from api.websocket_endpoints import websocket_roulette_game
+        
+        # Accept the connection first
+        await websocket.accept()
+        
+        # Handle the roulette game WebSocket connection
+        await websocket_roulette_game(websocket, session_id)
+        
+    except Exception as e:
+        logger.error(f"Roulette WebSocket error: {e}")
+        try:
+            await websocket.close(code=1011, reason="Internal server error")
+        except:
+            pass
+
+
 @app.post("/api/auth/register")
 async def simple_register(request: Request):
     """Simple registration endpoint for demo purposes."""
@@ -947,22 +968,82 @@ async def get_wallet_info(request: Request):
 
 @app.post("/api/roulette/spin")
 async def roulette_spin(request: Request):
-    """Execute a roulette spin with bets."""
-    if not request.session.get("is_authenticated"):
-        return JSONResponse({"status": "error", "message": "Not authenticated"}, status_code=401)
+    """Execute a roulette spin with bets - Demo mode supported."""
+    # Demo mode support - Allow both authenticated and unauthenticated users
+    is_demo_mode = not request.session.get("is_authenticated")
     
     try:
         data = await request.json()
         bets = data.get("bets", [])
+        client_balance = data.get("current_balance", None)  # Balance sent from client
         
+        # Enhanced validation and logging
         if not bets:
+            logger.error(f"Roulette spin failed: No bets provided. Request data: {data}")
             return JSONResponse({"status": "error", "message": "No bets placed"}, status_code=400)
+        
+        # Validate bet structure
+        for i, bet in enumerate(bets):
+            if not isinstance(bet, dict):
+                logger.error(f"Roulette spin failed: Bet {i} is not a dict. Bet: {bet}, All bets: {bets}")
+                return JSONResponse({"status": "error", "message": f"Invalid bet structure at position {i}"}, status_code=400)
+            
+            required_fields = ["type", "value", "amount"]
+            for field in required_fields:
+                if field not in bet:
+                    logger.error(f"Roulette spin failed: Missing field '{field}' in bet {i}. Bet: {bet}")
+                    return JSONResponse({"status": "error", "message": f"Missing field '{field}' in bet {i}"}, status_code=400)
+            
+            # Validate data types
+            if not isinstance(bet["amount"], (int, float)) or bet["amount"] <= 0:
+                logger.error(f"Roulette spin failed: Invalid amount in bet {i}. Amount: {bet['amount']}")
+                return JSONResponse({"status": "error", "message": f"Invalid bet amount in bet {i}"}, status_code=400)
         
         # Validate total bet amount
         total_bet = sum(bet.get("amount", 0) for bet in bets)
-        current_gems = request.session.get("gem_coins", 1000)
+        
+        # Unified balance synchronization for both demo and authenticated users
+        # Prioritize client-sent balance over session for consistency, but validate it
+        if client_balance is not None and isinstance(client_balance, (int, float)) and client_balance > 0:
+            # Accept positive client balance
+            current_gems = client_balance
+            # Update session to match client for both demo and authenticated users
+            request.session["gem_coins"] = client_balance
+            logger.info(f"Balance synchronized from client: {client_balance} (is_demo_mode={is_demo_mode})")
+        elif client_balance is not None and isinstance(client_balance, (int, float)) and client_balance <= 0:
+            # Reject negative or zero client balance, use session default
+            logger.warning(f"Invalid client_balance (negative/zero): {client_balance}. Using session fallback.")
+            if is_demo_mode:
+                current_gems = request.session.get("gem_coins", 5000)
+            else:
+                current_gems = max(request.session.get("gem_coins", 1000), request.session.get("wallet_balance", 1000))
+        else:
+            # Fallback to session balance with appropriate defaults
+            if is_demo_mode:
+                current_gems = request.session.get("gem_coins", 5000)  # Demo users start with 5000 GEM
+            else:
+                # For authenticated users, check wallet_balance as fallback if gem_coins is 0
+                session_gems = request.session.get("gem_coins", 1000)
+                if session_gems == 0:
+                    # Check if wallet_balance can be used as fallback
+                    wallet_balance = request.session.get("wallet_balance", 1000)
+                    if wallet_balance > 0:
+                        current_gems = wallet_balance
+                        request.session["gem_coins"] = wallet_balance  # Sync gem_coins with wallet_balance
+                        logger.warning(f"Authenticated user had gem_coins=0, using wallet_balance={wallet_balance} as fallback")
+                    else:
+                        current_gems = session_gems
+                else:
+                    current_gems = session_gems
+            
+            if client_balance is not None:
+                logger.warning(f"Invalid client_balance received: {client_balance} (type: {type(client_balance)}). Using session default: {current_gems}")
+        
+        # Enhanced logging for balance validation debugging
+        logger.info(f"Roulette spin balance check: is_demo_mode={is_demo_mode}, current_gems={current_gems}, total_bet={total_bet}, session_gems={request.session.get('gem_coins', 'NOT_SET')}, wallet_balance={request.session.get('wallet_balance', 'NOT_SET')}, client_balance={client_balance}, session_keys={list(request.session.keys())}")
         
         if total_bet > current_gems:
+            logger.error(f"Roulette spin failed - insufficient balance: current_gems={current_gems}, total_bet={total_bet}, is_demo_mode={is_demo_mode}, client_balance={client_balance}, wallet_balance={request.session.get('wallet_balance')}, gem_coins_before={request.session.get('gem_coins')}, session_user_id={request.session.get('user_id')}")
             return JSONResponse({"status": "error", "message": "Insufficient GEM coins"}, status_code=400)
         
         # Generate random winning number (0-36)
@@ -1020,7 +1101,10 @@ async def roulette_spin(request: Request):
         new_balance = current_gems - total_bet + total_payout
         request.session["gem_coins"] = new_balance
         
-        # Update session stats
+        # Log balance update for debugging
+        logger.info(f"Roulette spin balance updated: old_balance={current_gems}, total_bet={total_bet}, total_payout={total_payout}, new_balance={new_balance}, session_updated={request.session.get('gem_coins')}")
+        
+        # Update session stats (both demo and authenticated users)
         current_games = request.session.get("total_games", 0)
         current_wins = request.session.get("total_wins", 0)
         request.session["total_games"] = current_games + 1
@@ -1041,8 +1125,8 @@ async def roulette_spin(request: Request):
             }
         }
     except Exception as e:
-        logger.error(f"Error executing roulette spin: {e}")
-        return JSONResponse({"status": "error", "message": "Spin execution failed"}, status_code=500)
+        logger.error(f"Error executing roulette spin: {e}. Request data: {data if 'data' in locals() else 'Not parsed'}, session_data={dict(request.session) if hasattr(request, 'session') else 'NO_SESSION'}")
+        return JSONResponse({"status": "error", "message": "Spin execution failed", "error": str(e)}, status_code=500)
 
 @app.get("/api/roulette/stats")
 async def get_roulette_stats(request: Request):
@@ -1100,6 +1184,48 @@ async def validate_roulette_bet(request: Request):
     except Exception as e:
         logger.error(f"Error validating bet: {e}")
         return JSONResponse({"status": "error", "message": "Bet validation failed"}, status_code=500)
+
+@app.get("/api/roulette/balance")
+async def get_current_balance(request: Request):
+    """Get current user balance for roulette game - supports both demo and authenticated users."""
+    try:
+        is_demo_mode = not request.session.get("is_authenticated")
+        
+        if is_demo_mode:
+            # Demo users: use session if set; otherwise initialize with minimal platform default
+            session_gems = request.session.get("gem_coins")
+            if isinstance(session_gems, (int, float)) and session_gems >= 0:
+                current_balance = session_gems
+            else:
+                # Initialize a sane default once and persist to session for consistency
+                current_balance = 1000
+                request.session["gem_coins"] = current_balance
+        else:
+            # Authenticated users: prioritize gem_coins, fallback to wallet_balance
+            session_gems = request.session.get("gem_coins", 0)
+            if session_gems <= 0:
+                # Use wallet_balance as fallback if gem_coins is 0 or missing
+                wallet_balance = request.session.get("wallet_balance", 1000)
+                current_balance = wallet_balance
+                # Sync gem_coins with wallet_balance for consistency
+                request.session["gem_coins"] = wallet_balance
+                logger.info(f"Authenticated user balance synced from wallet_balance: {wallet_balance}")
+            else:
+                current_balance = session_gems
+        
+        logger.info(f"Balance request: is_demo_mode={is_demo_mode}, balance={current_balance}, user_id={request.session.get('user_id', 'anonymous')}")
+        
+        return {
+            "status": "success",
+            "data": {
+                "balance": current_balance,
+                "is_demo_mode": is_demo_mode,
+                "user_id": request.session.get("user_id", "anonymous")
+            }
+        }
+    except Exception as e:
+        logger.error(f"Error getting current balance: {e}")
+        return JSONResponse({"status": "error", "message": "Failed to get balance"}, status_code=500)
 
 # ====================== END ROULETTE GAMING API ENDPOINTS ======================
 

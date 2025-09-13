@@ -1,0 +1,8 @@
+# Allowed Markdown files and globs (fnmatch)
+README.md
+CHANGELOG.md
+DEPLOYMENT.md
+PROGRESS.md
+LATEST_FIXES_SUMMARY.md
+CaludeDirections.MD
+docs/**

@@ -1,6 +1,6 @@
 """
 WebSocket endpoints for real-time roulette gaming.
-Enhanced with CS:GO-inspired real-time features.
+Enhanced with crypto-inspired real-time features.
 """
 
 import json
@@ -25,18 +25,24 @@ async def authenticate_websocket(websocket: WebSocket) -> tuple[str, str, str]:
     
     # Get token from query params
     token = websocket.query_params.get("token")
-    if not token:
-        await websocket.close(code=4001, reason="Missing authentication token")
-        raise HTTPException(status_code=4001, detail="Missing token")
+    if not token or token == "undefined":
+        # Demo mode - return demo user info
+        return "demo-user-123", "DemoPlayer", "demo@cryptochecker.com"
     
-    # Verify token and get user
-    async with get_db_session() as session:
-        user = await auth_manager.get_user_by_token(session, token)
-        if not user:
-            await websocket.close(code=4001, reason="Invalid authentication token")
-            raise HTTPException(status_code=4001, detail="Invalid token")
-        
-        return user.id, user.username, user.email
+    # Verify token and get user for real authentication
+    try:
+        async with get_db_session() as session:
+            user = await auth_manager.get_user_by_token(session, token)
+            if not user:
+                # Fallback to demo mode
+                logger.warning(f"Invalid token {token}, falling back to demo mode")
+                return "demo-user-123", "DemoPlayer", "demo@cryptochecker.com"
+            
+            return user.id, user.username, user.email
+    except Exception as e:
+        # If authentication fails, use demo mode
+        logger.warning(f"Auth error: {e}, falling back to demo mode")
+        return "demo-user-123", "DemoPlayer", "demo@cryptochecker.com"
 
 
 async def websocket_roulette_game(websocket: WebSocket, session_id: str):

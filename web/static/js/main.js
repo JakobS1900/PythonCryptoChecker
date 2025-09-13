@@ -464,7 +464,108 @@ document.addEventListener('DOMContentLoaded', () => {
     lazyImages.forEach((img) => {
         lazyImageObserver.observe(img);
     });
+    
+    // Initialize cross-component balance synchronization
+    initializeBalanceSynchronization();
 });
+
+// ===== BALANCE SYNCHRONIZATION =====
+
+function initializeBalanceSynchronization() {
+    console.log('🔄 Initializing cross-component balance synchronization');
+    
+    // Wait for balance manager to be ready
+    const waitForBalanceManager = () => {
+        if (window.balanceManager) {
+            setupBalanceSync();
+        } else {
+            setTimeout(waitForBalanceManager, 100);
+        }
+    };
+    waitForBalanceManager();
+}
+
+function setupBalanceSync() {
+    console.log('🔗 Setting up balance synchronization across components');
+    
+    // Listen for balance changes and update all UI components
+    window.balanceManager.addBalanceListener((event) => {
+        updateAllBalanceDisplays(event.balance, event.isDemo);
+    });
+    
+    // Initial balance display update
+    const currentBalance = window.balanceManager.getBalance();
+    const isDemoMode = window.balanceManager.isInDemoMode();
+    updateAllBalanceDisplays(currentBalance, isDemoMode);
+}
+
+function updateAllBalanceDisplays(balance, isDemo = true) {
+    // Update navbar balance
+    const navBalance = document.getElementById('nav-gem-balance');
+    if (navBalance) {
+        navBalance.textContent = balance.toLocaleString();
+        console.log('📊 Updated navbar balance:', balance);
+    }
+    
+    // Update wallet balance (roulette page)
+    const walletBalance = document.getElementById('walletBalance');
+    if (walletBalance) {
+        walletBalance.textContent = balance.toLocaleString() + ' GEM';
+        console.log('💰 Updated wallet balance:', balance);
+    }
+    
+    // Update any other balance displays
+    document.querySelectorAll('[data-balance-display]').forEach(element => {
+        const format = element.getAttribute('data-balance-format') || 'number';
+        
+        switch (format) {
+            case 'currency':
+                element.textContent = balance.toLocaleString() + ' GEM';
+                break;
+            case 'short':
+                element.textContent = window.utils ? window.utils.formatNumber(balance) : balance;
+                break;
+            default:
+                element.textContent = balance.toLocaleString();
+        }
+    });
+    
+    // Update demo mode indicators
+    document.querySelectorAll('[data-demo-indicator]').forEach(element => {
+        element.style.display = isDemo ? 'block' : 'none';
+    });
+    
+    // Trigger custom event for other components
+    window.dispatchEvent(new CustomEvent('globalBalanceUpdated', {
+        detail: { balance, isDemo, source: 'balance-manager' }
+    }));
+}
+
+// Global function to manually refresh balance across all components
+window.refreshAllBalances = () => {
+    if (window.balanceManager) {
+        window.balanceManager.refresh();
+    }
+    
+    // Also refresh auth manager balance
+    if (window.authManager && typeof window.authManager.loadWalletBalance === 'function') {
+        window.authManager.loadWalletBalance();
+    }
+    
+    console.log('🔄 Manual balance refresh triggered');
+};
+
+// Global function to update balance from external sources
+window.updateGlobalBalance = (newBalance, source = 'external') => {
+    if (window.balanceManager) {
+        window.balanceManager.updateBalance(newBalance, source);
+    } else {
+        // Fallback for legacy components
+        updateAllBalanceDisplays(newBalance, true);
+    }
+    
+    console.log('💰 Global balance updated:', newBalance, 'from', source);
+};
 
 // ===== EXPORT FOR MODULES =====
 

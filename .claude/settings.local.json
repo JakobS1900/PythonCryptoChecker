@@ -24,7 +24,9 @@
       "Bash(\".venv/Scripts/python.exe\" test_imports_fixed.py)",
       "Bash(\".venv/Scripts/python.exe\" test_server.py)",
       "Bash(\".venv/Scripts/python.exe\":*)",
-      "mcp__zen__zen_gemini_query"
+      "mcp__zen__zen_gemini_query",
+      "Bash(del:*)",
+      "Bash(node:*)"
     ],
     "deny": [],
     "ask": []

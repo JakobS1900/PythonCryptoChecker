@@ -63,6 +63,18 @@ DATABASE_URL=sqlite:///./crypto_platform.db
 
 # CORS Settings
 ALLOWED_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
+
+# Social Bots (optional)
+BOTS_ENABLED=true
+BOTS_MIN_SEC=30
+BOTS_MAX_SEC=90
+BOTS_PENDING_CAP=5
+BOTS_SEED_ACCEPTED=2
+BOTS_SEED_PENDING=1
+
+# GEM Economy
+# USD per GEM. Example: 0.01 means 1 GEM = $0.01 (⇒ 1000 GEM = $10)
+GEM_USD_RATE_USD_PER_GEM=0.01
 ```
 
 ### Docker Deployment

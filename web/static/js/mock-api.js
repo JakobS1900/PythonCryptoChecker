@@ -347,13 +347,13 @@ class EnhancedAPIClient {
     constructor() {
         this.realAPI = new APIClient();
         this.mockAPI = new MockAPIClient();
-        this.useMockData = false; // Now using REAL APIs! CLAUDESACKULA SMASH!
+        this.useMockData = false; // Default to real APIs
         
         console.log('🚀 Enhanced API Client initialized!');
         if (this.useMockData) {
             console.log('🎭 Using MOCK DATA for development.');
         } else {
-            console.log('🔥 Using REAL APIs - CLAUDESACKULA FIXED IT!');
+            console.log('🔥 Using REAL APIs.');
         }
     }
     

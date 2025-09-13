@@ -5,6 +5,7 @@ class AuthManager {
         this.isLoggedIn = false;
         this.balanceTimer = null;
         this.balancePollMs = 30000; // 30s polling to prevent desync
+        this.userBalance = 5000; // Demo balance
         this.init();
     }
 
@@ -85,6 +86,16 @@ class AuthManager {
                 // Store user data for persistence  
                 localStorage.setItem('demo_user', JSON.stringify(data.user));
                 localStorage.setItem('is_logged_in', 'true');
+                
+                // Initialize demo balance in balance manager
+                if (data.user && data.user.gem_coins && window.balanceManager) {
+                    window.balanceManager.updateBalance(data.user.gem_coins, 'demo_login');
+                }
+                
+                // Trigger auth status change event for balance manager
+                window.dispatchEvent(new CustomEvent('authStatusChanged', {
+                    detail: { authenticated: true, demo: true, user: data.user }
+                }));
                 
                 this.updateUI();
                 this.showAlert('Demo login successful! Welcome to CryptoChecker.', 'success');
@@ -284,46 +295,69 @@ class AuthManager {
             const response = await fetch('/api/trading/gamification/wallet');
             if (response.ok) {
                 const data = await response.json();
-                if (data.status === 'success') {
+                if (data.status === 'success' && data.data && data.data.gem_coins !== undefined) {
                     const balance = data.data.gem_coins;
+                    // Ensure balance is a number
+                    const safeBalance = typeof balance === 'number' ? balance : 5000;
+                    
                     const balanceElement = document.getElementById('nav-gem-balance');
                     if (balanceElement) {
-                        balanceElement.textContent = balance.toLocaleString();
+                        balanceElement.textContent = safeBalance.toLocaleString();
                     }
                     
                     // Also update wallet balance on roulette page
                     const walletBalanceElement = document.getElementById('walletBalance');
                     if (walletBalanceElement) {
-                        walletBalanceElement.textContent = balance.toLocaleString() + ' GEM';
+                        walletBalanceElement.textContent = safeBalance.toLocaleString() + ' GEM';
                     }
-                }
-            } else {
-                // Fallback for demo - use consistent balance
-                const balance = 5000; // Fixed demo balance
-                const balanceElement = document.getElementById('nav-gem-balance');
-                if (balanceElement) {
-                    balanceElement.textContent = balance.toLocaleString();
-                }
-                
-                const walletBalanceElement = document.getElementById('walletBalance');
-                if (walletBalanceElement) {
-                    walletBalanceElement.textContent = balance.toLocaleString() + ' GEM';
+                    
+                    // Store balance for roulette game
+                    this.userBalance = safeBalance;
+                    return;
                 }
             }
+            
+            // Fallback for demo - use consistent balance
+            this.setFallbackBalance();
+            
         } catch (error) {
             console.error('Failed to load wallet balance:', error);
             // Fallback for demo - use consistent balance
-            const balance = 5000;
-            const balanceElement = document.getElementById('nav-gem-balance');
-            if (balanceElement) {
-                balanceElement.textContent = balance.toLocaleString();
-            }
-            
-            const walletBalanceElement = document.getElementById('walletBalance');
-            if (walletBalanceElement) {
-                walletBalanceElement.textContent = balance.toLocaleString() + ' GEM';
-            }
+            this.setFallbackBalance();
         }
+    }
+    
+    setFallbackBalance() {
+        const balance = 5000; // Fixed demo balance
+        this.userBalance = balance;
+        
+        const balanceElement = document.getElementById('nav-gem-balance');
+        if (balanceElement) {
+            balanceElement.textContent = balance.toLocaleString();
+        }
+        
+        const walletBalanceElement = document.getElementById('walletBalance');
+        if (walletBalanceElement) {
+            walletBalanceElement.textContent = balance.toLocaleString() + ' GEM';
+        }
+    }
+    
+    updateBalance(newBalance) {
+        this.userBalance = newBalance;
+        
+        const balanceElement = document.getElementById('nav-gem-balance');
+        if (balanceElement) {
+            balanceElement.textContent = newBalance.toLocaleString();
+        }
+        
+        const walletBalanceElement = document.getElementById('walletBalance');
+        if (walletBalanceElement) {
+            walletBalanceElement.textContent = newBalance.toLocaleString() + ' GEM';
+        }
+    }
+    
+    getBalance() {
+        return this.userBalance;
     }
 
     showAlert(message, type = 'info') {
