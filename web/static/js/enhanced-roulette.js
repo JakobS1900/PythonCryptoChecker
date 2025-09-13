@@ -26,6 +26,11 @@ class EnhancedRouletteGame {
         this.websocket = null;
         this.roomStats = {};
         this.userBalance = 1000; // Default balance
+        this.committedAmount = 0; // Amount committed to current bets (not yet deducted)
+        
+        // Performance optimization: Throttling timestamps  
+        this.lastBalanceSync = 0;
+        this.lastManagerCheck = 0;
         
         // Create updateBalance method with balance manager integration
         this.updateBalance = (newBalance, source = 'roulette') => {
@@ -105,13 +110,20 @@ class EnhancedRouletteGame {
             this.validateInitialization();
         }, 100);
         
-        // Listen for balance changes
+        // Listen for balance changes with improved synchronization
         window.balanceManager.addBalanceListener((event) => {
             if (event.type === 'updated' || event.type === 'loaded') {
-                this.userBalance = event.balance;
-                this.updateBalanceDisplay();
-                this.updateBetAmountDisplay(); // Also update bet display
-                console.log('🎰 Roulette balance synced from manager:', event.balance);
+                // CRITICAL FIX: Only update if the event is from external source
+                // Prevent circular updates when roulette itself updates the balance
+                const eventSource = event.source || 'unknown';
+                if (eventSource !== 'roulette-correction' && eventSource !== 'spin_result' && eventSource !== 'bet_update') {
+                    console.log('🎰 External balance update detected, syncing:', event.balance, 'from:', eventSource);
+                    this.userBalance = event.balance;
+                    this.updateBalanceDisplay();
+                    this.updateBetAmountDisplay();
+                } else {
+                    console.log('🔄 Ignoring self-generated balance event from:', eventSource);
+                }
             }
         });
         
@@ -326,8 +338,10 @@ class EnhancedRouletteGame {
             return;
         }
 
-        if (this.userBalance < this.currentBetAmount) {
-            this.showNotification('Insufficient balance', 'error');
+        // Check available balance (total balance minus committed amount)
+        const availableBalance = this.userBalance - this.committedAmount;
+        if (availableBalance < this.currentBetAmount) {
+            this.showNotification('Insufficient available balance', 'error');
             return;
         }
 
@@ -374,55 +388,38 @@ class EnhancedRouletteGame {
     }
 
     async simulateDemoBet(betType, betValue) {
-        // Simulate bet placement in demo mode WITH balance deduction
+        // Simulate bet placement in demo mode WITHOUT immediate balance deduction
         const betId = 'demo-bet-' + Date.now();
-        
+
         const currentBalance = this.getSafeBalance();
         const betAmount = parseFloat(this.currentBetAmount) || MIN_BET;
-        
-        // Deduct balance for demo bet
-        const newBalance = Math.max(0, currentBalance - betAmount);
-        
+
+        // Add to committed amount instead of deducting immediately
+        this.committedAmount += betAmount;
+
         // Log for debugging
-        console.log('Demo bet placed - Balance deducted:', {
+        console.log('Demo bet placed - Committed (not deducted):', {
             betAmount: betAmount,
-            oldBalance: currentBalance,
-            newBalance: newBalance
+            currentBalance: currentBalance,
+            committedAmount: this.committedAmount,
+            availableBalance: currentBalance - this.committedAmount
         });
-        
+
         const result = {
             bet_id: betId,
             bet_type: betType,
             bet_value: betValue,
             amount: betAmount,
             potential_payout: this.calculatePotentialPayout(betType, betValue),
-            new_balance: newBalance // Balance deducted immediately
+            new_balance: currentBalance // Balance not changed yet
         };
-        
-        // Update balance immediately and store for persistence
-        this.userBalance = newBalance;
+
+        // Update display to show committed vs available funds
         this.updateBalanceDisplay();
-        
-        // Store demo balance for server persistence
-        try {
-            await fetch('/api/gaming/roulette/update_balance', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    balance: newBalance
-                })
-            });
-        } catch (error) {
-            console.warn('Failed to update server balance:', error);
-            // Still store locally for fallback using centralized method
-            this.updateBalance(newBalance, 'bet_update');
-        }
-        
+
         this.handleBetPlaced(result);
         this.addVisualBetFeedback(betType, betValue);
-        this.showNotification(`Bet placed: ${betAmount} GEM`, 'success');
+        this.showNotification(`Bet committed: ${betAmount} GEM`, 'success');
     }
     
     calculatePotentialPayout(betType, betValue) {
@@ -458,13 +455,26 @@ class EnhancedRouletteGame {
             'user-balance',       // Fallback ID
             'nav-gem-balance'     // Navigation bar balance
         ];
-        
+
+        const availableBalance = balance - this.committedAmount;
+
         balanceElementIds.forEach(id => {
             const element = document.getElementById(id);
             if (element) {
-                // Format differently for navigation (no ' GEM' suffix)
-                if (id === 'nav-gem-balance') {
-                    element.textContent = balance.toLocaleString();
+                // Show available/committed breakdown for main wallet balance
+                if (id === 'walletBalance' && this.committedAmount > 0) {
+                    element.innerHTML = `
+                        <div class="balance-breakdown">
+                            <div class="total-balance">${balance.toLocaleString()} GEM</div>
+                            <div class="balance-details">
+                                <small class="text-success">Available: ${availableBalance.toLocaleString()} GEM</small>
+                                <small class="text-warning">In Play: ${this.committedAmount.toLocaleString()} GEM</small>
+                            </div>
+                        </div>
+                    `;
+                } else if (id === 'nav-gem-balance') {
+                    // Navigation shows available balance only
+                    element.textContent = availableBalance.toLocaleString();
                 } else {
                     element.textContent = balance.toLocaleString() + ' GEM';
                 }
@@ -494,9 +504,10 @@ class EnhancedRouletteGame {
     updateCustomInputConstraints() {
         const customInput = document.getElementById('custom-bet-amount');
         if (customInput) {
-            const maxBet = Math.min(this.getSafeBalance(), MAX_BET);
+            const availableBalance = this.getSafeBalance() - this.committedAmount;
+            const maxBet = Math.min(availableBalance, MAX_BET);
             customInput.max = maxBet;
-            
+
             // If current input value exceeds new max, clear it
             if (customInput.value && parseFloat(customInput.value) > maxBet) {
                 this.clearCustomBetInput();
@@ -505,38 +516,52 @@ class EnhancedRouletteGame {
     }
     
     getSafeBalance() {
-        // Enhanced balance management with balance manager integration
-        console.log('🔍 Getting safe balance - Current userBalance:', this.userBalance);
+        // PERFORMANCE FIX: Reduce balance manager calls and prevent refresh loops
         
-        // First try to get from balance manager if available
-        if (window.balanceManager) {
-            const managerBalance = window.balanceManager.getBalance();
-            if (managerBalance >= 0) {
-                console.log('💰 Using balance from manager:', managerBalance);
-                if (this.userBalance !== managerBalance) {
-                    this.userBalance = managerBalance;
-                    this.updateBalanceDisplay();
+        // PRIORITY 1: Use local userBalance if it's valid and recently set
+        if (this.userBalance !== undefined && this.userBalance !== null) {
+            const numBalance = parseFloat(this.userBalance);
+            if (!isNaN(numBalance) && numBalance >= 0) {
+                
+                // PERFORMANCE: Only sync to balance manager occasionally, not on every call
+                if (window.balanceManager && !this.lastBalanceSync || 
+                    (Date.now() - this.lastBalanceSync) > 5000) { // 5 second throttle
+                    
+                    const managerBalance = window.balanceManager.getBalance();
+                    if (Math.abs(managerBalance - numBalance) > 0.01) {
+                        console.log('🔄 Syncing local balance to manager:', numBalance);
+                        window.balanceManager.updateBalance(numBalance, 'roulette-correction');
+                    }
+                    this.lastBalanceSync = Date.now();
                 }
+                
+                return numBalance;
+            }
+        }
+        
+        // PRIORITY 2: Try balance manager only as fallback (less frequently)
+        if (window.balanceManager && (!this.lastManagerCheck || 
+            (Date.now() - this.lastManagerCheck) > 2000)) { // 2 second throttle
+            
+            this.lastManagerCheck = Date.now();
+            const managerBalance = window.balanceManager.getBalance();
+            
+            if (managerBalance >= 0) {
+                console.log('💰 Fallback to balance manager:', managerBalance);
+                this.userBalance = managerBalance;
+                this.updateBalanceDisplay();
                 return managerBalance;
             }
         }
         
-        // Fallback to userBalance validation
-        if (this.userBalance === undefined || this.userBalance === null) {
-            console.warn('Balance is null/undefined, using fallback and refreshing');
-            this.refreshBalanceFromServer(); // Request fresh balance from server
-            return 5000; // Default demo balance as fallback
+        // PRIORITY 3: Return last known balance or default
+        if (this.userBalance > 0) {
+            console.log('📋 Using last known balance:', this.userBalance);
+            return this.userBalance;
         }
         
-        const numBalance = parseFloat(this.userBalance);
-        if (isNaN(numBalance) || numBalance < 0) {
-            console.warn('Invalid balance detected, requesting server refresh:', this.userBalance);
-            this.refreshBalanceFromServer(); // Request fresh balance from server
-            return 5000; // Default demo balance as fallback
-        }
-        
-        console.log('✅ Safe balance validated:', numBalance);
-        return numBalance;
+        console.warn('⚠️ Using default balance fallback');
+        return 5000; // Minimal fallback
     }
 
     handleBetPlaced(result) {
@@ -604,10 +629,13 @@ class EnhancedRouletteGame {
                 element.classList.remove('bet-placed');
             }
         });
-        
+
+        // Reset committed amount when clearing bets
+        this.committedAmount = 0;
         this.activeBets = [];
         this.selectedNumbers = [];
         this.updateBetDisplay();
+        this.updateBalanceDisplay(); // Refresh balance display to remove "In Play" indicator
         this.showNotification('All bets cleared', 'info');
     }
 
@@ -718,10 +746,8 @@ class EnhancedRouletteGame {
         const winningNumber = result.data.winning_number;
         this.spinToNumber(winningNumber);
         
-        // Update balance immediately with new value (server is source of truth)
-        if (result.data.new_balance !== undefined) {
-            this.updateBalance(result.data.new_balance, 'spin_result');
-        }
+        // Process the delayed balance update with bet deduction and winnings
+        this.processDelayedBalanceUpdate(result.data);
         
         // Show result after animation
         setTimeout(() => {
@@ -730,6 +756,34 @@ class EnhancedRouletteGame {
             // Reset spinning state after animation completes
             this.isSpinning = false;
         }, ROLL_TIME * 1000 + 1000);
+    }
+
+    processDelayedBalanceUpdate(resultData) {
+        // Calculate the final balance based on committed bets and winnings
+        const totalBetAmount = this.committedAmount;
+        const totalWinnings = resultData.total_payout || resultData.total_winnings || 0;
+
+        // Deduct committed amount and add winnings
+        const newBalance = this.userBalance - totalBetAmount + totalWinnings;
+
+        console.log('Processing delayed balance update:', {
+            originalBalance: this.userBalance,
+            totalBetAmount: totalBetAmount,
+            totalWinnings: totalWinnings,
+            newBalance: newBalance
+        });
+
+        // Reset committed amount since bets are now settled
+        this.committedAmount = 0;
+
+        // Update balance with server value if provided, otherwise use calculated value
+        const finalBalance = resultData.new_balance !== undefined ? resultData.new_balance : newBalance;
+
+        // Delay the balance update until after the spin animation completes
+        setTimeout(() => {
+            this.updateBalance(finalBalance, 'spin_result');
+            console.log('Balance updated after spin result reveal');
+        }, ROLL_TIME * 1000 + 1000); // Same timing as result display
     }
 
     spinToNumber(winningNumber) {
@@ -860,9 +914,10 @@ class EnhancedRouletteGame {
         const new_balance = data.new_balance;
         const is_winner = data.is_winner || total_payout > 0;
         
-        // Update balance
+        // Update balance and ensure committed amount is cleared
         if (new_balance !== undefined) {
             this.userBalance = new_balance;
+            this.committedAmount = 0; // Ensure committed amount is cleared
             this.updateBalanceDisplay();
         }
 
@@ -1178,7 +1233,8 @@ class EnhancedRouletteGame {
     }
     
     setMaxBetAmount() {
-        const maxAllowed = Math.min(this.getSafeBalance(), MAX_BET);
+        const availableBalance = this.getSafeBalance() - this.committedAmount;
+        const maxAllowed = Math.min(availableBalance, MAX_BET);
         this.currentBetAmount = Math.max(MIN_BET, maxAllowed);
         this.betAmountSelected = true;
         this.updateBetAmountDisplay();
@@ -1189,11 +1245,11 @@ class EnhancedRouletteGame {
     validateCustomBetAmount() {
         const input = document.getElementById('custom-bet-amount');
         const feedback = document.getElementById('bet-validation-message');
-        
+
         if (!input || !feedback) return false;
-        
+
         const value = parseFloat(input.value);
-        const balance = this.getSafeBalance();
+        const balance = this.getSafeBalance() - this.committedAmount;
         
         // Clear previous classes
         feedback.className = 'bet-validation-feedback';
@@ -1222,7 +1278,7 @@ class EnhancedRouletteGame {
         }
         
         if (value > balance) {
-            feedback.textContent = 'Insufficient balance';
+            feedback.textContent = 'Insufficient available balance';
             feedback.classList.add('invalid');
             return false;
         }

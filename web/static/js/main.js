@@ -474,12 +474,15 @@ document.addEventListener('DOMContentLoaded', () => {
 function initializeBalanceSynchronization() {
     console.log('🔄 Initializing cross-component balance synchronization');
     
-    // Wait for balance manager to be ready
+    // ✅ FIXED: Ensure balance manager is initialized first, then prevent other managers from overriding
     const waitForBalanceManager = () => {
         if (window.balanceManager) {
             setupBalanceSync();
+            
+            // ✅ FIXED: Tell other components that balance manager is the authority
+            window.balanceManagerReady = true;
         } else {
-            setTimeout(waitForBalanceManager, 100);
+            setTimeout(waitForBalanceManager, 50); // Shorter interval for faster init
         }
     };
     waitForBalanceManager();
@@ -566,6 +569,45 @@ window.updateGlobalBalance = (newBalance, source = 'external') => {
     
     console.log('💰 Global balance updated:', newBalance, 'from', source);
 };
+
+// ===== BALANCE CONFLICT DETECTION =====
+
+// ✅ Detect and resolve balance conflicts
+function detectBalanceConflicts() {
+    const balanceElements = ['nav-gem-balance', 'walletBalance'];
+    const observedBalances = {};
+    
+    balanceElements.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            observedBalances[id] = element.textContent;
+        }
+    });
+    
+    // If balance manager exists, its value should match UI
+    if (window.balanceManager) {
+        const authoritativeBalance = window.balanceManager.getBalance();
+        const conflicts = balanceElements.filter(id => {
+            const element = document.getElementById(id);
+            if (!element) return false;
+            
+            const displayedValue = parseInt(element.textContent.replace(/[^\d]/g, ''));
+            return Math.abs(displayedValue - authoritativeBalance) > 1; // Allow for rounding
+        });
+        
+        if (conflicts.length > 0) {
+            console.warn('🚨 Balance conflict detected, correcting UI:', {
+                authoritative: authoritativeBalance,
+                conflicts: conflicts
+            });
+            // Force correction
+            window.balanceManager.notifyBalanceChange('corrected', null, null);
+        }
+    }
+}
+
+// Run conflict detection every 5 seconds
+setInterval(detectBalanceConflicts, 5000);
 
 // ===== EXPORT FOR MODULES =====
 

@@ -291,38 +291,37 @@ class AuthManager {
     }
 
     async loadWalletBalance() {
+        // ✅ FIXED: Check if balance manager is handling this
+        if (window.balanceManager && window.balanceManager.isUserAuthenticated()) {
+            // Let balance manager handle authenticated users
+            return;
+        }
+        
         try {
             const response = await fetch('/api/trading/gamification/wallet');
             if (response.ok) {
                 const data = await response.json();
                 if (data.status === 'success' && data.data && data.data.gem_coins !== undefined) {
                     const balance = data.data.gem_coins;
-                    // Ensure balance is a number
                     const safeBalance = typeof balance === 'number' ? balance : 5000;
                     
-                    const balanceElement = document.getElementById('nav-gem-balance');
-                    if (balanceElement) {
-                        balanceElement.textContent = safeBalance.toLocaleString();
+                    // ✅ FIXED: Use balance manager for updates instead of direct UI manipulation
+                    if (window.balanceManager) {
+                        window.balanceManager.updateBalance(safeBalance, 'auth_api');
+                    } else {
+                        // Legacy direct update only if balance manager unavailable
+                        this.updateBalance(safeBalance);
                     }
                     
-                    // Also update wallet balance on roulette page
-                    const walletBalanceElement = document.getElementById('walletBalance');
-                    if (walletBalanceElement) {
-                        walletBalanceElement.textContent = safeBalance.toLocaleString() + ' GEM';
-                    }
-                    
-                    // Store balance for roulette game
-                    this.userBalance = safeBalance;
                     return;
                 }
             }
             
-            // Fallback for demo - use consistent balance
+            // ✅ FIXED: Fallback uses balance manager
             this.setFallbackBalance();
             
         } catch (error) {
             console.error('Failed to load wallet balance:', error);
-            // Fallback for demo - use consistent balance
             this.setFallbackBalance();
         }
     }
@@ -413,9 +412,18 @@ class AuthManager {
     }
 }
 
-// Initialize auth manager when DOM is loaded
+// ✅ FIXED: Initialize auth manager AFTER balance manager is ready
 document.addEventListener('DOMContentLoaded', function() {
-    window.auth = new AuthManager();
+    const waitForBalanceManager = () => {
+        if (window.balanceManagerReady || !window.balanceManager) {
+            // Balance manager is ready or not available, safe to start auth manager
+            window.auth = new AuthManager();
+        } else {
+            // Wait for balance manager to be ready
+            setTimeout(waitForBalanceManager, 50);
+        }
+    };
+    waitForBalanceManager();
 });
 
 // Export for use in other scripts

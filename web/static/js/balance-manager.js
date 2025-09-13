@@ -15,12 +15,23 @@ class UnifiedBalanceManager {
         this.autoSaveTimer = null;
         this.heartbeatTimer = null;
         
+        // Performance optimization: Rate limiting for stale detection
+        this.lastStaleCheck = 0;
+        this.lastForceRefresh = 0;
+        this.refreshAttempts = 0;
+        this.refreshCooldownActive = false;
+        
         // Configuration
         this.config = {
             defaultDemoBalance: 5000,
             autoSaveInterval: 30000, // 30 seconds
             heartbeatInterval: 60000, // 1 minute
             maxRetries: 3,
+            // Performance optimization thresholds
+            staleThreshold: 30000, // 30 seconds (increased from 5 seconds)
+            refreshCooldown: 2000, // 2 seconds minimum between refreshes
+            maxRefreshAttempts: 3, // Maximum refresh attempts per cooldown period
+            cooldownResetTime: 10000, // 10 seconds to reset refresh attempts
             storageKeys: {
                 demoBalance: 'cc_demo_balance_v2',
                 balanceTimestamp: 'cc_balance_timestamp',
@@ -50,8 +61,14 @@ class UnifiedBalanceManager {
         
         console.log(`✅ Balance Manager initialized - Demo: ${this.isDemo}, Balance: ${this.currentBalance} GEM`);
         
+        // ✅ Set flag to prevent other components from overriding
+        window.balanceManagerAuthority = true;
+        
+        // PERFORMANCE FIX: Set sync time on initialization to prevent immediate stale detection
+        this.lastSyncTime = Date.now();
+        
         // Notify all listeners that balance is loaded
-        this.notifyBalanceChange('loaded', null, null);
+        this.notifyBalanceChange('loaded', null, null, 'initialization');
     }
 
     async detectAuthStatus() {
@@ -81,7 +98,7 @@ class UnifiedBalanceManager {
         } catch (error) {
             console.error('❌ Failed to load balance:', error);
             this.currentBalance = this.config.defaultDemoBalance;
-            this.notifyBalanceChange('error', error.message);
+            this.notifyBalanceChange('error', error.message, null, 'load-error');
         }
     }
 
@@ -211,13 +228,18 @@ class UnifiedBalanceManager {
             const validBalance = Math.max(0, parseFloat(newBalance) || 0);
             
             if (validBalance === this.currentBalance) {
+                // Even if balance is same, update sync time to prevent stale state detection
+                this.lastSyncTime = Date.now();
                 return; // No change needed
             }
 
             const oldBalance = this.currentBalance;
+            
+            // CRITICAL FIX: Update balance immediately and synchronously
             this.currentBalance = validBalance;
+            this.lastSyncTime = Date.now(); // Mark as fresh
 
-            // Save to appropriate storage
+            // Save to appropriate storage IMMEDIATELY
             if (this.isDemo) {
                 this.saveToLocalStorage(validBalance);
                 // Save to server in background
@@ -227,14 +249,14 @@ class UnifiedBalanceManager {
                 await this.saveAuthenticatedBalance(validBalance);
             }
 
-            // Notify all listeners
-            this.notifyBalanceChange('updated', null, oldBalance);
+            // Notify all listeners AFTER balance is fully updated
+            this.notifyBalanceChange('updated', null, oldBalance, source);
 
             console.log(`💰 Balance updated: ${oldBalance} → ${validBalance} GEM (${source})`);
 
         } catch (error) {
             console.error('❌ Balance update failed:', error);
-            this.notifyBalanceChange('error', error.message);
+            this.notifyBalanceChange('error', error.message, null, 'update-error');
         }
     }
 
@@ -319,13 +341,14 @@ class UnifiedBalanceManager {
         }
     }
 
-    notifyBalanceChange(type, error = null, oldBalance = null) {
+    notifyBalanceChange(type, error = null, oldBalance = null, source = null) {
         const event = {
-            type: type, // 'updated', 'error', 'loaded'
+            type: type, // 'updated', 'error', 'loaded', 'refreshed'
             balance: this.currentBalance,
             oldBalance: oldBalance,
             isDemo: this.isDemo,
             error: error,
+            source: source || 'balance-manager',
             timestamp: Date.now()
         };
 
@@ -342,7 +365,7 @@ class UnifiedBalanceManager {
         window.dispatchEvent(new CustomEvent('balanceUpdated', {
             detail: {
                 balance: this.currentBalance,
-                source: 'balance-manager',
+                source: event.source,
                 isDemo: this.isDemo,
                 type: type
             }
@@ -410,7 +433,63 @@ class UnifiedBalanceManager {
 
     // Public API
     getBalance() {
+        // PERFORMANCE FIX: Smart rate limiting to prevent refresh loops
+        const now = Date.now();
+        
+        // Reset refresh attempts if cooldown period has passed
+        if (now - this.lastForceRefresh > this.config.cooldownResetTime) {
+            this.refreshAttempts = 0;
+            this.refreshCooldownActive = false;
+        }
+        
+        // Only check for stale state if not in cooldown and haven't exceeded attempts
+        if (!this.refreshCooldownActive && 
+            this.refreshAttempts < this.config.maxRefreshAttempts &&
+            now - this.lastStaleCheck > this.config.refreshCooldown) {
+            
+            this.lastStaleCheck = now;
+            
+            if (this.syncInProgress || this.hasStaleState()) {
+                console.warn('⚠️ Stale balance detected, refreshing... (attempt ' + (this.refreshAttempts + 1) + ')');
+                this.forceBalanceRefresh();
+            }
+        }
+        
         return this.currentBalance;
+    }
+    
+    hasStaleState() {
+        // PERFORMANCE FIX: More reasonable stale detection threshold
+        const timeSinceLastSync = Date.now() - (this.lastSyncTime || 0);
+        return timeSinceLastSync > this.config.staleThreshold; // 30 seconds threshold (was 5 seconds)
+    }
+    
+    forceBalanceRefresh() {
+        // PERFORMANCE FIX: Implement refresh rate limiting
+        const now = Date.now();
+        
+        // Increment refresh attempts and update cooldown state
+        this.refreshAttempts++;
+        this.lastForceRefresh = now;
+        
+        // Enter cooldown if we've reached max attempts
+        if (this.refreshAttempts >= this.config.maxRefreshAttempts) {
+            this.refreshCooldownActive = true;
+            console.warn('🚫 Balance refresh cooldown activated (too many attempts)');
+        }
+        
+        // Synchronous balance validation - don't return stale values
+        const localBalance = parseFloat(localStorage.getItem(this.config.storageKeys.demoBalance));
+        if (!isNaN(localBalance) && localBalance !== this.currentBalance) {
+            console.log('🔄 Force refreshing balance from localStorage:', localBalance);
+            const oldBalance = this.currentBalance;
+            this.currentBalance = localBalance;
+            this.lastSyncTime = now; // Update sync time
+            this.notifyBalanceChange('refreshed', null, oldBalance, 'force-refresh');
+        } else {
+            // Even if no change, update sync time to prevent repeated stale detections
+            this.lastSyncTime = now;
+        }
     }
 
     isInDemoMode() {
