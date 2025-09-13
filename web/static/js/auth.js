@@ -328,17 +328,25 @@ class AuthManager {
     }
     
     setFallbackBalance() {
-        const balance = 5000; // Fixed demo balance
+        // ✅ FIXED: Get balance from balance manager instead of hardcoded value
+        const balance = window.balanceManager ? window.balanceManager.getBalance() : 5000;
         this.userBalance = balance;
         
-        const balanceElement = document.getElementById('nav-gem-balance');
-        if (balanceElement) {
-            balanceElement.textContent = balance.toLocaleString();
-        }
-        
-        const walletBalanceElement = document.getElementById('walletBalance');
-        if (walletBalanceElement) {
-            walletBalanceElement.textContent = balance.toLocaleString() + ' GEM';
+        // ✅ FIXED: Don't update UI elements directly - let balance manager handle it
+        // The balance manager will notify all listeners including this component
+        if (window.balanceManager) {
+            window.balanceManager.updateBalance(balance, 'auth_fallback');
+        } else {
+            // Only update UI if balance manager isn't available (legacy fallback)
+            const balanceElement = document.getElementById('nav-gem-balance');
+            if (balanceElement) {
+                balanceElement.textContent = balance.toLocaleString();
+            }
+            
+            const walletBalanceElement = document.getElementById('walletBalance');
+            if (walletBalanceElement) {
+                walletBalanceElement.textContent = balance.toLocaleString() + ' GEM';
+            }
         }
     }
     

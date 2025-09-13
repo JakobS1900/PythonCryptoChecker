@@ -26,7 +26,8 @@
       "Bash(\".venv/Scripts/python.exe\":*)",
       "mcp__zen__zen_gemini_query",
       "Bash(del:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(findstr:*)"
     ],
     "deny": [],
     "ask": []
