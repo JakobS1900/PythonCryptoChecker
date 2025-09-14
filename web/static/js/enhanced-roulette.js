@@ -911,6 +911,7 @@ class EnhancedRouletteGame {
         const winning_number = data.winning_number;
         const winning_bets = data.winning_bets || data.payouts || [];
         const total_payout = data.total_payout || data.total_winnings || 0;
+        const net_winnings = data.net_winnings || (total_payout > 0 ? total_payout - (data.total_bet || 0) : 0);
         const new_balance = data.new_balance;
         const is_winner = data.is_winner || total_payout > 0;
         
@@ -928,7 +929,7 @@ class EnhancedRouletteGame {
         const resultContent = `
             <div class="result-info">
                 <h3>Winning Number: <span class="${this.getColorClass(winning_number)}">${winning_number !== undefined ? winning_number : 'Error'}</span></h3>
-                <h4>Total Win: ${total_payout} GEM</h4>
+                <h4>Total Win: ${net_winnings} GEM</h4>
                 ${winning_bets && winning_bets.length > 0 ? winning_bets.map(p => `
                     <div class="payout-item">
                         <div>Bet: ${p.type || p.bet_type} ${p.value || p.bet_value}</div>

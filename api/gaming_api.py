@@ -1082,6 +1082,9 @@ async def spin_roulette_wheel(
             except Exception:
                 pass
 
+            # Calculate net winnings (profit) for better UX
+            net_winnings = total_payout - total_bet if total_payout > 0 else 0
+
             content = {
                 "success": True,
                 "data": {
@@ -1089,6 +1092,7 @@ async def spin_roulette_wheel(
                     "winning_color": winning_color,
                     "winning_bets": winning_bets,
                     "total_payout": total_payout,
+                    "net_winnings": net_winnings,  # Show actual profit, not total payout
                     "total_bet": total_bet,
                     "new_balance": new_balance,
                     "is_winner": total_payout > 0,
@@ -1141,13 +1145,19 @@ async def spin_roulette_wheel(
         user_result = await session.execute(select(User).where(User.id == user_id))
         user = user_result.scalar_one()
         
+        # Calculate net winnings (profit) for better UX
+        total_winnings = result["total_winnings"]
+        total_bet = result["total_bet"]
+        net_winnings = total_winnings - total_bet if total_winnings > 0 else 0
+
         return {
             "success": True,
             "data": {
                 "winning_number": result["winning_number"],
                 "winning_bets": result.get("payouts", []),
-                "total_payout": result["total_winnings"],
-                "total_bet": result["total_bet"],
+                "total_payout": total_winnings,
+                "net_winnings": net_winnings,  # Show actual profit, not total payout
+                "total_bet": total_bet,
                 "new_balance": user.current_balance if hasattr(user, 'current_balance') else 1000,
                 "server_seed": result.get("server_seed"),
                 "client_seed": result.get("client_seed"),
