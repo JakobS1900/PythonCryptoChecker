@@ -1042,6 +1042,8 @@ async function openSelectedPack() {
 
     try {
         // Call the real pack opening API
+        console.log('🎁 Opening pack:', packType, 'cost:', packCosts[packType]);
+
         const response = await fetch('/api/inventory/packs/open', {
             method: 'POST',
             headers: {
@@ -1054,9 +1056,27 @@ async function openSelectedPack() {
         });
 
         const result = await response.json();
+        console.log('🎁 Pack opening result:', result);
 
         if (!response.ok) {
-            throw new Error(result.detail || 'Failed to open pack');
+            // Handle specific error cases
+            let errorMessage = 'Failed to open pack';
+            if (response.status === 400 && result.detail) {
+                if (result.detail.includes('Insufficient GEM')) {
+                    errorMessage = `Insufficient GEM coins! You need ${packCosts[packType]} GEM to open this pack.`;
+                } else if (result.detail.includes('Invalid pack type')) {
+                    errorMessage = 'Invalid pack type selected. Please try again.';
+                } else {
+                    errorMessage = result.detail;
+                }
+            } else if (response.status === 401) {
+                errorMessage = 'Authentication required. Please log in to open packs with real GEM coins.';
+            } else if (response.status >= 500) {
+                errorMessage = 'Server error occurred. Please try again later.';
+            } else {
+                errorMessage = result.detail || result.message || 'Unknown error occurred';
+            }
+            throw new Error(errorMessage);
         }
 
         // Show real pack results after animation
@@ -1067,17 +1087,26 @@ async function openSelectedPack() {
 
             // Update balance if not demo mode
             if (!result.demo_mode && result.remaining_balance !== undefined) {
+                console.log('💰 Updated balance from', window.balanceManager ? window.balanceManager.getBalance() : 'unknown', 'to', result.remaining_balance);
                 updateBalance(result.remaining_balance);
             }
 
             // Refresh inventory to show new items
+            console.log('🔄 Refreshing inventory after pack opening');
             refreshInventory();
         }, 2000);
 
     } catch (error) {
-        console.error('Pack opening failed:', error);
-        showAlert(error.message || 'Failed to open pack', 'error');
+        console.error('❌ Pack opening failed:', error);
 
+        // Show appropriate error message
+        if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+            showAlert('Network error. Please check your connection and try again.', 'error');
+        } else {
+            showAlert(error.message || 'Failed to open pack', 'error');
+        }
+
+        // Reset UI state
         packBox.classList.remove('opening');
         document.getElementById('openPackBtn').disabled = false;
     }

@@ -330,6 +330,196 @@ Validate a roulette bet before placing.
 
 ---
 
+### 📦 Inventory Management System
+
+#### `GET /api/inventory/balance`
+Get user's current GEM balance.
+
+**Authentication**: Required
+
+**Response**:
+```json
+{
+  "status": "success",
+  "data": {
+    "balance": 4500,
+    "currency": "GEM"
+  }
+}
+```
+
+#### `GET /api/inventory/items`
+Get user's inventory items with pagination.
+
+**Authentication**: Required
+
+**Parameters**:
+- `page` (query, optional): Page number (default: 1)
+- `limit` (query, optional): Items per page (default: 20)
+
+**Response**:
+```json
+{
+  "status": "success",
+  "data": {
+    "items": [
+      {
+        "id": 1,
+        "name": "Bitcoin Card",
+        "description": "A rare trading card featuring Bitcoin",
+        "rarity": "rare",
+        "quantity": 1,
+        "category": "trading_card",
+        "value": 50
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "total_pages": 1,
+      "total_items": 6,
+      "items_per_page": 20
+    },
+    "summary": {
+      "total_items": 6,
+      "total_value": 220,
+      "rarity_breakdown": {
+        "common": 3,
+        "rare": 2,
+        "epic": 1
+      }
+    }
+  }
+}
+```
+
+#### `POST /api/inventory/open_pack`
+Open an item pack (Standard/Premium/Legendary).
+
+**Authentication**: Required
+
+**Request**:
+```json
+{
+  "pack_type": "standard"
+}
+```
+
+**Response**:
+```json
+{
+  "status": "success",
+  "data": {
+    "pack_type": "standard",
+    "cost": 500,
+    "items_received": [
+      {
+        "id": 15,
+        "name": "Ethereum Card",
+        "rarity": "common",
+        "category": "trading_card",
+        "value": 25
+      },
+      {
+        "id": 23,
+        "name": "Lucky Streak",
+        "rarity": "rare",
+        "category": "consumable",
+        "value": 75
+      }
+    ],
+    "new_balance": 4000,
+    "message": "Pack opened successfully! You received 3 items."
+  }
+}
+```
+
+#### `POST /api/inventory/use_item`
+Use a consumable item from inventory.
+
+**Authentication**: Required
+
+**Request**:
+```json
+{
+  "item_id": 23
+}
+```
+
+**Response**:
+```json
+{
+  "status": "success",
+  "data": {
+    "item_used": {
+      "id": 23,
+      "name": "Lucky Streak",
+      "effect": "Increases luck for next 3 games"
+    },
+    "effect_applied": true,
+    "remaining_quantity": 0,
+    "message": "Lucky Streak consumed! Effect is now active."
+  }
+}
+```
+
+#### `POST /api/inventory/equip_item`
+Equip a cosmetic item.
+
+**Authentication**: Required
+
+**Request**:
+```json
+{
+  "item_id": 45
+}
+```
+
+**Response**:
+```json
+{
+  "status": "success",
+  "data": {
+    "item_equipped": {
+      "id": 45,
+      "name": "Golden Avatar Frame",
+      "category": "cosmetic"
+    },
+    "equipped": true,
+    "message": "Golden Avatar Frame equipped successfully!"
+  }
+}
+```
+
+#### `POST /api/inventory/transaction`
+Process a GEM transaction (debit/credit).
+
+**Authentication**: Required
+
+**Request**:
+```json
+{
+  "amount": 100,
+  "type": "debit",
+  "description": "Pack purchase"
+}
+```
+
+**Response**:
+```json
+{
+  "status": "success",
+  "data": {
+    "transaction_id": "txn-1234567890",
+    "amount": -100,
+    "new_balance": 4400,
+    "type": "debit",
+    "description": "Pack purchase"
+  }
+}
+```
+
+---
+
 ### 🛠️ Utility Endpoints
 
 #### `GET /api/test`
@@ -423,13 +613,42 @@ class CryptoCheckerAPI {
     });
     return await response.json();
   }
+
+  async getInventory(page = 1) {
+    const response = await fetch(`${this.baseURL}/api/inventory/items?page=${page}`, {
+      credentials: 'include'
+    });
+    return await response.json();
+  }
+
+  async openPack(packType = 'standard') {
+    const response = await fetch(`${this.baseURL}/api/inventory/open_pack`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ pack_type: packType })
+    });
+    return await response.json();
+  }
+
+  async useItem(itemId) {
+    const response = await fetch(`${this.baseURL}/api/inventory/use_item`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ item_id: itemId })
+    });
+    return await response.json();
+  }
 }
 
 // Usage
 const api = new CryptoCheckerAPI();
 await api.demoLogin();
 const portfolio = await api.getPortfolio();
-const result = await api.spinRoulette([
+const inventory = await api.getInventory();
+const packResult = await api.openPack('standard');
+const rouletteResult = await api.spinRoulette([
   { type: 'red', value: 'red', amount: 10 }
 ]);
 ```
@@ -448,4 +667,18 @@ This script tests all major endpoints and validates response formats.
 
 ---
 
-*Generated for CryptoChecker Gaming Platform - January 2025*
+## Recent API Updates (January 2025)
+
+### 🆕 New Features Added:
+- **📦 Complete Inventory System**: Full item management with pack opening, item usage, and equipment
+- **💰 Real GEM Transactions**: Actual currency deduction and balance management
+- **🎲 Enhanced Gaming UX**: Improved win displays and clearer profit reporting
+- **🛠️ Server Reliability**: Fixed dependency issues and added virtual environment support
+
+### 🔄 Updated Endpoints:
+- All inventory endpoints now process real transactions (no more mock data)
+- Gambling endpoints display net winnings instead of confusing total payouts
+- Enhanced error handling and validation across all endpoints
+- Improved authentication flows with better demo mode support
+
+*API Documentation - Updated January 2025 with Complete Inventory System*

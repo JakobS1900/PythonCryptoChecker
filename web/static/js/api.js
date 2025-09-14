@@ -225,38 +225,38 @@ class APIClient {
 
     inventory = {
         getItems: async (page = 1, rarity = null, category = null) => {
-            let url = `/inventory/items?page=${page}`;
+            let url = `/api/inventory/items?page=${page}`;
             if (rarity) url += `&rarity=${rarity}`;
             if (category) url += `&category=${category}`;
             return this.request(url);
         },
 
         getItem: async (itemId) => {
-            return this.request(`/inventory/items/${itemId}`);
+            return this.request(`/api/inventory/items/${itemId}`);
         },
 
         equipItem: async (itemId, slot = null) => {
-            return this.request(`/inventory/items/${itemId}/equip`, {
+            return this.request(`/api/inventory/items/${itemId}/equip`, {
                 method: 'POST',
                 body: JSON.stringify({ slot })
             });
         },
 
         unequipItem: async (itemId) => {
-            return this.request(`/inventory/items/${itemId}/unequip`, {
+            return this.request(`/api/inventory/items/${itemId}/unequip`, {
                 method: 'POST'
             });
         },
 
         useItem: async (itemId, quantity = 1) => {
-            return this.request(`/inventory/items/${itemId}/use`, {
+            return this.request(`/api/inventory/items/${itemId}/use`, {
                 method: 'POST',
                 body: JSON.stringify({ quantity })
             });
         },
 
         sellItem: async (itemId, quantity = 1) => {
-            return this.request(`/inventory/items/${itemId}/sell`, {
+            return this.request(`/api/inventory/items/${itemId}/sell`, {
                 method: 'POST',
                 body: JSON.stringify({ quantity })
             });
@@ -264,41 +264,41 @@ class APIClient {
 
         // Trading methods
         createTrade: async (tradeData) => {
-            return this.request('/inventory/trades', {
+            return this.request('/api/inventory/trades', {
                 method: 'POST',
                 body: JSON.stringify(tradeData)
             });
         },
 
         getTrades: async (status = null) => {
-            let url = '/inventory/trades';
+            let url = '/api/inventory/trades';
             if (status) url += `?status=${status}`;
             return this.request(url);
         },
 
         respondToTrade: async (tradeId, action) => {
-            return this.request(`/inventory/trades/${tradeId}`, {
+            return this.request(`/api/inventory/trades/${tradeId}`, {
                 method: 'PUT',
                 body: JSON.stringify({ action })
             });
         },
 
         cancelTrade: async (tradeId) => {
-            return this.request(`/inventory/trades/${tradeId}`, {
+            return this.request(`/api/inventory/trades/${tradeId}`, {
                 method: 'DELETE'
             });
         },
 
         // Marketplace
         getMarketplace: async (page = 1, rarity = null, category = null) => {
-            let url = `/inventory/marketplace?page=${page}`;
+            let url = `/api/inventory/marketplace?page=${page}`;
             if (rarity) url += `&rarity=${rarity}`;
             if (category) url += `&category=${category}`;
             return this.request(url);
         },
 
         getWallet: async () => {
-            return this.request('/inventory/wallet');
+            return this.request('/api/inventory/wallet');
         }
     };
 
