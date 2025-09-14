@@ -23,6 +23,7 @@ from api.admin_api import router as admin_router
 from api.analytics_api import router as analytics_router
 from api.onboarding_api import router as onboarding_router
 from api.mini_games_api import router as mini_games_router
+from api.inventory_api import router as inventory_router
 from web.trading_api import router as trading_router
 
 # Import database and other systems
@@ -177,6 +178,7 @@ app.include_router(admin_router, prefix="/api")
 app.include_router(analytics_router, prefix="/api")
 app.include_router(onboarding_router, prefix="/api")
 app.include_router(mini_games_router, prefix="/api/mini-games")
+app.include_router(inventory_router, prefix="/api/inventory")
 # Trading API already declares '/api/trading' in its router prefix; include without extra prefix
 app.include_router(trading_router)
 

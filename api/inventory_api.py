@@ -2,13 +2,15 @@
 Inventory API endpoints for item management and trading.
 """
 
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends, status, Request
 from fastapi.security import HTTPBearer
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
-from database import get_db_session, ItemType, ItemRarity
+from database import get_db_session
+from database.unified_models import ItemType, ItemRarity
 from inventory import InventoryManager, TradingSystem
 from achievements import achievement_engine
 from auth import AuthenticationManager
@@ -65,6 +67,34 @@ async def get_current_user_id(
             detail="Invalid token"
         )
     return user.id
+
+
+async def get_optional_user_id(
+    request: Request,
+    session: AsyncSession = Depends(get_db_session)
+) -> Optional[str]:
+    """Get user ID if authenticated, otherwise return None for demo mode."""
+    try:
+        auth_header = request.headers.get("Authorization")
+        logger.info(f"Auth header: {auth_header}")
+
+        if not auth_header or not auth_header.startswith("Bearer "):
+            logger.info("No valid Bearer token found")
+            return None
+
+        token = auth_header.replace("Bearer ", "")
+        logger.info(f"Extracted token: {token[:20]}...")
+
+        if token in ["null", "undefined", ""]:
+            logger.info("Token is null/undefined/empty")
+            return None
+
+        user = await auth_manager.get_user_by_token(session, token)
+        logger.info(f"User found: {user.id if user else None}")
+        return user.id if user else None
+    except Exception as e:
+        logger.error(f"Error in get_optional_user_id: {e}")
+        return None
 
 
 # ==================== INVENTORY ENDPOINTS ====================
@@ -575,7 +605,7 @@ async def get_item_details(
 @router.get("/rarities")
 async def get_item_rarities():
     """Get item rarity information."""
-    from gamification.models import VirtualEconomyConstants
+    from database.unified_models import GameConstants
     
     return {
         "rarities": {
@@ -610,5 +640,378 @@ async def get_item_rarities():
                 "gem_value": 5000.0
             }
         },
-        "drop_rates": VirtualEconomyConstants.DROP_RATES
+        "drop_rates": GameConstants.DROP_RATES
     }
+
+
+@router.get("/test-auth")
+async def test_authentication(
+    request: Request,
+    user_id: Optional[str] = Depends(get_optional_user_id),
+    session: AsyncSession = Depends(get_db_session)
+):
+    """Test endpoint to verify authentication works."""
+    return {
+        "success": True,
+        "user_id": user_id,
+        "is_demo": user_id is None,
+        "auth_header": request.headers.get("Authorization", "None")
+    }
+
+
+@router.post("/packs/open")
+async def open_item_pack(
+    pack_data: dict,
+    request: Request,
+    user_id: Optional[str] = Depends(get_optional_user_id),
+    session: AsyncSession = Depends(get_db_session)
+):
+    """Open an item pack and award random items to user inventory."""
+    try:
+        pack_type = pack_data.get("pack_type", "standard")
+
+        # Pack costs and item counts
+        pack_config = {
+            "standard": {"cost": 500, "items": 3, "legendary_bonus": False},
+            "premium": {"cost": 1500, "items": 5, "legendary_bonus": False},
+            "legendary": {"cost": 5000, "items": 7, "legendary_bonus": True}
+        }
+
+        if pack_type not in pack_config:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid pack type"
+            )
+
+        config = pack_config[pack_type]
+
+        if not user_id:
+            # Demo mode - return simulated results without affecting database
+            mock_items = []
+            for i in range(config["items"]):
+                # Select random rarity based on drop rates
+                import random
+                rand = random.random()
+                if rand < 0.02 and config["legendary_bonus"]:
+                    rarity = "LEGENDARY"
+                elif rand < 0.038:
+                    rarity = "EPIC"
+                elif rand < 0.118:
+                    rarity = "RARE"
+                elif rand < 0.318:
+                    rarity = "UNCOMMON"
+                else:
+                    rarity = "COMMON"
+
+                mock_items.append({
+                    "id": f"demo-{i}",
+                    "name": f"{rarity.capitalize()} Demo Item {i+1}",
+                    "rarity": rarity,
+                    "item_type": "TRADING_CARD",
+                    "gem_value": {"COMMON": 10, "UNCOMMON": 50, "RARE": 200, "EPIC": 1000, "LEGENDARY": 5000}[rarity],
+                    "demo": True
+                })
+
+            return {
+                "success": True,
+                "pack_type": pack_type,
+                "cost": config["cost"],
+                "items": mock_items,
+                "demo_mode": True
+            }
+
+        # Real mode - check balance and deduct cost
+        from database.unified_models import VirtualWallet, CollectibleItem, UserInventory, GameConstants, ItemRarity
+
+        # Get user's wallet
+        wallet_result = await session.execute(
+            select(VirtualWallet).where(VirtualWallet.user_id == user_id)
+        )
+        wallet = wallet_result.scalar_one_or_none()
+
+        if not wallet or wallet.gem_coins < config["cost"]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Insufficient GEM coins"
+            )
+
+        # Deduct cost
+        wallet.gem_coins -= config["cost"]
+
+        # Get all available items
+        items_result = await session.execute(
+            select(CollectibleItem).where(CollectibleItem.is_active == True)
+        )
+        all_items = items_result.scalars().all()
+
+        if not all_items:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="No items available in the database"
+            )
+
+        # Group items by rarity
+        items_by_rarity = {}
+        for item in all_items:
+            if item.rarity not in items_by_rarity:
+                items_by_rarity[item.rarity] = []
+            items_by_rarity[item.rarity].append(item)
+
+        # Generate random items based on drop rates
+        import random
+        awarded_items = []
+        drop_rates = GameConstants.DROP_RATES
+
+        for i in range(config["items"]):
+            # Select rarity based on drop rates
+            rand = random.random()
+            cumulative = 0.0
+            selected_rarity = "COMMON"  # fallback
+
+            # Legendary pack bonus - increased legendary chance
+            if config["legendary_bonus"]:
+                drop_rates_adjusted = {
+                    ItemRarity.COMMON: 0.50,     # Reduced from 70%
+                    ItemRarity.UNCOMMON: 0.25,   # Increased from 20%
+                    ItemRarity.RARE: 0.15,       # Increased from 8%
+                    ItemRarity.EPIC: 0.08,       # Increased from 1.8%
+                    ItemRarity.LEGENDARY: 0.02   # Increased from 0.2%
+                }
+            else:
+                drop_rates_adjusted = drop_rates
+
+            for rarity, rate in drop_rates_adjusted.items():
+                cumulative += rate
+                if rand <= cumulative:
+                    selected_rarity = rarity.value
+                    break
+
+            # Select random item from that rarity
+            if selected_rarity in items_by_rarity and items_by_rarity[selected_rarity]:
+                selected_item = random.choice(items_by_rarity[selected_rarity])
+
+                # Add to user inventory
+                existing_result = await session.execute(
+                    select(UserInventory).where(
+                        and_(
+                            UserInventory.user_id == user_id,
+                            UserInventory.item_id == selected_item.id
+                        )
+                    )
+                )
+                existing_inventory = existing_result.scalar_one_or_none()
+
+                if existing_inventory:
+                    existing_inventory.quantity += 1
+                    inventory_item = existing_inventory
+                else:
+                    inventory_item = UserInventory(
+                        user_id=user_id,
+                        item_id=selected_item.id,
+                        quantity=1,
+                        acquisition_method="pack_opening"
+                    )
+                    session.add(inventory_item)
+
+                awarded_items.append({
+                    "id": selected_item.id,
+                    "name": selected_item.name,
+                    "description": selected_item.description,
+                    "rarity": selected_item.rarity,
+                    "item_type": selected_item.item_type,
+                    "gem_value": selected_item.gem_value,
+                    "color_theme": selected_item.color_theme,
+                    "quantity": 1
+                })
+
+        await session.commit()
+
+        return {
+            "success": True,
+            "pack_type": pack_type,
+            "cost": config["cost"],
+            "items": awarded_items,
+            "remaining_balance": wallet.gem_coins
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to open pack: {e}")
+        await session.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to open pack"
+        )
+
+
+@router.post("/packs/test-open")
+async def test_open_pack_authenticated(
+    pack_data: dict,
+    session: AsyncSession = Depends(get_db_session)
+):
+    """Test pack opening with real authenticated user logic (TEMPORARY TEST ENDPOINT)."""
+    try:
+        # Hardcode test user for now
+        user_id = "user-testuser2-1757810573"
+        pack_type = pack_data.get("pack_type", "standard")
+
+        # Pack costs and item counts
+        pack_config = {
+            "standard": {"cost": 500, "items": 3, "legendary_bonus": False},
+            "premium": {"cost": 1500, "items": 5, "legendary_bonus": False},
+            "legendary": {"cost": 5000, "items": 7, "legendary_bonus": True}
+        }
+
+        if pack_type not in pack_config:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid pack type"
+            )
+
+        config = pack_config[pack_type]
+
+        # Real mode - check balance and deduct cost
+        from database.unified_models import VirtualWallet, CollectibleItem, UserInventory
+        from sqlalchemy import and_
+
+        # Get user's wallet
+        wallet_result = await session.execute(
+            select(VirtualWallet).where(VirtualWallet.user_id == user_id)
+        )
+        wallet = wallet_result.scalar_one_or_none()
+        if not wallet:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="User wallet not found"
+            )
+        if wallet.gem_coins < config["cost"]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Insufficient GEM coins. Need {config['cost']}, have {wallet.gem_coins}"
+            )
+
+        # Deduct cost
+        wallet.gem_coins -= config["cost"]
+        logger.info(f"Deducted {config['cost']} GEM coins from user {user_id}. New balance: {wallet.gem_coins}")
+
+        # Get all available items
+        items_result = await session.execute(
+            select(CollectibleItem).where(CollectibleItem.is_active == True)
+        )
+        all_items = items_result.scalars().all()
+        if not all_items:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="No items available in the database"
+            )
+
+        # Group items by rarity
+        items_by_rarity = {}
+        for item in all_items:
+            if item.rarity not in items_by_rarity:
+                items_by_rarity[item.rarity] = []
+            items_by_rarity[item.rarity].append(item)
+
+        logger.info(f"Available rarities: {list(items_by_rarity.keys())}")
+
+        # Generate random items based on drop rates
+        import random
+        awarded_items = []
+        drop_rates = {
+            "COMMON": 0.70,
+            "UNCOMMON": 0.20,
+            "RARE": 0.08,
+            "EPIC": 0.018,
+            "LEGENDARY": 0.002
+        }
+
+        for i in range(config["items"]):
+            # Select rarity based on drop rates
+            rand = random.random()
+            cumulative = 0.0
+            selected_rarity = "COMMON"  # fallback
+
+            # Legendary pack bonus - increased legendary chance
+            if config["legendary_bonus"]:
+                drop_rates_adjusted = {
+                    "COMMON": 0.50,
+                    "UNCOMMON": 0.25,
+                    "RARE": 0.15,
+                    "EPIC": 0.08,
+                    "LEGENDARY": 0.02
+                }
+            else:
+                drop_rates_adjusted = drop_rates
+
+            for rarity, rate in drop_rates_adjusted.items():
+                cumulative += rate
+                if rand <= cumulative:
+                    selected_rarity = rarity
+                    break
+
+            # Select random item from that rarity
+            if selected_rarity in items_by_rarity and items_by_rarity[selected_rarity]:
+                selected_item = random.choice(items_by_rarity[selected_rarity])
+                logger.info(f"Selected {selected_rarity} item: {selected_item.name}")
+
+                # Add to user inventory
+                existing_result = await session.execute(
+                    select(UserInventory).where(
+                        and_(
+                            UserInventory.user_id == user_id,
+                            UserInventory.item_id == selected_item.id
+                        )
+                    )
+                )
+                existing_inventory = existing_result.scalar_one_or_none()
+
+                if existing_inventory:
+                    existing_inventory.quantity += 1
+                    logger.info(f"Updated inventory item quantity to {existing_inventory.quantity}")
+                else:
+                    new_inventory = UserInventory(
+                        user_id=user_id,
+                        item_id=selected_item.id,
+                        quantity=1,
+                        acquisition_method="pack_opening"
+                    )
+                    session.add(new_inventory)
+                    logger.info(f"Added new inventory item: {selected_item.name}")
+
+                awarded_items.append({
+                    "id": selected_item.id,
+                    "name": selected_item.name,
+                    "description": selected_item.description,
+                    "rarity": selected_item.rarity,
+                    "item_type": selected_item.item_type,
+                    "gem_value": selected_item.gem_value,
+                    "color_theme": selected_item.color_theme,
+                    "crypto_theme": selected_item.crypto_theme,
+                    "quantity": 1
+                })
+            else:
+                logger.warning(f"No items available for rarity: {selected_rarity}")
+
+        await session.commit()
+        logger.info(f"Pack opening completed successfully. Awarded {len(awarded_items)} items.")
+
+        return {
+            "success": True,
+            "pack_type": pack_type,
+            "cost": config["cost"],
+            "items": awarded_items,
+            "remaining_balance": wallet.gem_coins,
+            "user_id": user_id,
+            "test_mode": True
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to open test pack: {e}", exc_info=True)
+        await session.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to open pack: {str(e)}"
+        )

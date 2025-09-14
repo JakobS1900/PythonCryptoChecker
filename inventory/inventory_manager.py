@@ -10,11 +10,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete, and_, or_, func
 from sqlalchemy.orm import selectinload
 
-from gamification.models import (
+from database.unified_models import (
     CollectibleItem, UserInventory, ItemType, ItemRarity,
-    VirtualWallet, VirtualTransaction, CurrencyType
+    VirtualWallet, VirtualTransaction, CurrencyType, User
 )
-from auth.models import User
 from logger import logger
 
 
@@ -519,7 +518,7 @@ class InventoryManager:
         consumable_item: CollectibleItem
     ) -> str:
         """Apply effects from consumable items."""
-        from gamification.models import ActiveEffect
+        from database.unified_models import ActiveEffect
         from datetime import datetime, timedelta
         name = (consumable_item.name or "").lower()
 

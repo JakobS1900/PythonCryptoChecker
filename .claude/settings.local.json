@@ -27,7 +27,13 @@
       "mcp__zen__zen_gemini_query",
       "Bash(del:*)",
       "Bash(node:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(find:*)",
+      "Bash(tasklist)",
+      "Bash(start http://localhost:8000/inventory)",
+      "Bash(pip show:*)",
+      "Bash(\".venv/Scripts/pip\" install flask-socketio)",
+      "Bash(\".venv/Scripts/pip\" install fastapi uvicorn pydantic[email])"
     ],
     "deny": [],
     "ask": []

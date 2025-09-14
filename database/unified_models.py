@@ -319,6 +319,27 @@ class UserInventory(Base):
     item = relationship("CollectibleItem", back_populates="user_items")
 
 
+class ActiveEffect(Base):
+    """Active consumable effects applied to a user (buffs)."""
+    __tablename__ = "active_effects"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+
+    # Effect type identifiers: DROP_RATE, XP_MULT, GEM_MULT, GUARANTEED_RARE
+    effect_type = Column(String, nullable=False)
+    multiplier = Column(Float, default=1.0)  # For *_MULT types or drop rate boosts
+    remaining_uses = Column(Integer)         # For effects with limited uses
+    scope = Column(String, default="TRADING")  # Scope: TRADING, GAMING, GLOBAL
+
+    # Timing
+    created_at = Column(DateTime, default=datetime.utcnow)
+    expires_at = Column(DateTime)            # Null means until uses are consumed
+
+    # Metadata
+    source_item_id = Column(String)          # Inventory/Item source (optional)
+
+
 # ==================== GAMING SYSTEM ====================
 
 class GameSession(Base):
