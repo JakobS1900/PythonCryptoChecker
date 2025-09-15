@@ -163,6 +163,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 localStorage.setItem('access_token', response.data.access_token);
                 localStorage.setItem('refresh_token', response.data.refresh_token);
                 localStorage.setItem('user_data', JSON.stringify(response.data.user));
+                localStorage.setItem('is_logged_in', 'true');  // Critical: Set flag for balance-manager.js
                 
                 // Redirect to home (dashboard)
                 setTimeout(() => {

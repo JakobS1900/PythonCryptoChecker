@@ -5,6 +5,7 @@
 {% block body_class %}inventory-page{% endblock %}
 
 {% block extra_css %}
+<link href="/static/css/inventory-fix.css" rel="stylesheet">
 <style>
     /* Enhanced gaming visuals merged into canonical inventory */
     body.inventory-page {
@@ -64,9 +65,119 @@
 
     .use-item-btn { background: var(--gradient-success); border:none; color:#fff; padding:0.45rem 0.9rem; border-radius:18px; }
 
+    /* Enhanced item card styling for better text display */
+    .item-card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 1rem;
+        height: 100%;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .item-card:hover {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(79, 70, 229, 0.4);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+    }
+
+    .item-name {
+        font-size: 0.95rem;
+        font-weight: 600;
+        line-height: 1.3;
+        color: #fff;
+        margin-bottom: 0.5rem;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+
+    .item-description {
+        font-size: 0.85rem;
+        line-height: 1.4;
+        color: rgba(255, 255, 255, 0.7);
+        margin-bottom: 0.75rem;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        min-height: 2.8em; /* Ensure consistent card heights */
+    }
+
+    .item-details {
+        padding: 0.75rem;
+    }
+
+    .item-image {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 0.75rem;
+        background: var(--gradient-crypto);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .item-image i {
+        font-size: 1.5rem;
+        color: #fff;
+    }
+
+    /* Improved responsive breakpoints */
+    @media (min-width: 1400px) {
+        .inventory-grid .col-xxl-2 {
+            flex: 0 0 auto;
+            width: 16.66666667%; /* 6 cards per row on XXL screens */
+        }
+    }
+
+    @media (max-width: 1199px) {
+        .item-name {
+            font-size: 0.9rem;
+        }
+        .item-description {
+            font-size: 0.8rem;
+        }
+    }
+
+    @media (max-width: 991px) {
+        .item-card {
+            padding: 0.75rem;
+        }
+        .item-image {
+            width: 50px;
+            height: 50px;
+        }
+        .item-image i {
+            font-size: 1.3rem;
+        }
+    }
+
     @media (max-width: 768px) {
         .inventory-page { padding-top: 100px; }
         .filter-tabs { overflow-x:auto; white-space:nowrap; }
+        .item-card {
+            padding: 1rem;
+        }
+        .item-name {
+            font-size: 1rem;
+        }
+        .item-description {
+            font-size: 0.85rem;
+            min-height: auto;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .item-card {
+            margin-bottom: 1rem;
+        }
+        .inventory-grid .col-sm-12 {
+            max-width: 100%;
+        }
     }
 </style>
 {% endblock %}
@@ -450,11 +561,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="/static/js/utils.js"></script>
-<script src="/static/js/api.js"></script>
-<script src="/static/js/main.js"></script>
 <script src="/static/js/animations.js"></script>
-<script src="/static/js/auth.js"></script>
 <script>
 let currentPage = 1;
 let currentFilters = {};
@@ -518,23 +625,32 @@ async function loadInventory() {
         console.log('🎒 Loading inventory with params:', params);
         
         const response = await apiClient.inventory.getItems(
-            params.page, 
-            params.rarity, 
+            params.page,
+            params.rarity,
             params.category
         );
-        
+
         console.log('🎒 Inventory response:', response);
-        
-        if (response.success) {
-            // Handle different response structures
-            const items = response.data?.items || response.data || [];
+
+        // Check if we have a successful API response
+        if (response && response.success) {
+            // API client wraps the response in {success: true, data: actualData}
+            // The actual inventory data structure is {items, pagination, filters}
+            const inventoryData = response.data;
+            const items = inventoryData?.items || [];
+            const pagination = inventoryData?.pagination;
+
             displayInventoryItems(items);
             updateInventoryStats(items);
-            updatePagination(response.data.pagination);
-            console.log('✅ Inventory loaded successfully');
+            if (pagination) {
+                updatePagination(pagination);
+            }
+            console.log('✅ Inventory loaded successfully -', items.length, 'items');
         } else {
-            console.warn('❌ Inventory load failed:', response.error);
-            showInventoryError(response.error || 'Failed to load inventory');
+            // Handle error responses
+            const errorMessage = response?.message || response?.error?.message || 'Failed to load inventory';
+            console.warn('❌ Inventory load failed:', errorMessage, response);
+            showInventoryError(errorMessage);
         }
     } catch (error) {
         console.error('❌ Inventory load error:', error);
@@ -586,80 +702,133 @@ function displayInventoryItems(items) {
 
 function displayGridView(items) {
     const container = document.getElementById('inventoryContainer');
-    
-    const itemsHTML = items.map(item => `
-        <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
-            <div class="item-card ${isMultiSelectMode ? 'selectable' : ''}" 
-                 data-item-id="${item.id}" onclick="handleItemClick('${item.id}', ${JSON.stringify(item).replace(/"/g, '&quot;')})">
-                <div class="item-image item-rarity-${item.rarity.toLowerCase()}">
-                    ${getItemIcon(item.category)}
+
+    const itemsHTML = items.map(item => {
+        // Defensive programming - ensure all required fields exist with fallbacks
+        const safeItem = {
+            id: item.id || `item-${Date.now()}-${Math.random()}`,
+            name: item.name || item.item_name || 'Unknown Item',
+            description: item.description || 'No description available',
+            category: item.category || (item.item_type ? item.item_type.toLowerCase().replace('_', ' ') : 'unknown'),
+            rarity: item.rarity || 'COMMON',
+            quantity: item.quantity || 1,
+            is_equipped: item.is_equipped || false,
+            is_tradeable: item.is_tradeable !== false // Default to true unless explicitly false
+        };
+
+        // Safe string operations with improved text display
+        const rarityClass = safeItem.rarity.toLowerCase();
+        // Improved text truncation for better readability
+        const itemName = safeItem.name.length > 80 ? safeItem.name.substring(0, 80) + '...' : safeItem.name;
+        const itemDescription = safeItem.description.length > 120 ? safeItem.description.substring(0, 120) + '...' : safeItem.description;
+        const showEllipsis = false; // Ellipsis now handled above
+
+        return `
+        <div class="col-xl-3 col-lg-4 col-md-6 col-sm-12 mb-4">
+            <div class="item-card ${isMultiSelectMode ? 'selectable' : ''}"
+                 data-item-id="${safeItem.id}" onclick="handleItemClick('${safeItem.id}', ${JSON.stringify(safeItem).replace(/"/g, '&quot;')})">
+                <div class="item-image item-rarity-${rarityClass}">
+                    ${getItemIcon(safeItem.category)}
                 </div>
                 <div class="item-details">
-                    <h6 class="item-name mb-2">${item.name}</h6>
+                    <h6 class="item-name mb-2" title="${safeItem.name}">${itemName}</h6>
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span class="badge rarity-${item.rarity.toLowerCase()}">${item.rarity}</span>
-                        <span class="text-muted">×${item.quantity}</span>
+                        <span class="badge rarity-${rarityClass}">${safeItem.rarity}</span>
+                        <span class="text-muted">×${safeItem.quantity}</span>
                     </div>
-                    <p class="item-description small text-muted mb-2">${item.description.substring(0, 80)}${item.description.length > 80 ? '...' : ''}</p>
+                    <p class="item-description small text-muted mb-2" title="${safeItem.description}">${itemDescription}</p>
                     <div class="item-actions">
-                        ${item.is_equipped ? '<span class="badge bg-success"><i class="fas fa-check me-1"></i>Equipped</span>' : ''}
-                        ${item.is_tradeable ? '<span class="badge bg-info">Tradeable</span>' : ''}
+                        ${safeItem.is_equipped ? '<span class="badge bg-success"><i class="fas fa-check me-1"></i>Equipped</span>' : ''}
+                        ${safeItem.is_tradeable ? '<span class="badge bg-info">Tradeable</span>' : ''}
                     </div>
                 </div>
                 ${isMultiSelectMode ? '<div class="item-select-overlay"><i class="fas fa-check"></i></div>' : ''}
             </div>
         </div>
-    `).join('');
-    
+        `;
+    }).join('');
+
     container.innerHTML = `<div class="row inventory-grid">${itemsHTML}</div>`;
 }
 
 function displayListView(items) {
     const container = document.getElementById('inventoryContainer');
-    
-    const itemsHTML = items.map(item => `
-        <div class="item-row ${isMultiSelectMode ? 'selectable' : ''}" 
-             data-item-id="${item.id}" onclick="handleItemClick('${item.id}', ${JSON.stringify(item).replace(/"/g, '&quot;')})">
+
+    const itemsHTML = items.map(item => {
+        // Defensive programming - ensure all required fields exist with fallbacks
+        const safeItem = {
+            id: item.id || `item-${Date.now()}-${Math.random()}`,
+            name: item.name || item.item_name || 'Unknown Item',
+            description: item.description || 'No description available',
+            category: item.category || (item.item_type ? item.item_type.toLowerCase().replace('_', ' ') : 'unknown'),
+            rarity: item.rarity || 'COMMON',
+            quantity: item.quantity || 1,
+            is_equipped: item.is_equipped || false,
+            is_tradeable: item.is_tradeable !== false // Default to true unless explicitly false
+        };
+
+        // Safe string operations with improved list view text display
+        const rarityClass = safeItem.rarity.toLowerCase();
+        // Better text truncation for list view
+        const itemName = safeItem.name.length > 45 ? safeItem.name.substring(0, 45) + '...' : safeItem.name;
+        const itemDescription = safeItem.description.length > 80 ? safeItem.description.substring(0, 80) + '...' : safeItem.description;
+        const showEllipsis = false; // Ellipsis now handled above
+
+        return `
+        <div class="item-row ${isMultiSelectMode ? 'selectable' : ''}"
+             data-item-id="${safeItem.id}" onclick="handleItemClick('${safeItem.id}', ${JSON.stringify(safeItem).replace(/"/g, '&quot;')})">
             <div class="row align-items-center py-3">
                 <div class="col-md-2">
-                    <div class="item-icon item-rarity-${item.rarity.toLowerCase()}">
-                        ${getItemIcon(item.category)}
+                    <div class="item-icon item-rarity-${rarityClass}">
+                        ${getItemIcon(safeItem.category)}
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <h6 class="mb-1">${item.name}</h6>
-                    <small class="text-muted">${item.description.substring(0, 50)}${item.description.length > 50 ? '...' : ''}</small>
+                    <h6 class="mb-1" title="${safeItem.name}">${itemName}</h6>
+                    <small class="text-muted" title="${safeItem.description}">${itemDescription}</small>
                 </div>
                 <div class="col-md-2">
-                    <span class="badge rarity-${item.rarity.toLowerCase()}">${item.rarity}</span>
+                    <span class="badge rarity-${rarityClass}">${safeItem.rarity}</span>
                 </div>
                 <div class="col-md-1">
-                    <span class="fw-semibold">×${item.quantity}</span>
+                    <span class="fw-semibold">×${safeItem.quantity}</span>
                 </div>
                 <div class="col-md-2">
-                    ${item.is_equipped ? '<span class="badge bg-success">Equipped</span>' : ''}
-                    ${item.is_tradeable ? '<span class="badge bg-info">Tradeable</span>' : ''}
+                    ${safeItem.is_equipped ? '<span class="badge bg-success">Equipped</span>' : ''}
+                    ${safeItem.is_tradeable ? '<span class="badge bg-info">Tradeable</span>' : ''}
                 </div>
                 <div class="col-md-1">
-                    <button class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation(); showItemDetails('${item.id}')">
+                    <button class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation(); showItemDetails('${safeItem.id}')">
                         <i class="fas fa-eye"></i>
                     </button>
                 </div>
             </div>
         </div>
-    `).join('');
-    
+        `;
+    }).join('');
+
     container.innerHTML = itemsHTML;
 }
 
 function getItemIcon(category) {
+    // Normalize category string for consistent lookup
+    const normalizedCategory = (category || '').toLowerCase().replace(/[_\s]+/g, '_');
+
     const icons = {
         'trading_cards': '<i class="fas fa-id-card display-4"></i>',
+        'trading_card': '<i class="fas fa-id-card display-4"></i>',
         'accessories': '<i class="fas fa-ring display-4"></i>',
+        'cosmetic': '<i class="fas fa-ring display-4"></i>',
         'consumables': '<i class="fas fa-flask display-4"></i>',
-        'special': '<i class="fas fa-star display-4"></i>'
+        'consumable': '<i class="fas fa-flask display-4"></i>',
+        'special': '<i class="fas fa-star display-4"></i>',
+        'equipment': '<i class="fas fa-shield-alt display-4"></i>',
+        'collectibles': '<i class="fas fa-gem display-4"></i>',
+        'trophy': '<i class="fas fa-trophy display-4"></i>',
+        'unknown': '<i class="fas fa-question display-4"></i>'
     };
-    return icons[category] || '<i class="fas fa-cube display-4"></i>';
+
+    return icons[normalizedCategory] || icons['unknown'];
 }
 
 function handleItemClick(itemId, itemData) {
@@ -1048,7 +1217,7 @@ async function openSelectedPack() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
+                'Authorization': `Bearer ${localStorage.getItem('access_token') || ''}`,
             },
             body: JSON.stringify({
                 pack_type: packType

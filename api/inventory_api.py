@@ -99,8 +99,10 @@ async def get_optional_user_id(
 
 # ==================== INVENTORY ENDPOINTS ====================
 
+
 @router.get("/")
 async def get_user_inventory(
+    request: Request,
     item_type: Optional[str] = None,
     rarity: Optional[str] = None,
     search_query: Optional[str] = None,
@@ -108,7 +110,7 @@ async def get_user_inventory(
     sort_desc: bool = True,
     page: int = 1,
     per_page: int = 50,
-    user_id: str = Depends(get_current_user_id),
+    user_id: Optional[str] = Depends(get_optional_user_id),
     session: AsyncSession = Depends(get_db_session)
 ):
     """Get user's inventory with filtering and pagination."""
@@ -116,7 +118,88 @@ async def get_user_inventory(
         # Convert string enums to enum objects
         item_type_enum = ItemType(item_type) if item_type else None
         rarity_enum = ItemRarity(rarity) if rarity else None
-        
+
+        if not user_id:
+            # Demo mode - return sample inventory
+            logger.info("Returning demo inventory for unauthenticated user")
+            demo_items = [
+                {
+                    "id": "demo-item-1",
+                    "name": "Demo Bitcoin Card",
+                    "item_name": "Demo Bitcoin Card",
+                    "description": "A shimmering Bitcoin-themed trading card featuring the iconic cryptocurrency logo. This collectible showcases the digital gold that started the crypto revolution.",
+                    "category": "trading_cards",
+                    "item_type": "TRADING_CARD",
+                    "rarity": "COMMON",
+                    "quantity": 1,
+                    "is_favorite": False,
+                    "is_equipped": False,
+                    "is_tradeable": True,
+                    "gem_value": 10.0,
+                    "market_value": 10.0,
+                    "max_stack_size": 10,
+                    "acquired_at": "2025-01-14T10:00:00Z",
+                    "created_at": "2025-01-14T10:00:00Z",
+                    "obtained_at": "2025-01-14T10:00:00Z",
+                    "demo": True
+                },
+                {
+                    "id": "demo-item-2",
+                    "name": "Demo Ethereum Badge",
+                    "item_name": "Demo Ethereum Badge",
+                    "description": "An elegant Ethereum-themed cosmetic badge that displays your crypto knowledge. Features the distinctive Ethereum diamond logo with a premium metallic finish.",
+                    "category": "accessories",
+                    "item_type": "COSMETIC",
+                    "rarity": "UNCOMMON",
+                    "quantity": 1,
+                    "is_favorite": True,
+                    "is_equipped": False,
+                    "is_tradeable": True,
+                    "gem_value": 50.0,
+                    "market_value": 50.0,
+                    "max_stack_size": 1,
+                    "acquired_at": "2025-01-14T10:30:00Z",
+                    "created_at": "2025-01-14T10:30:00Z",
+                    "obtained_at": "2025-01-14T10:30:00Z",
+                    "demo": True
+                },
+                {
+                    "id": "demo-item-3",
+                    "name": "Demo Crypto Potion",
+                    "item_name": "Demo Crypto Potion",
+                    "description": "A mysterious consumable potion that glows with digital energy. When used, it provides a temporary boost to your gaming performance and luck.",
+                    "category": "consumables",
+                    "item_type": "CONSUMABLE",
+                    "rarity": "RARE",
+                    "quantity": 3,
+                    "is_favorite": False,
+                    "is_equipped": False,
+                    "is_tradeable": True,
+                    "gem_value": 200.0,
+                    "market_value": 200.0,
+                    "max_stack_size": 5,
+                    "acquired_at": "2025-01-14T11:00:00Z",
+                    "created_at": "2025-01-14T11:00:00Z",
+                    "obtained_at": "2025-01-14T11:00:00Z",
+                    "demo": True
+                }
+            ]
+            return {
+                "items": demo_items,
+                "pagination": {
+                    "page": page,
+                    "per_page": per_page,
+                    "total": len(demo_items),
+                    "pages": 1
+                },
+                "summary": {
+                    "total_items": len(demo_items),
+                    "total_value": 60.0,
+                    "unique_items": len(demo_items)
+                },
+                "demo_mode": True
+            }
+
         inventory = await inventory_manager.get_user_inventory(
             session=session,
             user_id=user_id,
@@ -128,7 +211,7 @@ async def get_user_inventory(
             page=page,
             per_page=per_page
         )
-        
+
         return inventory
         
     except ValueError as e:
@@ -146,18 +229,41 @@ async def get_user_inventory(
 
 @router.get("/summary")
 async def get_inventory_summary(
-    user_id: str = Depends(get_current_user_id),
+    request: Request,
+    user_id: Optional[str] = Depends(get_optional_user_id),
     session: AsyncSession = Depends(get_db_session)
 ):
     """Get inventory summary statistics."""
     try:
+        if not user_id:
+            # Demo mode - return sample summary
+            logger.info("Returning demo inventory summary for unauthenticated user")
+            return {
+                "total_items": 5,  # 1 + 1 + 3 (quantities)
+                "total_value": 860.0,  # 10 + 50 + (200 * 3) + addon value
+                "unique_items": 3,
+                "by_rarity": {
+                    "COMMON": 1,
+                    "UNCOMMON": 1,
+                    "RARE": 1,
+                    "EPIC": 0,
+                    "LEGENDARY": 0
+                },
+                "by_type": {
+                    "TRADING_CARD": 1,
+                    "COSMETIC": 1,
+                    "CONSUMABLE": 1
+                },
+                "demo_mode": True
+            }
+
         summary = await inventory_manager.get_inventory_summary(
             session=session,
             user_id=user_id
         )
-        
+
         return summary
-        
+
     except Exception as e:
         logger.error(f"Failed to get inventory summary: {e}")
         raise HTTPException(
@@ -225,18 +331,27 @@ async def equip_cosmetic_item(
 
 @router.get("/equipped")
 async def get_equipped_items(
-    user_id: str = Depends(get_current_user_id),
+    request: Request,
+    user_id: Optional[str] = Depends(get_optional_user_id),
     session: AsyncSession = Depends(get_db_session)
 ):
     """Get all equipped cosmetic items."""
     try:
+        if not user_id:
+            # Demo mode - return empty equipped items
+            logger.info("Returning demo equipped items for unauthenticated user")
+            return {
+                "equipped_items": [],
+                "demo_mode": True
+            }
+
         equipped_items = await inventory_manager.get_equipped_items(
             session=session,
             user_id=user_id
         )
-        
+
         return {"equipped_items": equipped_items}
-        
+
     except Exception as e:
         logger.error(f"Failed to get equipped items: {e}")
         raise HTTPException(
@@ -647,7 +762,7 @@ async def get_item_rarities():
 @router.get("/test-auth")
 async def test_authentication(
     request: Request,
-    user_id: Optional[str] = Depends(get_optional_user_id),
+    user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db_session)
 ):
     """Test endpoint to verify authentication works."""

@@ -103,31 +103,33 @@ class InventoryManager:
         result = await session.execute(query)
         inventory_items = result.all()
         
-        # Format response
+        # Format response - flatten structure to match frontend expectations
         items = []
         for inventory_item, collectible_item in inventory_items:
             item_data = {
+                # Inventory item fields
                 "inventory_id": inventory_item.id,
                 "quantity": inventory_item.quantity,
                 "acquired_at": inventory_item.acquired_at.isoformat(),
                 "acquisition_method": inventory_item.acquisition_method,
                 "is_equipped": inventory_item.is_equipped,
                 "is_favorite": inventory_item.is_favorite,
-                "item": {
-                    "id": collectible_item.id,
-                    "name": collectible_item.name,
-                    "description": collectible_item.description,
-                    "item_type": collectible_item.item_type,
-                    "rarity": collectible_item.rarity,
-                    "image_url": collectible_item.image_url,
-                    "color_theme": collectible_item.color_theme,
-                    "animation_type": collectible_item.animation_type,
-                    "gem_value": collectible_item.gem_value,
-                    "is_tradeable": collectible_item.is_tradeable,
-                    "is_consumable": collectible_item.is_consumable,
-                    "effect_description": collectible_item.effect_description,
-                    "crypto_theme": collectible_item.crypto_theme
-                }
+
+                # Flattened collectible item fields (frontend expects these at root level)
+                "id": collectible_item.id,
+                "name": collectible_item.name,
+                "description": collectible_item.description,
+                "item_type": collectible_item.item_type,
+                "category": self._convert_item_type_to_category(collectible_item.item_type),  # Frontend expects 'category'
+                "rarity": collectible_item.rarity,
+                "image_url": collectible_item.image_url,
+                "color_theme": collectible_item.color_theme,
+                "animation_type": collectible_item.animation_type,
+                "gem_value": collectible_item.gem_value,
+                "is_tradeable": collectible_item.is_tradeable,
+                "is_consumable": collectible_item.is_consumable,
+                "effect_description": collectible_item.effect_description,
+                "crypto_theme": collectible_item.crypto_theme
             }
             items.append(item_data)
         
@@ -552,3 +554,15 @@ class InventoryManager:
             return await add_effect("GUARANTEED_RARE", uses=5, scope="TRADING")
         else:
             return f"Applied {consumable_item.name} effect"
+
+    def _convert_item_type_to_category(self, item_type: str) -> str:
+        """Convert ItemType enum to frontend category string."""
+        type_to_category = {
+            "TRADING_CARD": "trading_cards",
+            "COLLECTIBLE": "collectibles",
+            "COSMETIC": "cosmetics",
+            "CONSUMABLE": "consumables",
+            "EQUIPMENT": "equipment",
+            "SPECIAL": "special"
+        }
+        return type_to_category.get(item_type, "collectibles")

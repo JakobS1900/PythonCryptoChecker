@@ -1731,6 +1731,7 @@
                     // Token expired or invalid
                     localStorage.removeItem('access_token');
                     localStorage.removeItem('refresh_token');
+                    localStorage.removeItem('is_logged_in');  // Critical: Clear login flag
                     showAuthButtons();
                 }
             } catch (error) {
@@ -1766,6 +1767,8 @@
             } finally {
                 localStorage.removeItem('access_token');
                 localStorage.removeItem('refresh_token');
+                localStorage.removeItem('user_data');
+                localStorage.removeItem('is_logged_in');  // Critical: Clear login flag
                 showAuthButtons();
                 showSuccess('Logged out successfully');
             }

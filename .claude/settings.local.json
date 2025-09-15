@@ -34,7 +34,11 @@
       "Bash(pip show:*)",
       "Bash(\".venv/Scripts/pip\" install flask-socketio)",
       "Bash(\".venv/Scripts/pip\" install fastapi uvicorn pydantic[email])",
-      "Bash(sqlite3:*)"
+      "Bash(sqlite3:*)",
+      "Bash(start http://localhost:8000)",
+      "Bash(dir:*)",
+      "Bash(cat:*)",
+      "WebFetch(domain:localhost)"
     ],
     "deny": [],
     "ask": []

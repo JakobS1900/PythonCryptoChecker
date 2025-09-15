@@ -421,13 +421,38 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }, 1000);
 
-    // Global error handler
+    // 🚨 EMERGENCY: Global error handler with circuit breaker
+    let globalErrorCount = 0;
+    const MAX_GLOBAL_ERRORS = 3;
+    let lastErrorTime = 0;
+
     window.addEventListener('error', (event) => {
+        const now = Date.now();
         console.error('Global error:', event.error);
+
+        // 🚨 CIRCUIT BREAKER: Prevent rapid-fire errors
+        if (now - lastErrorTime < 1000) { // Less than 1 second since last error
+            globalErrorCount++;
+        } else {
+            globalErrorCount = 1; // Reset counter if enough time has passed
+        }
+        lastErrorTime = now;
+
+        // Stop showing alerts if too many errors
+        if (globalErrorCount >= MAX_GLOBAL_ERRORS) {
+            console.error('🚨 GLOBAL ERROR CIRCUIT BREAKER: Too many rapid errors, suppressing alerts');
+            return;
+        }
+
         // Don't show alerts for network errors or script errors
-        if (!event.error?.message?.includes('NetworkError') && 
-            !event.error?.message?.includes('Script error')) {
-            window.showAlert('An unexpected error occurred', 'danger');
+        if (!event.error?.message?.includes('NetworkError') &&
+            !event.error?.message?.includes('Script error') &&
+            !event.error?.message?.includes('getBalance')) {
+            try {
+                window.showAlert('An unexpected error occurred', 'danger');
+            } catch (alertError) {
+                console.warn('🚨 Alert system error (suppressed):', alertError);
+            }
         }
     });
 
@@ -493,16 +518,17 @@ function setupBalanceSync() {
     
     // Listen for balance changes and update all UI components
     window.balanceManager.addBalanceListener((event) => {
-        updateAllBalanceDisplays(event.balance, event.isDemo);
+        updateAllBalanceDisplays(event.balance, event.isAuthenticated);
     });
-    
+
     // Initial balance display update
-    const currentBalance = window.balanceManager.getBalance();
-    const isDemoMode = window.balanceManager.isInDemoMode();
-    updateAllBalanceDisplays(currentBalance, isDemoMode);
+    if (window.balanceManager.isUserAuthenticated()) {
+        const currentBalance = window.balanceManager.getBalance();
+        updateAllBalanceDisplays(currentBalance, true);
+    }
 }
 
-function updateAllBalanceDisplays(balance, isDemo = true) {
+function updateAllBalanceDisplays(balance, isAuthenticated = true) {
     // Update navbar balance
     const navBalance = document.getElementById('nav-gem-balance');
     if (navBalance) {
@@ -535,12 +561,12 @@ function updateAllBalanceDisplays(balance, isDemo = true) {
     
     // Update demo mode indicators
     document.querySelectorAll('[data-demo-indicator]').forEach(element => {
-        element.style.display = isDemo ? 'block' : 'none';
+        element.style.display = isAuthenticated ? 'block' : 'none';
     });
     
     // Trigger custom event for other components
     window.dispatchEvent(new CustomEvent('globalBalanceUpdated', {
-        detail: { balance, isDemo, source: 'balance-manager' }
+        detail: { balance, isAuthenticated, source: 'balance-manager' }
     }));
 }
 
@@ -572,42 +598,101 @@ window.updateGlobalBalance = (newBalance, source = 'external') => {
 
 // ===== BALANCE CONFLICT DETECTION =====
 
+// 🚨 EMERGENCY CIRCUIT BREAKER SYSTEM
+let balanceErrorCount = 0;
+const MAX_BALANCE_ERRORS = 5;
+let balanceConflictInterval = null;
+
 // ✅ Detect and resolve balance conflicts
 function detectBalanceConflicts() {
-    const balanceElements = ['nav-gem-balance', 'walletBalance'];
-    const observedBalances = {};
-    
-    balanceElements.forEach(id => {
-        const element = document.getElementById(id);
-        if (element) {
-            observedBalances[id] = element.textContent;
+    // 🚨 EMERGENCY: Circuit breaker to prevent infinite loops
+    if (balanceErrorCount >= MAX_BALANCE_ERRORS) {
+        console.error('🚨 CIRCUIT BREAKER ACTIVATED: Too many balance errors, stopping conflict detection');
+        if (balanceConflictInterval) {
+            clearInterval(balanceConflictInterval);
+            balanceConflictInterval = null;
         }
-    });
-    
-    // If balance manager exists, its value should match UI
-    if (window.balanceManager) {
-        const authoritativeBalance = window.balanceManager.getBalance();
+        return;
+    }
+    try {
+        const balanceElements = ['nav-gem-balance', 'walletBalance'];
+        const observedBalances = {};
+
+        balanceElements.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                observedBalances[id] = element.textContent;
+            }
+        });
+
+        // Check if balance manager exists and is properly initialized
+        if (!window.balanceManager || typeof window.balanceManager.getBalance !== 'function') {
+            // Balance manager not available - this is normal during initialization
+            return;
+        }
+
+        // Get authoritative balance with error handling
+        let authoritativeBalance;
+        try {
+            authoritativeBalance = window.balanceManager.getBalance();
+
+            // Validate the returned balance
+            if (typeof authoritativeBalance !== 'number' || isNaN(authoritativeBalance)) {
+                console.warn('⚠️ Balance manager returned invalid balance:', authoritativeBalance);
+                return;
+            }
+        } catch (error) {
+            balanceErrorCount++;
+            console.warn('⚠️ Balance conflict detection failed - getBalance error:', balanceErrorCount, '/', MAX_BALANCE_ERRORS, error);
+            if (balanceErrorCount >= MAX_BALANCE_ERRORS) {
+                console.error('🚨 MAX ERRORS REACHED: Stopping balance conflict detection');
+                if (balanceConflictInterval) {
+                    clearInterval(balanceConflictInterval);
+                    balanceConflictInterval = null;
+                }
+            }
+            return;
+        }
+
         const conflicts = balanceElements.filter(id => {
             const element = document.getElementById(id);
             if (!element) return false;
-            
+
             const displayedValue = parseInt(element.textContent.replace(/[^\d]/g, ''));
             return Math.abs(displayedValue - authoritativeBalance) > 1; // Allow for rounding
         });
-        
+
         if (conflicts.length > 0) {
             console.warn('🚨 Balance conflict detected, correcting UI:', {
                 authoritative: authoritativeBalance,
                 conflicts: conflicts
             });
-            // Force correction
-            window.balanceManager.notifyBalanceChange('corrected', null, null);
+
+            // Force correction with error handling
+            try {
+                window.balanceManager.notifyBalanceChange('corrected', null, null);
+            } catch (notifyError) {
+                console.warn('⚠️ Balance correction notification failed:', notifyError);
+            }
         }
+    } catch (error) {
+        balanceErrorCount++;
+        console.warn('⚠️ Balance conflict detection encountered an error:', balanceErrorCount, '/', MAX_BALANCE_ERRORS, error);
+        if (balanceErrorCount >= MAX_BALANCE_ERRORS) {
+            console.error('🚨 MAX ERRORS REACHED: Stopping balance conflict detection');
+            if (balanceConflictInterval) {
+                clearInterval(balanceConflictInterval);
+                balanceConflictInterval = null;
+            }
+        }
+        // Don't throw the error - would cause infinite loop
+        return;
     }
 }
 
-// Run conflict detection every 5 seconds
-setInterval(detectBalanceConflicts, 5000);
+// 🔧 FIXED: Re-enable balance conflict detection with better logic (30 second intervals)
+balanceConflictInterval = setInterval(detectBalanceConflicts, 30000);
+console.log('✅ Balance conflict detection re-enabled with improved auth synchronization');
 
 // ===== EXPORT FOR MODULES =====
 

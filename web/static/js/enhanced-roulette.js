@@ -346,10 +346,9 @@ class EnhancedRouletteGame {
         }
 
         try {
-            // Demo mode - simulate bet placement without API call
+            // Check authentication - require login for all betting
             if (!localStorage.getItem('access_token') || localStorage.getItem('access_token') === 'null') {
-                // Simulate successful bet placement in demo mode
-                await this.simulateDemoBet(betType, betValue);
+                this.showErrorAlert('Please log in to place bets. <a href="/login" class="alert-link">Login here</a>');
                 return;
             }
             
@@ -375,51 +374,48 @@ class EnhancedRouletteGame {
                 this.handleBetPlaced(result);
                 this.addVisualBetFeedback(betType, betValue);
             } else {
-                // If API fails, fall back to demo mode - preserve current bet amount
-                console.warn('API bet failed, using demo mode:', result?.error || response.statusText || 'Unknown error');
-                console.log('Preserving bet amount for demo mode:', this.currentBetAmount);
-                await this.simulateDemoBet(betType, betValue);
+                // API bet failed - show error message
+                const errorMsg = result?.error || result?.detail || response.statusText || 'Unknown error';
+                console.error('API bet failed:', errorMsg);
+                this.showErrorAlert(`Bet placement failed: ${errorMsg}`);
             }
         } catch (error) {
             console.error('Bet placement error:', error);
-            // Fall back to demo mode
-            await this.simulateDemoBet(betType, betValue);
+            this.showErrorAlert('Network error. Please check your connection and try again.');
         }
     }
 
-    async simulateDemoBet(betType, betValue) {
-        // Simulate bet placement in demo mode WITHOUT immediate balance deduction
-        const betId = 'demo-bet-' + Date.now();
+    showErrorAlert(message) {
+        // Create alert container if it doesn't exist
+        let alertContainer = document.getElementById('alertContainer');
+        if (!alertContainer) {
+            alertContainer = document.createElement('div');
+            alertContainer.id = 'alertContainer';
+            alertContainer.className = 'container mt-3';
+            document.querySelector('main').insertBefore(alertContainer, document.querySelector('main').firstChild);
+        }
 
-        const currentBalance = this.getSafeBalance();
-        const betAmount = parseFloat(this.currentBetAmount) || MIN_BET;
+        // Create and show alert
+        const alert = document.createElement('div');
+        alert.className = 'alert alert-danger alert-dismissible fade show';
+        alert.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
 
-        // Add to committed amount instead of deducting immediately
-        this.committedAmount += betAmount;
+        alertContainer.appendChild(alert);
 
-        // Log for debugging
-        console.log('Demo bet placed - Committed (not deducted):', {
-            betAmount: betAmount,
-            currentBalance: currentBalance,
-            committedAmount: this.committedAmount,
-            availableBalance: currentBalance - this.committedAmount
-        });
-
-        const result = {
-            bet_id: betId,
-            bet_type: betType,
-            bet_value: betValue,
-            amount: betAmount,
-            potential_payout: this.calculatePotentialPayout(betType, betValue),
-            new_balance: currentBalance // Balance not changed yet
-        };
-
-        // Update display to show committed vs available funds
-        this.updateBalanceDisplay();
-
-        this.handleBetPlaced(result);
-        this.addVisualBetFeedback(betType, betValue);
-        this.showNotification(`Bet committed: ${betAmount} GEM`, 'success');
+        // Auto-dismiss after 10 seconds
+        setTimeout(() => {
+            if (alert.parentNode) {
+                alert.classList.remove('show');
+                setTimeout(() => {
+                    if (alert.parentNode) {
+                        alert.parentNode.removeChild(alert);
+                    }
+                }, 300);
+            }
+        }, 10000);
     }
     
     calculatePotentialPayout(betType, betValue) {
@@ -1136,10 +1132,11 @@ class EnhancedRouletteGame {
                 await this.connectWebSocket(sessionId, token);
                 this.gameState = 'betting';
             } else {
-                // Demo mode
-                this.gameState = 'betting';
-                // Try to connect with demo session for WebSocket features
-                await this.connectWebSocket('demo-session', 'undefined');
+                // No authentication - show login prompt
+                console.log('No authentication detected - prompting for login');
+                this.showErrorAlert('Please log in to play roulette. <a href="/login" class="alert-link">Login here</a>');
+                this.gameState = 'requires_auth';
+                return;
             }
             
             // Initialize balance and update display
@@ -1166,12 +1163,8 @@ class EnhancedRouletteGame {
                 const result = await response.json();
                 if (result.status === 'success' && result.data) {
                     balance = result.data.balance;
-                    console.log('Balance loaded from server:', balance, '(demo mode:', result.data.is_demo_mode, ')');
-                    
-                    // Update balance using centralized method for persistence
-                    if (result.data.is_demo_mode) {
-                        this.updateBalance(balance, 'server_sync');
-                    }
+                    console.log('Balance loaded from server:', balance);
+                    this.updateBalance(balance, 'server_sync');
                 } else {
                     console.warn('Server balance request failed:', result);
                 }
@@ -1213,10 +1206,9 @@ class EnhancedRouletteGame {
                 if (result.status === 'success' && result.data && result.data.balance) {
                     const serverBalance = result.data.balance;
                     console.log('Server balance refreshed:', serverBalance);
-                    // Update balance using centralized method (handles both local and persistence)
-                    if (result.data.is_demo_mode) {
-                        this.updateBalance(serverBalance, 'server_load');
-                    } else {
+                    // Update balance
+                    this.updateBalance(serverBalance, 'server_load');
+                    if (false) {
                         this.userBalance = serverBalance;
                         this.updateBalanceDisplay();
                     }

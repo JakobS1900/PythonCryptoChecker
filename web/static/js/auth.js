@@ -20,14 +20,6 @@ class AuthManager {
     setupEventListeners() {
         // Use event delegation for dynamically created buttons
         document.addEventListener('click', (e) => {
-            // Demo login button
-            const demoBtn = e.target.closest('#demo-login-btn');
-            if (demoBtn) {
-                e.preventDefault();
-                console.log('Demo login button clicked');
-                this.demoLogin();
-                return;
-            }
 
             // Strict logout click handling only for explicit logout controls
             const logoutEl = e.target.closest('#logout-btn, a[data-action="logout"], button[data-action="logout"]');
@@ -64,63 +56,6 @@ class AuthManager {
         });
     }
 
-    async demoLogin() {
-        try {
-            console.log('Starting demo login...');
-            
-            // REAL API CALL - Now that backend is ready!
-            const response = await fetch('/api/auth/demo-login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            const data = await response.json();
-            console.log('Demo login response:', data);
-            
-            if (data.status === 'success') {
-                this.user = data.user;
-                this.isLoggedIn = true;
-                
-                // Store user data for persistence  
-                localStorage.setItem('demo_user', JSON.stringify(data.user));
-                localStorage.setItem('is_logged_in', 'true');
-                
-                // Initialize demo balance in balance manager
-                if (data.user && data.user.gem_coins && window.balanceManager) {
-                    window.balanceManager.updateBalance(data.user.gem_coins, 'demo_login');
-                }
-                
-                // Trigger auth status change event for balance manager
-                window.dispatchEvent(new CustomEvent('authStatusChanged', {
-                    detail: { authenticated: true, demo: true, user: data.user }
-                }));
-                
-                this.updateUI();
-                this.showAlert('Demo login successful! Welcome to CryptoChecker.', 'success');
-                
-                // Trigger dashboard reload if we're on the home page
-                if (window.location.pathname === '/' || window.location.pathname === '/dashboard') {
-                    if (window.checkAuthenticationAndInitialize) {
-                        window.checkAuthenticationAndInitialize();
-                    }
-                }
-
-                // Start balance polling after successful login
-                this.startBalancePolling();
-                
-                return { success: true, user: data.user };
-            } else {
-                this.showAlert('Login failed: ' + data.message, 'error');
-                return { success: false, error: data.message };
-            }
-        } catch (error) {
-            console.error('Login error:', error);
-            this.showAlert('Login failed. Please try again.', 'error');
-            return { success: false, error: error.message };
-        }
-    }
 
     async logout() {
         try {
@@ -268,9 +203,6 @@ class AuthManager {
             if (authButtons) {
                 authButtons.style.display = 'block';
                 authButtons.innerHTML = `
-                    <button class="btn btn-outline-light me-2" id="demo-login-btn">
-                        <i class="fas fa-sign-in-alt me-2"></i>Demo Login
-                    </button>
                     <a href="/login" class="btn btn-primary" style="border-radius: 20px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border: none;">
                         <i class="fas fa-user-plus me-2"></i>Sign Up
                     </a>

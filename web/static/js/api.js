@@ -8,12 +8,14 @@ class APIClient {
         this.baseURL = '/api';
         this.token = localStorage.getItem('access_token');
         this.refreshToken = localStorage.getItem('refresh_token');
+        console.log('🚀 APIClient initialized with baseURL:', this.baseURL);
     }
 
     // ===== UTILITY METHODS =====
 
     async request(endpoint, options = {}) {
         const url = `${this.baseURL}${endpoint}`;
+        console.log('🌐 APIClient Request:', { endpoint, url, baseURL: this.baseURL });
         const config = {
             headers: {
                 'Content-Type': 'application/json',
@@ -91,6 +93,7 @@ class APIClient {
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
         localStorage.removeItem('user_data');
+        localStorage.removeItem('is_logged_in');  // Critical: Clear login flag
         this.token = null;
         this.refreshToken = null;
         
@@ -225,38 +228,38 @@ class APIClient {
 
     inventory = {
         getItems: async (page = 1, rarity = null, category = null) => {
-            let url = `/api/inventory/items?page=${page}`;
+            let url = `/inventory/?page=${page}`;
             if (rarity) url += `&rarity=${rarity}`;
             if (category) url += `&category=${category}`;
             return this.request(url);
         },
 
         getItem: async (itemId) => {
-            return this.request(`/api/inventory/items/${itemId}`);
+            return this.request(`/inventory/items/${itemId}`);
         },
 
         equipItem: async (itemId, slot = null) => {
-            return this.request(`/api/inventory/items/${itemId}/equip`, {
+            return this.request(`/inventory/items/${itemId}/equip`, {
                 method: 'POST',
                 body: JSON.stringify({ slot })
             });
         },
 
         unequipItem: async (itemId) => {
-            return this.request(`/api/inventory/items/${itemId}/unequip`, {
+            return this.request(`/inventory/items/${itemId}/unequip`, {
                 method: 'POST'
             });
         },
 
         useItem: async (itemId, quantity = 1) => {
-            return this.request(`/api/inventory/items/${itemId}/use`, {
+            return this.request(`/inventory/items/${itemId}/use`, {
                 method: 'POST',
                 body: JSON.stringify({ quantity })
             });
         },
 
         sellItem: async (itemId, quantity = 1) => {
-            return this.request(`/api/inventory/items/${itemId}/sell`, {
+            return this.request(`/inventory/items/${itemId}/sell`, {
                 method: 'POST',
                 body: JSON.stringify({ quantity })
             });
@@ -264,41 +267,41 @@ class APIClient {
 
         // Trading methods
         createTrade: async (tradeData) => {
-            return this.request('/api/inventory/trades', {
+            return this.request('/inventory/trades', {
                 method: 'POST',
                 body: JSON.stringify(tradeData)
             });
         },
 
         getTrades: async (status = null) => {
-            let url = '/api/inventory/trades';
+            let url = '/inventory/trades';
             if (status) url += `?status=${status}`;
             return this.request(url);
         },
 
         respondToTrade: async (tradeId, action) => {
-            return this.request(`/api/inventory/trades/${tradeId}`, {
+            return this.request(`/inventory/trades/${tradeId}`, {
                 method: 'PUT',
                 body: JSON.stringify({ action })
             });
         },
 
         cancelTrade: async (tradeId) => {
-            return this.request(`/api/inventory/trades/${tradeId}`, {
+            return this.request(`/inventory/trades/${tradeId}`, {
                 method: 'DELETE'
             });
         },
 
         // Marketplace
         getMarketplace: async (page = 1, rarity = null, category = null) => {
-            let url = `/api/inventory/marketplace?page=${page}`;
+            let url = `/inventory/marketplace?page=${page}`;
             if (rarity) url += `&rarity=${rarity}`;
             if (category) url += `&category=${category}`;
             return this.request(url);
         },
 
         getWallet: async () => {
-            return this.request('/api/inventory/wallet');
+            return this.request('/inventory/wallet');
         }
     };
 

@@ -603,9 +603,14 @@ class EnhancedAPIClient {
 
 // ===== GLOBAL INITIALIZATION =====
 
-// Replace the global apiClient with enhanced version
+// Only initialize EnhancedAPIClient if no existing apiClient exists
 if (typeof window !== 'undefined') {
-    window.apiClient = new EnhancedAPIClient();
+    // Don't override existing apiClient to prevent double API prefix issues
+    if (!window.apiClient) {
+        window.apiClient = new EnhancedAPIClient();
+    } else {
+        console.log('🔄 Existing APIClient found, skipping EnhancedAPIClient initialization');
+    }
     
     // Add global utilities for debugging
     window.mockAPI = {
