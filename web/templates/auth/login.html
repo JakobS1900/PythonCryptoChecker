@@ -72,17 +72,17 @@
                         </a>
                     </div>
 
-                    <!-- Demo Account Section -->
+                    <!-- Guest Access Section -->
                     <div class="mt-4 p-3 bg-light rounded">
                         <h6 class="fw-semibold mb-2">
-                            <i class="fas fa-info-circle me-2 text-info"></i>Demo Account
+                            <i class="fas fa-info-circle me-2 text-info"></i>Guest Access
                         </h6>
                         <p class="small text-muted mb-2">
-                            Try the platform with a demo account:
+                            Jump right in with instant access:
                         </p>
                         <div class="d-grid gap-1">
                             <button type="button" class="btn btn-sm btn-outline-info" id="demoLoginBtn">
-                                <i class="fas fa-play me-1"></i>Use Demo Account
+                                <i class="fas fa-play me-1"></i>Play as Guest
                             </button>
                         </div>
                     </div>
@@ -180,10 +180,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Demo login
+    // Guest access
     demoLoginBtn.addEventListener('click', async function() {
         setLoading(true);
-        
+
         try {
             const response = await apiClient.auth.login({
                 username_or_email: 'demo@example.com',
@@ -191,19 +191,19 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             if (response.success) {
-                showAlert('Demo login successful! Redirecting...', 'success');
+                showAlert('Guest access activated! Redirecting...', 'success');
                 localStorage.setItem('access_token', response.data.access_token);
                 localStorage.setItem('refresh_token', response.data.refresh_token);
                 localStorage.setItem('user_data', JSON.stringify(response.data.user));
-                
+
                 setTimeout(() => {
                     window.location.href = '/';
                 }, 1000);
             } else {
-                showAlert('Demo account not available', 'warning');
+                showAlert('Guest access not available', 'warning');
             }
         } catch (error) {
-            showAlert('Demo account not available', 'warning');
+            showAlert('Guest access not available', 'warning');
         } finally {
             setLoading(false);
         }

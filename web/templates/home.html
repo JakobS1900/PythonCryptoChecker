@@ -282,7 +282,7 @@
                         </p>
                         <div class="d-flex gap-3 justify-content-center flex-wrap guest-content">
                             <button class="btn btn-neon-enhanced" id="demoLoginBtn">
-                                <i class="fas fa-play me-2"></i>Try Demo
+                                <i class="fas fa-play me-2"></i>Start Gaming
                             </button>
                             <a href="/login" class="btn btn-neon-enhanced" style="border-color: #f59e0b; color: #f59e0b;">
                                 <i class="fas fa-sign-in-alt me-2"></i>Sign In
@@ -412,7 +412,7 @@
                         <i class="fas fa-user-plus me-2"></i>Find Friends
                     </a>
                     <button class="quick-action-btn guest-content" id="startTourBtn">
-                        <i class="fas fa-question-circle me-2"></i>Take Tour
+                        <i class="fas fa-question-circle me-2"></i>Platform Tour
                     </button>
                 </div>
             </div>
@@ -1029,12 +1029,12 @@ async function loadMiniLeaderboard() {
 }
 
 function initializeEventListeners() {
-    // Demo login button
+    // Quick Start button (guest access)
     const demoBtn = document.getElementById('demoLoginBtn');
     if (demoBtn) {
         demoBtn.addEventListener('click', async function() {
-            console.log('Demo login button clicked');
-            // Use the auth manager's demo login functionality
+            console.log('Quick Start button clicked');
+            // Use the auth manager's guest login functionality
             if (window.auth) {
                 try {
                     const result = await window.auth.demoLogin();
@@ -1044,7 +1044,7 @@ function initializeEventListeners() {
                         await loadDashboardData();
                     }
                 } catch (error) {
-                    console.error('Demo login failed:', error);
+                    console.error('Guest login failed:', error);
                 }
             }
         });

@@ -144,12 +144,12 @@
                         <div class="gaming-icon mb-3" style="width: 48px; height: 48px; font-size: 20px; margin: 0 auto; background: var(--gradient-success);">
                             <i class="fas fa-play"></i>
                         </div>
-                        <h6 class="text-success fw-semibold mb-2">Try Demo Account</h6>
+                        <h6 class="text-success fw-semibold mb-2">Quick Access</h6>
                         <p class="text-white opacity-75 small mb-3">
-                            Experience the platform with a demo account - no registration required!
+                            Jump right in with instant guest access - no registration required!
                         </p>
                         <button class="btn btn-neon w-100" onclick="loginDemo()" style="border-color: #22c55e; color: #22c55e;">
-                            <i class="fas fa-rocket me-2"></i>Use Demo Account
+                            <i class="fas fa-rocket me-2"></i>Play as Guest
                         </button>
                     </div>
                 </div>
@@ -258,7 +258,7 @@
 
         async function loginDemo() {
             showLoading();
-            
+
             try {
                 const response = await fetch('/api/auth/demo-login', {
                     method: 'POST',
@@ -268,19 +268,19 @@
                 });
 
                 const data = await response.json();
-                
+
                 if (data.status === 'success') {
-                    showAlert('Demo account activated! Redirecting...', 'success');
-                    
+                    showAlert('Guest access activated! Redirecting...', 'success');
+
                     setTimeout(() => {
                         window.location.href = '/';
                     }, 1500);
                 } else {
-                    showAlert('Demo login failed. Please try again.', 'error');
+                    showAlert('Guest access failed. Please try again.', 'error');
                 }
             } catch (error) {
-                console.error('Demo login error:', error);
-                showAlert('Demo login failed. Please try again.', 'error');
+                console.error('Guest access error:', error);
+                showAlert('Guest access failed. Please try again.', 'error');
             } finally {
                 hideLoading();
             }
@@ -308,16 +308,16 @@
                         <div class="gaming-icon mb-3" style="width: 60px; height: 60px; font-size: 24px; margin: 0 auto; background: var(--gradient-crypto);">
                             <i class="fas fa-key"></i>
                         </div>
-                        <p>For this demo platform, you can use any credentials to log in, or simply use the Demo Account option.</p>
+                        <p>For this virtual gaming platform, you can use any credentials to log in, or simply use the Guest Access option.</p>
                         <p class="text-muted small">In a real application, this would send a password reset email.</p>
                     </div>
                     `,
                     [
-                        { text: 'Use Demo Account', type: 'primary', onclick: 'loginDemo()', dismiss: true }
+                        { text: 'Play as Guest', type: 'primary', onclick: 'loginDemo()', dismiss: true }
                     ]
                 );
             } else {
-                alert('For this demo, you can use any credentials or the Demo Account option.');
+                alert('For this virtual gaming platform, you can use any credentials or the Guest Access option.');
             }
         }
 

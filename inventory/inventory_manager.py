@@ -136,10 +136,10 @@ class InventoryManager:
         return {
             "items": items,
             "pagination": {
-                "page": page,
+                "current_page": page,
                 "per_page": per_page,
                 "total": total_count,
-                "pages": (total_count + per_page - 1) // per_page
+                "total_pages": (total_count + per_page - 1) // per_page
             },
             "filters": {
                 "item_type": item_type.value if item_type else None,

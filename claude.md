@@ -10,7 +10,7 @@ This is a **production-ready** crypto gaming platform built with FastAPI, featur
 
 #### **🎰 Crypto Roulette Gaming System - COMPLETE**
 - **Perfect Custom Betting**: All amounts from 10-10,000 GEM work flawlessly
-- **Demo Mode Integration**: Seamless fallback for unauthenticated users  
+- **Guest Mode Integration**: Limited feature access for unauthenticated visitors  
 - **Professional Interface**: Clean "Crypto Roulette" branding throughout
 - **Comprehensive Testing**: 40+ test scenarios with 100% pass rate
 - **Error-Free Operation**: No 401 errors, balance issues, or undefined responses
@@ -18,21 +18,23 @@ This is a **production-ready** crypto gaming platform built with FastAPI, featur
 #### **🔐 Authentication System - COMPLETE**
 - **JWT Token Management**: Access tokens (1 hour) + refresh tokens (30 days)
 - **Multi-Device Support**: Up to 5 active sessions per user
-- **Demo Mode Support**: Graceful fallback for unauthenticated users
+- **Guest Mode Support**: Graceful fallback for unauthenticated visitors
 - **Role-Based Access**: Player, VIP, Moderator, Admin permissions
 
 #### **💰 Virtual Economy - COMPLETE**
-- **GEM Coins System**: Virtual currency for all platform transactions
+- **GEM Coins System**: Virtual currency for all platform transactions (1,000 GEM = $10 USD equivalent)
 - **Perfect Synchronization**: Real-time balance updates across all UI components
 - **Transaction Security**: Complete audit trail with rollback capability
 - **Cross-Component Integration**: Event-driven balance updates system-wide
+- **Balanced Economy**: All items and features priced according to realistic virtual economy standards
 
 #### **📦 Inventory Management System - COMPLETE**
 - **Full Item Collection**: 42+ collectible items with proper rarity distribution
-- **Pack Opening System**: Standard (500), Premium (1500), Legendary (5000) GEM packs
+- **Pack Opening System**: Standard (~$5), Premium (~$15), Legendary (~$50) equivalent in GEM packs
 - **Real Transactions**: Actual GEM deduction and persistent database storage
 - **Item Functionality**: Working consumables and equippable cosmetic items
 - **Database Integration**: Complete persistence with transaction safety
+- **Balanced Pricing**: All items valued according to 1,000 GEM = $10 USD virtual economy
 
 #### **🌐 REST API Ecosystem - COMPLETE**
 - **25+ Endpoints**: Comprehensive API coverage for all platform features
@@ -164,11 +166,11 @@ PythonCryptoChecker/
 - **Provably Fair**: SHA256-based result verification
 - **Real-time Interface**: Visual feedback with color-coded validation
 
-### **Demo Mode Operation**
-- **Automatic Fallback**: No authentication required for testing
-- **5000 GEM Starting Balance**: Virtual currency for demo users
-- **Full Functionality**: All betting features available without login
-- **Seamless Experience**: No errors or authentication barriers
+### **Guest Mode Operation**
+- **Automatic Fallback**: Limited features for unauthenticated visitors
+- **5000 GEM Virtual Balance**: Temporary currency for exploration only
+- **Full Gaming Experience**: Complete betting functionality available to all users
+- **Seamless Experience**: No authentication barriers for core gaming features
 
 ## 🚀 Development Guidelines
 
@@ -182,7 +184,7 @@ PythonCryptoChecker/
 - **Consistent Response Format**: Use standard JSON structure with success/error flags
 - **Proper HTTP Status Codes**: 200 for success, 4xx for client errors, 5xx for server errors
 - **Session Management**: Use existing JWT + session patterns
-- **Demo Mode Support**: Ensure new endpoints work without authentication
+- **Guest Mode Support**: Ensure new endpoints provide appropriate fallbacks for unauthenticated users
 
 ### **Frontend Development**
 - **Bootstrap 5 Components**: Use existing CSS framework and design patterns
@@ -222,10 +224,10 @@ PythonCryptoChecker/
 - **Rate Limiting**: Protection against abuse and attacks
 
 ### **Data Protection**
-- **Virtual Transactions Only**: No real money handling
+- **Virtual Transactions Only**: No real money handling (1,000 GEM = $10 USD equivalent for reference)
 - **Audit Trails**: Complete logging of all user actions
 - **Error Information**: Never expose sensitive system details
-- **Demo Mode Safety**: Isolated virtual environment for testing
+- **Virtual Currency Safety**: Isolated virtual economy with balanced pricing standards
 
 ## 🎯 Development Priorities
 
@@ -243,13 +245,13 @@ PythonCryptoChecker/
 
 ## 🏆 Success Criteria
 
-**The CryptoChecker Gaming Platform is production-ready with:**
+**The CryptoChecker Gaming Platform is a fully functional virtual gaming environment with:**
 
-✅ **Stable Core Systems**: All gaming, auth, and economy features working  
-✅ **Error-Free Operation**: No critical bugs or system failures  
-✅ **Professional Interface**: Clean, modern user experience  
-✅ **Comprehensive Testing**: All functionality validated and working  
-✅ **Scalable Architecture**: Ready to support thousands of users  
+✅ **Complete Virtual Economy**: Real GEM transactions with persistent virtual currency
+✅ **Immersive Gaming Experience**: Full-featured gambling and trading without real money
+✅ **Professional Interface**: Clean, modern user experience indistinguishable from real platforms
+✅ **Comprehensive Features**: All functionality validated and working as intended
+✅ **Scalable Architecture**: Ready to support thousands of concurrent virtual gamers  
 
 ---
 
@@ -270,8 +272,8 @@ python run.py
 - **Inventory System**: http://localhost:8000/inventory
 - **API Docs**: http://localhost:8000/api/docs
 
-### **Test Demo Mode**
-Click "Try Demo" button for instant 5000 GEM access
+### **Test Guest Mode**
+Click "Try Guest Mode" button for instant 5000 GEM virtual access
 
 ---
 

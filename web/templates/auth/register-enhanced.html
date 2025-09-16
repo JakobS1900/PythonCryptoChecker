@@ -136,10 +136,10 @@
                         </div>
                         <h6 class="text-success fw-semibold mb-2">Skip Registration</h6>
                         <p class="text-white opacity-75 small mb-3">
-                            Want to try the platform first? Use our demo account!
+                            Want to try the platform first? Use guest access!
                         </p>
                         <button class="btn btn-neon w-100" onclick="useDemoAccount()" style="border-color: #22c55e; color: #22c55e;">
-                            <i class="fas fa-play me-2"></i>Use Demo Account
+                            <i class="fas fa-play me-2"></i>Play as Guest
                         </button>
                     </div>
                 </div>
@@ -282,7 +282,7 @@
 
         async function useDemoAccount() {
             showLoading();
-            
+
             try {
                 const response = await fetch('/api/auth/demo-login', {
                     method: 'POST',
@@ -292,19 +292,19 @@
                 });
 
                 const data = await response.json();
-                
+
                 if (data.status === 'success') {
-                    showAlert('Demo account activated! Redirecting...', 'success');
-                    
+                    showAlert('Guest access activated! Redirecting...', 'success');
+
                     setTimeout(() => {
                         window.location.href = '/';
                     }, 1500);
                 } else {
-                    showAlert('Demo account activation failed. Please try again.', 'error');
+                    showAlert('Guest access activation failed. Please try again.', 'error');
                 }
             } catch (error) {
-                console.error('Demo account error:', error);
-                showAlert('Demo account activation failed. Please try again.', 'error');
+                console.error('Guest access error:', error);
+                showAlert('Guest access activation failed. Please try again.', 'error');
             } finally {
                 hideLoading();
             }

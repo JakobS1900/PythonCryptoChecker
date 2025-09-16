@@ -24,6 +24,26 @@ window.utils = {
     },
 
     /**
+     * Format date to readable string
+     * @param {string|Date} timestamp - The timestamp to format
+     * @param {string} format - Format type ('relative', 'full', 'short')
+     * @returns {string} - Formatted date string
+     */
+    formatDate: function(timestamp, format = 'relative') {
+        const date = new Date(timestamp);
+
+        if (format === 'relative') {
+            return this.formatRelativeTime(timestamp);
+        } else if (format === 'full') {
+            return date.toLocaleString();
+        } else if (format === 'short') {
+            return date.toLocaleDateString();
+        } else {
+            return date.toISOString().split('T')[0]; // YYYY-MM-DD format
+        }
+    },
+
+    /**
      * Format relative time (e.g., "2 minutes ago")
      * @param {string|Date} timestamp - The timestamp to format
      * @returns {string} - Relative time string

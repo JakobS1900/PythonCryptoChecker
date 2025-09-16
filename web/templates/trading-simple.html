@@ -27,8 +27,8 @@
                     <div class="d-flex align-items-center animate-on-scroll" data-animation="fadeInUp">
                         <div class="logo-icon me-3">₿</div>
                         <div>
-                            <h1 class="mb-0 text-gradient">Paper Trading Dashboard</h1>
-                            <p class="mb-0 mt-2 opacity-75">Practice trading with virtual money • Risk-free learning environment</p>
+                            <h1 class="mb-0 text-gradient">Virtual Trading Dashboard</h1>
+                            <p class="mb-0 mt-2 opacity-75">Experience virtual crypto trading • Risk-free entertainment platform</p>
                         </div>
                     </div>
                 </div>
@@ -65,7 +65,7 @@
                                 <!-- User Menu -->
                                 <div class="dropdown me-2">
                                     <button class="btn btn-neon dropdown-toggle" type="button" data-bs-toggle="dropdown" style="border-color: #22c55e; color: #22c55e;">
-                                        <i class="fas fa-user me-2"></i><span id="username-display">Demo User</span>
+                                        <i class="fas fa-user me-2"></i><span id="username-display">Guest Trader</span>
                                     </button>
                                     <ul class="dropdown-menu dropdown-menu-end" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); border-radius: 12px;">
                                         <li><a class="dropdown-item" href="/gaming/roulette"><i class="fas fa-dice me-2 text-warning"></i>Gaming</a></li>
@@ -104,8 +104,8 @@
                                 <i class="fas fa-chart-line"></i>
                             </div>
                             <div>
-                                <h3 class="mb-0 text-gradient">Demo Trading Portfolio</h3>
-                                <p class="mb-0 text-muted">Virtual trading environment</p>
+                                <h3 class="mb-0 text-gradient">Virtual Trading Portfolio</h3>
+                                <p class="mb-0 text-muted">Virtual crypto trading experience</p>
                             </div>
                         </div>
                         <span class="badge bg-success" style="padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.9rem;">
@@ -415,7 +415,7 @@
         
         function checkAuthenticationStatus() {
             const isLoggedIn = isUserAuthenticated();
-            const username = localStorage.getItem('demo_username') || 'Demo User';
+            const username = localStorage.getItem('demo_username') || 'Guest Trader';
             
             if (isLoggedIn) {
                 // Show logged in UI

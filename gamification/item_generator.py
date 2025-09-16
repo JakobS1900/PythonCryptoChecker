@@ -69,7 +69,7 @@ class CryptoItemGenerator:
                 rarity=ItemRarity.COMMON.value,
                 image_url=f"/assets/cards/{crypto}_common.png",
                 color_theme=self.rarity_colors[ItemRarity.COMMON],
-                gem_value=10.0,
+                gem_value=300.0,
                 crypto_theme=crypto,
                 effect_description="Display in your profile showcase"
             )
@@ -86,7 +86,7 @@ class CryptoItemGenerator:
                 image_url=f"/assets/cards/{crypto}_uncommon.png",
                 color_theme=self.rarity_colors[ItemRarity.UNCOMMON],
                 animation_type="holographic",
-                gem_value=50.0,
+                gem_value=750.0,
                 crypto_theme=crypto,
                 effect_description="Animated holographic display with particle effects"
             )
@@ -103,7 +103,7 @@ class CryptoItemGenerator:
                 image_url=f"/assets/cards/{crypto}_rare.png",
                 color_theme=self.rarity_colors[ItemRarity.RARE],
                 animation_type="crystal_glow",
-                gem_value=200.0,
+                gem_value=1500.0,
                 crypto_theme=crypto,
                 effect_description="Crystal glow animation with sound effects"
             )
@@ -120,7 +120,7 @@ class CryptoItemGenerator:
                 image_url=f"/assets/cards/{crypto}_epic.png",
                 color_theme=self.rarity_colors[ItemRarity.EPIC],
                 animation_type="platinum_shine",
-                gem_value=1000.0,
+                gem_value=3000.0,
                 crypto_theme=crypto,
                 effect_description="Platinum shine with dynamic particle system and exclusive sound"
             )
@@ -135,7 +135,7 @@ class CryptoItemGenerator:
             image_url="/assets/cards/genesis_legendary.png",
             color_theme=self.rarity_colors[ItemRarity.LEGENDARY],
             animation_type="legendary_aura",
-            gem_value=5000.0,
+            gem_value=6000.0,
             crypto_theme="bitcoin",
             effect_description="Legendary aura with rainbow particles, exclusive music, and screen effects"
         )
@@ -278,13 +278,13 @@ class CryptoItemGenerator:
         return special_items
     
     def _get_gem_value_by_rarity(self, rarity: ItemRarity) -> float:
-        """Get GEM coin value based on item rarity."""
+        """Get GEM coin value based on item rarity (1,000 GEM = $10 USD economy)."""
         return {
-            ItemRarity.COMMON: 10.0,
-            ItemRarity.UNCOMMON: 50.0,
-            ItemRarity.RARE: 200.0,
-            ItemRarity.EPIC: 1000.0,
-            ItemRarity.LEGENDARY: 5000.0
+            ItemRarity.COMMON: 300.0,      # $3.00 equivalent - reasonable for common items
+            ItemRarity.UNCOMMON: 750.0,    # $7.50 equivalent - decent value for uncommon
+            ItemRarity.RARE: 1500.0,       # $15.00 equivalent - good value for rare items
+            ItemRarity.EPIC: 3000.0,       # $30.00 equivalent - premium pricing for epic
+            ItemRarity.LEGENDARY: 6000.0   # $60.00 equivalent - luxury pricing for legendary
         }[rarity]
 
 

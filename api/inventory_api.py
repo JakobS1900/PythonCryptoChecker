@@ -75,23 +75,30 @@ async def get_optional_user_id(
 ) -> Optional[str]:
     """Get user ID if authenticated, otherwise return None for demo mode."""
     try:
+        # First try JWT token authentication
         auth_header = request.headers.get("Authorization")
         logger.info(f"Auth header: {auth_header}")
 
-        if not auth_header or not auth_header.startswith("Bearer "):
-            logger.info("No valid Bearer token found")
-            return None
+        if auth_header and auth_header.startswith("Bearer "):
+            token = auth_header.replace("Bearer ", "")
+            logger.info(f"Extracted token: {token[:20]}...")
 
-        token = auth_header.replace("Bearer ", "")
-        logger.info(f"Extracted token: {token[:20]}...")
+            if token not in ["null", "undefined", ""]:
+                user = await auth_manager.get_user_by_token(session, token)
+                if user:
+                    logger.info(f"User found via JWT: {user.id}")
+                    return user.id
 
-        if token in ["null", "undefined", ""]:
-            logger.info("Token is null/undefined/empty")
-            return None
+        # Fallback to session-based authentication (like /api/auth/me does)
+        if hasattr(request, 'session'):
+            session_data = request.session
+            if session_data.get("is_authenticated") and session_data.get("user_id"):
+                user_id = session_data.get("user_id")
+                logger.info(f"User found via session: {user_id}")
+                return user_id
 
-        user = await auth_manager.get_user_by_token(session, token)
-        logger.info(f"User found: {user.id if user else None}")
-        return user.id if user else None
+        logger.info("No valid authentication found - returning None for demo mode")
+        return None
     except Exception as e:
         logger.error(f"Error in get_optional_user_id: {e}")
         return None
@@ -135,8 +142,8 @@ async def get_user_inventory(
                     "is_favorite": False,
                     "is_equipped": False,
                     "is_tradeable": True,
-                    "gem_value": 10.0,
-                    "market_value": 10.0,
+                    "gem_value": 300.0,
+                    "market_value": 300.0,
                     "max_stack_size": 10,
                     "acquired_at": "2025-01-14T10:00:00Z",
                     "created_at": "2025-01-14T10:00:00Z",
@@ -155,8 +162,8 @@ async def get_user_inventory(
                     "is_favorite": True,
                     "is_equipped": False,
                     "is_tradeable": True,
-                    "gem_value": 50.0,
-                    "market_value": 50.0,
+                    "gem_value": 750.0,
+                    "market_value": 750.0,
                     "max_stack_size": 1,
                     "acquired_at": "2025-01-14T10:30:00Z",
                     "created_at": "2025-01-14T10:30:00Z",
@@ -175,8 +182,8 @@ async def get_user_inventory(
                     "is_favorite": False,
                     "is_equipped": False,
                     "is_tradeable": True,
-                    "gem_value": 200.0,
-                    "market_value": 200.0,
+                    "gem_value": 1500.0,
+                    "market_value": 1500.0,
                     "max_stack_size": 5,
                     "acquired_at": "2025-01-14T11:00:00Z",
                     "created_at": "2025-01-14T11:00:00Z",
@@ -187,14 +194,14 @@ async def get_user_inventory(
             return {
                 "items": demo_items,
                 "pagination": {
-                    "page": page,
+                    "current_page": page,
                     "per_page": per_page,
                     "total": len(demo_items),
-                    "pages": 1
+                    "total_pages": 1
                 },
                 "summary": {
                     "total_items": len(demo_items),
-                    "total_value": 60.0,
+                    "total_value": 5550.0,  # 300 + 750 + (1500 * 3)
                     "unique_items": len(demo_items)
                 },
                 "demo_mode": True
@@ -240,7 +247,7 @@ async def get_inventory_summary(
             logger.info("Returning demo inventory summary for unauthenticated user")
             return {
                 "total_items": 5,  # 1 + 1 + 3 (quantities)
-                "total_value": 860.0,  # 10 + 50 + (200 * 3) + addon value
+                "total_value": 5550.0,  # 300 + 750 + (1500 * 3)
                 "unique_items": 3,
                 "by_rarity": {
                     "COMMON": 1,
@@ -374,11 +381,51 @@ async def sell_inventory_item(
             inventory_id=request.inventory_id,
             quantity=request.quantity
         )
-        
+
         return result
-        
+
     except Exception as e:
         logger.error(f"Failed to sell item: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+
+
+@router.post("/items/{inventory_id}/sell")
+async def sell_inventory_item_by_id(
+    inventory_id: str,
+    quantity: int = 1,
+    request: Request = None,
+    user_id: Optional[str] = Depends(get_optional_user_id),
+    session: AsyncSession = Depends(get_db_session)
+):
+    """Sell inventory item for GEM coins (path parameter version)."""
+    try:
+        if not user_id:
+            # Demo mode - return mock result
+            logger.info(f"Demo mode sell attempt for item {inventory_id}")
+            return {
+                "success": True,
+                "inventory_id": inventory_id,
+                "quantity_sold": quantity,
+                "gem_coins_earned": 225.0,  # Mock value (75% of 300 GEM common item)
+                "remaining_quantity": 0,
+                "demo_mode": True,
+                "message": "Demo item sold successfully (no real transaction)"
+            }
+
+        result = await inventory_manager.sell_item(
+            session=session,
+            user_id=user_id,
+            inventory_id=inventory_id,
+            quantity=quantity
+        )
+
+        return result
+
+    except Exception as e:
+        logger.error(f"Failed to sell item {inventory_id}: {e}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
@@ -728,31 +775,31 @@ async def get_item_rarities():
                 "name": "Common",
                 "color": "#9CA3AF",
                 "drop_rate": 70.0,
-                "gem_value": 10.0
+                "gem_value": 300.0
             },
             "UNCOMMON": {
-                "name": "Uncommon", 
+                "name": "Uncommon",
                 "color": "#10B981",
                 "drop_rate": 20.0,
-                "gem_value": 50.0
+                "gem_value": 750.0
             },
             "RARE": {
                 "name": "Rare",
-                "color": "#3B82F6", 
+                "color": "#3B82F6",
                 "drop_rate": 8.0,
-                "gem_value": 200.0
+                "gem_value": 1500.0
             },
             "EPIC": {
                 "name": "Epic",
                 "color": "#8B5CF6",
                 "drop_rate": 1.8,
-                "gem_value": 1000.0
+                "gem_value": 3000.0
             },
             "LEGENDARY": {
                 "name": "Legendary",
                 "color": "#F59E0B",
                 "drop_rate": 0.2,
-                "gem_value": 5000.0
+                "gem_value": 6000.0
             }
         },
         "drop_rates": GameConstants.DROP_RATES
@@ -823,7 +870,7 @@ async def open_item_pack(
                     "name": f"{rarity.capitalize()} Demo Item {i+1}",
                     "rarity": rarity,
                     "item_type": "TRADING_CARD",
-                    "gem_value": {"COMMON": 10, "UNCOMMON": 50, "RARE": 200, "EPIC": 1000, "LEGENDARY": 5000}[rarity],
+                    "gem_value": {"COMMON": 300, "UNCOMMON": 750, "RARE": 1500, "EPIC": 3000, "LEGENDARY": 6000}[rarity],
                     "demo": True
                 })
 
