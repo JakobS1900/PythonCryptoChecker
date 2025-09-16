@@ -24,6 +24,7 @@ from api.analytics_api import router as analytics_router
 from api.onboarding_api import router as onboarding_router
 from api.mini_games_api import router as mini_games_router
 from api.inventory_api import router as inventory_router
+from api.portfolio_api import router as portfolio_router
 from web.trading_api import router as trading_router
 
 # Import database and other systems
@@ -179,6 +180,7 @@ app.include_router(analytics_router, prefix="/api")
 app.include_router(onboarding_router, prefix="/api")
 app.include_router(mini_games_router, prefix="/api/mini-games")
 app.include_router(inventory_router, prefix="/api/inventory")
+app.include_router(portfolio_router, prefix="/api/portfolio")
 # Trading API already declares '/api/trading' in its router prefix; include without extra prefix
 app.include_router(trading_router)
 
@@ -463,10 +465,22 @@ async def remove_avatar(request: Request):
         return {"status": "error", "message": "Failed to remove avatar"}
 
 
-@app.get("/inventory", response_class=HTMLResponse)  
+@app.get("/inventory", response_class=HTMLResponse)
 async def inventory(request: Request):
     """User inventory and gaming items."""
     return templates.TemplateResponse("inventory/inventory.html", {"request": request})
+
+
+@app.get("/market", response_class=HTMLResponse)
+async def market_dashboard(request: Request):
+    """Market dashboard with live crypto data and portfolio integration."""
+    return templates.TemplateResponse("market_dashboard.html", {"request": request})
+
+
+@app.get("/portfolio", response_class=HTMLResponse)
+async def portfolio_page(request: Request):
+    """Portfolio management page with GEMs integration."""
+    return templates.TemplateResponse("portfolio.html", {"request": request})
 
 
 @app.get("/gaming/inventory")

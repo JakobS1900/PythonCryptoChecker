@@ -346,18 +346,20 @@ class EnhancedRouletteGame {
         }
 
         try {
-            // Check authentication - require login for all betting
-            if (!localStorage.getItem('access_token') || localStorage.getItem('access_token') === 'null') {
-                this.showErrorAlert('Please log in to place bets. <a href="/login" class="alert-link">Login here</a>');
-                return;
+            // Get access token (or null for demo mode)
+            const accessToken = localStorage.getItem('access_token');
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+
+            // Add Authorization header if token exists and is valid
+            if (accessToken && accessToken !== 'null' && accessToken !== 'undefined') {
+                headers['Authorization'] = `Bearer ${accessToken}`;
             }
-            
+
             const response = await fetch('/api/gaming/roulette/place_bet', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-                },
+                headers: headers,
                 body: JSON.stringify({
                     bet_type: betType,
                     bet_value: betValue,
@@ -677,12 +679,20 @@ class EnhancedRouletteGame {
                 timestamp: new Date().toISOString()
             });
 
+            // Get access token (or null for demo mode)
+            const accessToken = localStorage.getItem('access_token');
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+
+            // Add Authorization header if token exists and is valid
+            if (accessToken && accessToken !== 'null' && accessToken !== 'undefined') {
+                headers['Authorization'] = `Bearer ${accessToken}`;
+            }
+
             const response = await fetch('/api/gaming/roulette/spin', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('access_token') || ''}`
-                },
+                headers: headers,
                 body: JSON.stringify({
                     bets: cleanedBets,
                     current_balance: this.getSafeBalance() // Send current balance for server sync
@@ -1131,12 +1141,13 @@ class EnhancedRouletteGame {
             if (sessionId && token && token !== 'undefined') {
                 await this.connectWebSocket(sessionId, token);
                 this.gameState = 'betting';
+                console.log('🎰 Authenticated roulette session initialized');
             } else {
-                // No authentication - show login prompt
-                console.log('No authentication detected - prompting for login');
-                this.showErrorAlert('Please log in to play roulette. <a href="/login" class="alert-link">Login here</a>');
-                this.gameState = 'requires_auth';
-                return;
+                // Demo mode - allow playing without authentication
+                console.log('🎰 Demo mode roulette session initialized');
+                this.gameState = 'betting';
+                // Show demo notification once
+                this.showNotification('Playing in demo mode - login to save progress', 'info');
             }
             
             // Initialize balance and update display

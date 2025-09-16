@@ -152,7 +152,7 @@ class User(Base):
     friendships_sent = relationship("Friendship", foreign_keys="Friendship.sender_id", back_populates="sender")
     friendships_received = relationship("Friendship", foreign_keys="Friendship.receiver_id", back_populates="receiver")
     daily_rewards = relationship("DailyReward", back_populates="user", uselist=False)
-    
+
     # Trading relationships
     portfolios = relationship("Portfolio", back_populates="user")
     transactions = relationship("Transaction", back_populates="user")
@@ -164,6 +164,15 @@ class User(Base):
     notifications = relationship("Notification", back_populates="user")
     notification_preferences = relationship("NotificationPreferences", back_populates="user", uselist=False)
     mini_game_stats = relationship("UserGameStats", back_populates="user", uselist=False)
+
+    # Market & Portfolio relationships
+    user_portfolio = relationship("UserPortfolio", uselist=False)
+    user_profile = relationship("UserProfile", uselist=False)
+    watchlists = relationship("MarketWatchlist")
+    price_alerts = relationship("PriceAlert")
+    community_posts = relationship("CommunityPost")
+    post_likes = relationship("PostLike")
+    post_comments = relationship("PostComment")
 
 
 class UserSession(Base):
@@ -1053,6 +1062,304 @@ class OCOLink(Base):
     # Relationships
     group = relationship("OCOGroup", back_populates="oco_links")
     order = relationship("Order", back_populates="oco_links")
+
+
+# ==================== MARKET DATA & PORTFOLIO TRACKING ====================
+
+class CryptoAsset(Base):
+    """Cryptocurrency asset information."""
+    __tablename__ = "crypto_assets"
+
+    id = Column(String, primary_key=True)  # CoinGecko ID
+    symbol = Column(String(20), nullable=False, index=True)
+    name = Column(String(100), nullable=False)
+
+    # Current market data
+    current_price_usd = Column(Float, default=0.0)
+    market_cap = Column(Float, default=0.0)
+    price_change_24h = Column(Float, default=0.0)
+    price_change_percentage_24h = Column(Float, default=0.0)
+
+    # Asset metadata
+    image_url = Column(String)
+    description = Column(Text)
+    website_url = Column(String)
+
+    # Trading info
+    is_active = Column(Boolean, default=True)
+    last_price_update = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    portfolio_holdings = relationship("PortfolioHolding", back_populates="asset")
+    portfolio_transactions = relationship("PortfolioTransaction", back_populates="asset")
+
+
+class UserPortfolio(Base):
+    """User's crypto portfolio for tracking real/virtual investments."""
+    __tablename__ = "user_portfolios"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, ForeignKey("users.id"), nullable=False, unique=True)
+
+    # Portfolio settings
+    name = Column(String(100), default="My Portfolio")
+    base_currency = Column(String(10), default="USD")
+    is_public = Column(Boolean, default=False)
+
+    # Performance metrics
+    total_value_usd = Column(Float, default=0.0)
+    total_invested = Column(Float, default=0.0)
+    total_pnl = Column(Float, default=0.0)
+    total_pnl_percentage = Column(Float, default=0.0)
+
+    # Statistics
+    total_transactions = Column(Integer, default=0)
+    best_performing_asset = Column(String)
+    worst_performing_asset = Column(String)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    user = relationship("User")
+    holdings = relationship("PortfolioHolding", back_populates="portfolio")
+    transactions = relationship("PortfolioTransaction", back_populates="portfolio")
+
+
+class PortfolioHolding(Base):
+    """Individual crypto holdings in user portfolio."""
+    __tablename__ = "portfolio_holdings"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    portfolio_id = Column(String, ForeignKey("user_portfolios.id"), nullable=False)
+    asset_id = Column(String, ForeignKey("crypto_assets.id"), nullable=False)
+
+    # Holding details
+    quantity = Column(Float, nullable=False, default=0.0)
+    average_buy_price = Column(Float, nullable=False, default=0.0)
+    total_cost = Column(Float, nullable=False, default=0.0)
+
+    # Current value
+    current_price = Column(Float, default=0.0)
+    current_value = Column(Float, default=0.0)
+    unrealized_pnl = Column(Float, default=0.0)
+    unrealized_pnl_percentage = Column(Float, default=0.0)
+
+    # Timestamps
+    first_purchase_date = Column(DateTime)
+    last_transaction_date = Column(DateTime)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    portfolio = relationship("UserPortfolio", back_populates="holdings")
+    asset = relationship("CryptoAsset", back_populates="portfolio_holdings")
+
+
+class PortfolioTransaction(Base):
+    """Portfolio transaction history."""
+    __tablename__ = "portfolio_transactions"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    portfolio_id = Column(String, ForeignKey("user_portfolios.id"), nullable=False)
+    asset_id = Column(String, ForeignKey("crypto_assets.id"), nullable=False)
+
+    # Transaction details
+    transaction_type = Column(String, nullable=False)  # BUY, SELL
+    quantity = Column(Float, nullable=False)
+    price_per_coin = Column(Float, nullable=False)
+    total_amount = Column(Float, nullable=False)
+    fees = Column(Float, default=0.0)
+
+    # GEMs integration
+    gems_used = Column(Float, default=0.0)  # GEMs spent on virtual purchases
+    is_virtual_transaction = Column(Boolean, default=True)  # True for GEM-based virtual trades
+
+    # Metadata
+    notes = Column(Text)
+    source = Column(String, default="MANUAL")  # MANUAL, IMPORT, API
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    portfolio = relationship("UserPortfolio", back_populates="transactions")
+    asset = relationship("CryptoAsset", back_populates="portfolio_transactions")
+
+
+class MarketWatchlist(Base):
+    """User's crypto watchlist."""
+    __tablename__ = "market_watchlists"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+
+    name = Column(String(100), default="My Watchlist")
+    is_default = Column(Boolean, default=False)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    user = relationship("User")
+    items = relationship("WatchlistItem", back_populates="watchlist")
+
+
+class WatchlistItem(Base):
+    """Individual items in watchlist."""
+    __tablename__ = "watchlist_items"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    watchlist_id = Column(String, ForeignKey("market_watchlists.id"), nullable=False)
+    asset_id = Column(String, ForeignKey("crypto_assets.id"), nullable=False)
+
+    # Alert settings
+    price_alert_high = Column(Float)
+    price_alert_low = Column(Float)
+    percentage_change_alert = Column(Float)
+
+    added_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    watchlist = relationship("MarketWatchlist", back_populates="items")
+    asset = relationship("CryptoAsset")
+
+
+class PriceAlert(Base):
+    """Price alerts for crypto assets."""
+    __tablename__ = "price_alerts"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    asset_id = Column(String, ForeignKey("crypto_assets.id"), nullable=False)
+
+    # Alert configuration
+    alert_type = Column(String, nullable=False)  # PRICE_ABOVE, PRICE_BELOW, PERCENT_CHANGE
+    target_value = Column(Float, nullable=False)
+    current_price_when_set = Column(Float)
+
+    # Status
+    is_active = Column(Boolean, default=True)
+    triggered_at = Column(DateTime)
+    trigger_price = Column(Float)
+
+    # Notification
+    notification_sent = Column(Boolean, default=False)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    user = relationship("User")
+    asset = relationship("CryptoAsset")
+
+
+# ==================== COMMUNITY & SOCIAL ENHANCEMENT ====================
+
+class UserProfile(Base):
+    """Extended user profile information."""
+    __tablename__ = "user_profiles"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, ForeignKey("users.id"), nullable=False, unique=True)
+
+    # Profile customization
+    profile_banner_url = Column(String)
+    favorite_crypto = Column(String)
+    trading_experience = Column(String)  # BEGINNER, INTERMEDIATE, ADVANCED, EXPERT
+    investment_style = Column(String)  # CONSERVATIVE, BALANCED, AGGRESSIVE
+
+    # Social settings
+    show_portfolio = Column(Boolean, default=False)
+    show_trading_stats = Column(Boolean, default=False)
+    allow_portfolio_comparison = Column(Boolean, default=True)
+
+    # Status and activity
+    status_message = Column(String(200))
+    last_seen = Column(DateTime)
+    is_online = Column(Boolean, default=False)
+
+    # Statistics
+    total_friends = Column(Integer, default=0)
+    profile_views = Column(Integer, default=0)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    user = relationship("User")
+
+
+class CommunityPost(Base):
+    """Community posts and discussions."""
+    __tablename__ = "community_posts"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+
+    # Post content
+    title = Column(String(200))
+    content = Column(Text, nullable=False)
+    post_type = Column(String, default="GENERAL")  # GENERAL, ANALYSIS, QUESTION, ALERT
+
+    # Metadata
+    tags = Column(JSON, default=list)  # List of tags
+    mentioned_assets = Column(JSON, default=list)  # List of crypto symbols mentioned
+
+    # Engagement
+    likes_count = Column(Integer, default=0)
+    comments_count = Column(Integer, default=0)
+    shares_count = Column(Integer, default=0)
+    views_count = Column(Integer, default=0)
+
+    # Moderation
+    is_deleted = Column(Boolean, default=False)
+    is_pinned = Column(Boolean, default=False)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    user = relationship("User")
+    comments = relationship("PostComment", back_populates="post")
+    likes = relationship("PostLike", back_populates="post")
+
+
+class PostComment(Base):
+    """Comments on community posts."""
+    __tablename__ = "post_comments"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    post_id = Column(String, ForeignKey("community_posts.id"), nullable=False)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    parent_comment_id = Column(String, ForeignKey("post_comments.id"))  # For nested comments
+
+    content = Column(Text, nullable=False)
+    likes_count = Column(Integer, default=0)
+
+    is_deleted = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    post = relationship("CommunityPost", back_populates="comments")
+    user = relationship("User")
+    parent_comment = relationship("PostComment", remote_side=[id])
+
+
+class PostLike(Base):
+    """Likes on posts and comments."""
+    __tablename__ = "post_likes"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    post_id = Column(String, ForeignKey("community_posts.id"))
+    comment_id = Column(String, ForeignKey("post_comments.id"))
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    user = relationship("User")
+    post = relationship("CommunityPost", back_populates="likes")
 
 
 # ==================== MINI-GAMES SYSTEM MODELS ====================

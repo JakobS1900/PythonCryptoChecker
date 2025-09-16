@@ -1,0 +1,728 @@
+{% extends "base.html" %}
+{% block title %}Market Dashboard - CryptoChecker Gaming Platform{% endblock %}
+{% block body_class %}market-dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .market-dashboard {
+        background: linear-gradient(135deg, #0f1419 0%, #1a1a2e 50%, #16213e 100%);
+        min-height: 100vh;
+        color: #ffffff;
+    }
+
+    .dashboard-header {
+        background: rgba(0, 0, 0, 0.7);
+        border-bottom: 2px solid #fbbf24;
+        padding: 20px 0;
+        margin-bottom: 30px;
+    }
+
+    .dashboard-title {
+        color: #fbbf24;
+        font-size: 2.5rem;
+        font-weight: bold;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        margin-bottom: 10px;
+    }
+
+    .dashboard-subtitle {
+        color: #94a3b8;
+        font-size: 1.1rem;
+    }
+
+    .market-controls {
+        background: rgba(0, 0, 0, 0.6);
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 30px;
+        border: 1px solid rgba(251, 191, 36, 0.3);
+    }
+
+    .crypto-table {
+        background: rgba(0, 0, 0, 0.6);
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid rgba(251, 191, 36, 0.3);
+    }
+
+    .crypto-table th {
+        background: rgba(251, 191, 36, 0.2);
+        color: #fbbf24;
+        font-weight: 600;
+        border: none;
+        padding: 15px 12px;
+    }
+
+    .crypto-table td {
+        color: #ffffff;
+        border: none;
+        padding: 12px;
+        background: rgba(255, 255, 255, 0.05);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .crypto-table tbody tr:hover {
+        background: rgba(251, 191, 36, 0.1);
+    }
+
+    .price-positive {
+        color: #10b981;
+        font-weight: bold;
+    }
+
+    .price-negative {
+        color: #ef4444;
+        font-weight: bold;
+    }
+
+    .crypto-icon {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        margin-right: 8px;
+    }
+
+    .crypto-symbol {
+        font-weight: bold;
+        color: #fbbf24;
+    }
+
+    .crypto-name {
+        color: #94a3b8;
+        font-size: 0.9rem;
+    }
+
+    .portfolio-summary {
+        background: rgba(0, 0, 0, 0.6);
+        border-radius: 10px;
+        padding: 20px;
+        border: 1px solid rgba(251, 191, 36, 0.3);
+        margin-bottom: 20px;
+    }
+
+    .summary-stat {
+        text-align: center;
+        padding: 10px;
+    }
+
+    .summary-stat .value {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #fbbf24;
+    }
+
+    .summary-stat .label {
+        color: #94a3b8;
+        font-size: 0.9rem;
+        margin-top: 5px;
+    }
+
+    .refresh-btn {
+        background: linear-gradient(45deg, #fbbf24, #f59e0b);
+        border: none;
+        color: #000;
+        font-weight: 600;
+    }
+
+    .refresh-btn:hover {
+        background: linear-gradient(45deg, #f59e0b, #d97706);
+        color: #000;
+    }
+
+    .loading-spinner {
+        display: none;
+        text-align: center;
+        padding: 40px;
+    }
+
+    .watchlist-controls {
+        margin-bottom: 20px;
+    }
+
+    .watchlist-btn {
+        background: rgba(251, 191, 36, 0.2);
+        border: 1px solid #fbbf24;
+        color: #fbbf24;
+        margin-right: 10px;
+        margin-bottom: 10px;
+    }
+
+    .watchlist-btn.active {
+        background: #fbbf24;
+        color: #000;
+    }
+
+    .pagination-controls {
+        text-align: center;
+        margin-top: 20px;
+    }
+
+    .error-message {
+        background: rgba(239, 68, 68, 0.2);
+        border: 1px solid #ef4444;
+        color: #fca5a5;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+
+    .success-message {
+        background: rgba(16, 185, 129, 0.2);
+        border: 1px solid #10b981;
+        color: #6ee7b7;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+
+    @media (max-width: 768px) {
+        .dashboard-title {
+            font-size: 2rem;
+        }
+
+        .crypto-table {
+            font-size: 0.9rem;
+        }
+
+        .crypto-table th,
+        .crypto-table td {
+            padding: 8px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Dashboard Header -->
+    <div class="dashboard-header">
+        <div class="container">
+            <div class="row">
+                <div class="col-12">
+                    <h1 class="dashboard-title">Market Dashboard</h1>
+                    <p class="dashboard-subtitle">Live cryptocurrency prices integrated with your GEMs portfolio</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Portfolio Summary -->
+        <div class="row" id="portfolio-summary-section" style="display: none;">
+            <div class="col-12">
+                <div class="portfolio-summary">
+                    <h3 class="mb-3" style="color: #fbbf24;">Portfolio Summary</h3>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="summary-stat">
+                                <div class="value" id="total-value">$0.00</div>
+                                <div class="label">Total Value</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="summary-stat">
+                                <div class="value" id="total-pnl">$0.00</div>
+                                <div class="label">Total P&L</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="summary-stat">
+                                <div class="value" id="holdings-count">0</div>
+                                <div class="label">Holdings</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="summary-stat">
+                                <div class="value" id="gems-balance">0 GEM</div>
+                                <div class="label">Available GEMs</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Market Controls -->
+        <div class="row">
+            <div class="col-12">
+                <div class="market-controls">
+                    <div class="row align-items-center">
+                        <div class="col-md-3">
+                            <label for="currency-select" class="form-label">Currency:</label>
+                            <select class="form-select" id="currency-select">
+                                <option value="USD" selected>USD</option>
+                                <option value="EUR">EUR</option>
+                                <option value="GBP">GBP</option>
+                                <option value="JPY">JPY</option>
+                                <option value="CAD">CAD</option>
+                                <option value="AUD">AUD</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Watchlist:</label>
+                            <div class="watchlist-controls">
+                                <button class="btn watchlist-btn active" data-preset="top100">Top 100</button>
+                                <button class="btn watchlist-btn" data-preset="trending">Trending</button>
+                                <button class="btn watchlist-btn" data-preset="gainers">Top Gainers</button>
+                                <button class="btn watchlist-btn" data-preset="losers">Top Losers</button>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">&nbsp;</label><br>
+                            <button class="btn refresh-btn btn-sm" id="refresh-data">
+                                <i class="fas fa-sync-alt"></i> Refresh Data
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Messages -->
+        <div id="message-container"></div>
+
+        <!-- Loading Spinner -->
+        <div class="loading-spinner" id="loading-spinner">
+            <div class="spinner-border text-warning" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Loading market data...</p>
+        </div>
+
+        <!-- Market Data Table -->
+        <div class="row">
+            <div class="col-12">
+                <div class="crypto-table">
+                    <table class="table table-dark table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Cryptocurrency</th>
+                                <th>Price</th>
+                                <th>24h Change</th>
+                                <th>24h %</th>
+                                <th>Market Cap</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="crypto-table-body">
+                            <!-- Market data will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination-controls">
+            <button class="btn btn-outline-warning" id="prev-page" disabled>Previous</button>
+            <span class="mx-3" id="page-info">Page 1</span>
+            <button class="btn btn-outline-warning" id="next-page">Next</button>
+        </div>
+    </div>
+</div>
+
+<!-- Portfolio Transaction Modal -->
+<div class="modal fade" id="transactionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark text-light">
+            <div class="modal-header border-warning">
+                <h5 class="modal-title text-warning">Add Portfolio Transaction</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="transaction-form">
+                    <input type="hidden" id="modal-asset-id">
+                    <div class="mb-3">
+                        <label class="form-label">Cryptocurrency:</label>
+                        <div id="modal-asset-info" class="p-2 bg-secondary rounded"></div>
+                    </div>
+                    <div class="row">
+                        <div class="col-6">
+                            <label class="form-label">Transaction Type:</label>
+                            <select class="form-select" id="transaction-type" required>
+                                <option value="BUY">Buy</option>
+                                <option value="SELL">Sell</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Quantity:</label>
+                            <input type="number" class="form-control" id="quantity" step="0.00000001" min="0.00000001" required>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-6">
+                            <label class="form-label">Price per Coin:</label>
+                            <input type="number" class="form-control" id="price-per-coin" step="0.01" min="0.01" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Total Cost:</label>
+                            <input type="text" class="form-control" id="total-cost" readonly>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="use-gems" checked>
+                            <label class="form-check-label" for="use-gems">
+                                Use GEMs for virtual transaction
+                            </label>
+                        </div>
+                        <small class="text-muted">GEMs Required: <span id="gems-required">0</span></small>
+                    </div>
+                    <div class="mt-3">
+                        <label class="form-label">Notes (optional):</label>
+                        <textarea class="form-control" id="transaction-notes" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-warning">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning" id="submit-transaction">Add Transaction</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+class MarketDashboard {
+    constructor() {
+        this.currentPage = 1;
+        this.pageSize = 50;
+        this.currentCurrency = 'USD';
+        this.currentPreset = 'top100';
+        this.marketData = [];
+        this.userBalance = null;
+        this.portfolioSummary = null;
+
+        this.init();
+    }
+
+    init() {
+        this.bindEvents();
+        this.loadUserData();
+        this.loadMarketData();
+    }
+
+    bindEvents() {
+        // Currency change
+        document.getElementById('currency-select').addEventListener('change', (e) => {
+            this.currentCurrency = e.target.value;
+            this.loadMarketData();
+        });
+
+        // Watchlist presets
+        document.querySelectorAll('.watchlist-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.watchlist-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                this.currentPreset = e.target.dataset.preset;
+                this.loadMarketData();
+            });
+        });
+
+        // Refresh data
+        document.getElementById('refresh-data').addEventListener('click', () => {
+            this.loadMarketData(true);
+        });
+
+        // Pagination
+        document.getElementById('prev-page').addEventListener('click', () => {
+            if (this.currentPage > 1) {
+                this.currentPage--;
+                this.updateTable();
+            }
+        });
+
+        document.getElementById('next-page').addEventListener('click', () => {
+            this.currentPage++;
+            this.updateTable();
+        });
+
+        // Transaction form
+        document.getElementById('quantity').addEventListener('input', () => this.updateTransactionTotal());
+        document.getElementById('price-per-coin').addEventListener('input', () => this.updateTransactionTotal());
+        document.getElementById('submit-transaction').addEventListener('click', () => this.submitTransaction());
+    }
+
+    async loadUserData() {
+        try {
+            // Load user balance
+            const balanceResponse = await fetch('/api/balance', {
+                headers: this.getAuthHeaders()
+            });
+
+            if (balanceResponse.ok) {
+                this.userBalance = await balanceResponse.json();
+                document.getElementById('gems-balance').textContent = `${this.userBalance.gem_coins.toFixed(0)} GEM`;
+            }
+
+            // Load portfolio summary
+            const portfolioResponse = await fetch('/api/portfolio/summary', {
+                headers: this.getAuthHeaders()
+            });
+
+            if (portfolioResponse.ok) {
+                this.portfolioSummary = await portfolioResponse.json();
+                this.updatePortfolioSummary();
+                document.getElementById('portfolio-summary-section').style.display = 'block';
+            }
+        } catch (error) {
+            console.error('Error loading user data:', error);
+        }
+    }
+
+    updatePortfolioSummary() {
+        if (!this.portfolioSummary) return;
+
+        document.getElementById('total-value').textContent = `$${this.portfolioSummary.total_value_usd.toFixed(2)}`;
+
+        const pnlElement = document.getElementById('total-pnl');
+        const pnl = this.portfolioSummary.total_pnl;
+        pnlElement.textContent = `$${pnl.toFixed(2)}`;
+        pnlElement.className = `value ${pnl >= 0 ? 'price-positive' : 'price-negative'}`;
+
+        document.getElementById('holdings-count').textContent = this.portfolioSummary.holdings_count;
+    }
+
+    async loadMarketData(refresh = false) {
+        this.showLoading(true);
+        this.clearMessages();
+
+        try {
+            const params = new URLSearchParams({
+                limit: '250',
+                vs_currency: this.currentCurrency,
+                refresh: refresh.toString()
+            });
+
+            const response = await fetch(`/api/portfolio/market/overview?${params}`);
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            this.marketData = await response.json();
+            this.filterDataByPreset();
+            this.updateTable();
+            this.showMessage('Market data updated successfully!', 'success');
+        } catch (error) {
+            console.error('Error loading market data:', error);
+            this.showMessage(`Failed to load market data: ${error.message}`, 'error');
+            this.marketData = [];
+            this.updateTable();
+        } finally {
+            this.showLoading(false);
+        }
+    }
+
+    filterDataByPreset() {
+        switch (this.currentPreset) {
+            case 'trending':
+                // Sort by 24h volume for trending (approximate)
+                this.marketData.sort((a, b) => (b.market_cap || 0) - (a.market_cap || 0));
+                break;
+            case 'gainers':
+                this.marketData = this.marketData
+                    .filter(coin => coin.change_24h_percent > 0)
+                    .sort((a, b) => b.change_24h_percent - a.change_24h_percent);
+                break;
+            case 'losers':
+                this.marketData = this.marketData
+                    .filter(coin => coin.change_24h_percent < 0)
+                    .sort((a, b) => a.change_24h_percent - b.change_24h_percent);
+                break;
+            default: // top100
+                this.marketData.sort((a, b) => (b.market_cap || 0) - (a.market_cap || 0));
+                break;
+        }
+    }
+
+    updateTable() {
+        const tbody = document.getElementById('crypto-table-body');
+        const startIdx = (this.currentPage - 1) * this.pageSize;
+        const endIdx = startIdx + this.pageSize;
+        const pageData = this.marketData.slice(startIdx, endIdx);
+
+        tbody.innerHTML = '';
+
+        if (pageData.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center p-4">
+                        No cryptocurrency data available.
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        pageData.forEach((coin, index) => {
+            const rank = startIdx + index + 1;
+            const change24hClass = coin.change_24h_percent >= 0 ? 'price-positive' : 'price-negative';
+            const changeIcon = coin.change_24h_percent >= 0 ? '▲' : '▼';
+
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${rank}</td>
+                <td>
+                    <div class="d-flex align-items-center">
+                        ${coin.image_url ? `<img src="${coin.image_url}" alt="${coin.symbol}" class="crypto-icon">` : ''}
+                        <div>
+                            <div class="crypto-symbol">${coin.symbol}</div>
+                            <div class="crypto-name">${coin.name}</div>
+                        </div>
+                    </div>
+                </td>
+                <td>$${coin.price.toFixed(coin.price >= 1 ? 2 : 6)}</td>
+                <td class="${change24hClass}">
+                    ${changeIcon} $${Math.abs(coin.change_24h || 0).toFixed(2)}
+                </td>
+                <td class="${change24hClass}">
+                    ${coin.change_24h_percent.toFixed(2)}%
+                </td>
+                <td>$${this.formatLargeNumber(coin.market_cap || 0)}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-warning"
+                            onclick="dashboard.openTransactionModal('${coin.id}', '${coin.symbol}', '${coin.name}', ${coin.price})">
+                        Add to Portfolio
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+
+        this.updatePagination();
+    }
+
+    updatePagination() {
+        const totalPages = Math.ceil(this.marketData.length / this.pageSize);
+
+        document.getElementById('prev-page').disabled = this.currentPage <= 1;
+        document.getElementById('next-page').disabled = this.currentPage >= totalPages;
+        document.getElementById('page-info').textContent =
+            `Page ${this.currentPage} of ${Math.max(1, totalPages)}`;
+    }
+
+    openTransactionModal(assetId, symbol, name, currentPrice) {
+        document.getElementById('modal-asset-id').value = assetId;
+        document.getElementById('modal-asset-info').innerHTML = `
+            <strong>${symbol}</strong> - ${name}<br>
+            Current Price: $${currentPrice.toFixed(currentPrice >= 1 ? 2 : 6)}
+        `;
+        document.getElementById('price-per-coin').value = currentPrice;
+        this.updateTransactionTotal();
+
+        const modal = new bootstrap.Modal(document.getElementById('transactionModal'));
+        modal.show();
+    }
+
+    updateTransactionTotal() {
+        const quantity = parseFloat(document.getElementById('quantity').value) || 0;
+        const price = parseFloat(document.getElementById('price-per-coin').value) || 0;
+        const total = quantity * price;
+
+        document.getElementById('total-cost').value = `$${total.toFixed(2)}`;
+        document.getElementById('gems-required').textContent = `${(total * 100).toFixed(0)} GEM`;
+    }
+
+    async submitTransaction() {
+        const assetId = document.getElementById('modal-asset-id').value;
+        const transactionType = document.getElementById('transaction-type').value;
+        const quantity = parseFloat(document.getElementById('quantity').value);
+        const pricePerCoin = parseFloat(document.getElementById('price-per-coin').value);
+        const useGems = document.getElementById('use-gems').checked;
+        const notes = document.getElementById('transaction-notes').value;
+
+        if (!quantity || !pricePerCoin) {
+            this.showMessage('Please fill in all required fields.', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/portfolio/transactions', {
+                method: 'POST',
+                headers: {
+                    ...this.getAuthHeaders(),
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    asset_id: assetId,
+                    transaction_type: transactionType,
+                    quantity: quantity,
+                    price_per_coin: pricePerCoin,
+                    use_gems: useGems,
+                    notes: notes
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Transaction failed');
+            }
+
+            const transaction = await response.json();
+            this.showMessage(`Transaction added successfully! ${transaction.transaction_type} ${transaction.quantity} ${transaction.asset_symbol}`, 'success');
+
+            // Close modal and refresh user data
+            bootstrap.Modal.getInstance(document.getElementById('transactionModal')).hide();
+            this.loadUserData();
+
+            // Reset form
+            document.getElementById('transaction-form').reset();
+
+        } catch (error) {
+            console.error('Error submitting transaction:', error);
+            this.showMessage(error.message, 'error');
+        }
+    }
+
+    formatLargeNumber(num) {
+        if (num >= 1e12) return (num / 1e12).toFixed(2) + 'T';
+        if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
+        if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
+        if (num >= 1e3) return (num / 1e3).toFixed(2) + 'K';
+        return num.toFixed(2);
+    }
+
+    getAuthHeaders() {
+        const token = localStorage.getItem('access_token');
+        return token ? { 'Authorization': `Bearer ${token}` } : {};
+    }
+
+    showLoading(show) {
+        document.getElementById('loading-spinner').style.display = show ? 'block' : 'none';
+    }
+
+    showMessage(message, type) {
+        const container = document.getElementById('message-container');
+        const alertClass = type === 'success' ? 'success-message' : 'error-message';
+
+        container.innerHTML = `
+            <div class="${alertClass}">
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'}"></i>
+                ${message}
+            </div>
+        `;
+
+        // Auto-hide success messages
+        if (type === 'success') {
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 5000);
+        }
+    }
+
+    clearMessages() {
+        document.getElementById('message-container').innerHTML = '';
+    }
+}
+
+// Initialize dashboard when page loads
+let dashboard;
+document.addEventListener('DOMContentLoaded', () => {
+    dashboard = new MarketDashboard();
+});
+</script>
+{% endblock %}

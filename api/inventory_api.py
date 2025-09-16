@@ -367,31 +367,6 @@ async def get_equipped_items(
         )
 
 
-@router.post("/items/sell")
-async def sell_inventory_item(
-    request: SellItemRequest,
-    user_id: str = Depends(get_current_user_id),
-    session: AsyncSession = Depends(get_db_session)
-):
-    """Sell inventory item for GEM coins."""
-    try:
-        result = await inventory_manager.sell_item(
-            session=session,
-            user_id=user_id,
-            inventory_id=request.inventory_id,
-            quantity=request.quantity
-        )
-
-        return result
-
-    except Exception as e:
-        logger.error(f"Failed to sell item: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
-
-
 @router.post("/items/{inventory_id}/sell")
 async def sell_inventory_item_by_id(
     inventory_id: str,
@@ -426,6 +401,31 @@ async def sell_inventory_item_by_id(
 
     except Exception as e:
         logger.error(f"Failed to sell item {inventory_id}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+
+
+@router.post("/items/sell")
+async def sell_inventory_item(
+    request: SellItemRequest,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db_session)
+):
+    """Sell inventory item for GEM coins."""
+    try:
+        result = await inventory_manager.sell_item(
+            session=session,
+            user_id=user_id,
+            inventory_id=request.inventory_id,
+            quantity=request.quantity
+        )
+
+        return result
+
+    except Exception as e:
+        logger.error(f"Failed to sell item: {e}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
@@ -775,7 +775,8 @@ async def get_item_rarities():
                 "name": "Common",
                 "color": "#9CA3AF",
                 "drop_rate": 70.0,
-                "gem_value": 300.0
+                "gem_value": 300.0,
+                "test_marker": "UPDATED_VERSION"
             },
             "UNCOMMON": {
                 "name": "Uncommon",

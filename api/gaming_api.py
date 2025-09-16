@@ -255,6 +255,50 @@ async def spin_wheel(
 
 # ==================== BALANCE MANAGEMENT ENDPOINTS ====================
 
+@router.get("/balance")
+async def get_balance(
+    request: Request,
+    session: AsyncSession = Depends(get_db_session)
+):
+    """Get user's current balance (general endpoint)."""
+    try:
+        # Get optional user ID (handles demo mode gracefully)
+        user_id = await get_optional_user_id(request, session)
+
+        if not user_id:
+            # Return demo balance for unauthenticated users
+            return {
+                "gem_coins": 5000.0,
+                "currency": "GEM",
+                "user_type": "guest"
+            }
+
+        # Get authenticated user's virtual wallet balance
+        from database.unified_models import VirtualWallet
+        wallet_result = await session.execute(select(VirtualWallet).where(VirtualWallet.user_id == user_id))
+        wallet = wallet_result.scalar_one_or_none()
+
+        if not wallet:
+            # Create default wallet if not exists
+            wallet = VirtualWallet(user_id=user_id, gem_coins=1200.0)
+            session.add(wallet)
+            await session.commit()
+
+        return {
+            "gem_coins": wallet.gem_coins,
+            "currency": "GEM",
+            "user_type": "authenticated",
+            "total_earned": wallet.total_gems_earned,
+            "total_spent": wallet.total_gems_spent
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to get balance: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to get balance"
+        )
+
 @router.get("/gaming/roulette/balance")
 async def get_roulette_balance(
     request: Request,
@@ -681,11 +725,28 @@ async def get_bet_types():
 async def place_roulette_bet(
     request: PlaceBetRequest,
     http_request: Request,
-    user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db_session)
 ):
     """Place bet on roulette game."""
     try:
+        # Get optional user ID (supports both authenticated and demo users)
+        user_id = await get_optional_user_id(http_request, session)
+
+        if not user_id:
+            # Demo mode - return demo response without actual database operations
+            return {
+                "success": True,
+                "bet_id": "demo_bet_" + str(int(datetime.now().timestamp())),
+                "bet_type": request.bet_type,
+                "bet_value": request.bet_value,
+                "amount": request.bet_amount or request.amount or 10,
+                "potential_payout": (request.bet_amount or request.amount or 10) * 2,  # Simple 2x payout for demo
+                "odds": "2:1",
+                "new_balance": 5000 - (request.bet_amount or request.amount or 10),  # Demo balance adjustment
+                "game_id": "demo_game",
+                "placed_at": datetime.utcnow().isoformat()
+            }
+
         game_session = await roulette_engine.get_or_create_active_session(
             session=session,
             user_id=user_id,
@@ -733,17 +794,41 @@ async def place_roulette_bet(
 @router.post("/gaming/roulette/spin")
 async def spin_roulette_wheel(
     request: Request,
-    user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db_session)
 ):
     """Spin roulette wheel and get results."""
     try:
+        # Get optional user ID (supports both authenticated and demo users)
+        user_id = await get_optional_user_id(request, session)
+
+        if not user_id:
+            # Demo mode - return demo spin result
+            import random
+            winning_number = random.randint(0, 36)
+            demo_winnings = random.choice([0, 0, 0, 100, 200])  # Usually lose, sometimes win
+
+            return {
+                "success": True,
+                "data": {
+                    "winning_number": winning_number,
+                    "winning_bets": [],
+                    "total_payout": demo_winnings,
+                    "net_winnings": demo_winnings,
+                    "total_bet": 50,  # Demo bet amount
+                    "new_balance": 5000 + demo_winnings - 50,  # Demo balance calculation
+                    "server_seed": "demo_seed",
+                    "client_seed": "demo_client",
+                    "nonce": 1,
+                    "is_winner": demo_winnings > 0
+                }
+            }
+
         # Get user's active game session
         game_session = await roulette_engine.get_active_session(
             session=session,
             user_id=user_id
         )
-        
+
         if not game_session:
             return {
                 "success": False,
