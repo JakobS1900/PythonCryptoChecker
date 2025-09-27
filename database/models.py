@@ -17,6 +17,43 @@ from passlib.context import CryptContext
 Base = declarative_base()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+# Bot usernames and bios for realistic character generation
+BOT_PROFILE_DATA = [
+    ("bob", "Beer lover from Merica Town"),
+    ("bob joe", "Dallas native, Geography Grad"),
+    ("billybob", "Coffee Addict, Dog Person"),
+    ("dogbob", "Beer Lover, Gym Rat"),
+    ("cryptojoe", "Movie Buff, Tech Geek"),
+    ("cryptobob", "Foodie, Music Lover"),
+    ("bitcoinbob", "Sports Fan, Night Owl"),
+    ("satoshisbet", "Yield Farmer, DeFi Native"),
+    ("hodlbob", "DiamondHands, Crypto Trader"),
+    ("hodlbilly", "PaperHands, Day Trader"),
+    ("moonbob", "Bear Market Survivor"),
+    ("nimblebob", "NFT Collector, All Time High believer"),
+    ("cypherpunk", "Privacy Maxwell, Bitcoin Cypherpunk"),
+    ("diamondjoe", "Decentralize or Die, Self Custody"),
+    ("hodljr", "Gold Bug, Fiat Refugee"),
+    ("cryptoking", "Merchant of Venice, From Silk Road to Litecoin"),
+    ("gemhunter", "Night Owl, Hedges & APEs"),
+    ("luckycharm", "Early Bird, Call Signals expert"),
+    ("diamondhands", "Put Signals wizard, Sport Fan"),
+    ("paperpro", "Tech Geek turned Crypto Trader"),
+    ("hodlmaxwell", "Education Over Regulation advocate"),
+    ("bitbro", "Privacy for the People and Keys Not Your Coins")
+]
+
+# Bot personality enum
+class BotPersonalityType(Enum):
+    """Types of bot personalities for gambling behavior."""
+    CONSERVATIVE = "CONSERVATIVE"      # Small bets, careful play, strategic bets
+    AGGRESSIVE = "AGGRESSIVE"          # Large bets, willing to risk more, high variance bets
+    TREND_FOLLOWER = "TREND_FOLLOWER"  # Follows recent wins/losses
+    OPPORTUNISTIC = "OPPORTUNISTIC"    # Bets on favorites, emotional play
+    PREDICTABLE_GAMBLER = "PREDICTABLE_GAMBLER"  # Patterns, cycling through bets
+    HIGHROLLER = "HIGHROLLER"        # Very large bets, occasionally plays to maintain status
+    TIMID = "TIMID"                    # Very small bets, rarely participates
+
 # ==================== ENUMS ====================
 
 class UserRole(Enum):
@@ -45,7 +82,7 @@ class BetType(Enum):
     """Types of roulette bets."""
     SINGLE_NUMBER = "SINGLE_NUMBER"     # Bet on specific number (0-36)
     RED_BLACK = "RED_BLACK"             # Bet on red or black
-    EVEN_ODD = "EVEN_ODD"              # Bet on even or odd
+    EVEN_ODD = "EVEN_ODD"              # Bet on even/odd
     HIGH_LOW = "HIGH_LOW"              # Bet on high (19-36) or low (1-18)
     CRYPTO_CATEGORY = "CRYPTO_CATEGORY" # Bet on crypto category
 
@@ -59,7 +96,7 @@ class AchievementType(Enum):
     """Types of achievements for GEM rewards."""
     FIRST_BET = "FIRST_BET"           # Place first bet
     WIN_STREAK = "WIN_STREAK"         # Win multiple rounds in a row
-    BIG_WIN = "BIG_WIN"               # Win large amount in single round
+    BIG_WIN = "BIG_WIN"              # Win large amount in single round
     TOTAL_BETS = "TOTAL_BETS"         # Place X number of bets
     TOTAL_WAGERED = "TOTAL_WAGERED"   # Wager X total amount
     PLAY_TIME = "PLAY_TIME"           # Play for X minutes
@@ -82,6 +119,9 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     last_login = Column(DateTime)
+    # Bot-specific fields
+    is_bot = Column(Boolean, default=False, nullable=False)  # New field to identify bots
+    bot_personality = Column(String(30), nullable=True)      # Bot personality type if applicable
 
     # Relationships
     wallet = relationship("Wallet", back_populates="user", uselist=False)
@@ -106,7 +146,9 @@ class User(Base):
             "role": self.role,
             "is_active": self.is_active,
             "created_at": self.created_at.isoformat() if self.created_at else None,
-            "last_login": self.last_login.isoformat() if self.last_login else None
+            "last_login": self.last_login.isoformat() if self.last_login else None,
+            "is_bot": self.is_bot,
+            "bot_personality": self.bot_personality
         }
 
 class Wallet(Base):
@@ -323,6 +365,9 @@ class GameBet(Base):
             "created_at": self.created_at.isoformat() if self.created_at else None
         }
 
+# Additional models for full functionality (CryptoCurrency, PortfolioHolding, DailyBonus, etc.)
+# These are needed for the complete system but are not directly involved in the bot system
+
 class CryptoCurrency(Base):
     """Cryptocurrency information for price tracking."""
     __tablename__ = "cryptocurrencies"
@@ -338,22 +383,6 @@ class CryptoCurrency(Base):
     image = Column(String(500), nullable=True)  # CoinGecko image URL
     last_updated = Column(DateTime, default=datetime.utcnow)
     is_active = Column(Boolean, default=True)
-
-    def to_dict(self):
-        """Convert cryptocurrency to dictionary."""
-        return {
-            "id": self.id,
-            "symbol": self.symbol.upper(),
-            "name": self.name,
-            "current_price_usd": self.current_price_usd,
-            "market_cap": self.market_cap,
-            "volume_24h": self.volume_24h,
-            "price_change_24h": self.price_change_24h,
-            "price_change_percentage_24h": self.price_change_percentage_24h,
-            "image": self.image,
-            "last_updated": self.last_updated.isoformat() if self.last_updated else None,
-            "is_active": self.is_active
-        }
 
 class PortfolioHolding(Base):
     """User's cryptocurrency holdings in their portfolio."""
@@ -372,53 +401,6 @@ class PortfolioHolding(Base):
     user = relationship("User", back_populates="portfolio_holdings")
     cryptocurrency = relationship("CryptoCurrency")
 
-    def calculate_current_value_gem(self, current_price_usd: float, gem_to_usd_rate: float = 0.01) -> float:
-        """Calculate current value of holding in GEMs."""
-        if not current_price_usd or self.quantity <= 0:
-            return 0.0
-
-        # Convert USD price to GEM price
-        current_price_gem = current_price_usd / gem_to_usd_rate
-        return self.quantity * current_price_gem
-
-    def calculate_profit_loss_gem(self, current_price_usd: float, gem_to_usd_rate: float = 0.01) -> float:
-        """Calculate profit/loss in GEMs."""
-        current_value = self.calculate_current_value_gem(current_price_usd, gem_to_usd_rate)
-        return current_value - self.total_invested_gem
-
-    def calculate_profit_loss_percentage(self, current_price_usd: float, gem_to_usd_rate: float = 0.01) -> float:
-        """Calculate profit/loss percentage."""
-        if self.total_invested_gem <= 0:
-            return 0.0
-
-        profit_loss = self.calculate_profit_loss_gem(current_price_usd, gem_to_usd_rate)
-        return (profit_loss / self.total_invested_gem) * 100
-
-    def to_dict(self, include_crypto_data: bool = True, current_price_usd: float = None) -> dict:
-        """Convert holding to dictionary."""
-        result = {
-            "id": self.id,
-            "user_id": self.user_id,
-            "crypto_id": self.crypto_id,
-            "quantity": self.quantity,
-            "average_buy_price_gem": self.average_buy_price_gem,
-            "total_invested_gem": self.total_invested_gem,
-            "created_at": self.created_at.isoformat() if self.created_at else None,
-            "updated_at": self.updated_at.isoformat() if self.updated_at else None
-        }
-
-        if include_crypto_data and hasattr(self, 'cryptocurrency') and self.cryptocurrency:
-            result["cryptocurrency"] = self.cryptocurrency.to_dict()
-
-        if current_price_usd:
-            result.update({
-                "current_value_gem": self.calculate_current_value_gem(current_price_usd),
-                "profit_loss_gem": self.calculate_profit_loss_gem(current_price_usd),
-                "profit_loss_percentage": self.calculate_profit_loss_percentage(current_price_usd)
-            })
-
-        return result
-
 class DailyBonus(Base):
     """Daily bonus claims for users."""
     __tablename__ = "daily_bonuses"
@@ -433,18 +415,6 @@ class DailyBonus(Base):
 
     # Relationships
     user = relationship("User", backref="daily_bonuses")
-
-    def to_dict(self):
-        """Convert daily bonus to dictionary."""
-        return {
-            "id": self.id,
-            "user_id": self.user_id,
-            "claim_date": self.claim_date.isoformat() if self.claim_date else None,
-            "bonus_amount": self.bonus_amount,
-            "consecutive_days": self.consecutive_days,
-            "last_claim_date": self.last_claim_date.isoformat() if self.last_claim_date else None,
-            "created_at": self.created_at.isoformat() if self.created_at else None
-        }
 
 class Achievement(Base):
     """Achievement definitions and user progress tracking."""
@@ -462,20 +432,6 @@ class Achievement(Base):
 
     # Relationships
     user_achievements = relationship("UserAchievement", back_populates="achievement")
-
-    def to_dict(self):
-        """Convert achievement to dictionary."""
-        return {
-            "id": self.id,
-            "name": self.name,
-            "description": self.description,
-            "achievement_type": self.achievement_type,
-            "target_value": self.target_value,
-            "reward_amount": self.reward_amount,
-            "icon": self.icon,
-            "is_active": self.is_active,
-            "created_at": self.created_at.isoformat() if self.created_at else None
-        }
 
 class UserAchievement(Base):
     """User progress and completion of achievements."""
@@ -495,32 +451,6 @@ class UserAchievement(Base):
     user = relationship("User", backref="user_achievements")
     achievement = relationship("Achievement", back_populates="user_achievements")
 
-    def calculate_progress_percentage(self):
-        """Calculate progress as percentage."""
-        if self.achievement.target_value <= 0:
-            return 100.0
-        return min(100.0, (self.current_progress / self.achievement.target_value) * 100)
-
-    def to_dict(self, include_achievement=True):
-        """Convert user achievement to dictionary."""
-        result = {
-            "id": self.id,
-            "user_id": self.user_id,
-            "achievement_id": self.achievement_id,
-            "current_progress": self.current_progress,
-            "progress_percentage": self.calculate_progress_percentage(),
-            "is_completed": self.is_completed,
-            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
-            "reward_claimed": self.reward_claimed,
-            "reward_claimed_at": self.reward_claimed_at.isoformat() if self.reward_claimed_at else None,
-            "created_at": self.created_at.isoformat() if self.created_at else None
-        }
-
-        if include_achievement and hasattr(self, 'achievement') and self.achievement:
-            result["achievement"] = self.achievement.to_dict()
-
-        return result
-
 class EmergencyTask(Base):
     """Emergency GEM earning tasks for low balance users."""
     __tablename__ = "emergency_tasks"
@@ -539,21 +469,6 @@ class EmergencyTask(Base):
     # Relationships
     user_completions = relationship("UserEmergencyTask", back_populates="task")
 
-    def to_dict(self):
-        """Convert emergency task to dictionary."""
-        return {
-            "id": self.id,
-            "name": self.name,
-            "description": self.description,
-            "task_type": self.task_type,
-            "reward_amount": self.reward_amount,
-            "cooldown_minutes": self.cooldown_minutes,
-            "max_completions_per_day": self.max_completions_per_day,
-            "min_balance_threshold": self.min_balance_threshold,
-            "is_active": self.is_active,
-            "created_at": self.created_at.isoformat() if self.created_at else None
-        }
-
 class UserEmergencyTask(Base):
     """User completion tracking for emergency tasks."""
     __tablename__ = "user_emergency_tasks"
@@ -568,19 +483,3 @@ class UserEmergencyTask(Base):
     # Relationships
     user = relationship("User", backref="emergency_task_completions")
     task = relationship("EmergencyTask", back_populates="user_completions")
-
-    def to_dict(self, include_task=True):
-        """Convert user emergency task to dictionary."""
-        result = {
-            "id": self.id,
-            "user_id": self.user_id,
-            "task_id": self.task_id,
-            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
-            "reward_claimed": self.reward_claimed,
-            "created_at": self.created_at.isoformat() if self.created_at else None
-        }
-
-        if include_task and hasattr(self, 'task') and self.task:
-            result["task"] = self.task.to_dict()
-
-        return result
