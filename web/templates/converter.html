@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block title %}Universal Converter - CryptoChecker v3{% endblock %}
+
+{% block content %}
+<!-- Converter Header -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="bg-gradient-primary text-white p-4 rounded-3">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="display-5 fw-bold mb-3">
+                        <i class="bi bi-arrow-left-right text-warning"></i>
+                        Universal Currency Converter
+                    </h1>
+                    <p class="fs-5 mb-0">
+                        Convert between cryptocurrencies and fiat currencies with real-time rates.
+                    </p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <div class="d-flex flex-column align-items-md-end">
+                        <div class="badge bg-success fs-6 mb-2">
+                            <i class="bi bi-clock"></i> Real-Time Rates
+                        </div>
+                        <div class="badge bg-info fs-6">
+                            50+ Currencies
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Converter -->
+<div class="row justify-content-center mb-4">
+    <div class="col-lg-8">
+        <div class="card shadow">
+            <div class="card-body p-4">
+                <form id="converter-form">
+                    <!-- Amount and From Currency -->
+                    <div class="row mb-4">
+                        <div class="col-md-8">
+                            <label for="amount" class="form-label fw-bold">Amount</label>
+                            <input type="number" class="form-control form-control-lg" id="amount"
+                                   placeholder="Enter amount" step="any" min="0" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="from-currency" class="form-label fw-bold">From</label>
+                            <select class="form-select form-select-lg" id="from-currency" required>
+                                <option value="">Select currency...</option>
+                                <!-- Options will be populated dynamically by converter.js -->
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Swap Button -->
+                    <div class="text-center mb-4">
+                        <button type="button" class="btn btn-outline-secondary btn-lg" id="swap-currencies">
+                            <i class="bi bi-arrow-up-down"></i> Swap
+                        </button>
+                    </div>
+
+                    <!-- Result and To Currency -->
+                    <div class="row mb-4">
+                        <div class="col-md-8">
+                            <label for="result" class="form-label fw-bold">Result</label>
+                            <input type="text" class="form-control form-control-lg" id="result"
+                                   placeholder="Conversion result" readonly>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="to-currency" class="form-label fw-bold">To</label>
+                            <select class="form-select form-select-lg" id="to-currency" required>
+                                <option value="">Select currency...</option>
+                                <!-- Options will be populated dynamically by converter.js -->
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Convert Button -->
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-arrow-left-right"></i> Convert
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Conversion Details -->
+                <div id="conversion-details" class="mt-4" style="display: none;">
+                    <div class="converter-result">
+                        <div class="row text-center">
+                            <div class="col-md-6">
+                                <div class="conversion-rate" id="conversion-rate">
+                                    1 BTC = $45,000 USD
+                                </div>
+                                <div class="text-muted">Exchange Rate</div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="conversion-rate" id="conversion-type">
+                                    Crypto to Fiat
+                                </div>
+                                <div class="text-muted">Conversion Type</div>
+                            </div>
+                        </div>
+                        <div class="text-center mt-3">
+                            <small class="text-muted">
+                                <i class="bi bi-clock"></i> Updated: <span id="last-updated">Just now</span>
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Popular Conversions -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-star-fill text-warning"></i> Popular Conversions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row" id="popular-conversions">
+                    <div class="col-12 text-center">
+                        <div class="spinner-border spinner-border-sm" role="status"></div>
+                        Loading popular conversions...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Conversion History -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-clock-history"></i> Recent Conversions
+                </h5>
+                <button class="btn btn-outline-secondary btn-sm" onclick="Converter.clearHistory()">
+                    <i class="bi bi-trash"></i> Clear
+                </button>
+            </div>
+            <div class="card-body">
+                <div id="conversion-history">
+                    <p class="text-muted text-center">No conversions yet. Try converting some currencies!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Supported Currencies -->
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-currency-bitcoin text-warning"></i> Supported Cryptocurrencies
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="supported-crypto" class="small">
+                    <div class="text-center">
+                        <div class="spinner-border spinner-border-sm" role="status"></div>
+                        Loading cryptocurrencies...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-cash-stack text-success"></i> Supported Fiat Currencies
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="supported-fiat" class="small">
+                    <div class="text-center">
+                        <div class="spinner-border spinner-border-sm" role="status"></div>
+                        Loading fiat currencies...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', path='/js/converter.js') }}"></script>
+{% endblock %}
+
+{% block page_init %}
+// Converter will auto-initialize when DOM is ready
+{% endblock %}

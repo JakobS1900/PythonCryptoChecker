@@ -1,599 +1,262 @@
 {% extends "base.html" %}
 
-{% block title %}CryptoChecker Gaming Platform - Your Crypto Adventure Starts Here{% endblock %}
-
-{% block extra_css %}
-<link href="/static/css/dashboard-enhanced.css" rel="stylesheet">
-<link href="/static/css/enhanced-theme.css" rel="stylesheet">
-<style>
-/* Hero Dashboard Section */
-.hero-dashboard {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    background-attachment: fixed;
-    min-height: 60vh;
-    display: flex;
-    align-items: center;
-    position: relative;
-    overflow: hidden;
-    padding: 2rem 0;
-}
-
-.hero-dashboard::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="25" cy="25" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="25" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="50" cy="50" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="25" cy="75" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="2" fill="rgba(255,255,255,0.1)"/></svg>') repeat;
-    opacity: 0.1;
-}
-
-.welcome-card {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 20px;
-    position: relative;
-    z-index: 2;
-}
-
-.stat-widget-enhanced {
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(15px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 15px;
-    padding: 1.5rem;
-    text-align: center;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.stat-widget-enhanced:hover {
-    transform: translateY(-5px);
-    background: rgba(255, 255, 255, 0.2);
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
-}
-
-.stat-widget-enhanced::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
-    border-radius: 15px 15px 0 0;
-}
-
-.stat-value-enhanced {
-    font-size: 2.5rem;
-    font-weight: 700;
-    color: #ffffff;
-    margin-bottom: 0.5rem;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.stat-label-enhanced {
-    color: rgba(255, 255, 255, 0.8);
-    font-weight: 500;
-    font-size: 0.9rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.dashboard-section {
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 20px;
-    margin: 1rem 0;
-}
-
-.card-glass-enhanced {
-    background: rgba(255, 255, 255, 0.12);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 15px;
-    transition: all 0.3s ease;
-}
-
-.card-glass-enhanced:hover {
-    background: rgba(255, 255, 255, 0.18);
-    transform: translateY(-2px);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-}
-
-.btn-neon-enhanced {
-    background: transparent;
-    border: 2px solid #4facfe;
-    color: #4facfe;
-    padding: 0.75rem 1.5rem;
-    border-radius: 25px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.btn-neon-enhanced:hover {
-    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-    border-color: #00f2fe;
-    color: white;
-    transform: translateY(-2px);
-    box-shadow: 0 10px 25px rgba(79, 172, 254, 0.4);
-}
-
-.activity-item-enhanced {
-    background: rgba(255, 255, 255, 0.08);
-    border-radius: 12px;
-    padding: 1rem;
-    margin: 0.5rem 0;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    transition: all 0.3s ease;
-}
-
-.activity-item-enhanced:hover {
-    background: rgba(255, 255, 255, 0.15);
-    transform: translateX(5px);
-}
-
-.progress-enhanced {
-    height: 12px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 6px;
-    overflow: hidden;
-    position: relative;
-}
-
-.progress-bar-enhanced {
-    background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
-    height: 100%;
-    border-radius: 6px;
-    transition: width 0.8s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.progress-bar-enhanced::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%);
-    animation: shimmer 2s infinite;
-}
-
-@keyframes shimmer {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
-}
-
-/* Sparkline */
-.sparkline {
-    width: 100%;
-    height: 30px;
-    display: block;
-    opacity: 0.9;
-}
-.sparkline path.line {
-    stroke: #4facfe;
-    stroke-width: 2;
-    fill: none;
-}
-.sparkline path.fill {
-    fill: url(#sparkGrad);
-    opacity: 0.25;
-}
-
-/* Quick Action Buttons */
-.quick-action-btn {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: white;
-    padding: 1rem;
-    border-radius: 15px;
-    transition: all 0.3s ease;
-    text-decoration: none;
-    display: block;
-    margin-bottom: 0.75rem;
-}
-
-.quick-action-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: translateY(-2px);
-    color: white;
-    text-decoration: none;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-}
-
-.friend-item-enhanced {
-    display: flex;
-    align-items: center;
-    padding: 0.75rem;
-    background: rgba(255, 255, 255, 0.08);
-    border-radius: 10px;
-    margin: 0.5rem 0;
-    transition: all 0.3s ease;
-}
-
-.friend-item-enhanced:hover {
-    background: rgba(255, 255, 255, 0.15);
-}
-
-.leaderboard-item-enhanced {
-    display: flex;
-    align-items: center;
-    padding: 1rem;
-    background: rgba(255, 255, 255, 0.08);
-    border-radius: 12px;
-    margin: 0.5rem 0;
-    transition: all 0.3s ease;
-    border-left: 3px solid transparent;
-}
-
-.leaderboard-item-enhanced.rank-1 { border-left-color: #fbbf24; }
-.leaderboard-item-enhanced.rank-2 { border-left-color: #9ca3af; }
-.leaderboard-item-enhanced.rank-3 { border-left-color: #cd7f32; }
-
-.leaderboard-item-enhanced:hover {
-    background: rgba(255, 255, 255, 0.15);
-    transform: translateX(3px);
-}
-
-/* Mobile Responsiveness */
-@media (max-width: 768px) {
-    .hero-dashboard {
-        min-height: 50vh;
-        padding: 1rem 0;
-    }
-    
-    .stat-value-enhanced {
-        font-size: 2rem;
-    }
-    
-    .card-glass-enhanced {
-        margin-bottom: 1rem;
-    }
-}
-</style>
-{% endblock %}
+{% block title %}CryptoChecker v3 - Real-Time Crypto Dashboard{% endblock %}
 
 {% block content %}
-<!-- Hero Dashboard Section -->
-<section class="hero-dashboard">
-    <div class="container">
-        <div class="row align-items-center">
-            <div class="col-lg-12">
-                <div class="welcome-card p-5 text-center">
-                    <!-- Guest Welcome -->
-                    <div id="guestWelcome" class="guest-content">
-                        <h1 class="display-4 fw-bold text-white mb-3">
-                            <i class="fas fa-dice me-3" style="color: #4facfe;"></i>
-                            Welcome to <span style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">CryptoChecker</span>
-                        </h1>
-                        <p class="lead text-white opacity-75 mb-4">
-                            Your ultimate virtual crypto gaming and trading adventure starts here
-                        </p>
-                        <div class="d-flex gap-3 justify-content-center flex-wrap guest-content">
-                            <button class="btn btn-neon-enhanced" id="demoLoginBtn">
-                                <i class="fas fa-play me-2"></i>Start Gaming
+<!-- Hero Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="bg-gradient-primary text-white p-4 rounded-3">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="display-5 fw-bold mb-3">
+                        <i class="bi bi-currency-bitcoin text-warning"></i>
+                        Real-Time Crypto Tracker
+                    </h1>
+                    <p class="fs-5 mb-0">
+                        Track live cryptocurrency prices, convert between currencies, and play crypto roulette.
+                    </p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <div class="d-flex flex-column align-items-md-end">
+                        <div class="badge bg-success fs-6 mb-2">
+                            <span id="price-status">🟢 Live</span> Market Data
+                        </div>
+                        <div class="badge bg-info fs-6">
+                            <span id="crypto-count">50+</span> Cryptocurrencies
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Stats -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-currency-bitcoin display-4 text-warning"></i>
+                <h5 class="card-title mt-2">Bitcoin Price</h5>
+                <h3 class="text-primary" id="btc-price">Loading...</h3>
+                <small class="text-muted" id="btc-change">--</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-gem display-4 text-info"></i>
+                <h5 class="card-title mt-2">Your GEM Balance</h5>
+                <h3 class="text-success" id="user-balance">Loading...</h3>
+                <small class="text-muted">≈ $<span id="balance-usd">0.00</span></small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-arrow-left-right display-4 text-purple"></i>
+                <h5 class="card-title mt-2">Conversions Today</h5>
+                <h3 class="text-primary" id="conversions-count">0</h3>
+                <small class="text-muted">Real-time rates</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-dice-5 display-4 text-danger"></i>
+                <h5 class="card-title mt-2">Roulette Games</h5>
+                <h3 class="text-primary" id="games-count">0</h3>
+                <small class="text-muted">Provably fair</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content Tabs -->
+<div class="row">
+    <div class="col-12">
+        <ul class="nav nav-tabs" id="dashboardTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="prices-tab" data-bs-toggle="tab" data-bs-target="#prices" type="button">
+                    <i class="bi bi-graph-up"></i> Live Prices
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="trending-tab" data-bs-toggle="tab" data-bs-target="#trending" type="button">
+                    <i class="bi bi-fire"></i> Trending
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="converter-tab" data-bs-toggle="tab" data-bs-target="#converter" type="button">
+                    <i class="bi bi-calculator"></i> Quick Convert
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="dashboardTabsContent">
+            <!-- Live Prices Tab -->
+            <div class="tab-pane fade show active" id="prices" role="tabpanel">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="bi bi-graph-up"></i> Live Cryptocurrency Prices
+                        </h5>
+                        <div class="d-flex gap-2">
+                            <input type="text" class="form-control form-control-sm" id="price-search" placeholder="Search crypto...">
+                            <button class="btn btn-outline-primary btn-sm" onclick="Dashboard.refreshPrices()">
+                                <i class="bi bi-arrow-clockwise"></i>
                             </button>
-                            <a href="/login" class="btn btn-neon-enhanced" style="border-color: #f59e0b; color: #f59e0b;">
-                                <i class="fas fa-sign-in-alt me-2"></i>Sign In
-                            </a>
                         </div>
                     </div>
-
-                    <!-- User Welcome -->
-                    <div id="userWelcome" class="user-content d-none">
-                        <h2 class="display-5 fw-bold text-white mb-3">
-                            Welcome back, <span id="welcomeUsername" style="color: #4facfe;">Player</span>!
-                        </h2>
-                        <p class="lead text-white opacity-75 mb-4">
-                            Ready for your next crypto gaming adventure?
-                        </p>
-                        <div class="d-flex gap-3 justify-content-center flex-wrap">
-                            <a href="/gaming/roulette" class="btn btn-neon-enhanced">
-                                <i class="fas fa-dice me-2"></i>Play Roulette
-                            </a>
-                            <a href="/inventory" class="btn btn-neon-enhanced" style="border-color: #22c55e; color: #22c55e;">
-                                <i class="fas fa-box me-2"></i>Open Inventory
-                            </a>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Cryptocurrency</th>
+                                        <th>Symbol</th>
+                                        <th class="text-end">Price (USD)</th>
+                                        <th class="text-end">24h Change</th>
+                                        <th class="text-end">Market Cap</th>
+                                        <th class="text-end">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="prices-table-body">
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4">
+                                            <div class="spinner-border spinner-border-sm" role="status"></div>
+                                            Loading prices...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-</section>
 
-<!-- Stats Overview (User Only) -->
-<div class="container-fluid py-4 user-content d-none" id="statsSection">
-    <div class="row g-4">
-        <div class="col-lg-3 col-md-6 col-12">
-            <div class="stat-widget-enhanced">
-                <div class="stat-value-enhanced" id="userGemBalance">0</div>
-                <div class="stat-label-enhanced">
-                    <i class="fas fa-gem me-1" style="color: #fbbf24;"></i>GEM Coins
+            <!-- Trending Tab -->
+            <div class="tab-pane fade" id="trending" role="tabpanel">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-fire text-danger"></i> Trending Cryptocurrencies
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row" id="trending-cards">
+                            <div class="col-12 text-center py-4">
+                                <div class="spinner-border spinner-border-sm" role="status"></div>
+                                Loading trending cryptocurrencies...
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="col-lg-3 col-md-6 col-12">
-            <div class="stat-widget-enhanced">
-                <div class="stat-value-enhanced" id="userLevel">1</div>
-                <div class="stat-label-enhanced">
-                    <i class="fas fa-star me-1" style="color: #22c55e;"></i>Level
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-3 col-md-6 col-12">
-            <div class="stat-widget-enhanced">
-                <div class="stat-value-enhanced" id="totalWins">0</div>
-                <div class="stat-label-enhanced">
-                    <i class="fas fa-trophy me-1" style="color: #f59e0b;"></i>Total Wins
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-3 col-md-6 col-12">
-            <div class="stat-widget-enhanced">
-                <div class="stat-value-enhanced" id="achievementsCount">0</div>
-                <div class="stat-label-enhanced">
-                    <i class="fas fa-medal me-1" style="color: #8b5cf6;"></i>Achievements
+
+            <!-- Quick Converter Tab -->
+            <div class="tab-pane fade" id="converter" role="tabpanel">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-calculator"></i> Quick Currency Converter
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mx-auto">
+                                <form id="quick-convert-form">
+                                    <div class="row mb-3">
+                                        <div class="col-8">
+                                            <input type="number" class="form-control" id="convert-amount" placeholder="Amount" step="any" min="0">
+                                        </div>
+                                        <div class="col-4">
+                                            <select class="form-select" id="convert-from">
+                                                <option value="BTC">BTC</option>
+                                                <option value="ETH">ETH</option>
+                                                <option value="USD">USD</option>
+                                                <option value="EUR">EUR</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="text-center mb-3">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="Dashboard.swapCurrencies()">
+                                            <i class="bi bi-arrow-up-down"></i> Swap
+                                        </button>
+                                    </div>
+
+                                    <div class="row mb-3">
+                                        <div class="col-8">
+                                            <input type="text" class="form-control" id="convert-result" placeholder="Result" readonly>
+                                        </div>
+                                        <div class="col-4">
+                                            <select class="form-select" id="convert-to">
+                                                <option value="USD">USD</option>
+                                                <option value="EUR">EUR</option>
+                                                <option value="BTC">BTC</option>
+                                                <option value="ETH">ETH</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        <i class="bi bi-arrow-left-right"></i> Convert
+                                    </button>
+                                </form>
+
+                                <div id="conversion-result" class="mt-3" style="display: none;">
+                                    <div class="alert alert-info">
+                                        <small id="conversion-details"></small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Main Dashboard Content -->
-<div class="container-fluid py-4">
-    <div class="row g-4">
-        <!-- Platform Live Stats (always visible) -->
-        <div class="col-12">
-            <div class="card-glass-enhanced p-3">
-                <div class="row g-3 text-center">
-                    <div class="col-6 col-md-3">
-                        <div class="stat-widget-enhanced">
-                            <div class="stat-value-enhanced" id="platformTotalUsers">0</div>
-                            <div class="stat-label-enhanced"><i class="fas fa-users me-1"></i>Total Users</div>
-                            <svg class="sparkline" id="sparkUsers" viewBox="0 0 100 30" preserveAspectRatio="none"></svg>
-                        </div>
-                    </div>
-                    <div class="col-6 col-md-3">
-                        <div class="stat-widget-enhanced">
-                            <div class="stat-value-enhanced" id="platformActivePlayers">0</div>
-                            <div class="stat-label-enhanced"><i class="fas fa-user-astronaut me-1"></i>Active Players</div>
-                            <svg class="sparkline" id="sparkActive" viewBox="0 0 100 30" preserveAspectRatio="none"></svg>
-                        </div>
-                    </div>
-                    <div class="col-6 col-md-3">
-                        <div class="stat-widget-enhanced">
-                            <div class="stat-value-enhanced" id="platformTotalGames">0</div>
-                            <div class="stat-label-enhanced"><i class="fas fa-gamepad me-1"></i>Total Games</div>
-                            <svg class="sparkline" id="sparkGames" viewBox="0 0 100 30" preserveAspectRatio="none"></svg>
-                        </div>
-                    </div>
-                    <div class="col-6 col-md-3">
-                        <div class="stat-widget-enhanced">
-                            <div class="stat-value-enhanced" id="platformGemsAwarded">0</div>
-                            <div class="stat-label-enhanced"><i class="fas fa-gem me-1"></i>GEMs Awarded</div>
-                            <svg class="sparkline" id="sparkGems" viewBox="0 0 100 30" preserveAspectRatio="none"></svg>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- Quick Actions -->
-        <div class="col-lg-3 col-md-6">
-            <div class="card-glass-enhanced p-4 h-100">
-                <h5 class="text-white fw-bold mb-4">
-                    <i class="fas fa-bolt me-2" style="color: #4facfe;"></i>Quick Actions
+<!-- Quick Actions -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-lightning-fill text-warning"></i> Quick Actions
                 </h5>
-                <div class="d-grid gap-3">
-                    <a href="/gaming" class="quick-action-btn">
-                        <i class="fas fa-dice-d20 me-2"></i>Play Roulette
-                    </a>
-                    <a href="/gaming/crash" class="quick-action-btn">
-                        <i class="fas fa-rocket me-2"></i>Crash Game
-                    </a>
-                    <a href="/gaming/dice" class="quick-action-btn">
-                        <i class="fas fa-dice me-2"></i>Dice Game
-                    </a>
-                    <a href="/inventory" class="quick-action-btn">
-                        <i class="fas fa-box me-2"></i>View Inventory
-                    </a>
-                    <a href="/social" class="quick-action-btn user-content d-none">
-                        <i class="fas fa-user-plus me-2"></i>Find Friends
-                    </a>
-                    <button class="quick-action-btn guest-content" id="startTourBtn">
-                        <i class="fas fa-question-circle me-2"></i>Platform Tour
-                    </button>
-                </div>
             </div>
-        </div>
-
-        <!-- Recent Activity / Game Features -->
-        <div class="col-lg-6">
-            <div class="card-glass-enhanced p-4 h-100">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h5 class="text-white fw-bold mb-0">
-                        <i class="fas fa-clock me-2" style="color: #4facfe;"></i>
-                        <span class="user-content d-none">Recent Activity</span>
-                        <span class="guest-content">Platform Features</span>
-                    </h5>
-                    <button class="btn btn-sm btn-outline-light user-content d-none" onclick="refreshActivity()">
-                        <i class="fas fa-sync-alt"></i>
-                    </button>
-                </div>
-
-                <!-- User Activity Feed -->
-                <div id="activityFeed" class="user-content d-none">
-                    <div class="text-center py-4">
-                        <div class="spinner-border" style="color: #4facfe;" role="status"></div>
-                        <div class="mt-2 text-white opacity-75">Loading recent activity...</div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3 mb-3">
+                        <a href="/converter" class="btn btn-outline-primary btn-lg w-100">
+                            <i class="bi bi-arrow-left-right d-block fs-2"></i>
+                            Universal Converter
+                        </a>
                     </div>
-                </div>
-
-                <!-- Guest Features Display -->
-                <div class="guest-content">
-                    <div class="activity-item-enhanced mb-3">
-                        <div class="d-flex align-items-center">
-                            <div class="me-3" style="font-size: 2rem; color: #4facfe;">
-                                <i class="fas fa-dice"></i>
-                            </div>
-                            <div>
-                                <div class="text-white fw-semibold">Crypto-Themed Gaming</div>
-                                <small class="text-white opacity-75">Play roulette, dice, crash, and tower games</small>
-                            </div>
-                        </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="/gaming" class="btn btn-outline-danger btn-lg w-100">
+                            <i class="bi bi-dice-5 d-block fs-2"></i>
+                            Crypto Roulette
+                        </a>
                     </div>
-                    <div class="activity-item-enhanced mb-3">
-                        <div class="d-flex align-items-center">
-                            <div class="me-3" style="font-size: 2rem; color: #22c55e;">
-                                <i class="fas fa-chart-line"></i>
-                            </div>
-                            <div>
-                                <div class="text-white fw-semibold">Portfolio Tracking</div>
-                                <small class="text-white opacity-75">Connect your wallet for real-time insights</small>
-                            </div>
-                        </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="/portfolio" class="btn btn-outline-success btn-lg w-100">
+                            <i class="bi bi-wallet2 d-block fs-2"></i>
+                            My Portfolio
+                        </a>
                     </div>
-                    <div class="activity-item-enhanced mb-3">
-                        <div class="d-flex align-items-center">
-                            <div class="me-3" style="font-size: 2rem; color: #f59e0b;">
-                                <i class="fas fa-trophy"></i>
-                            </div>
-                            <div>
-                                <div class="text-white fw-semibold">Achievements & Rewards</div>
-                                <small class="text-white opacity-75">Earn GEM coins, items, and unlock achievements</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="activity-item-enhanced">
-                        <div class="d-flex align-items-center">
-                            <div class="me-3" style="font-size: 2rem; color: #8b5cf6;">
-                                <i class="fas fa-users"></i>
-                            </div>
-                            <div>
-                                <div class="text-white fw-semibold">Social Features</div>
-                                <small class="text-white opacity-75">Friends, leaderboards, and tournaments</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Level Progress / Platform Stats -->
-        <div class="col-lg-3 col-md-6">
-            <div class="card-glass-enhanced p-4 h-100">
-                <!-- User Progress -->
-                <div class="user-content d-none">
-                    <h5 class="text-white fw-bold mb-4">
-                        <i class="fas fa-chart-line me-2" style="color: #4facfe;"></i>Level Progress
-                    </h5>
-                    <div class="text-center mb-3">
-                        <div class="text-white">
-                            <strong>Level <span id="currentLevel">1</span></strong>
-                        </div>
-                        <small class="text-white opacity-75">Progress to next level</small>
-                    </div>
-                    <div class="progress-enhanced mb-3">
-                        <div class="progress-bar-enhanced" id="experienceProgress" style="width: 0%"></div>
-                    </div>
-                    <div class="text-center">
-                        <strong class="text-white" id="experienceText">0 / 1000 XP</strong>
-                    </div>
-                    <div class="row text-center mt-3">
-                        <div class="col-4">
-                            <small class="text-white opacity-75">Games</small>
-                            <div class="text-white fw-semibold" id="gamesPlayed">0</div>
-                        </div>
-                        <div class="col-4">
-                            <small class="text-white opacity-75">Win Rate</small>
-                            <div class="text-white fw-semibold" id="winRate">0%</div>
-                        </div>
-                        <div class="col-4">
-                            <small class="text-white opacity-75">Streak</small>
-                            <div class="text-white fw-semibold" id="currentStreak">0</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Guest Platform Stats -->
-                <div class="guest-content">
-                    <h5 class="text-white fw-bold mb-4">
-                        <i class="fas fa-chart-bar me-2" style="color: #4facfe;"></i>Platform Stats
-                    </h5>
-                    <div class="stat-item-small mb-3">
-                        <div class="d-flex justify-content-between">
-                            <span class="text-white opacity-75">Active Users</span>
-                            <span class="text-white fw-bold">12,500+</span>
-                        </div>
-                    </div>
-                    <div class="stat-item-small mb-3">
-                        <div class="d-flex justify-content-between">
-                            <span class="text-white opacity-75">Games Played</span>
-                            <span class="text-white fw-bold">2.1M+</span>
-                        </div>
-                    </div>
-                    <div class="stat-item-small mb-3">
-                        <div class="d-flex justify-content-between">
-                            <span class="text-white opacity-75">GEM Coins Earned</span>
-                            <span class="text-white fw-bold">50M+</span>
-                        </div>
-                    </div>
-                    <div class="stat-item-small">
-                        <div class="d-flex justify-content-between">
-                            <span class="text-white opacity-75">Achievements</span>
-                            <span class="text-white fw-bold">180K+</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Bottom Row - Friends & Leaderboard (User Only) -->
-    <div class="row g-4 mt-2 user-content d-none">
-        <!-- Online Friends -->
-        <div class="col-lg-6">
-            <div class="card-glass-enhanced p-4">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h5 class="text-white fw-bold mb-0">
-                        <i class="fas fa-users me-2" style="color: #22c55e;"></i>Online Friends
-                        <span class="badge ms-2" style="background: #22c55e;" id="onlineFriendsCount">0</span>
-                    </h5>
-                    <a href="/social" class="btn btn-sm btn-outline-light">View All</a>
-                </div>
-                <div id="onlineFriends">
-                    <div class="text-center py-3">
-                        <i class="fas fa-user-friends text-white opacity-50"></i>
-                        <div class="mt-2 text-white opacity-75 small">Loading friends...</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Mini Leaderboard -->
-        <div class="col-lg-6">
-            <div class="card-glass-enhanced p-4">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h5 class="text-white fw-bold mb-0">
-                        <i class="fas fa-trophy me-2" style="color: #f59e0b;"></i>Leaderboard
-                    </h5>
-                    <a href="/leaderboards" class="btn btn-sm btn-outline-light">View Full</a>
-                </div>
-                <div id="miniLeaderboard">
-                    <div class="text-center py-3">
-                        <div class="spinner-border" style="color: #4facfe;" role="status"></div>
-                        <div class="mt-2 text-white opacity-75 small">Loading leaderboard...</div>
+                    <div class="col-md-3 mb-3">
+                        <button class="btn btn-outline-info btn-lg w-100" onclick="Dashboard.showGuestInfo()">
+                            <i class="bi bi-info-circle d-block fs-2"></i>
+                            Guest Mode Info
+                        </button>
                     </div>
                 </div>
             </div>
@@ -603,535 +266,9 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
-(function(){
-  const els = {
-    users: document.getElementById('platformTotalUsers'),
-    active: document.getElementById('platformActivePlayers'),
-    games: document.getElementById('platformTotalGames'),
-    gems: document.getElementById('platformGemsAwarded'),
-  };
-
-  const state = {
-    current: { users: 0, active: 0, games: 0, gems: 0 },
-    target: { users: 0, active: 0, games: 0, gems: 0 },
-    lastSync: 0,
-    history: {
-      users: [],
-      active: [],
-      games: [],
-      gems: []
-    },
-    maxPoints: 60
-  };
-
-  function format(n){
-    try { return n.toLocaleString(); } catch(e) { return String(n); }
-  }
-
-  function updateDOM(){
-    if (els.users) els.users.textContent = format(state.current.users);
-    if (els.active) els.active.textContent = format(state.current.active);
-    if (els.games) els.games.textContent = format(state.current.games);
-    if (els.gems) els.gems.textContent = format(state.current.gems);
-  }
-
-  function stepTowardsTarget(){
-    // Smooth increments with small per-tick steps
-    const keys = ['users','active','games','gems'];
-    keys.forEach(k => {
-      const cur = state.current[k];
-      const tgt = state.target[k];
-      if (cur < tgt) {
-        // Increment by a fraction of the remaining distance (ceil min 1)
-        const delta = Math.max(1, Math.ceil((tgt - cur) * 0.02));
-        state.current[k] = Math.min(tgt, cur + delta);
-      } else if (cur > tgt) {
-        state.current[k] = tgt; // snap if overshoot
-      } else {
-        // add gentle drift to keep numbers alive between syncs
-        const drift = (k === 'gems') ? 5 : (k === 'games' ? 1 : 0);
-        if (drift) state.current[k] += drift;
-      }
-    });
-    updateDOM();
-
-    // Append to history and redraw sparklines
-    pushHistory('users', state.current.users);
-    pushHistory('active', state.current.active);
-    pushHistory('games', state.current.games);
-    pushHistory('gems', state.current.gems);
-    drawSpark('sparkUsers', state.history.users, '#4facfe');
-    drawSpark('sparkActive', state.history.active, '#22c55e');
-    drawSpark('sparkGames', state.history.games, '#f59e0b');
-    drawSpark('sparkGems', state.history.gems, '#a78bfa');
-  }
-
-  async function syncFromServer(){
-    try {
-      const r = await fetch('/api/platform/stats');
-      if (!r.ok) return;
-      const d = await r.json();
-      if (d && d.status === 'success' && d.data) {
-        state.target.users = d.data.total_users || state.target.users;
-        state.target.active = d.data.active_players || state.target.active;
-        state.target.games = d.data.total_games || state.target.games;
-        state.target.gems = d.data.gems_awarded || state.target.gems;
-        // Initialize current to a bit below target on first sync for nicer animation
-        if (!state.lastSync) {
-          state.current.users = Math.max(0, state.target.users - 50);
-          state.current.active = Math.max(0, state.target.active - 5);
-          state.current.games = Math.max(0, state.target.games - 500);
-          state.current.gems = Math.max(0, state.target.gems - 5000);
-          updateDOM();
-        }
-        state.lastSync = Date.now();
-      }
-    } catch (e) {
-      // ignore network errors; continue animating current values
-    }
-  }
-
-  document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) syncFromServer();
-  });
-  window.addEventListener('focus', syncFromServer);
-
-  // Start loops
-  syncFromServer();
-  setInterval(syncFromServer, 15000); // refresh targets every 15s
-  setInterval(stepTowardsTarget, 1000); // animate every second
-
-  function pushHistory(key, value){
-    const arr = state.history[key];
-    arr.push(value);
-    if (arr.length > state.maxPoints) arr.shift();
-  }
-
-  function drawSpark(id, data, color){
-    const el = document.getElementById(id);
-    if (!el || data.length < 2) return;
-    const w = 100, h = 30, pad = 2;
-    const min = Math.min.apply(null, data);
-    const max = Math.max.apply(null, data);
-    const span = Math.max(1, max - min);
-    const stepX = (w - pad*2) / (state.maxPoints - 1);
-    // Build path
-    let d = '';
-    for (let i = 0; i < data.length; i++) {
-      const x = pad + i * stepX;
-      const y = pad + (h - pad*2) - ((data[i] - min) / span) * (h - pad*2);
-      d += (i === 0 ? 'M' : 'L') + x.toFixed(2) + ' ' + y.toFixed(2) + ' ';
-    }
-    // Build fill path to baseline
-    let df = d + `L ${pad + (data.length-1)*stepX} ${h-pad} L ${pad} ${h-pad} Z`;
-
-    // Inject defs gradient once
-    if (!el.querySelector('defs')){
-      const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
-      const grad = document.createElementNS('http://www.w3.org/2000/svg','linearGradient');
-      grad.setAttribute('id','sparkGrad'); grad.setAttribute('x1','0'); grad.setAttribute('x2','0'); grad.setAttribute('y1','0'); grad.setAttribute('y2','1');
-      const s1 = document.createElementNS('http://www.w3.org/2000/svg','stop'); s1.setAttribute('offset','0%'); s1.setAttribute('stop-color', color); s1.setAttribute('stop-opacity','0.6');
-      const s2 = document.createElementNS('http://www.w3.org/2000/svg','stop'); s2.setAttribute('offset','100%'); s2.setAttribute('stop-color', color); s2.setAttribute('stop-opacity','0');
-      grad.appendChild(s1); grad.appendChild(s2); defs.appendChild(grad); el.appendChild(defs);
-    }
-
-    // Update paths
-    let pathLine = el.querySelector('path.line');
-    if (!pathLine){ pathLine = document.createElementNS('http://www.w3.org/2000/svg','path'); pathLine.setAttribute('class','line'); el.appendChild(pathLine); }
-    pathLine.setAttribute('d', d);
-    pathLine.setAttribute('stroke', color);
-
-    let pathFill = el.querySelector('path.fill');
-    if (!pathFill){ pathFill = document.createElementNS('http://www.w3.org/2000/svg','path'); pathFill.setAttribute('class','fill'); el.appendChild(pathFill); }
-    pathFill.setAttribute('d', df);
-  }
-})();
-</script>
+<script src="{{ url_for('static', path='/js/dashboard.js') }}"></script>
 {% endblock %}
 
-{% block extra_js %}
-<script>
-// Enhanced dashboard functionality with modern UI
-document.addEventListener('DOMContentLoaded', function() {
-    initializeEnhancedDashboard();
-    
-    // Auto-refresh data every 30 seconds for authenticated users
-    setInterval(() => {
-        if (window.auth && window.auth.isAuthenticated()) {
-            refreshDashboardData();
-        }
-    }, 30000);
-});
-
-async function initializeEnhancedDashboard() {
-    try {
-        // Wait for auth manager to be available and complete its check
-        await waitForAuth();
-        
-        // Check authentication status after auth manager is ready
-        const isAuthenticated = window.auth ? window.auth.isAuthenticated() : false;
-        console.log('Dashboard: User authenticated?', isAuthenticated);
-        
-        if (isAuthenticated) {
-            showUserInterface();
-            await loadDashboardData();
-        } else {
-            showGuestInterface();
-        }
-        
-        // Initialize event listeners
-        initializeEventListeners();
-        
-    } catch (error) {
-        console.error('Failed to initialize dashboard:', error);
-        showGuestInterface();
-    }
-}
-
-async function waitForAuth() {
-    // Wait for auth manager to be available
-    let attempts = 0;
-    while (!window.auth && attempts < 20) {
-        await new Promise(resolve => setTimeout(resolve, 100));
-        attempts++;
-    }
-    
-    if (window.auth) {
-        // Wait a bit more for the auth check to complete
-        await new Promise(resolve => setTimeout(resolve, 500));
-    }
-}
-
-function showUserInterface() {
-    // Show user-specific content
-    document.querySelectorAll('.user-content').forEach(el => el.classList.remove('d-none'));
-    document.querySelectorAll('.guest-content').forEach(el => el.classList.add('d-none'));
-    
-    const user = window.auth.getUser();
-    if (user) {
-        document.getElementById('welcomeUsername').textContent = user.username || 'Player';
-    }
-}
-
-function showGuestInterface() {
-    // Show guest content
-    document.querySelectorAll('.guest-content').forEach(el => el.classList.remove('d-none'));
-    document.querySelectorAll('.user-content').forEach(el => el.classList.add('d-none'));
-}
-
-async function loadDashboardData() {
-    try {
-        await Promise.all([
-            loadUserStats(),
-            loadRecentActivity(),
-            loadOnlineFriends(),
-            loadMiniLeaderboard()
-        ]);
-    } catch (error) {
-        console.error('Failed to load dashboard data:', error);
-    }
-}
-
-async function loadUserStats() {
-    try {
-        const user = window.auth.getUser();
-        if (!user) return;
-
-        // Update basic stats
-        console.log('📊 Loading user stats for:', user);
-        document.getElementById('userGemBalance').textContent = 
-            window.utils.formatNumber(user.gem_coins || 0);
-        document.getElementById('userLevel').textContent = user.current_level || user.level || 1;
-        
-        // Update currentLevel if element exists
-        const currentLevelEl = document.getElementById('currentLevel');
-        if (currentLevelEl) {
-            currentLevelEl.textContent = user.current_level || user.level || 1;
-        }
-
-        // Load detailed gaming stats if API is available
-        if (window.apiClient && window.apiClient.gaming) {
-            console.log('📊 Loading gaming stats from API...');
-            const gamingStatsResponse = await window.apiClient.gaming.getStats();
-            console.log('📊 Gaming stats response:', gamingStatsResponse);
-            
-            if (gamingStatsResponse.success) {
-                const stats = gamingStatsResponse.data;
-                console.log('📊 Updating dashboard with stats:', stats);
-                
-                document.getElementById('totalWins').textContent = 
-                    window.utils.formatNumber(stats.total_wins || 0);
-                document.getElementById('achievementsCount').textContent = 
-                    window.utils.formatNumber(stats.achievements_count || 0);
-                
-                // Update additional stats if elements exist
-                const gamesPlayedEl = document.getElementById('gamesPlayed');
-                if (gamesPlayedEl) {
-                    gamesPlayedEl.textContent = window.utils.formatNumber(stats.total_games || 0);
-                }
-                
-                // Update additional stats if elements exist
-                const winRateEl = document.getElementById('winRate');
-                if (winRateEl) {
-                    const winRate = stats.total_games > 0 
-                        ? ((stats.total_wins / stats.total_games) * 100).toFixed(1)
-                        : 0;
-                    winRateEl.textContent = winRate + '%';
-                }
-                
-                const currentStreakEl = document.getElementById('currentStreak');
-                if (currentStreakEl) {
-                    currentStreakEl.textContent = stats.current_streak || 0;
-                }
-            } else {
-                console.warn('❌ Gaming stats API failed:', gamingStatsResponse.error);
-            }
-        }
-
-        // Update experience progress
-        updateExperienceProgress(user);
-        
-    } catch (error) {
-        console.error('Failed to load user stats:', error);
-    }
-}
-
-function updateExperienceProgress(user) {
-    const currentLevel = user.current_level || user.level || 1;
-    const totalExperience = user.total_experience || 0;
-    
-    console.log('🎯 Updating XP progress:', { currentLevel, totalExperience });
-    
-    // Calculate experience needed for current level
-    const baseExp = 1000;
-    const expForCurrentLevel = Math.floor(baseExp * Math.pow(1.5, currentLevel - 1));
-    const expForNextLevel = Math.floor(baseExp * Math.pow(1.5, currentLevel));
-    const currentLevelExp = totalExperience - expForCurrentLevel;
-    const neededExp = expForNextLevel - expForCurrentLevel;
-    
-    const progress = Math.max(0, Math.min(100, (currentLevelExp / neededExp) * 100));
-    
-    document.getElementById('experienceProgress').style.width = progress + '%';
-    document.getElementById('experienceText').textContent = 
-        `${window.utils.formatNumber(currentLevelExp)} / ${window.utils.formatNumber(neededExp)} XP`;
-}
-
-async function loadRecentActivity() {
-    try {
-        if (!window.apiClient || !window.apiClient.social) return;
-        
-        const response = await window.apiClient.social.getActivityFeed(5);
-        const container = document.getElementById('activityFeed');
-        
-        if (response.success && response.data.length > 0) {
-            const activitiesHTML = response.data.map(activity => `
-                <div class="activity-item-enhanced">
-                    <div class="d-flex align-items-start">
-                        <img src="${activity.user.avatar_url || '/static/images/default-avatar.png'}" 
-                             class="rounded-circle me-3" width="40" height="40">
-                        <div class="flex-grow-1">
-                            <div class="text-white fw-semibold">${activity.user.username}</div>
-                            <small class="text-white opacity-75">${getActivityDescription(activity)}</small>
-                            <div class="small text-white opacity-50">${window.utils.formatRelativeTime(activity.timestamp)}</div>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-            
-            container.innerHTML = activitiesHTML;
-        } else {
-            container.innerHTML = `
-                <div class="text-center py-4">
-                    <i class="fas fa-clock text-white opacity-50 mb-2"></i>
-                    <div class="text-white opacity-75">No recent activity</div>
-                </div>
-            `;
-        }
-    } catch (error) {
-        console.error('Failed to load recent activity:', error);
-    }
-}
-
-async function loadOnlineFriends() {
-    try {
-        if (!window.apiClient || !window.apiClient.social) return;
-        
-        const response = await window.apiClient.social.getOnlineFriends();
-        const container = document.getElementById('onlineFriends');
-        const countBadge = document.getElementById('onlineFriendsCount');
-        
-        if (response.success && response.data.online_friends.length > 0) {
-            const friends = response.data.online_friends;
-            countBadge.textContent = friends.length;
-            
-            const friendsHTML = friends.slice(0, 4).map(friend => `
-                <div class="friend-item-enhanced">
-                    <img src="${friend.avatar_url || '/static/images/default-avatar.png'}" 
-                         class="rounded-circle me-2" width="32" height="32">
-                    <div class="flex-grow-1">
-                        <div class="text-white fw-semibold small">${friend.username}</div>
-                        <small style="color: #22c55e;">
-                            <i class="fas fa-circle me-1"></i>Online
-                        </small>
-                    </div>
-                </div>
-            `).join('');
-            
-            container.innerHTML = friendsHTML;
-        } else {
-            countBadge.textContent = '0';
-            container.innerHTML = `
-                <div class="text-center py-3">
-                    <i class="fas fa-user-friends text-white opacity-50"></i>
-                    <div class="mt-2 text-white opacity-75 small">No friends online</div>
-                </div>
-            `;
-        }
-    } catch (error) {
-        console.error('Failed to load online friends:', error);
-    }
-}
-
-async function loadMiniLeaderboard() {
-    try {
-        if (!window.apiClient || !window.apiClient.social) return;
-        
-        const response = await window.apiClient.social.getLeaderboard('level', 5);
-        const container = document.getElementById('miniLeaderboard');
-        
-        if (response.success && response.data.length > 0) {
-            const leaderboardHTML = response.data.map((entry, index) => `
-                <div class="leaderboard-item-enhanced rank-${entry.rank}">
-                    <div class="me-3 text-white fw-bold" style="min-width: 30px;">
-                        #${entry.rank}
-                    </div>
-                    <img src="${entry.user.avatar_url || '/static/images/default-avatar.png'}" 
-                         class="rounded-circle me-2" width="32" height="32">
-                    <div class="flex-grow-1">
-                        <div class="text-white fw-semibold">${entry.user.username}</div>
-                        <small class="text-white opacity-75">Level ${Math.floor(entry.score)}</small>
-                    </div>
-                </div>
-            `).join('');
-            
-            container.innerHTML = leaderboardHTML;
-        } else {
-            container.innerHTML = `
-                <div class="text-center py-3 text-white opacity-75">
-                    No leaderboard data available
-                </div>
-            `;
-        }
-    } catch (error) {
-        console.error('Failed to load mini leaderboard:', error);
-    }
-}
-
-function initializeEventListeners() {
-    // Quick Start button (guest access)
-    const demoBtn = document.getElementById('demoLoginBtn');
-    if (demoBtn) {
-        demoBtn.addEventListener('click', async function() {
-            console.log('Quick Start button clicked');
-            // Use the auth manager's guest login functionality
-            if (window.auth) {
-                try {
-                    const result = await window.auth.demoLogin();
-                    if (result.success) {
-                        // Refresh the dashboard to show user interface
-                        showUserInterface();
-                        await loadDashboardData();
-                    }
-                } catch (error) {
-                    console.error('Guest login failed:', error);
-                }
-            }
-        });
-    }
-    
-    // Tour button for guests
-    const tourBtn = document.getElementById('startTourBtn');
-    if (tourBtn) {
-        tourBtn.addEventListener('click', function() {
-            startPlatformTour();
-        });
-    }
-}
-
-function startPlatformTour() {
-    // Simple tour implementation
-    const features = [
-        { element: '.quick-action-btn:first-child', message: 'Start here - play our signature crypto roulette!' },
-        { element: '.activity-item-enhanced:first-child', message: 'Track your portfolio with real-time insights' },
-        { element: '.stat-item-small:first-child', message: 'Join thousands of active users' }
-    ];
-    
-    let currentStep = 0;
-    
-    function showNextStep() {
-        if (currentStep >= features.length) return;
-        
-        const feature = features[currentStep];
-        const element = document.querySelector(feature.element);
-        
-        if (element) {
-            // Simple highlight effect
-            element.style.boxShadow = '0 0 20px rgba(79, 172, 254, 0.8)';
-            element.style.transform = 'scale(1.02)';
-            
-            setTimeout(() => {
-                element.style.boxShadow = '';
-                element.style.transform = '';
-                currentStep++;
-                if (currentStep < features.length) {
-                    setTimeout(showNextStep, 1000);
-                }
-            }, 2000);
-        }
-    }
-    
-    showNextStep();
-}
-
-function getActivityDescription(activity) {
-    const type = activity.activity_type;
-    const content = activity.content;
-    
-    switch (type) {
-        case 'game_won':
-            return `Won ${window.utils.formatNumber(content.winnings)} GEM coins`;
-        case 'achievement_unlocked':
-            return `Unlocked: ${content.achievement_name}`;
-        case 'level_up':
-            return `Reached level ${content.new_level}`;
-        case 'friend_added':
-            return `Became friends with ${content.friend_name}`;
-        default:
-            return 'Recent activity';
-    }
-}
-
-async function refreshDashboardData() {
-    try {
-        await loadUserStats();
-        await loadOnlineFriends();
-        await loadMiniLeaderboard();
-    } catch (error) {
-        console.error('Failed to refresh dashboard data:', error);
-    }
-}
-
-function refreshActivity() {
-    loadRecentActivity();
-}
-
-// Export functions for global use
-window.dashboardManager = {
-    refresh: refreshDashboardData,
-    loadStats: loadUserStats,
-    showUserInterface,
-    showGuestInterface
-};
-</script>
+{% block page_init %}
+Dashboard.init();
 {% endblock %}

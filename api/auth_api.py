@@ -1,445 +1,450 @@
+__all__ = ["get_current_user"]
 """
-Authentication API endpoints for user management.
+Authentication API endpoints with guest mode support.
+Clean JWT-based authentication system.
 """
 
-from datetime import datetime
-from fastapi import APIRouter, HTTPException, Depends, status, UploadFile, File
-from fastapi.security import HTTPBearer
-from pydantic import BaseModel, EmailStr, Field
-from typing import Optional
 import os
-import shutil
-from pathlib import Path
+from datetime import datetime, timedelta
+from typing import Optional, Dict, Any
+from fastapi import APIRouter, HTTPException, Depends, status, Request
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from jose import JWTError, jwt
+from dotenv import load_dotenv
 
-from database.database_manager import get_db_session
-from database.unified_models import User
-from auth.auth_manager import AuthenticationManager
-from auth.security import SecurityUtils
-from logger import logger
+from database.database import get_db, create_user_with_wallet, get_user_by_username, get_user_by_email
+from database.models import User, UserRole
+from crypto.portfolio import portfolio_manager
+
+load_dotenv()
+
+# JWT Configuration
+SECRET_KEY = os.getenv("JWT_SECRET_KEY", "jwt-secret-key-change-in-production")
+ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
 
 router = APIRouter()
-security = HTTPBearer()
-auth_manager = AuthenticationManager()
-security_utils = SecurityUtils()
+security = HTTPBearer(auto_error=False)
 
+@router.get("/check")
+async def check_auth(
+    request: Request,
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+    db: AsyncSession = Depends(get_db),
+):
+    """Check if the current session or provided JWT is authenticated.
+
+    This endpoint supports either a Bearer token in the Authorization header
+    or a legacy server-side session containing `user_id` and `auth_token`.
+    """
+    # Debug: log incoming auth header and session for troubleshooting
+    try:
+        incoming_auth = None
+        if credentials and credentials.credentials:
+            incoming_auth = credentials.credentials
+        print(f">> Auth Check: Received Authorization token: {incoming_auth}")
+    except Exception as _e:
+        print(f">> Auth Check: Error reading credentials: {_e}")
+
+    # 1) If an Authorization header is present, validate the JWT
+    if credentials and credentials.credentials:
+        try:
+            payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
+            user_id: str = payload.get("sub")
+            print(f">> Auth Check: Decoded JWT payload sub={user_id}")
+            if user_id:
+                # Verify user exists
+                user = await db.get(User, user_id)
+                if user:
+                    print(f">> Auth Check: JWT validated for user {user_id}")
+                    return {"status": "success", "authenticated": True}
+        except JWTError as e:
+            # Token invalid or expired - fall through to session check
+            print(f">> Auth Check: JWT validation failed: {e}")
+            pass
+
+    # 2) Fall back to session-based validation (legacy behavior)
+    user_id = request.session.get("user_id")
+    auth_token = request.session.get("auth_token")
+    print(f">> Auth Check: Session contents: user_id={user_id}, auth_token_present={bool(auth_token)}")
+    if user_id and auth_token:
+        return {"status": "success", "authenticated": True}
+
+    raise HTTPException(status_code=401, detail="Not authenticated")
 
 # ==================== REQUEST/RESPONSE MODELS ====================
 
-class RegisterRequest(BaseModel):
-    username: str = Field(..., min_length=3, max_length=30)
+class UserRegister(BaseModel):
+    username: str = Field(..., min_length=3, max_length=50)
     email: EmailStr
-    password: str = Field(..., min_length=8, max_length=128)
-    display_name: Optional[str] = Field(None, max_length=100)
+    password: str = Field(..., min_length=6, max_length=100)
 
-
-class LoginRequest(BaseModel):
-    username_or_email: str
+class UserLogin(BaseModel):
+    username: str
     password: str
 
-
-class PasswordChangeRequest(BaseModel):
-    current_password: str
-    new_password: str = Field(..., min_length=8, max_length=128)
-
-
-class ProfileUpdateRequest(BaseModel):
-    display_name: Optional[str] = Field(None, max_length=100)
-    bio: Optional[str] = Field(None, max_length=500)
-    avatar_url: Optional[str] = Field(None, max_length=255)
-    profile_public: Optional[bool] = None
-    show_stats: Optional[bool] = None
-    allow_friend_requests: Optional[bool] = None
-
-
-class AuthResponse(BaseModel):
+class Token(BaseModel):
     access_token: str
-    refresh_token: str
-    token_type: str = "bearer"
+    token_type: str
     expires_in: int
-    user: dict
-
+    user: Dict[str, Any]
 
 class UserResponse(BaseModel):
     id: str
     username: str
-    display_name: str
-    email: Optional[str] = None
-    avatar_url: Optional[str] = None
-    bio: Optional[str] = None
+    email: str
     role: str
-    status: str
-    current_level: int
-    prestige_level: int
-    total_experience: int
-    created_at: str
-    last_login: Optional[str] = None
-    profile_public: bool
-    show_stats: bool
+    is_active: bool
+    created_at: Optional[str]
+    wallet_balance: float
 
+# ==================== HELPER FUNCTIONS ====================
 
-# ==================== ENDPOINTS ====================
+def format_datetime(dt):
+    """Safely format datetime to ISO string."""
+    if dt is None:
+        return None
+    if isinstance(dt, str):
+        return dt  # Already a string
+    return dt.isoformat()
 
-@router.post("/register", response_model=AuthResponse)
+# ==================== AUTHENTICATION FUNCTIONS ====================
+
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+    """Create JWT access token."""
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+async def get_current_user(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+    db: AsyncSession = Depends(get_db)
+) -> Optional[User]:
+    """Get current authenticated user or None for guest mode."""
+    if not credentials:
+        return None
+
+    try:
+        payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            return None
+    except JWTError:
+        return None
+
+    # Get user from database
+    user = await db.get(User, user_id)
+    return user
+
+async def require_authentication(
+    current_user: Optional[User] = Depends(get_current_user)
+) -> User:
+    """Require authentication, raise 401 if not authenticated."""
+    if not current_user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return current_user
+
+async def get_guest_user_data() -> Dict[str, Any]:
+    """Get guest user data for unauthenticated users."""
+    guest_gems = int(os.getenv("GUEST_MODE_GEMS", "5000"))
+    return {
+        "id": "guest",
+        "username": "Guest",
+        "email": "guest@example.com",
+        "role": UserRole.PLAYER.value,
+        "is_active": True,
+        "created_at": datetime.utcnow().isoformat(),
+        "wallet_balance": guest_gems,
+        "is_guest": True
+    }
+
+# ==================== API ENDPOINTS ====================
+
+@router.post("/register", response_model=Token, status_code=status.HTTP_201_CREATED)
 async def register_user(
-    request: RegisterRequest,
-    session: AsyncSession = Depends(get_db_session)
+    user_data: UserRegister,
+    db: AsyncSession = Depends(get_db)
 ):
-    """Register new user account."""
+    """Register a new user account."""
     try:
-        # Validate input
-        username_valid, username_errors = security_utils.validate_username(request.username)
-        if not username_valid:
+        # Check if username already exists
+        existing_user = await get_user_by_username(db, user_data.username)
+        if existing_user:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Invalid username: {', '.join(username_errors)}"
+                detail="Username already registered"
             )
-        
-        # Register user
-        user, verification_token = await auth_manager.register_user(
-            session=session,
-            username=request.username,
-            email=request.email,
-            password=request.password,
-            display_name=request.display_name,
-            ip_address="127.0.0.1",  # Will be extracted from request in production
-            user_agent="API Client"
-        )
-        
-        # Create initial session
-        user_data, access_token, refresh_token = await auth_manager.authenticate_user(
-            session=session,
-            username_or_email=request.username,
-            password=request.password,
-            ip_address="127.0.0.1",
-            user_agent="API Client"
-        )
-        
-        return AuthResponse(
-            access_token=access_token,
-            refresh_token=refresh_token,
-            expires_in=3600,  # 1 hour
-            user=user_data.to_dict(include_sensitive=True)
-        )
-        
-    except Exception as e:
-        logger.error(f"Registration failed: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
+
+        # Check if email already exists
+        existing_email = await get_user_by_email(db, user_data.email)
+        if existing_email:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email already registered"
+            )
+
+        # Create user with wallet
+        user = await create_user_with_wallet(
+            session=db,
+            username=user_data.username,
+            email=user_data.email,
+            password=user_data.password,
+            initial_gems=1000.0
         )
 
+        # Verify wallet creation and ensure balance is correct
+        wallet_balance = await portfolio_manager.get_user_balance(user.id)
+        if wallet_balance == 0:
+            # Wallet creation might have failed, try to create it manually
+            print(f">> Warning: Wallet not found for new user {user.id}, creating manually")
+            await portfolio_manager.create_wallet(user.id, 1000.0)
+            wallet_balance = 1000.0
 
-@router.post("/login", response_model=AuthResponse)
-async def login_user(
-    request: LoginRequest,
-    session: AsyncSession = Depends(get_db_session)
-):
-    """Login user and create session."""
-    try:
-        user, access_token, refresh_token = await auth_manager.authenticate_user(
-            session=session,
-            username_or_email=request.username_or_email,
-            password=request.password,
-            ip_address="127.0.0.1",
-            user_agent="API Client"
-        )
-        
-        return AuthResponse(
-            access_token=access_token,
-            refresh_token=refresh_token,
-            expires_in=3600,
-            user=user.to_dict(include_sensitive=True)
-        )
-        
-    except Exception as e:
-        logger.error(f"Login failed: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid credentials"
+        # Create access token
+        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = create_access_token(
+            data={"sub": user.id},
+            expires_delta=access_token_expires
         )
 
-
-@router.post("/refresh")
-async def refresh_token(
-    refresh_token: str,
-    session: AsyncSession = Depends(get_db_session)
-):
-    """Refresh access token."""
-    try:
-        new_access_token, new_refresh_token = await auth_manager.refresh_token(
-            session=session,
-            refresh_token=refresh_token,
-            ip_address="127.0.0.1"
-        )
-        
         return {
-            "access_token": new_access_token,
-            "refresh_token": new_refresh_token,
+            "access_token": access_token,
             "token_type": "bearer",
-            "expires_in": 3600
-        }
-        
-    except Exception as e:
-        logger.error(f"Token refresh failed: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid refresh token"
-        )
-
-
-@router.post("/logout")
-async def logout_user(
-    token: str = Depends(security),
-    session: AsyncSession = Depends(get_db_session)
-):
-    """Logout user and invalidate session."""
-    try:
-        success = await auth_manager.logout_user(session, token.credentials)
-        
-        if success:
-            return {"message": "Logged out successfully"}
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid token"
-            )
-            
-    except Exception as e:
-        logger.error(f"Logout failed: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Logout failed"
-        )
-
-
-@router.get("/profile", response_model=UserResponse)
-async def get_user_profile(
-    token: str = Depends(security),
-    session: AsyncSession = Depends(get_db_session)
-):
-    """Get current user profile."""
-    try:
-        user = await auth_manager.get_user_by_token(session, token.credentials)
-        
-        if not user:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token"
-            )
-        
-        return UserResponse(**user.to_dict(include_sensitive=True))
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Get profile failed: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to get profile"
-        )
-
-
-@router.put("/profile")
-async def update_user_profile(
-    request: ProfileUpdateRequest,
-    token: str = Depends(security),
-    session: AsyncSession = Depends(get_db_session)
-):
-    """Update user profile."""
-    try:
-        user = await auth_manager.get_user_by_token(session, token.credentials)
-        
-        if not user:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token"
-            )
-        
-        # Update profile fields
-        update_data = request.dict(exclude_unset=True)
-        
-        for field, value in update_data.items():
-            if hasattr(user, field):
-                setattr(user, field, value)
-        
-        user.updated_at = datetime.utcnow()
-        await session.commit()
-        
-        return {"message": "Profile updated successfully"}
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Profile update failed: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to update profile"
-        )
-
-
-@router.post("/profile/avatar")
-async def upload_profile_avatar(
-    file: UploadFile = File(...),
-    token: str = Depends(security),
-    session: AsyncSession = Depends(get_db_session)
-):
-    """Upload and set the current user's profile avatar.
-
-    - Accepts: JPEG/PNG/WebP up to ~5MB
-    - Stores under: web/static/uploads/avatars
-    - Updates: User.avatar_url
-    """
-    try:
-        user = await auth_manager.get_user_by_token(session, token.credentials)
-        if not user:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
-
-        # Validate content type
-        allowed_types = {"image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp"}
-        content_type = (file.content_type or "").lower()
-        if content_type not in allowed_types:
-            raise HTTPException(status_code=400, detail="Unsupported image type. Use JPG, PNG, or WebP.")
-
-        # Ensure upload directory exists
-        base_dir = Path("web/static/uploads/avatars")
-        base_dir.mkdir(parents=True, exist_ok=True)
-
-        # Enforce size limit (~5MB) while streaming to disk
-        max_bytes = 5 * 1024 * 1024
-        ext = allowed_types[content_type]
-        safe_filename = f"{user.id}{ext}"
-        dest_path = base_dir / safe_filename
-
-        bytes_written = 0
-        with dest_path.open("wb") as out:
-            while True:
-                chunk = await file.read(1024 * 64)
-                if not chunk:
-                    break
-                bytes_written += len(chunk)
-                if bytes_written > max_bytes:
-                    try:
-                        out.close()
-                        dest_path.unlink(missing_ok=True)
-                    except Exception:
-                        pass
-                    raise HTTPException(status_code=413, detail="File too large (max 5MB)")
-                out.write(chunk)
-
-        # Update user profile
-        relative_url = f"/static/uploads/avatars/{safe_filename}"
-        user.avatar_url = relative_url
-        user.updated_at = datetime.utcnow()
-        await session.commit()
-
-        return {"message": "Avatar updated", "avatar_url": relative_url}
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Avatar upload failed: {e}")
-        raise HTTPException(status_code=500, detail="Failed to upload avatar")
-
-
-@router.post("/change-password")
-async def change_password(
-    request: PasswordChangeRequest,
-    token: str = Depends(security),
-    session: AsyncSession = Depends(get_db_session)
-):
-    """Change user password."""
-    try:
-        user = await auth_manager.get_user_by_token(session, token.credentials)
-        
-        if not user:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token"
-            )
-        
-        success = await auth_manager.change_password(
-            session=session,
-            user_id=user.id,
-            current_password=request.current_password,
-            new_password=request.new_password
-        )
-        
-        if success:
-            return {"message": "Password changed successfully"}
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Failed to change password"
-            )
-            
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Password change failed: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
-
-
-@router.get("/verify-email/{token}")
-async def verify_email(
-    token: str,
-    session: AsyncSession = Depends(get_db_session)
-):
-    """Verify user email address."""
-    try:
-        success = await auth_manager.verify_email(session, token)
-        
-        if success:
-            return {"message": "Email verified successfully"}
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid verification token"
-            )
-            
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Email verification failed: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email verification failed"
-        )
-
-
-@router.get("/me/sessions")
-async def get_user_sessions(
-    token: str = Depends(security),
-    session: AsyncSession = Depends(get_db_session)
-):
-    """Get user's active sessions."""
-    try:
-        user = await auth_manager.get_user_by_token(session, token.credentials)
-        
-        if not user:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token"
-            )
-        
-        # Get user sessions (simplified - would implement proper session listing)
-        return {
-            "active_sessions": 1,
-            "current_session": {
-                "created_at": user.last_login.isoformat() if user.last_login else None,
-                "device_info": "API Client",
-                "ip_address": "127.0.0.1"
+            "expires_in": ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+            "user": {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+                "role": user.role,
+                "is_active": user.is_active,
+                "created_at": format_datetime(user.created_at),
+                "wallet_balance": wallet_balance
             }
         }
-        
+
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Get sessions failed: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to get sessions"
+            detail=f"Error creating user: {str(e)}"
         )
+
+@router.post("/login", response_model=Token)
+async def login_user(
+    request: Request,
+    login_data: UserLogin,
+    db: AsyncSession = Depends(get_db)
+):
+    """Authenticate user and return access token."""
+    try:
+        # Get user by username or create test user
+        user = await get_user_by_username(db, login_data.username)
+        if not user and login_data.username == "testuser" and login_data.password == "testpass":
+            # Create test user for development
+            print(">> Creating test user account")
+            user = await create_user_with_wallet(
+                db,
+                username="testuser",
+                email="test@example.com",
+                password="testpass",
+                role=UserRole.USER
+            )
+        elif not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid username or password"
+            )
+
+        # Verify password
+        if not user.verify_password(login_data.password):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid username or password"
+            )
+
+        # Check if user is active
+        if not user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Account is disabled"
+            )
+
+        # Update last login
+        user.last_login = datetime.utcnow()
+        await db.commit()
+
+        # Create access token
+        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = create_access_token(
+            data={"sub": user.id},
+            expires_delta=access_token_expires
+        )
+
+        # Get wallet balance with fallback creation
+        wallet_balance = await portfolio_manager.get_user_balance(str(user.id))
+        if wallet_balance == 0:
+            # Check if wallet exists, create if needed
+            wallet = await portfolio_manager.get_user_wallet(str(user.id))
+            if not wallet:
+                print(f">> Warning: Wallet not found for user {user.id} during login, creating")
+                await portfolio_manager.create_wallet(str(user.id), 1000.0)
+                wallet_balance = 1000.0
+
+        # Set session data
+        request.session["user_id"] = str(user.id)
+        request.session["auth_token"] = access_token
+        print(f">> Login Success: Set session for user {user.id}")
+        
+        return {
+            "access_token": access_token,
+            "token_type": "bearer",
+            "expires_in": ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+            "user": {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+                "role": user.role,
+                "is_active": user.is_active,
+                "created_at": format_datetime(user.created_at),
+                "wallet_balance": wallet_balance
+            }
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error logging in: {str(e)}"
+        )
+
+@router.get("/me", response_model=UserResponse)
+async def get_current_user_info(
+    current_user: Optional[User] = Depends(get_current_user)
+):
+    """Get current user information or guest data."""
+    if not current_user:
+        # Return guest user data
+        guest_data = await get_guest_user_data()
+        return UserResponse(**guest_data)
+
+    # Get wallet balance for authenticated user
+    wallet_balance = await portfolio_manager.get_user_balance(current_user.id)
+
+    return UserResponse(
+        id=str(current_user.id),
+        username=str(current_user.username),
+        email=str(current_user.email),
+        role=str(current_user.role),
+        is_active=bool(current_user.is_active),
+        created_at=format_datetime(current_user.created_at),
+        wallet_balance=wallet_balance
+    )
+
+@router.post("/logout")
+async def logout_user():
+    """Logout user (client-side token removal)."""
+    return {"message": "Successfully logged out"}
+
+@router.get("/guest")
+async def get_guest_mode_info():
+    """Get guest mode information."""
+    guest_data = await get_guest_user_data()
+    return {
+        "message": "Guest mode activated",
+        "features": {
+            "crypto_tracking": True,
+            "currency_converter": True,
+            "roulette_gaming": True,
+            "portfolio_saving": False,
+            "transaction_history": False
+        },
+        "guest_user": guest_data,
+        "limitations": [
+            "Balance is temporary and not saved",
+            "No transaction history",
+            "Cannot save portfolio data",
+            "Limited to guest GEM balance"
+        ]
+    }
+
+@router.get("/status")
+async def get_auth_status(
+    current_user: Optional[User] = Depends(get_current_user)
+):
+    """Get authentication status with guaranteed balance information."""
+    if current_user:
+        try:
+            # Get wallet balance with fallback logic
+            wallet_balance = await portfolio_manager.get_user_balance(current_user.id)
+
+            # If balance is 0, check if wallet exists and create if needed
+            if wallet_balance == 0:
+                wallet = await portfolio_manager.get_user_wallet(str(current_user.id))
+                if not wallet:
+                    # Create wallet with initial balance if it doesn't exist
+                    await portfolio_manager.create_wallet(str(current_user.id), 1000.0)
+                    wallet_balance = 1000.0
+
+            return {
+                "authenticated": True,
+                "user": {
+                    "id": current_user.id,
+                    "username": current_user.username,
+                    "email": current_user.email,
+                    "role": current_user.role,
+                    "is_active": current_user.is_active,
+                    "wallet_balance": wallet_balance
+                }
+            }
+        except Exception as e:
+            # If there's any issue with balance retrieval, log and use fallback
+            print(f">> Warning: Balance retrieval failed for user {current_user.id}: {e}")
+            return {
+                "authenticated": True,
+                "user": {
+                    "id": current_user.id,
+                    "username": current_user.username,
+                    "email": current_user.email,
+                    "role": current_user.role,
+                    "is_active": current_user.is_active,
+                    "wallet_balance": 1000.0  # Fallback balance
+                }
+            }
+    else:
+        guest_data = await get_guest_user_data()
+        return {
+            "authenticated": False,
+            "guest_mode": True,
+            "guest_user": guest_data
+        }
+
+@router.get("/debug")
+async def debug_users(db: AsyncSession = Depends(get_db)):
+    """Debug endpoint to see all users (remove in production)."""
+    from sqlalchemy import select
+    users = await db.execute(select(User).limit(10))
+    user_list = []
+    for user in users.scalars():
+        user_list.append({
+            "id": str(user.id),
+            "username": user.username,
+            "email": user.email,
+            "is_active": user.is_active,
+            "role": str(user.role) if user.role else None
+        })
+    return {"users": user_list, "total": len(user_list)}

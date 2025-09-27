@@ -1,325 +1,467 @@
-# 🚀 Deployment Guide
+# 🚀 CryptoChecker Version3 - Deployment Guide
 
-## Development Environment
+## 📋 Overview
 
-### Prerequisites
-- Python 3.8 or higher
-- pip (Python package installer)
-- Modern web browser
-- 4GB+ RAM recommended
-- 1GB+ free disk space
+This guide covers deploying CryptoChecker Version3 to production environments. The platform is designed to be deployment-ready with minimal configuration.
 
-### Quick Setup
+## 🔧 **Environment Setup**
 
-1. **Clone Repository**
+### **1. Production Environment Variables**
+
+Create a production `.env` file:
+
 ```bash
-git clone <repository-url>
-cd PythonCryptoChecker
-```
-
-2. **Create Virtual Environment** (Recommended)
-```bash
-python -m venv .venv
-
-# Windows
-.venv\Scripts\activate
-
-# macOS/Linux
-source .venv/bin/activate
-```
-
-3. **Install Dependencies**
-```bash
-pip install -r requirements.txt
-```
-
-4. **Run Development Server**
-```bash
-python run.py
-```
-
-5. **Access Platform**
-- Open browser to: http://localhost:8000
-- API Documentation: http://localhost:8000/api/docs
-
-## Production Deployment
-
-### Environment Variables
-
-Create a `.env` file in the project root:
-
-```env
-# Server Configuration
+# Application Settings
+DEBUG=False
+SECRET_KEY=your-production-secret-key-change-this
 HOST=0.0.0.0
 PORT=8000
-DEBUG=False
 
-# Security
-SECRET_KEY=your-super-secret-key-here
-SESSION_SECRET=your-session-secret-here
+# Database Configuration (Production)
+DATABASE_URL=postgresql+asyncpg://username:password@host:port/database
 
-# Database
-DATABASE_URL=sqlite:///./crypto_platform.db
+# Crypto API Settings
+COINGECKO_API_KEY=your-coingecko-api-key
+COINCAP_API_KEY=your-coincap-api-key
+PRICE_UPDATE_INTERVAL=30
+
+# Gaming Configuration
+GEM_TO_USD_RATE=0.01
+MIN_BET_AMOUNT=10
+MAX_BET_AMOUNT=10000
+GUEST_MODE_GEMS=5000
+
+# JWT Authentication
+JWT_SECRET_KEY=your-jwt-secret-key-production
+JWT_ALGORITHM=HS256
+JWT_ACCESS_TOKEN_EXPIRE_MINUTES=60
+JWT_REFRESH_TOKEN_EXPIRE_DAYS=30
 
 # CORS Settings
-ALLOWED_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
+CORS_ORIGINS=["https://yourdomain.com", "https://www.yourdomain.com"]
 
-# Social Bots (optional)
-BOTS_ENABLED=true
-BOTS_MIN_SEC=30
-BOTS_MAX_SEC=90
-BOTS_PENDING_CAP=5
-BOTS_SEED_ACCEPTED=2
-BOTS_SEED_PENDING=1
-
-# GEM Economy
-# USD per GEM. Example: 0.01 means 1 GEM = $0.01 (⇒ 1000 GEM = $10)
-GEM_USD_RATE_USD_PER_GEM=0.01
+# SSL/Security
+FORCE_HTTPS=True
+SECURE_COOKIES=True
 ```
 
-### Docker Deployment
+### **2. Database Setup**
 
-Create `Dockerfile`:
+#### **SQLite (Development)**
+```bash
+# Default - no additional setup required
+DATABASE_URL=sqlite+aiosqlite:///./crypto_tracker_v3.db
+```
 
+#### **PostgreSQL (Production)**
+```bash
+# Install PostgreSQL dependencies
+pip install asyncpg psycopg2-binary
+
+# Configure connection
+DATABASE_URL=postgresql+asyncpg://user:pass@localhost/cryptochecker_v3
+```
+
+#### **Database Migration**
+```python
+# Run database initialization
+python -c "
+import asyncio
+from database.database import init_database
+asyncio.run(init_database())
+"
+```
+
+## 🐳 **Docker Deployment**
+
+### **Dockerfile**
 ```dockerfile
 FROM python:3.11-slim
 
 WORKDIR /app
 
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements first for better caching
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Copy application code
 COPY . .
 
+# Create non-root user
+RUN useradd -m -u 1000 cryptouser && chown -R cryptouser:cryptouser /app
+USER cryptouser
+
+# Expose port
 EXPOSE 8000
 
-CMD ["python", "run.py"]
+# Health check
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:8000/api/crypto/market/status || exit 1
+
+# Start application
+CMD ["python", "main.py"]
 ```
 
-Create `docker-compose.yml`:
-
+### **docker-compose.yml**
 ```yaml
 version: '3.8'
 
 services:
-  crypto-platform:
+  cryptochecker:
     build: .
     ports:
       - "8000:8000"
     environment:
-      - HOST=0.0.0.0
-      - PORT=8000
+      - DATABASE_URL=postgresql+asyncpg://postgres:password@db:5432/cryptochecker
       - DEBUG=False
+      - SECRET_KEY=${SECRET_KEY}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+    depends_on:
+      - db
     volumes:
-      - ./data:/app/data
+      - ./logs:/app/logs
     restart: unless-stopped
+
+  db:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=cryptochecker
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/nginx/ssl
+    depends_on:
+      - cryptochecker
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
 ```
 
-Deploy with Docker:
+## 🌐 **Web Server Configuration**
 
-```bash
-docker-compose up -d
-```
-
-### Cloud Deployment Options
-
-#### 1. Heroku
-
-```bash
-# Install Heroku CLI
-# Create Procfile
-echo "web: python run.py" > Procfile
-
-# Deploy
-heroku create your-app-name
-git push heroku main
-```
-
-#### 2. Railway
-
-```bash
-# Install Railway CLI
-npm install -g @railway/cli
-
-# Deploy
-railway login
-railway init
-railway up
-```
-
-#### 3. DigitalOcean App Platform
-
-1. Connect GitHub repository
-2. Configure build settings:
-   - Build Command: `pip install -r requirements.txt`
-   - Run Command: `python run.py`
-3. Set environment variables
-4. Deploy
-
-### Nginx Configuration (Optional)
-
-For production with reverse proxy:
-
+### **Nginx Configuration**
 ```nginx
+upstream cryptochecker {
+    server cryptochecker:8000;
+}
+
 server {
     listen 80;
-    server_name yourdomain.com;
-    
-    location / {
-        proxy_pass http://127.0.0.1:8000;
+    server_name yourdomain.com www.yourdomain.com;
+    return 301 https://$server_name$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name yourdomain.com www.yourdomain.com;
+
+    ssl_certificate /etc/nginx/ssl/cert.pem;
+    ssl_certificate_key /etc/nginx/ssl/key.pem;
+
+    # Security headers
+    add_header X-Frame-Options DENY;
+    add_header X-Content-Type-Options nosniff;
+    add_header X-XSS-Protection "1; mode=block";
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+
+    # Gzip compression
+    gzip on;
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml;
+
+    # Static files
+    location /static {
+        alias /app/web/static;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # API endpoints
+    location /api {
+        proxy_pass http://cryptochecker;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
     }
-    
-    location /static/ {
-        alias /path/to/your/app/web/static/;
-        expires 1y;
-        add_header Cache-Control "public, immutable";
+
+    # Main application
+    location / {
+        proxy_pass http://cryptochecker;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
 }
 ```
 
-## Database Setup
+## ☁️ **Cloud Deployment**
 
-### SQLite (Default)
-- Automatically created on first run
-- Located at `./crypto_platform.db`
-- Perfect for development and small deployments
-
-### PostgreSQL (Production)
-
-1. **Install PostgreSQL**
-2. **Create Database**
-```sql
-CREATE DATABASE crypto_platform;
-CREATE USER crypto_user WITH PASSWORD 'your_password';
-GRANT ALL PRIVILEGES ON DATABASE crypto_platform TO crypto_user;
-```
-
-3. **Update Environment**
-```env
-DATABASE_URL=postgresql://crypto_user:your_password@localhost/crypto_platform
-```
-
-4. **Install PostgreSQL Driver**
+### **1. Heroku**
 ```bash
-pip install psycopg2-binary
+# Install Heroku CLI and login
+heroku login
+
+# Create app
+heroku create cryptochecker-v3
+
+# Set environment variables
+heroku config:set SECRET_KEY=your-secret-key
+heroku config:set JWT_SECRET_KEY=your-jwt-secret
+heroku config:set DEBUG=False
+
+# Add PostgreSQL addon
+heroku addons:create heroku-postgresql:hobby-dev
+
+# Deploy
+git push heroku main
 ```
 
-## Performance Optimization
+**Procfile**:
+```
+web: python main.py
+```
 
-### Static File Serving
+### **2. DigitalOcean App Platform**
+```yaml
+# app.yaml
+name: cryptochecker-v3
+services:
+- name: web
+  source_dir: /
+  github:
+    repo: your-username/cryptochecker-v3
+    branch: main
+  run_command: python main.py
+  environment_slug: python
+  instance_count: 1
+  instance_size_slug: basic-xxs
+  envs:
+  - key: SECRET_KEY
+    value: your-secret-key
+  - key: JWT_SECRET_KEY
+    value: your-jwt-secret
+  - key: DEBUG
+    value: "False"
+databases:
+- name: cryptochecker-db
+  engine: PG
+  version: "15"
+```
 
-For production, serve static files with a CDN or web server:
+### **3. AWS ECS**
+```yaml
+# task-definition.json
+{
+  "family": "cryptochecker-v3",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "arn:aws:iam::account:role/ecsTaskExecutionRole",
+  "containerDefinitions": [
+    {
+      "name": "cryptochecker",
+      "image": "your-account.dkr.ecr.region.amazonaws.com/cryptochecker-v3:latest",
+      "portMappings": [
+        {
+          "containerPort": 8000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "DEBUG",
+          "value": "False"
+        }
+      ],
+      "secrets": [
+        {
+          "name": "SECRET_KEY",
+          "valueFrom": "arn:aws:secretsmanager:region:account:secret:cryptochecker/secret-key"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/cryptochecker-v3",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ]
+}
+```
+
+## 🔒 **Security Configuration**
+
+### **1. SSL/TLS Setup**
+```bash
+# Let's Encrypt with Certbot
+sudo apt install certbot python3-certbot-nginx
+sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com
+```
+
+### **2. Firewall Configuration**
+```bash
+# UFW (Ubuntu)
+sudo ufw allow 22/tcp
+sudo ufw allow 80/tcp
+sudo ufw allow 443/tcp
+sudo ufw enable
+```
+
+### **3. Security Headers**
+Update `main.py` to include security middleware:
 
 ```python
-# In main.py, disable static file serving
-# app.mount("/static", StaticFiles(directory="web/static"), name="static")
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
+
+if not DEBUG:
+    app.add_middleware(HTTPSRedirectMiddleware)
+    app.add_middleware(
+        TrustedHostMiddleware,
+        allowed_hosts=["yourdomain.com", "*.yourdomain.com"]
+    )
 ```
 
-### Caching
+## 📊 **Monitoring & Logging**
 
-Add Redis for session storage and caching:
-
-```bash
-pip install redis
-```
-
+### **1. Application Monitoring**
 ```python
 # Add to main.py
-import redis
-from starlette.middleware.sessions import SessionMiddleware
-
-redis_client = redis.Redis(host='localhost', port=6379, db=0)
-```
-
-### Monitoring
-
-Add application monitoring:
-
-```bash
-pip install prometheus-client
-```
-
-## Security Checklist
-
-- [ ] Change default secret keys
-- [ ] Enable HTTPS in production
-- [ ] Configure CORS properly
-- [ ] Set up rate limiting
-- [ ] Enable security headers
-- [ ] Regular security updates
-- [ ] Database connection encryption
-- [ ] Input validation and sanitization
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Port Already in Use**
-```bash
-# Find process using port 8000
-lsof -i :8000
-# Kill process
-kill -9 <PID>
-```
-
-2. **Database Connection Issues**
-```bash
-# Check database file permissions
-ls -la crypto_platform.db
-# Reset database
-rm crypto_platform.db
-python main.py  # Will recreate
-```
-
-3. **Static Files Not Loading**
-- Check file permissions
-- Verify static file paths
-- Clear browser cache
-
-### Logs
-
-Application logs are output to console. For production:
-
-```python
 import logging
-logging.basicConfig(level=logging.INFO)
+from logging.handlers import RotatingFileHandler
+
+# Configure logging
+if not DEBUG:
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s %(levelname)s %(name)s %(message)s',
+        handlers=[
+            RotatingFileHandler('logs/app.log', maxBytes=10485760, backupCount=5),
+            logging.StreamHandler()
+        ]
+    )
 ```
 
-## Backup Strategy
+### **2. Health Checks**
+```python
+@app.get("/health")
+async def health_check():
+    """Health check endpoint for load balancers."""
+    return {
+        "status": "healthy",
+        "timestamp": datetime.utcnow().isoformat(),
+        "version": "3.0.0"
+    }
+```
 
-### Database Backup
+### **3. Metrics Collection**
+```python
+from prometheus_client import Counter, Histogram, generate_latest
 
+# Metrics
+REQUEST_COUNT = Counter('http_requests_total', 'Total HTTP requests', ['method', 'endpoint'])
+REQUEST_DURATION = Histogram('http_request_duration_seconds', 'HTTP request duration')
+
+@app.get("/metrics")
+async def metrics():
+    """Prometheus metrics endpoint."""
+    return Response(generate_latest(), media_type="text/plain")
+```
+
+## 🔄 **Backup Strategy**
+
+### **1. Database Backups**
 ```bash
-# SQLite
-cp crypto_platform.db backup_$(date +%Y%m%d).db
-
-# PostgreSQL
-pg_dump crypto_platform > backup_$(date +%Y%m%d).sql
+#!/bin/bash
+# backup.sh
+DATE=$(date +%Y%m%d_%H%M%S)
+pg_dump $DATABASE_URL > backups/cryptochecker_$DATE.sql
+aws s3 cp backups/cryptochecker_$DATE.sql s3://your-backup-bucket/
+find backups/ -name "*.sql" -mtime +7 -delete
 ```
 
-### Full Application Backup
-
+### **2. Automated Backups with Cron**
 ```bash
-tar -czf backup_$(date +%Y%m%d).tar.gz \
-  --exclude='.venv' \
-  --exclude='__pycache__' \
-  --exclude='*.pyc' \
-  .
+# crontab -e
+0 2 * * * /path/to/backup.sh
 ```
+
+## 🚀 **Deployment Checklist**
+
+### **Pre-Deployment**
+- [ ] Environment variables configured
+- [ ] Database connection tested
+- [ ] SSL certificates installed
+- [ ] Security headers configured
+- [ ] Monitoring setup
+- [ ] Backup strategy implemented
+
+### **Deployment**
+- [ ] Application deployed
+- [ ] Database migrations run
+- [ ] Static files served correctly
+- [ ] Health checks passing
+- [ ] SSL working
+- [ ] Performance tested
+
+### **Post-Deployment**
+- [ ] Monitoring alerts configured
+- [ ] Logs being collected
+- [ ] Backups running
+- [ ] Performance metrics tracked
+- [ ] Error tracking active
+
+## 🛠️ **Maintenance**
+
+### **Regular Tasks**
+- Monitor application logs
+- Check database performance
+- Update dependencies
+- Renew SSL certificates
+- Review security settings
+- Backup verification
+
+### **Scaling Considerations**
+- **Horizontal Scaling**: Multiple app instances behind load balancer
+- **Database Scaling**: Read replicas, connection pooling
+- **Caching**: Redis for session storage and API caching
+- **CDN**: CloudFlare/AWS CloudFront for static assets
 
 ---
 
-## Support
+## 🎯 **Production Ready**
 
-For deployment issues:
-1. Check application logs
-2. Verify environment variables
-3. Test database connectivity
-4. Confirm port availability
-5. Review security settings
+CryptoChecker Version3 is designed for production deployment with:
 
-*Last Updated: September 9, 2025*
+- ✅ **Environment Configuration**: Flexible .env setup
+- ✅ **Database Support**: SQLite for development, PostgreSQL for production
+- ✅ **Container Ready**: Docker and docker-compose included
+- ✅ **Security Focused**: HTTPS, security headers, input validation
+- ✅ **Monitoring Ready**: Health checks, logging, metrics endpoints
+- ✅ **Scalable Architecture**: Stateless design, database-backed sessions
+
+**Deploy with confidence!** 🚀

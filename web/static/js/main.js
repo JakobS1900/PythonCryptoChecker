@@ -1,707 +1,903 @@
 /**
- * Main JavaScript functionality for Crypto Gamification Platform
- * Handles global utilities, UI components, and common functionality
+ * CryptoChecker Version3 - Main JavaScript Module
+ * Core functionality and utilities
  */
 
-// ===== GLOBAL UTILITIES =====
-// Note: Utils are now loaded from utils.js - commenting out duplicate
-
-/*window.utils = {
-    // Format numbers with appropriate suffixes
-    formatNumber: (num) => {
-        if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
-        if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
-        if (num >= 1e3) return (num / 1e3).toFixed(2) + 'K';
-        return num.toString();
+// Global App Object
+window.CryptoChecker = {
+    // Configuration
+    config: {
+        apiBaseUrl: '/api',
+        refreshInterval: 30000, // 30 seconds
+        maxRetries: 3,
+        retryDelay: 1000
     },
 
-    // Format currency with symbol
-    formatCurrency: (amount, currency = 'GEM') => {
-        const symbols = {
-            'GEM': '💎',
-            'BTC': '₿',
-            'ETH': 'Ξ',
-            'USD': '$'
-        };
-        return `${symbols[currency] || currency} ${window.utils.formatNumber(amount)}`;
-    },
+    // Current user data
+    user: null,
+    isAuthenticated: false,
+    isGuest: true,
 
-    // Format date/time
-    formatDate: (dateString) => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
-    },
+    // Cache for API responses
+    cache: new Map(),
 
-    // Format relative time (e.g., "2 hours ago")
-    formatRelativeTime: (dateString) => {
-        const date = new Date(dateString);
-        const now = new Date();
-        const diffInSeconds = Math.floor((now - date) / 1000);
-        
-        if (diffInSeconds < 60) return 'Just now';
-        if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
-        if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
-        if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 86400)}d ago`;
-        return date.toLocaleDateString();
-    },
+    // API module for making HTTP requests
+    api: {
+        // Base configuration
+        baseUrl: '/api',
+        defaultHeaders: {
+            'Content-Type': 'application/json'
+        },
 
-    // Debounce function for search inputs
-    debounce: (func, wait) => {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
+        // Get authentication headers
+        getAuthHeaders() {
+            const headers = { ...this.defaultHeaders };
+            const token = localStorage.getItem('auth_token');
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            return headers;
+        },
+
+        // Generic request method
+        async request(method, endpoint, data = null) {
+            const url = endpoint.startsWith('http') ? endpoint : `${this.baseUrl}${endpoint}`;
+            const options = {
+                method: method.toUpperCase(),
+                headers: this.getAuthHeaders()
             };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
-    },
 
-    // Copy text to clipboard
-    copyToClipboard: async (text) => {
-        try {
-            await navigator.clipboard.writeText(text);
-            window.showAlert('Copied to clipboard!', 'success');
-        } catch (err) {
-            console.error('Failed to copy:', err);
-            window.showAlert('Failed to copy to clipboard', 'warning');
+            // Handle different data types
+            if (data) {
+                if (data instanceof FormData) {
+                    // Remove Content-Type for FormData to let browser set it
+                    delete options.headers['Content-Type'];
+                    options.body = data;
+                } else if (typeof data === 'object') {
+                    options.body = JSON.stringify(data);
+                } else {
+                    options.body = data;
+                }
+            }
+
+            try {
+                console.log(`🌐 API Request: ${method.toUpperCase()} ${url}`);
+
+                const response = await fetch(url, options);
+
+                let responseData;
+                try {
+                    responseData = await response.json();
+                } catch (jsonError) {
+                    console.warn('Failed to parse JSON response:', jsonError);
+                    responseData = { error: 'Invalid JSON response from server' };
+                }
+
+                const result = {
+                    ...responseData,
+                    status: response.status,
+                    ok: response.ok
+                };
+
+                // Log response for debugging
+                if (!response.ok) {
+                    console.warn(`⚠️ API Error ${response.status}:`, url, result);
+                } else {
+                    console.log(`✅ API Success ${response.status}:`, url);
+                }
+
+                return result;
+            } catch (error) {
+                console.error('❌ API Request Error:', error);
+                console.error('Request details:', {
+                    method: method.toUpperCase(),
+                    url,
+                    hasAuth: options.headers['Authorization'] ? 'Yes' : 'No',
+                    error: error.message
+                });
+                throw new Error(`Request failed: ${error.message}`);
+            }
+        },
+
+        // Convenience methods
+        async get(endpoint) {
+            return this.request('GET', endpoint);
+        },
+
+        async post(endpoint, data) {
+            return this.request('POST', endpoint, data);
+        },
+
+        async put(endpoint, data) {
+            return this.request('PUT', endpoint, data);
+        },
+
+        async delete(endpoint) {
+            return this.request('DELETE', endpoint);
         }
     },
 
-    // Generate random ID
-    generateId: () => {
-        return Math.random().toString(36).substr(2, 9);
-    }
-};*/
+    // Utility functions
+    utils: {
+        // Generate unique ID
+        generateId() {
+            return 'id-' + Math.random().toString(36).substr(2, 9) + '-' + Date.now().toString(36);
+        },
 
-// ===== ALERT SYSTEM =====
+        // Storage utilities with expiration
+        storage: {
+            set(key, value, minutesExpiry = 60) {
+                const item = {
+                    value: value,
+                    expiry: Date.now() + (minutesExpiry * 60 * 1000)
+                };
+                localStorage.setItem(key, JSON.stringify(item));
+            },
 
-window.showAlert = (message, type = 'info', duration = 5000) => {
-    const alertContainer = document.getElementById('alertContainer');
-    if (!alertContainer) return;
+            get(key) {
+                const itemStr = localStorage.getItem(key);
+                if (!itemStr) return null;
 
-    const alertId = 'alert-' + Date.now();
-    const alertHTML = `
-        <div id="${alertId}" class="alert alert-${type} alert-dismissible fade show" role="alert">
-            <div class="d-flex align-items-center">
-                <i class="fas fa-${getAlertIcon(type)} me-2"></i>
-                <div class="flex-grow-1">${message}</div>
+                try {
+                    const item = JSON.parse(itemStr);
+                    if (Date.now() > item.expiry) {
+                        localStorage.removeItem(key);
+                        return null;
+                    }
+                    return item.value;
+                } catch (error) {
+                    localStorage.removeItem(key);
+                    return null;
+                }
+            },
+
+            remove(key) {
+                localStorage.removeItem(key);
+            }
+        },
+
+        // Format numbers
+        formatNumber(num, decimals = 2) {
+            return new Intl.NumberFormat('en-US', {
+                minimumFractionDigits: decimals,
+                maximumFractionDigits: decimals
+            }).format(num);
+        },
+
+        // Debounce function
+        debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+    },
+
+    // Initialize the application
+    init() {
+        this.initEventListeners();
+        this.startPriceUpdates();
+        this.startBalanceUpdates();
+        console.log('CryptoChecker v3 initialized');
+    },
+
+    // Set up global event listeners
+    initEventListeners() {
+        // Handle navigation clicks and login modal actions
+        document.addEventListener('click', (e) => {
+            console.log('🖱️ Global click handler triggered for:', e.target.tagName, e.target.id, e.target.className);
+            if (e.target.matches('[data-action]')) {
+                console.log('✨ Found data-action element:', e.target.dataset.action);
+                e.preventDefault();
+                const action = e.target.dataset.action;
+                if (action === 'showLoginModal') {
+                    console.log('📬 Calling showLoginModal...');
+                    this.showLoginModal();
+                } else {
+                    this.handleAction(action, e.target);
+                }
+            }
+        });
+
+        // Handle form submissions
+        document.addEventListener('submit', (e) => {
+            if (e.target.matches('[data-api-form]')) {
+                e.preventDefault();
+                this.handleApiForm(e.target);
+            }
+        });
+
+        // Handle keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                switch (e.key) {
+                    case 'r':
+                        e.preventDefault();
+                        this.refreshData();
+                        break;
+                    case '/':
+                        e.preventDefault();
+                        this.focusSearch();
+                        break;
+                }
+            }
+        });
+    },
+
+    // Start automatic price updates
+    startPriceUpdates() {
+        // Initial load with delay to prevent race conditions
+        setTimeout(() => {
+            this.updatePrices();
+        }, 1000);
+
+        // Set up interval
+        setInterval(() => {
+            this.updatePrices();
+        }, this.config.refreshInterval);
+    },
+
+    // Update cryptocurrency prices
+    async updatePrices() {
+        try {
+            const prices = await this.api.get('/crypto/prices?limit=20');
+            if (prices.success) {
+                // Cache the successful response
+                this.utils.storage.set('crypto_prices', prices.data, 10); // 10 minutes cache
+                this.utils.storage.set('last_price_update', new Date().toISOString(), 60);
+                this.updatePriceDisplays(prices.data);
+                this.updatePriceStatus('live');
+            } else {
+                // Try to use cached data
+                await this.handlePriceUpdateFailure('API returned unsuccessful response');
+            }
+        } catch (error) {
+            console.warn('Failed to update prices:', error);
+            await this.handlePriceUpdateFailure(error.message);
+        }
+    },
+
+    // Handle price update failures gracefully
+    async handlePriceUpdateFailure(errorMessage) {
+        // Try to use cached data first
+        const cachedPrices = this.utils.storage.get('crypto_prices');
+        if (cachedPrices && cachedPrices.length > 0) {
+            console.log('Using cached price data due to API failure');
+            this.updatePriceDisplays(cachedPrices);
+            this.updatePriceStatus('cached');
+            return;
+        }
+
+        // Fallback to mock data if no cache available
+        console.log('Using mock price data due to complete API failure');
+        const mockData = this.getMockPriceData();
+        this.updatePriceDisplays(mockData);
+        this.updatePriceStatus('offline');
+    },
+
+    // Update price status indicator
+    updatePriceStatus(status) {
+        const statusElement = document.getElementById('price-status');
+        if (statusElement) {
+            const statusText = {
+                'live': '🟢 Live',
+                'cached': '🟡 Cached',
+                'offline': '🔴 Offline'
+            };
+            statusElement.textContent = statusText[status] || '⚪ Unknown';
+            statusElement.className = `price-status ${status}`;
+        }
+    },
+
+    // Provide mock price data as ultimate fallback
+    getMockPriceData() {
+        return [
+            { id: 'bitcoin', symbol: 'BTC', name: 'Bitcoin', current_price_usd: 43250, price_change_percentage_24h: 2.1, market_cap: 847000000000, image: null },
+            { id: 'ethereum', symbol: 'ETH', name: 'Ethereum', current_price_usd: 2640, price_change_percentage_24h: 1.8, market_cap: 317000000000, image: null },
+            { id: 'binancecoin', symbol: 'BNB', name: 'BNB', current_price_usd: 310, price_change_percentage_24h: -0.5, market_cap: 47000000000, image: null },
+            { id: 'cardano', symbol: 'ADA', name: 'Cardano', current_price_usd: 0.48, price_change_percentage_24h: 3.2, market_cap: 17000000000, image: null },
+            { id: 'solana', symbol: 'SOL', name: 'Solana', current_price_usd: 98, price_change_percentage_24h: 4.1, market_cap: 43000000000, image: null },
+            { id: 'ripple', symbol: 'XRP', name: 'XRP', current_price_usd: 0.52, price_change_percentage_24h: 1.1, market_cap: 29000000000, image: null },
+            { id: 'polkadot', symbol: 'DOT', name: 'Polkadot', current_price_usd: 7.2, price_change_percentage_24h: -1.2, market_cap: 9000000000, image: null }
+        ];
+    },
+
+    // Update price displays in the UI
+    updatePriceDisplays(cryptos) {
+        // Update BTC price in navbar/stats
+        const btc = cryptos.find(c => c.symbol.toLowerCase() === 'btc');
+        if (btc) {
+            this.updateElement('btc-price', this.formatPrice(btc.current_price_usd));
+            this.updateElement('btc-change', this.formatChange(btc.price_change_percentage_24h));
+        }
+
+        // Update crypto count
+        this.updateElement('crypto-count', `${cryptos.length}+`);
+
+        // Emit event for other modules
+        document.dispatchEvent(new CustomEvent('pricesUpdated', { detail: cryptos }));
+    },
+
+    // Start automatic balance updates
+    startBalanceUpdates() {
+        // Update balance every 30 seconds if authenticated
+        setInterval(async () => {
+            if (this.isAuthenticated && !this.isGuest) {
+                try {
+                    const response = await this.api.get('/crypto/portfolio/balance');
+                    if (response.success && response.balance !== undefined) {
+                        // Update user balance if it changed
+                        if (this.user && this.user.wallet_balance !== response.balance) {
+                            this.user.wallet_balance = response.balance;
+
+                            // Dispatch balance update event
+                            document.dispatchEvent(new CustomEvent('balanceUpdated', {
+                                detail: {
+                                    balance: response.balance,
+                                    isGuest: false
+                                }
+                            }));
+
+                            // Update Auth module
+                            if (window.Auth && Auth.currentUser) {
+                                Auth.currentUser.wallet_balance = response.balance;
+                                Auth.updateBalanceDisplays();
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.warn('Failed to update balance:', error);
+                }
+            }
+        }, 30000); // 30 seconds
+    },
+
+    // Manually refresh balance (can be called by other modules)
+    async refreshBalance() {
+        if (this.isAuthenticated && !this.isGuest) {
+            try {
+                const response = await this.api.get('/auth/status');
+                if (response.authenticated && response.user && response.user.wallet_balance !== undefined) {
+                    // Update user balance
+                    if (this.user && this.user.wallet_balance !== response.user.wallet_balance) {
+                        this.user.wallet_balance = response.user.wallet_balance;
+
+                        // Dispatch balance update event
+                        document.dispatchEvent(new CustomEvent('balanceUpdated', {
+                            detail: {
+                                balance: response.user.wallet_balance,
+                                isGuest: false
+                            }
+                        }));
+
+                        // Update Auth module and sync authentication status
+                        if (window.Auth) {
+                            if (Auth.currentUser) {
+                                Auth.currentUser.wallet_balance = response.user.wallet_balance;
+                            }
+                            Auth.updateBalanceDisplays();
+
+                            // Sync authentication state
+                            this.user = response.user;
+                            this.isAuthenticated = true;
+                            this.isGuest = false;
+                        }
+
+                        console.log(`Balance refreshed: ${response.user.wallet_balance} GEM`);
+                    }
+                }
+                return true;
+            } catch (error) {
+                console.warn('Failed to refresh balance:', error);
+                return false;
+            }
+        }
+        return false;
+    },
+
+    // Handle action buttons
+    handleAction(action, element) {
+        switch (action) {
+            case 'refresh':
+                this.refreshData();
+                break;
+            case 'login':
+                Auth.showLoginModal();
+                break;
+            case 'logout':
+                Auth.logout();
+                break;
+            case 'guest-info':
+                this.showGuestInfo();
+                break;
+            default:
+                console.warn('Unknown action:', action);
+        }
+    },
+
+    // Handle API form submissions
+    async handleApiForm(form) {
+        const formData = new FormData(form);
+        const endpoint = form.dataset.apiForm;
+        const method = form.dataset.method || 'POST';
+
+        try {
+            this.showLoading(form);
+            const response = await this.api.request(method, endpoint, formData);
+            this.handleApiResponse(response, form);
+        } catch (error) {
+            this.showAlert('error', error.message);
+        } finally {
+            this.hideLoading(form);
+        }
+    },
+
+    // Handle API response from form submissions
+    handleApiResponse(response, form) {
+        try {
+            // Check if response is successful
+            if (response.success || (response.status >= 200 && response.status < 300)) {
+                // Handle successful response
+                if (response.message) {
+                    this.showAlert('success', response.message, 4000);
+                } else if (response.data && response.data.message) {
+                    this.showAlert('success', response.data.message, 4000);
+                } else {
+                    this.showAlert('success', 'Operation completed successfully', 3000);
+                }
+
+                // Reset form if it was a submission
+                if (form && typeof form.reset === 'function') {
+                    form.reset();
+                }
+
+                // Trigger any custom success handlers
+                if (form && form.dataset.onSuccess) {
+                    const successHandler = window[form.dataset.onSuccess];
+                    if (typeof successHandler === 'function') {
+                        successHandler(response);
+                    }
+                }
+
+                // Refresh authentication status and balance if needed
+                if (response.user || response.access_token) {
+                    setTimeout(() => {
+                        if (window.Auth && typeof window.Auth.checkAuthStatus === 'function') {
+                            window.Auth.checkAuthStatus();
+                        }
+                    }, 500);
+                }
+
+            } else {
+                // Handle error response
+                let errorMessage = 'Operation failed';
+
+                if (response.error) {
+                    errorMessage = response.error;
+                } else if (response.detail) {
+                    errorMessage = response.detail;
+                } else if (response.message) {
+                    errorMessage = response.message;
+                } else if (response.status) {
+                    errorMessage = `Request failed with status ${response.status}`;
+                }
+
+                this.showAlert('danger', errorMessage, 5000);
+
+                // Log error for debugging
+                console.error('API Response Error:', response);
+            }
+
+        } catch (error) {
+            console.error('Error handling API response:', error);
+            this.showAlert('danger', 'Failed to process server response', 4000);
+        }
+    },
+
+    // Refresh all data
+    async refreshData() {
+        this.showAlert('info', 'Refreshing data...', 2000);
+        await Promise.all([
+            this.updatePrices(),
+            Auth.checkAuthStatus()
+        ]);
+        this.showAlert('success', 'Data refreshed!', 2000);
+    },
+
+    // Focus search input
+    focusSearch() {
+        const searchInput = document.querySelector('#price-search, .search-input');
+        if (searchInput) {
+            searchInput.focus();
+        }
+    },
+
+    // Show guest mode information
+    showGuestInfo() {
+        this.showModal('Guest Mode Information', `
+            <div class="alert alert-info">
+                <h6><i class="bi bi-info-circle"></i> You're in Guest Mode</h6>
+                <p class="mb-2">You can explore all features with limitations:</p>
+                <ul class="mb-2">
+                    <li>5,000 temporary GEM balance</li>
+                    <li>Full crypto tracking access</li>
+                    <li>Currency converter access</li>
+                    <li>Roulette gaming access</li>
+                </ul>
+                <p class="mb-0"><strong>Limitations:</strong> No balance persistence, no transaction history</p>
+            </div>
+            <div class="text-center">
+                <button class="btn btn-primary" onclick="Auth.showLoginModal()">
+                    <i class="bi bi-person-plus"></i> Sign Up / Login
+                </button>
+            </div>
+        `);
+    },
+
+    // API wrapper object
+    api: {
+        // Base request method
+        async request(method, endpoint, data = null) {
+            const url = `${CryptoChecker.config.apiBaseUrl}${endpoint}`;
+            const options = {
+                method: method.toUpperCase(),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            };
+
+            // Add auth token if available
+            const token = localStorage.getItem('auth_token');
+            if (token) {
+                options.headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            // Add data for POST/PUT requests
+            if (data && method.toUpperCase() !== 'GET') {
+                if (data instanceof FormData) {
+                    options.body = JSON.stringify(Object.fromEntries(data));
+                } else {
+                    options.body = JSON.stringify(data);
+                }
+            }
+
+            const response = await fetch(url, options);
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.detail || `HTTP ${response.status}`);
+            }
+
+            return await response.json();
+        },
+
+        // GET request
+        async get(endpoint, params = {}) {
+            const url = new URL(`${CryptoChecker.config.apiBaseUrl}${endpoint}`, window.location.origin);
+            Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+            const fullPath = url.pathname + url.search;
+
+            // Set up options with auth token
+            const options = {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                signal: AbortSignal.timeout(10000) // 10 second timeout
+            };
+
+            // Add auth token if available
+            const token = localStorage.getItem('auth_token');
+            if (token) {
+                options.headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            let retries = 0;
+            const maxRetries = CryptoChecker.config.maxRetries;
+
+            while (retries < maxRetries) {
+                try {
+                    const response = await fetch(fullPath, options);
+
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({}));
+                        throw new Error(errorData.detail || `HTTP ${response.status}`);
+                    }
+
+                    return await response.json();
+                } catch (error) {
+                    retries++;
+
+                    if (error.name === 'AbortError') {
+                        console.warn(`Request timeout for ${endpoint}`);
+                        throw new Error('Request timeout');
+                    }
+
+                    if (retries >= maxRetries) {
+                        console.error(`API request failed after ${maxRetries} retries:`, error);
+                        throw error;
+                    }
+
+                    // Wait before retry
+                    await new Promise(resolve => setTimeout(resolve, CryptoChecker.config.retryDelay * retries));
+                }
+            }
+        },
+
+        // POST request
+        async post(endpoint, data) {
+            return this.request('POST', endpoint, data);
+        },
+
+        // PUT request
+        async put(endpoint, data) {
+            return this.request('PUT', endpoint, data);
+        },
+
+        // DELETE request
+        async delete(endpoint) {
+            return this.request('DELETE', endpoint);
+        }
+    },
+
+    // Utility functions
+    utils: {
+        // Format price with appropriate currency symbol
+        formatPrice(price, currency = 'USD') {
+            if (price === null || price === undefined) return 'N/A';
+
+            const formatter = new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: currency,
+                minimumFractionDigits: price < 1 ? 6 : 2,
+                maximumFractionDigits: price < 1 ? 6 : 2
+            });
+
+            return formatter.format(price);
+        },
+
+        // Format percentage change
+        formatChange(change) {
+            if (change === null || change === undefined) return 'N/A';
+
+            const formatted = `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`;
+            const className = change >= 0 ? 'text-success' : 'text-danger';
+
+            return `<span class="${className}">${formatted}</span>`;
+        },
+
+        // Format large numbers
+        formatNumber(num) {
+            if (num === null || num === undefined) return 'N/A';
+
+            if (num >= 1e12) return (num / 1e12).toFixed(2) + 'T';
+            if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B';
+            if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M';
+            if (num >= 1e3) return (num / 1e3).toFixed(2) + 'K';
+
+            return num.toFixed(2);
+        },
+
+        // Debounce function
+        debounce(func, delay) {
+            let timeoutId;
+            return function (...args) {
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(() => func.apply(this, args), delay);
+            };
+        },
+
+        // Throttle function
+        throttle(func, limit) {
+            let inThrottle;
+            return function (...args) {
+                if (!inThrottle) {
+                    func.apply(this, args);
+                    inThrottle = true;
+                    setTimeout(() => inThrottle = false, limit);
+                }
+            };
+        },
+
+        // Deep clone object
+        deepClone(obj) {
+            return JSON.parse(JSON.stringify(obj));
+        },
+
+        // Generate random ID
+        generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        },
+
+        // Validate email
+        isValidEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        },
+
+        // Local storage with expiry
+        storage: {
+            set(key, value, expiryMinutes = 60) {
+                const item = {
+                    value: value,
+                    expiry: Date.now() + (expiryMinutes * 60 * 1000)
+                };
+                localStorage.setItem(key, JSON.stringify(item));
+            },
+
+            get(key) {
+                const itemStr = localStorage.getItem(key);
+                if (!itemStr) return null;
+
+                try {
+                    const item = JSON.parse(itemStr);
+                    if (Date.now() > item.expiry) {
+                        localStorage.removeItem(key);
+                        return null;
+                    }
+                    return item.value;
+                } catch {
+                    localStorage.removeItem(key);
+                    return null;
+                }
+            },
+
+            remove(key) {
+                localStorage.removeItem(key);
+            }
+        }
+    },
+
+    // Format price (shorthand)
+    formatPrice(price, currency = 'USD') {
+        return this.utils.formatPrice(price, currency);
+    },
+
+    // Format change (shorthand)
+    formatChange(change) {
+        return this.utils.formatChange(change);
+    },
+
+    // Format number (shorthand)
+    formatNumber(num) {
+        return this.utils.formatNumber(num);
+    },
+
+    // Update element content safely
+    updateElement(id, content) {
+        const element = document.getElementById(id);
+        if (element) {
+            if (typeof content === 'string' && content.includes('<')) {
+                element.innerHTML = content;
+            } else {
+                element.textContent = content;
+            }
+        }
+    },
+
+    // Show loading state
+    showLoading(element) {
+        if (element) {
+            element.classList.add('loading');
+            const btn = element.querySelector('button[type="submit"], .btn-primary');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Loading...';
+            }
+        }
+    },
+
+    // Hide loading state
+    hideLoading(element) {
+        if (element) {
+            element.classList.remove('loading');
+            const btn = element.querySelector('button[type="submit"], .btn-primary');
+            if (btn) {
+                btn.disabled = false;
+                // Restore original text (you might want to store this)
+                btn.innerHTML = btn.dataset.originalText || 'Submit';
+            }
+        }
+    },
+
+    // Show alert message
+    showAlert(type, message, duration = 5000) {
+        const alertsContainer = document.getElementById('alerts-container');
+        if (!alertsContainer) return;
+
+        const alertId = this.utils.generateId();
+        const alertHtml = `
+            <div id="${alertId}" class="alert alert-${type} alert-dismissible fade show" role="alert">
+                <i class="bi bi-${this.getAlertIcon(type)}"></i>
+                ${message}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
-        </div>
-    `;
+        `;
 
-    alertContainer.insertAdjacentHTML('beforeend', alertHTML);
+        alertsContainer.insertAdjacentHTML('beforeend', alertHtml);
 
-    // Auto-dismiss after duration
-    if (duration > 0) {
-        setTimeout(() => {
-            const alert = document.getElementById(alertId);
-            if (alert) {
-                const bsAlert = new bootstrap.Alert(alert);
-                bsAlert.close();
-            }
-        }, duration);
-    }
+        // Auto-dismiss after duration
+        if (duration > 0) {
+            setTimeout(() => {
+                const alert = document.getElementById(alertId);
+                if (alert) {
+                    alert.remove();
+                }
+            }, duration);
+        }
+    },
 
-    function getAlertIcon(type) {
+    // Get icon for alert type
+    getAlertIcon(type) {
         const icons = {
-            'success': 'check-circle',
-            'danger': 'exclamation-triangle',
-            'warning': 'exclamation-circle',
-            'info': 'info-circle',
-            'primary': 'bell'
+            success: 'check-circle',
+            danger: 'exclamation-triangle',
+            warning: 'exclamation-triangle',
+            info: 'info-circle'
         };
         return icons[type] || 'info-circle';
-    }
-};
+    },
 
-// ===== LOADING STATES =====
-
-window.showLoading = (target, text = 'Loading...') => {
-    const element = typeof target === 'string' ? document.getElementById(target) : target;
-    if (!element) return;
-
-    const loadingHTML = `
-        <div class="loading-overlay d-flex align-items-center justify-content-center">
-            <div class="text-center">
-                <div class="spinner-border text-primary mb-3" role="status"></div>
-                <div class="fw-semibold">${text}</div>
-            </div>
-        </div>
-    `;
-
-    element.style.position = 'relative';
-    element.insertAdjacentHTML('beforeend', loadingHTML);
-};
-
-window.hideLoading = (target) => {
-    const element = typeof target === 'string' ? document.getElementById(target) : target;
-    if (!element) return;
-
-    const overlay = element.querySelector('.loading-overlay');
-    if (overlay) {
-        overlay.remove();
-    }
-};
-
-// ===== MODAL UTILITIES =====
-
-window.showModal = (title, content, actions = []) => {
-    const modalId = 'modal-' + Date.now();
-    const actionsHTML = actions.map(action => 
-        `<button type="button" class="btn btn-${action.type || 'secondary'}" 
-                 onclick="${action.onclick || ''}" 
-                 ${action.dismiss ? 'data-bs-dismiss="modal"' : ''}>
-            ${action.text}
-         </button>`
-    ).join('');
-
-    const modalHTML = `
-        <div class="modal fade" id="${modalId}" tabindex="-1">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">${title}</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">${content}</div>
-                    <div class="modal-footer">
-                        ${actionsHTML}
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+    // Show modal
+    showModal(title, content, size = '') {
+        const modalId = 'dynamic-modal-' + this.utils.generateId();
+        const modalHtml = `
+            <div class="modal fade" id="${modalId}" tabindex="-1">
+                <div class="modal-dialog ${size}">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">${title}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            ${content}
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    `;
+        `;
 
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
-    
-    const modal = new bootstrap.Modal(document.getElementById(modalId));
-    modal.show();
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
 
-    // Clean up modal after it's hidden
-    document.getElementById(modalId).addEventListener('hidden.bs.modal', () => {
-        document.getElementById(modalId).remove();
-    });
+        const modal = new bootstrap.Modal(document.getElementById(modalId));
+        modal.show();
 
-    return modal;
-};
-
-// ===== FORM VALIDATION =====
-
-window.formValidator = {
-    validate: (form) => {
-        const inputs = form.querySelectorAll('input[required], select[required], textarea[required]');
-        let isValid = true;
-
-        inputs.forEach(input => {
-            if (!window.formValidator.validateField(input)) {
-                isValid = false;
-            }
+        // Clean up when modal is hidden
+        document.getElementById(modalId).addEventListener('hidden.bs.modal', () => {
+            document.getElementById(modalId).remove();
         });
 
-        return isValid;
+        return modal;
     },
 
-    validateField: (field) => {
-        const value = field.value.trim();
-        let isValid = true;
-        let message = '';
-
-        // Clear previous validation
-        field.classList.remove('is-invalid');
-        const feedback = field.parentNode.querySelector('.invalid-feedback');
-        if (feedback) feedback.textContent = '';
-
-        // Required validation
-        if (field.hasAttribute('required') && !value) {
-            message = `${field.name || 'This field'} is required`;
-            isValid = false;
+    // Show login modal
+    showLoginModal() {
+        if (window.Auth && typeof window.Auth.showLoginModal === 'function') {
+            window.Auth.showLoginModal();
+        } else {
+            console.warn('Auth module not ready or showLoginModal function not available');
         }
-
-        // Type-specific validation
-        if (isValid && value) {
-            switch (field.type) {
-                case 'email':
-                    if (!window.formValidator.isValidEmail(value)) {
-                        message = 'Please enter a valid email address';
-                        isValid = false;
-                    }
-                    break;
-                
-                case 'password':
-                    const minLength = parseInt(field.getAttribute('minlength')) || 8;
-                    if (value.length < minLength) {
-                        message = `Password must be at least ${minLength} characters`;
-                        isValid = false;
-                    }
-                    break;
-                
-                case 'number':
-                    const min = parseFloat(field.getAttribute('min'));
-                    const max = parseFloat(field.getAttribute('max'));
-                    const numValue = parseFloat(value);
-                    
-                    if (isNaN(numValue)) {
-                        message = 'Please enter a valid number';
-                        isValid = false;
-                    } else if (!isNaN(min) && numValue < min) {
-                        message = `Value must be at least ${min}`;
-                        isValid = false;
-                    } else if (!isNaN(max) && numValue > max) {
-                        message = `Value must be at most ${max}`;
-                        isValid = false;
-                    }
-                    break;
-            }
-        }
-
-        // Show validation result
-        if (!isValid) {
-            field.classList.add('is-invalid');
-            if (feedback) feedback.textContent = message;
-        }
-
-        return isValid;
-    },
-
-    isValidEmail: (email) => {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return emailRegex.test(email);
     }
 };
 
-// ===== WEBSOCKET CONNECTION (for real-time features) =====
+// Alias for easier access
+window.App = window.CryptoChecker;
 
-class WebSocketManager {
-    constructor() {
-        this.ws = null;
-        this.reconnectAttempts = 0;
-        this.maxReconnectAttempts = 5;
-        this.reconnectDelay = 1000;
-        this.listeners = new Map();
-    }
-
-    connect() {
-        if (!window.auth.isAuthenticated()) return;
-
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${protocol}//${window.location.host}/ws`;
-
-        try {
-            this.ws = new WebSocket(wsUrl);
-            
-            this.ws.onopen = () => {
-                console.log('WebSocket connected');
-                this.reconnectAttempts = 0;
-                
-                // Send auth token
-                this.send('authenticate', {
-                    token: localStorage.getItem('access_token')
-                });
-            };
-
-            this.ws.onmessage = (event) => {
-                try {
-                    const data = JSON.parse(event.data);
-                    this.handleMessage(data);
-                } catch (error) {
-                    console.error('Failed to parse WebSocket message:', error);
-                }
-            };
-
-            this.ws.onclose = () => {
-                console.log('WebSocket disconnected');
-                this.attemptReconnect();
-            };
-
-            this.ws.onerror = (error) => {
-                console.error('WebSocket error:', error);
-            };
-        } catch (error) {
-            console.error('Failed to create WebSocket connection:', error);
-        }
-    }
-
-    disconnect() {
-        if (this.ws) {
-            this.ws.close();
-            this.ws = null;
-        }
-    }
-
-    send(type, data) {
-        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-            this.ws.send(JSON.stringify({ type, data }));
-        }
-    }
-
-    handleMessage(message) {
-        const { type, data } = message;
-        const listeners = this.listeners.get(type) || [];
-        
-        listeners.forEach(callback => {
-            try {
-                callback(data);
-            } catch (error) {
-                console.error('WebSocket listener error:', error);
-            }
-        });
-    }
-
-    on(type, callback) {
-        if (!this.listeners.has(type)) {
-            this.listeners.set(type, []);
-        }
-        this.listeners.get(type).push(callback);
-    }
-
-    off(type, callback) {
-        const listeners = this.listeners.get(type);
-        if (listeners) {
-            const index = listeners.indexOf(callback);
-            if (index !== -1) {
-                listeners.splice(index, 1);
-            }
-        }
-    }
-
-    attemptReconnect() {
-        if (this.reconnectAttempts < this.maxReconnectAttempts) {
-            this.reconnectAttempts++;
-            console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
-            
-            setTimeout(() => {
-                this.connect();
-            }, this.reconnectDelay * this.reconnectAttempts);
-        }
-    }
-}
-
-// ===== INITIALIZATION =====
-
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize tooltips
-    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    tooltipTriggerList.map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
-
-    // Initialize popovers
-    const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
-    popoverTriggerList.map(popoverTriggerEl => new bootstrap.Popover(popoverTriggerEl));
-
-    // Initialize WebSocket for authenticated users (disabled for demo)
-    setTimeout(() => {
-        if (window.auth && window.auth.isAuthenticated()) {
-            console.log('WebSocket disabled for demo mode');
-            // window.wsManager = new WebSocketManager();
-            // window.wsManager.connect();
-
-            // Listen for real-time updates (only if wsManager exists)
-            if (window.wsManager) {
-                window.wsManager.on('notification', (data) => {
-                    window.showAlert(data.message, data.type || 'info');
-                });
-
-                window.wsManager.on('friend_request', (data) => {
-                    window.showAlert(`Friend request from ${data.username}`, 'info');
-                    // Update friend requests UI if visible
-                    if (typeof updateFriendRequests === 'function') {
-                        updateFriendRequests();
-                    }
-                });
-
-                window.wsManager.on('achievement_unlocked', (data) => {
-                    window.showAlert(`🏆 Achievement unlocked: ${data.name}!`, 'success', 10000);
-                });
-            } else {
-                console.log('WebSocket manager not initialized - real-time features disabled');
-            }
-        }
-    }, 1000);
-
-    // 🚨 EMERGENCY: Global error handler with circuit breaker
-    let globalErrorCount = 0;
-    const MAX_GLOBAL_ERRORS = 3;
-    let lastErrorTime = 0;
-
-    window.addEventListener('error', (event) => {
-        const now = Date.now();
-        console.error('Global error:', event.error);
-
-        // 🚨 CIRCUIT BREAKER: Prevent rapid-fire errors
-        if (now - lastErrorTime < 1000) { // Less than 1 second since last error
-            globalErrorCount++;
-        } else {
-            globalErrorCount = 1; // Reset counter if enough time has passed
-        }
-        lastErrorTime = now;
-
-        // Stop showing alerts if too many errors
-        if (globalErrorCount >= MAX_GLOBAL_ERRORS) {
-            console.error('🚨 GLOBAL ERROR CIRCUIT BREAKER: Too many rapid errors, suppressing alerts');
-            return;
-        }
-
-        // Don't show alerts for network errors or script errors
-        if (!event.error?.message?.includes('NetworkError') &&
-            !event.error?.message?.includes('Script error') &&
-            !event.error?.message?.includes('getBalance')) {
-            try {
-                window.showAlert('An unexpected error occurred', 'danger');
-            } catch (alertError) {
-                console.warn('🚨 Alert system error (suppressed):', alertError);
-            }
-        }
-    });
-
-    // Handle offline/online status
-    window.addEventListener('online', () => {
-        window.showAlert('Connection restored', 'success');
-        if (window.wsManager) {
-            window.wsManager.connect();
-        }
-    });
-
-    window.addEventListener('offline', () => {
-        window.showAlert('Connection lost. Some features may not work.', 'warning');
-    });
-});
-
-// ===== PERFORMANCE OPTIMIZATION =====
-
-// Lazy loading for images
-const lazyImageObserver = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-            const img = entry.target;
-            img.src = img.dataset.src;
-            img.classList.remove('lazy');
-            lazyImageObserver.unobserve(img);
-        }
-    });
-});
-
-// Apply lazy loading to images with data-src
-document.addEventListener('DOMContentLoaded', () => {
-    const lazyImages = document.querySelectorAll('img[data-src]');
-    lazyImages.forEach((img) => {
-        lazyImageObserver.observe(img);
-    });
-    
-    // Initialize cross-component balance synchronization
-    initializeBalanceSynchronization();
-});
-
-// ===== BALANCE SYNCHRONIZATION =====
-
-function initializeBalanceSynchronization() {
-    console.log('🔄 Initializing cross-component balance synchronization');
-    
-    // ✅ FIXED: Ensure balance manager is initialized first, then prevent other managers from overriding
-    const waitForBalanceManager = () => {
-        if (window.balanceManager) {
-            setupBalanceSync();
-            
-            // ✅ FIXED: Tell other components that balance manager is the authority
-            window.balanceManagerReady = true;
-        } else {
-            setTimeout(waitForBalanceManager, 50); // Shorter interval for faster init
-        }
-    };
-    waitForBalanceManager();
-}
-
-function setupBalanceSync() {
-    console.log('🔗 Setting up balance synchronization across components');
-    
-    // Listen for balance changes and update all UI components
-    window.balanceManager.addBalanceListener((event) => {
-        updateAllBalanceDisplays(event.balance, event.isAuthenticated);
-    });
-
-    // Initial balance display update
-    if (window.balanceManager.isUserAuthenticated()) {
-        const currentBalance = window.balanceManager.getBalance();
-        updateAllBalanceDisplays(currentBalance, true);
-    }
-}
-
-function updateAllBalanceDisplays(balance, isAuthenticated = true) {
-    // Update navbar balance
-    const navBalance = document.getElementById('nav-gem-balance');
-    if (navBalance) {
-        navBalance.textContent = balance.toLocaleString();
-        console.log('📊 Updated navbar balance:', balance);
-    }
-    
-    // Update wallet balance (roulette page)
-    const walletBalance = document.getElementById('walletBalance');
-    if (walletBalance) {
-        walletBalance.textContent = balance.toLocaleString() + ' GEM';
-        console.log('💰 Updated wallet balance:', balance);
-    }
-    
-    // Update any other balance displays
-    document.querySelectorAll('[data-balance-display]').forEach(element => {
-        const format = element.getAttribute('data-balance-format') || 'number';
-        
-        switch (format) {
-            case 'currency':
-                element.textContent = balance.toLocaleString() + ' GEM';
-                break;
-            case 'short':
-                element.textContent = window.utils ? window.utils.formatNumber(balance) : balance;
-                break;
-            default:
-                element.textContent = balance.toLocaleString();
-        }
-    });
-    
-    // Update demo mode indicators
-    document.querySelectorAll('[data-demo-indicator]').forEach(element => {
-        element.style.display = isAuthenticated ? 'block' : 'none';
-    });
-    
-    // Trigger custom event for other components
-    window.dispatchEvent(new CustomEvent('globalBalanceUpdated', {
-        detail: { balance, isAuthenticated, source: 'balance-manager' }
-    }));
-}
-
-// Global function to manually refresh balance across all components
-window.refreshAllBalances = () => {
-    if (window.balanceManager) {
-        window.balanceManager.refresh();
-    }
-    
-    // Also refresh auth manager balance
-    if (window.authManager && typeof window.authManager.loadWalletBalance === 'function') {
-        window.authManager.loadWalletBalance();
-    }
-    
-    console.log('🔄 Manual balance refresh triggered');
-};
-
-// Global function to update balance from external sources
-window.updateGlobalBalance = (newBalance, source = 'external') => {
-    if (window.balanceManager) {
-        window.balanceManager.updateBalance(newBalance, source);
+// Global function to show login modal (defined immediately when script loads)
+window.showLoginModal = function() {
+    if (window.Auth && typeof window.Auth.showLoginModal === 'function') {
+        window.Auth.showLoginModal();
     } else {
-        // Fallback for legacy components
-        updateAllBalanceDisplays(newBalance, true);
+        console.warn('Auth module not ready or showLoginModal function not available');
     }
-    
-    console.log('💰 Global balance updated:', newBalance, 'from', source);
 };
 
-// ===== BALANCE CONFLICT DETECTION =====
-
-// 🚨 EMERGENCY CIRCUIT BREAKER SYSTEM
-let balanceErrorCount = 0;
-const MAX_BALANCE_ERRORS = 5;
-let balanceConflictInterval = null;
-
-// ✅ Detect and resolve balance conflicts
-function detectBalanceConflicts() {
-    // 🚨 EMERGENCY: Circuit breaker to prevent infinite loops
-    if (balanceErrorCount >= MAX_BALANCE_ERRORS) {
-        console.error('🚨 CIRCUIT BREAKER ACTIVATED: Too many balance errors, stopping conflict detection');
-        if (balanceConflictInterval) {
-            clearInterval(balanceConflictInterval);
-            balanceConflictInterval = null;
-        }
-        return;
-    }
-    try {
-        const balanceElements = ['nav-gem-balance', 'walletBalance'];
-        const observedBalances = {};
-
-        balanceElements.forEach(id => {
-            const element = document.getElementById(id);
-            if (element) {
-                observedBalances[id] = element.textContent;
-            }
-        });
-
-        // Check if balance manager exists and is properly initialized
-        if (!window.balanceManager || typeof window.balanceManager.getBalance !== 'function') {
-            // Balance manager not available - this is normal during initialization
-            return;
-        }
-
-        // Get authoritative balance with error handling
-        let authoritativeBalance;
-        try {
-            authoritativeBalance = window.balanceManager.getBalance();
-
-            // Validate the returned balance
-            if (typeof authoritativeBalance !== 'number' || isNaN(authoritativeBalance)) {
-                console.warn('⚠️ Balance manager returned invalid balance:', authoritativeBalance);
-                return;
-            }
-        } catch (error) {
-            balanceErrorCount++;
-            console.warn('⚠️ Balance conflict detection failed - getBalance error:', balanceErrorCount, '/', MAX_BALANCE_ERRORS, error);
-            if (balanceErrorCount >= MAX_BALANCE_ERRORS) {
-                console.error('🚨 MAX ERRORS REACHED: Stopping balance conflict detection');
-                if (balanceConflictInterval) {
-                    clearInterval(balanceConflictInterval);
-                    balanceConflictInterval = null;
-                }
-            }
-            return;
-        }
-
-        const conflicts = balanceElements.filter(id => {
-            const element = document.getElementById(id);
-            if (!element) return false;
-
-            const displayedValue = parseInt(element.textContent.replace(/[^\d]/g, ''));
-            return Math.abs(displayedValue - authoritativeBalance) > 1; // Allow for rounding
-        });
-
-        if (conflicts.length > 0) {
-            console.warn('🚨 Balance conflict detected, correcting UI:', {
-                authoritative: authoritativeBalance,
-                conflicts: conflicts
-            });
-
-            // Force correction with error handling
-            try {
-                window.balanceManager.notifyBalanceChange('corrected', null, null);
-            } catch (notifyError) {
-                console.warn('⚠️ Balance correction notification failed:', notifyError);
-            }
-        }
-    } catch (error) {
-        balanceErrorCount++;
-        console.warn('⚠️ Balance conflict detection encountered an error:', balanceErrorCount, '/', MAX_BALANCE_ERRORS, error);
-        if (balanceErrorCount >= MAX_BALANCE_ERRORS) {
-            console.error('🚨 MAX ERRORS REACHED: Stopping balance conflict detection');
-            if (balanceConflictInterval) {
-                clearInterval(balanceConflictInterval);
-                balanceConflictInterval = null;
-            }
-        }
-        // Don't throw the error - would cause infinite loop
-        return;
-    }
-}
-
-// 🔧 FIXED: Re-enable balance conflict detection with better logic (30 second intervals)
-balanceConflictInterval = setInterval(detectBalanceConflicts, 30000);
-console.log('✅ Balance conflict detection re-enabled with improved auth synchronization');
-
-// ===== EXPORT FOR MODULES =====
-
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = {
-        utils: window.utils,
-        showAlert: window.showAlert,
-        showModal: window.showModal,
-        formValidator: window.formValidator,
-        WebSocketManager
-    };
-}
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    CryptoChecker.init();
+});

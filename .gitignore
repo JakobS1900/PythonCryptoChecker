@@ -1,143 +1,82 @@
-# =============================================================================
-# CryptoChecker Gaming Platform - Optimized .gitignore
-# Keep only essential production code, exclude tests/docs/AI tools
-# =============================================================================
+# ===============================
+# CRYPTO CHECKER .GITIGNORE
+# Only ignore what's TRULY unnecessary
+# ===============================
 
-# Python Runtime Files
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-
-# Virtual Environments & Dependencies
-.env*
-.venv/
-venv/
-env/
-ENV/
-env.bak/
-venv.bak/
-.Python
-pip-wheel-metadata/
-*.egg-info/
-.installed.cfg
-*.egg
-
-# Development & Testing Files (EXCLUDED FROM REPO)
-test_*.py
-*_test*.py
-*test*.py
-api_smoke_tests.py
-simple_agents_test.py
-
-# Documentation Files (EXCLUDED - Too many, keep only essentials)
-# Keep: README.md, CLAUDE.md only
-*.md
-!README.md
-!CLAUDE.md
-
-# AI Development Tools & Agents (EXCLUDED FROM REPO)
-agents/
-agents_config.py
-ULTIMATE_AGENTS_SUMMARY.md
-AgentUse.md
-
-# Development Artifacts (EXCLUDED)
-temp_*.py
-*_temp.py
-*_fixed.py
-*_debug.py
-simple_*.py
-run_server_simple.py
-main_fixed.py
-
-# Database Files (Runtime Only)
+# 🗄️ DATABASE FILES (Keep local, never commit)
 *.db
 *.sqlite
 *.sqlite3
-crypto_gaming.db
-users.db
+*.db-journal
+crypto_tracker_v3.db
 
-# Logs & Runtime Data
-*.log
-logs/
-debug_sessions.log
-context_knowledge.log
-construction_projects.log
-agents_test_results.json
-
-# Development Tools & Configuration
-.prohibited_words.txt
-prohibited_words.txt
-error.txt
-errors.txt
-Error.txt
-*.error
-*.err
-
-# IDE & Editor Files
-.vscode/
-.idea/
-*.swp
-*.swo
-.DS_Store
-Thumbs.db
-
-# Build & Distribution
-build/
-dist/
-*.egg-info/
-.tox/
-.pytest_cache/
-htmlcov/
-.coverage*
-coverage.xml
-
-# Security & Configuration
-secrets.json
-api_keys.json
-config.local.py
+# 🔐 ENVIRONMENT & SECRETS (NEVER COMMIT)
+.env
 .env.local
-*.pem
-*.key
+.env.development
+.env.production
+.env.test
+*API_KEY*
+*SECRET_KEY*
+*JWT_SECRET*
+*api_key*
+*secret*
+*password*
 
-# Upload & Cache Directories
-web/static/uploads/
-cache/
-data/
-temp/
+# 📁 VIRTUAL ENVIRONMENTS (NEVER COMMIT)
+.venv/
+venv/
 
-# OS Files
+# 📝 LOGS & DEBUG FILES
+*.log
+Error.txt
+debug_sessions.log
+construction_projects.log
+context_knowledge.log
+.claude/
+.claude-flow/
+
+# 💻 IDE & DEVELOPMENT
+.vscode/
+
+# 🐍 PYTHON CACHE
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.py[cod]
+
+# 🎮 DEVELOPMENT ARTIFACTS (Keep file structure working)
+# docs/_build/
+# .coverage
+# .pytest_cache/
+# .tox/
+# backup/
+# test_api.sh  # ← Comment out if needed for setup
+# nul
+
+# 💾 OS SPECIFIC
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
 Thumbs.db
+desktop.ini
 
-# =============================================================================
-# PRODUCTION FILES INCLUDED IN REPO:
-# =============================================================================
-# Core Application:
-#   - main.py (primary server)
-#   - run.py, run_server.py (launchers)
-#   - config.py, app_config.py (configuration)
-#   - requirements.txt (dependencies)
-#
-# Source Code Directories:
-#   - api/ (REST API endpoints)
-#   - auth/ (authentication system)
-#   - database/ (models and ORM)
-#   - gaming/ (game engines)
-#   - web/ (frontend templates and static files)
-#
-# Utilities:
-#   - models.py, utils.py, logger.py
-#   - data_providers.py
-#   - setup.py, __init__.py
-#
-# Essential Documentation:
-#   - README.md (project overview)
-#   - CLAUDE.md (development instructions)
-# =============================================================================
+# 📦 BUILD ARTIFACTS
+dist/
+build/
+*.egg-info/
+
+# 🔧 DEVELOPMENT ONLY (No need to track)
+fresh_env/
+specs/
+memory/
+Ignoreme/
+*_debug.txt
+*_scratch.txt
+*_draft.txt
+ClaudeTemp_*
+.prohibited_words.txt  # ← Keep if needed for setup
+
+# 🚧 CONSTRUCTION DOCUMENTATION (Comment out if needed)
+## .allowed_markdown.txt
+## *[INSERT_DATE]*.md
+## INSTRUCTIONSFORGPT5.md

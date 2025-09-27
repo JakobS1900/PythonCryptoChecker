@@ -1,0 +1,492 @@
+{% extends "base.html" %}
+
+{% block title %}Crypto Roulette - CryptoChecker v3{% endblock %}
+
+{% block extra_css %}
+<link href="{{ url_for('static', path='/css/roulette.css') }}?v=3" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="gaming-app">
+    <!-- Gaming Header -->
+    <header class="gaming-header">
+        <div class="header-content">
+            <div class="brand-section">
+                <div class="brand-icon">
+                    <i class="fas fa-dice-five"></i>
+                </div>
+                <h1 class="brand-title">CRYPTO ROULETTE</h1>
+                <div class="live-indicator">
+                    <span class="pulse-dot"></span>
+                    <span>LIVE</span>
+                </div>
+            </div>
+
+            <div class="header-stats">
+                <div class="stat-card">
+                    <div class="stat-label">Balance</div>
+                    <div class="stat-value">
+                        <i class="fas fa-gem"></i>
+                        <span id="gaming-balance">Loading...</span>
+                        <span class="currency">GEM</span>
+                    </div>
+                </div>
+                <div class="stat-card earning-card" id="daily-bonus-card">
+                    <div class="stat-label">Daily Bonus</div>
+                    <div class="stat-value daily-bonus-status" id="daily-bonus-status">
+                        <i class="fas fa-calendar-day"></i>
+                        <span id="bonus-status-text">Available</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Round</div>
+                    <div class="stat-value" id="round-number">#1</div>
+                </div>
+            </div>
+
+            <div class="header-controls">
+                <button class="control-btn earn-gem-btn" id="earn-gem-btn" title="Get More GEM">
+                    <i class="fas fa-plus-circle"></i>
+                    <span class="earn-text">Earn GEM</span>
+                </button>
+                <button class="control-btn sound-btn" id="sound-toggle">
+                    <i class="fas fa-volume-up"></i>
+                </button>
+                <button class="control-btn settings-btn">
+                    <i class="fas fa-cog"></i>
+                </button>
+                <button class="control-btn fullscreen-btn">
+                    <i class="fas fa-expand"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Gaming Area -->
+    <main class="gaming-main">
+        <!-- Game Status Bar -->
+        <div class="game-status-bar">
+            <div class="status-content">
+                <div class="timer-section">
+                    <div class="timer-label">Next Round</div>
+                    <div class="timer-display">
+                        <div class="timer-circle">
+                            <div class="timer-progress" id="timer-progress"></div>
+                            <span class="timer-text" id="timer-text">15s</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="game-phase" id="game-phase">
+                    <span class="phase-text">Place Your Bets</span>
+                    <div class="phase-indicator betting"></div>
+                </div>
+
+                <div class="recent-results">
+                    <div class="results-label">Recent</div>
+                    <div class="results-list" id="recent-results">
+                        <!-- Recent results will be populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Timer Bar Section -->
+        <div class="timer-container">
+            <div class="timer-bar">
+                <div class="timer-progress" id="timer-progress"></div>
+                <span class="timer-text" id="timer-text">20s</span>
+            </div>
+        </div>
+
+        <!-- Roulette Display Section -->
+        <section class="roulette-section">
+            <div class="roulette-display">
+                <div class="previous-rolls" id="previous-rolls">
+                    <!-- Previous rolls will be added here -->
+                </div>
+                <div class="wheel-container" style="height: 120px; position: relative; overflow: hidden; border-radius: 12px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3); margin: 1rem 0;">
+                    <div class="wheel-pointer" style="position: absolute; left: 50%; top: 0; height: 100%; width: 3px; background: linear-gradient(to bottom, #00f5ff, #8b5cf6); z-index: 10; box-shadow: 0 0 15px rgba(0, 245, 255, 0.8); transform: translateX(-50%);"></div>
+                    <div class="wheel-numbers" id="wheelNumbers" style="position: absolute; left: 50%; height: 100%; display: flex; transform: translateX(-50%); transition: transform 6s cubic-bezier(0.21, 0.53, 0.29, 0.99); white-space: nowrap;">
+                        <!-- Simplified Horizontal Wheel -->
+                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #22c55e, #16a34a); color: white; flex-shrink: 0;"><div>0</div><div style="font-size: 0.7rem; opacity: 0.8;">BTC</div></div>
+                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #ef4444, #dc2626); color: white; flex-shrink: 0;"><div>1</div><div style="font-size: 0.7rem; opacity: 0.8;">ETH</div></div>
+                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #374151, #111827); color: white; flex-shrink: 0;"><div>2</div><div style="font-size: 0.7rem; opacity: 0.8;">ADA</div></div>
+                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #ef4444, #dc2626); color: white; flex-shrink: 0;"><div>3</div><div style="font-size: 0.7rem; opacity: 0.8;">SOL</div></div>
+                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #374151, #111827); color: white; flex-shrink: 0;"><div>4</div><div style="font-size: 0.7rem; opacity: 0.8;">DOT</div></div>
+                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #ef4444, #dc2626); color: white; flex-shrink: 0;"><div>5</div><div style="font-size: 0.7rem; opacity: 0.8;">MATIC</div></div>
+                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #374151, #111827); color: white; flex-shrink: 0;"><div>6</div><div style="font-size: 0.7rem; opacity: 0.8;">AVAX</div></div>
+                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #ef4444, #dc2626); color: white; flex-shrink: 0;"><div>7</div><div style="font-size: 0.7rem; opacity: 0.8;">LINK</div></div>
+                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #374151, #111827); color: white; flex-shrink: 0;"><div>8</div><div style="font-size: 0.7rem; opacity: 0.8;">UNI</div></div>
+                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #ef4444, #dc2626); color: white; flex-shrink: 0;"><div>9</div><div style="font-size: 0.7rem; opacity: 0.8;">LTC</div></div>
+                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #374151, #111827); color: white; flex-shrink: 0;"><div>10</div><div style="font-size: 0.7rem; opacity: 0.8;">BCH</div></div>
+                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #ef4444, #dc2626); color: white; flex-shrink: 0;"><div>11</div><div style="font-size: 0.7rem; opacity: 0.8;">XLM</div></div>
+                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #374151, #111827); color: white; flex-shrink: 0;"><div>12</div><div style="font-size: 0.7rem; opacity: 0.8;">VET</div></div>
+                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #ef4444, #dc2626); color: white; flex-shrink: 0;"><div>13</div><div style="font-size: 0.7rem; opacity: 0.8;">FIL</div></div>
+                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #374151, #111827); color: white; flex-shrink: 0;"><div>14</div><div style="font-size: 0.7rem; opacity: 0.8;">TRX</div></div>
+                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #ef4444, #dc2626); color: white; flex-shrink: 0;"><div>15</div><div style="font-size: 0.7rem; opacity: 0.8;">ETC</div></div>
+                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #374151, #111827); color: white; flex-shrink: 0;"><div>16</div><div style="font-size: 0.7rem; opacity: 0.8;">THETA</div></div>
+                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #ef4444, #dc2626); color: white; flex-shrink: 0;"><div>17</div><div style="font-size: 0.7rem; opacity: 0.8;">XMR</div></div>
+                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #374151, #111827); color: white; flex-shrink: 0;"><div>18</div><div style="font-size: 0.7rem; opacity: 0.8;">ALGO</div></div>
+                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #ef4444, #dc2626); color: white; flex-shrink: 0;"><div>19</div><div style="font-size: 0.7rem; opacity: 0.8;">AAVE</div></div>
+                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #374151, #111827); color: white; flex-shrink: 0;"><div>20</div><div style="font-size: 0.7rem; opacity: 0.8;">ATOM</div></div>
+                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #ef4444, #dc2626); color: white; flex-shrink: 0;"><div>21</div><div style="font-size: 0.7rem; opacity: 0.8;">XTZ</div></div>
+                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #374151, #111827); color: white; flex-shrink: 0;"><div>22</div><div style="font-size: 0.7rem; opacity: 0.8;">COMP</div></div>
+                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #ef4444, #dc2626); color: white; flex-shrink: 0;"><div>23</div><div style="font-size: 0.7rem; opacity: 0.8;">SUSHI</div></div>
+                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #374151, #111827); color: white; flex-shrink: 0;"><div>24</div><div style="font-size: 0.7rem; opacity: 0.8;">GRT</div></div>
+                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #ef4444, #dc2626); color: white; flex-shrink: 0;"><div>25</div><div style="font-size: 0.7rem; opacity: 0.8;">MKR</div></div>
+                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #374151, #111827); color: white; flex-shrink: 0;"><div>26</div><div style="font-size: 0.7rem; opacity: 0.8;">SNX</div></div>
+                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #ef4444, #dc2626); color: white; flex-shrink: 0;"><div>27</div><div style="font-size: 0.7rem; opacity: 0.8;">YFI</div></div>
+                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #374151, #111827); color: white; flex-shrink: 0;"><div>28</div><div style="font-size: 0.7rem; opacity: 0.8;">UMA</div></div>
+                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #ef4444, #dc2626); color: white; flex-shrink: 0;"><div>29</div><div style="font-size: 0.7rem; opacity: 0.8;">BAL</div></div>
+                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #374151, #111827); color: white; flex-shrink: 0;"><div>30</div><div style="font-size: 0.7rem; opacity: 0.8;">CRV</div></div>
+                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #ef4444, #dc2626); color: white; flex-shrink: 0;"><div>31</div><div style="font-size: 0.7rem; opacity: 0.8;">1INCH</div></div>
+                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #374151, #111827); color: white; flex-shrink: 0;"><div>32</div><div style="font-size: 0.7rem; opacity: 0.8;">BAND</div></div>
+                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #ef4444, #dc2626); color: white; flex-shrink: 0;"><div>33</div><div style="font-size: 0.7rem; opacity: 0.8;">KNC</div></div>
+                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #374151, #111827); color: white; flex-shrink: 0;"><div>34</div><div style="font-size: 0.7rem; opacity: 0.8;">REN</div></div>
+                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #ef4444, #dc2626); color: white; flex-shrink: 0;"><div>35</div><div style="font-size: 0.7rem; opacity: 0.8;">LRC</div></div>
+                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: none; background: linear-gradient(to bottom, #374151, #111827); color: white; flex-shrink: 0;"><div>36</div><div style="font-size: 0.7rem; opacity: 0.8;">ZRX</div></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Betting Interface -->
+        <section class="betting-interface">
+            <div class="betting-grid">
+                <!-- Bet Amount Panel -->
+                <div class="bet-panel">
+                    <div class="panel-header">
+                        <h3 class="panel-title">Bet Amount</h3>
+                        <div class="balance-info">
+                            <span class="balance-text">Available: <span id="available-balance">0</span> GEM</span>
+                        </div>
+                    </div>
+
+                    <div class="amount-selector">
+                        <div class="quick-amounts">
+                            <button class="chip-btn enhanced-hover smooth-transition pulse-ripple" data-amount="10">
+                                <span class="chip-value">10</span>
+                                <div class="chip-glow"></div>
+                            </button>
+                            <button class="chip-btn enhanced-hover smooth-transition pulse-ripple" data-amount="50">
+                                <span class="chip-value">50</span>
+                                <div class="chip-glow"></div>
+                            </button>
+                            <button class="chip-btn enhanced-hover smooth-transition pulse-ripple active" data-amount="100">
+                                <span class="chip-value">100</span>
+                                <div class="chip-glow"></div>
+                            </button>
+                            <button class="chip-btn enhanced-hover smooth-transition pulse-ripple" data-amount="500">
+                                <span class="chip-value">500</span>
+                                <div class="chip-glow"></div>
+                            </button>
+                            <button class="chip-btn enhanced-hover smooth-transition pulse-ripple" data-amount="1000">
+                                <span class="chip-value">1K</span>
+                                <div class="chip-glow"></div>
+                            </button>
+                        </div>
+
+                        <div class="custom-amount-section">
+                            <div class="amount-input-group">
+                                <input type="number" id="betAmount" class="amount-input" placeholder="Custom amount" min="10" max="10000" value="100">
+                                <span class="input-currency">GEM</span>
+                            </div>
+                            <div class="amount-controls">
+                                <button class="amount-control-btn" id="halfBtn">½</button>
+                                <button class="amount-control-btn" id="doubleBtn">2×</button>
+                                <button class="amount-control-btn" id="maxBtn">MAX</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Betting Options Panel -->
+                <div class="betting-options-panel">
+                    <div class="panel-header">
+                        <h3 class="panel-title">Place Your Bets</h3>
+                        <div class="betting-status">
+                            <span class="status-indicator betting-open">Betting Open</span>
+                        </div>
+                    </div>
+
+                    <div class="betting-grid-layout">
+                        <!-- Color Betting Section -->
+                        <div class="color-betting">
+                            <button class="color-bet-btn red-bet bet-btn enhanced-hover" data-type="color" data-value="red">
+                                <div class="bet-color red"></div>
+                                <div class="bet-info">
+                                    <span class="bet-label">RED</span>
+                                    <span class="bet-payout">2:1</span>
+                                </div>
+                                <div class="bet-amount-display" id="red-bet-amount">0</div>
+                            </button>
+
+                            <button class="color-bet-btn green-bet bet-btn enhanced-hover" data-type="color" data-value="green">
+                                <div class="bet-color green"></div>
+                                <div class="bet-info">
+                                    <span class="bet-label">GREEN</span>
+                                    <span class="bet-payout">14:1</span>
+                                </div>
+                                <div class="bet-amount-display" id="green-bet-amount">0</div>
+                            </button>
+
+                            <button class="color-bet-btn black-bet bet-btn enhanced-hover" data-type="color" data-value="black">
+                                <div class="bet-color black"></div>
+                                <div class="bet-info">
+                                    <span class="bet-label">BLACK</span>
+                                    <span class="bet-payout">2:1</span>
+                                </div>
+                                <div class="bet-amount-display" id="black-bet-amount">0</div>
+                            </button>
+                        </div>
+
+                        <!-- Additional Betting Options -->
+                        <div class="additional-bets">
+                            <div class="bet-row">
+                                <button class="additional-bet-btn bet-btn enhanced-hover smooth-transition" data-type="parity" data-value="odd">
+                                    <span class="bet-text">ODD</span>
+                                    <span class="bet-payout">2:1</span>
+                                    <div class="bet-amount-display">0</div>
+                                </button>
+                                <button class="additional-bet-btn bet-btn enhanced-hover smooth-transition" data-type="parity" data-value="even">
+                                    <span class="bet-text">EVEN</span>
+                                    <span class="bet-payout">2:1</span>
+                                    <div class="bet-amount-display">0</div>
+                                </button>
+                            </div>
+                            <div class="bet-row">
+                                <button class="additional-bet-btn bet-btn enhanced-hover smooth-transition" data-type="range" data-value="1-18">
+                                    <span class="bet-text">1-18</span>
+                                    <span class="bet-payout">2:1</span>
+                                    <div class="bet-amount-display">0</div>
+                                </button>
+                                <button class="additional-bet-btn bet-btn enhanced-hover smooth-transition" data-type="range" data-value="19-36">
+                                    <span class="bet-text">19-36</span>
+                                    <span class="bet-payout">2:1</span>
+                                    <div class="bet-amount-display">0</div>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active Bets Panel -->
+                <div class="active-bets-panel">
+                    <div class="panel-header">
+                        <h3 class="panel-title">Active Bets</h3>
+                        <button class="clear-all-btn" id="clearBets">
+                            <i class="fas fa-trash"></i>
+                            Clear All
+                        </button>
+                    </div>
+
+                    <div class="bets-container">
+                        <div class="bets-list" id="betsList">
+                            <div class="no-bets-message">
+                                <i class="fas fa-dice"></i>
+                                <span>No active bets</span>
+                            </div>
+                        </div>
+
+                        <div class="bets-summary">
+                            <div class="summary-row">
+                                <span class="summary-label">Total Wagered:</span>
+                                <span class="summary-value" id="totalBet">0 GEM</span>
+                            </div>
+                            <div class="summary-row">
+                                <span class="summary-label">Potential Win:</span>
+                                <span class="summary-value potential" id="potentialWin">0 GEM</span>
+                            </div>
+                        </div>
+
+                        <div class="action-buttons">
+                            <button class="action-btn spin-btn enhanced-hover" id="spinWheel" disabled>
+                                <i class="fas fa-play"></i>
+                                <span>SPIN TO WIN</span>
+                                <div class="button-shine"></div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- History Panel -->
+        <section class="history-panel">
+            <h3>Previous Results</h3>
+            <div class="rolls-history" id="rollsHistory">
+                <!-- History will be populated by JavaScript -->
+            </div>
+        </section>
+
+        <!-- GEM Earning Panel -->
+        <section class="gem-earning-panel" id="gem-earning-panel" style="display: none;">
+            <div class="earning-header">
+                <h3><i class="fas fa-coins"></i> Get More GEM</h3>
+                <button class="close-earning-btn" id="close-earning-btn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="earning-tabs">
+                <button class="earning-tab active" data-tab="daily-bonus">Daily Bonus</button>
+                <button class="earning-tab" data-tab="achievements">Achievements</button>
+                <button class="earning-tab" data-tab="emergency-tasks">Emergency GEM</button>
+            </div>
+
+            <div class="earning-content">
+                <!-- Daily Bonus Tab -->
+                <div class="earning-tab-content active" id="daily-bonus-content">
+                    <div class="daily-bonus-section">
+                        <div class="bonus-card">
+                            <div class="bonus-icon">
+                                <i class="fas fa-calendar-check"></i>
+                            </div>
+                            <div class="bonus-info">
+                                <h4>Daily Bonus Reward</h4>
+                                <p class="bonus-description">Claim your daily GEM bonus! Build a streak for bigger rewards.</p>
+                                <div class="bonus-details" id="bonus-details">
+                                    <div class="bonus-amount">Base: 100 GEM + Streak Bonus</div>
+                                    <div class="bonus-streak" id="bonus-streak">Current Streak: Loading...</div>
+                                </div>
+                            </div>
+                            <button class="claim-bonus-btn" id="claim-daily-bonus-btn">
+                                <i class="fas fa-gift"></i>
+                                <span>Claim Bonus</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Achievements Tab -->
+                <div class="earning-tab-content" id="achievements-content">
+                    <div class="achievements-section">
+                        <div class="achievements-header">
+                            <h4><i class="fas fa-trophy"></i> Your Achievements</h4>
+                            <div class="unclaimed-rewards" id="unclaimed-rewards">
+                                <span>Unclaimed: 0 GEM</span>
+                            </div>
+                        </div>
+                        <div class="achievements-list" id="achievements-list">
+                            <div class="achievements-loading">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <span>Loading achievements...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Emergency Tasks Tab -->
+                <div class="earning-tab-content" id="emergency-tasks-content">
+                    <div class="emergency-section">
+                        <div class="emergency-header">
+                            <h4><i class="fas fa-exclamation-triangle"></i> Emergency GEM Tasks</h4>
+                            <p class="emergency-description">Quick tasks to earn GEM when you're running low on balance!</p>
+                        </div>
+                        <div class="emergency-tasks-list" id="emergency-tasks-list">
+                            <div class="tasks-loading">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <span>Loading emergency tasks...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Win/Loss Notifications -->
+    <div class="notification-overlay" id="notification-overlay">
+        <div class="notification win-notification" id="win-notification">
+            <div class="notification-content">
+                <div class="win-icon">
+                    <i class="fas fa-trophy"></i>
+                </div>
+                <div class="win-text">
+                    <div class="win-title">CONGRATULATIONS!</div>
+                    <div class="win-amount" id="win-amount">+500 GEM</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Achievement Unlock Modal -->
+    <div class="achievement-modal" id="achievement-modal" style="display: none;">
+        <div class="modal-content achievement-content">
+            <div class="achievement-celebration">
+                <div class="achievement-icon">
+                    <i class="fas fa-trophy achievement-trophy"></i>
+                </div>
+                <h3 class="achievement-title">Achievement Unlocked!</h3>
+                <div class="achievement-name" id="achievement-name">First Bet</div>
+                <div class="achievement-description" id="achievement-description">You placed your first bet!</div>
+                <div class="achievement-reward">
+                    <i class="fas fa-gem"></i>
+                    <span id="achievement-reward-amount">50 GEM</span> Earned!
+                </div>
+                <button class="claim-achievement-btn" id="claim-achievement-btn">
+                    <i class="fas fa-hand-holding-usd"></i>
+                    Claim Reward
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Emergency Task Modal -->
+    <div class="task-modal" id="task-modal" style="display: none;">
+        <div class="modal-content task-content">
+            <div class="task-header">
+                <h3 id="task-title">Watch Advertisement</h3>
+                <button class="close-task-btn" id="close-task-btn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="task-body">
+                <div class="task-description" id="task-description">
+                    Watch a short advertisement to earn emergency GEM!
+                </div>
+                <div class="task-reward">
+                    Reward: <span id="task-reward-amount">25</span> GEM
+                </div>
+                <div class="task-action" id="task-action">
+                    <!-- Dynamic task content will be loaded here -->
+                </div>
+            </div>
+            <div class="task-footer">
+                <button class="complete-task-btn" id="complete-task-btn">
+                    <i class="fas fa-check"></i>
+                    Complete Task
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Socket.IO -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+<!-- Font Awesome -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+<!-- Game script -->
+<script src="{{ url_for('static', path='/js/roulette.js') }}?v=8"></script>
+<!-- GEM Earning System script -->
+<script src="{{ url_for('static', path='/js/gem-earning.js') }}"></script>
+<script>
+// Clean initialization - RouletteGame class handles everything
+console.log('🎰 CryptoChecker Roulette V3 Ready - RouletteGame will initialize automatically');
+
+// Sync balance when gaming page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Wait a bit for everything to initialize, then sync balance
+    setTimeout(() => {
+        if (typeof window.syncGamingBalance === 'function') {
+            window.syncGamingBalance();
+            console.log('🎮 Gaming balance synced with real-time system');
+        }
+    }, 500);
+});
+</script>
+{% endblock %}

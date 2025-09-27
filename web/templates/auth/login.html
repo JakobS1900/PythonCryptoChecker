@@ -1,258 +1,59 @@
 {% extends "base.html" %}
 
-{% block title %}Login - CryptoChecker Gaming Platform{% endblock %}
-
-{% block body_class %}auth-page{% endblock %}
+{% block title %}Login - CryptoChecker{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-6 col-lg-5">
-            <div class="card shadow-lg mt-5">
-                <div class="card-body p-5">
-                    <div class="text-center mb-4">
-                        <i class="fas fa-dice display-4 text-primary mb-3"></i>
-                        <h2 class="fw-bold text-gradient">Welcome Back</h2>
-                        <p class="text-muted">Sign in to continue your gaming adventure</p>
-                    </div>
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-6 offset-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="card-title text-center mb-4">Welcome Back!</h2>
+                    
+                    <div id="authAlert" class="alert" style="display: none;" role="alert"></div>
 
-                    <form id="loginForm" novalidate>
+                    <!-- Login Form -->
+                    <form id="login-page-form" class="needs-validation" novalidate>
                         <div class="mb-3">
-                            <label for="usernameOrEmail" class="form-label fw-semibold">
-                                <i class="fas fa-user me-2"></i>Username or Email
-                            </label>
-                            <input type="text" class="form-control form-control-lg" id="usernameOrEmail" 
-                                   name="username_or_email" required>
-                            <div class="invalid-feedback"></div>
+                            <label for="username" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="username" name="username" required>
                         </div>
-
                         <div class="mb-3">
-                            <label for="password" class="form-label fw-semibold">
-                                <i class="fas fa-lock me-2"></i>Password
-                            </label>
-                            <div class="position-relative">
-                                <input type="password" class="form-control form-control-lg" id="password" 
-                                       name="password" required>
-                                <button type="button" class="btn btn-link position-absolute top-50 end-0 translate-middle-y" 
-                                        id="togglePassword">
-                                    <i class="fas fa-eye" id="passwordIcon"></i>
-                                </button>
-                            </div>
-                            <div class="invalid-feedback"></div>
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="password" name="password" required>
                         </div>
-
-                        <div class="mb-3 form-check">
-                            <input type="checkbox" class="form-check-input" id="rememberMe">
-                            <label class="form-check-label" for="rememberMe">
-                                Remember me
-                            </label>
-                        </div>
-
-                        <div class="d-grid gap-2 mb-3">
-                            <button type="submit" class="btn btn-primary btn-lg" id="loginBtn">
-                                <i class="fas fa-sign-in-alt me-2"></i>
-                                <span class="btn-text">Sign In</span>
-                                <span class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
-                            </button>
-                        </div>
-
-                        <div class="text-center">
-                            <a href="/forgot-password" class="text-decoration-none">
-                                <i class="fas fa-question-circle me-1"></i>Forgot your password?
-                            </a>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Login</button>
+                            <button type="button" class="btn btn-secondary" onclick="Auth.handleGuestLogin()">Continue as Guest</button>
                         </div>
                     </form>
 
-                    <hr class="my-4">
-
-                    <div class="text-center">
-                        <p class="text-muted mb-3">Don't have an account?</p>
-                        <a href="/register" class="btn btn-outline-primary btn-lg">
-                            <i class="fas fa-user-plus me-2"></i>Create Account
-                        </a>
-                    </div>
-
-                    <!-- Guest Access Section -->
-                    <div class="mt-4 p-3 bg-light rounded">
-                        <h6 class="fw-semibold mb-2">
-                            <i class="fas fa-info-circle me-2 text-info"></i>Guest Access
-                        </h6>
-                        <p class="small text-muted mb-2">
-                            Jump right in with instant access:
-                        </p>
-                        <div class="d-grid gap-1">
-                            <button type="button" class="btn btn-sm btn-outline-info" id="demoLoginBtn">
-                                <i class="fas fa-play me-1"></i>Play as Guest
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Features Section -->
-            <div class="row mt-4">
-                <div class="col-4 text-center">
-                    <div class="card h-100 border-0 glass-effect">
-                        <div class="card-body py-3">
-                            <i class="fas fa-dice-d20 text-primary mb-2"></i>
-                            <small class="text-white">Crypto Roulette</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-4 text-center">
-                    <div class="card h-100 border-0 glass-effect">
-                        <div class="card-body py-3">
-                            <i class="fas fa-briefcase text-success mb-2"></i>
-                            <small class="text-white">Virtual Items</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-4 text-center">
-                    <div class="card h-100 border-0 glass-effect">
-                        <div class="card-body py-3">
-                            <i class="fas fa-trophy text-warning mb-2"></i>
-                            <small class="text-white">Achievements</small>
-                        </div>
+                    <div class="text-center mt-3">
+                        <p>Don't have an account? <a href="/register">Register</a></p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const loginForm = document.getElementById('loginForm');
-    const loginBtn = document.getElementById('loginBtn');
-    const togglePassword = document.getElementById('togglePassword');
-    const passwordInput = document.getElementById('password');
-    const passwordIcon = document.getElementById('passwordIcon');
-    const demoLoginBtn = document.getElementById('demoLoginBtn');
-
-    // Toggle password visibility
-    togglePassword.addEventListener('click', function() {
-        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-        passwordInput.setAttribute('type', type);
-        passwordIcon.classList.toggle('fa-eye');
-        passwordIcon.classList.toggle('fa-eye-slash');
-    });
-
-    // Handle form submission
-    loginForm.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        if (!validateForm()) {
-            return;
-        }
-
-        setLoading(true);
-        
-        try {
-            const formData = new FormData(loginForm);
-            const response = await apiClient.auth.login({
-                username_or_email: formData.get('username_or_email'),
-                password: formData.get('password')
-            });
-
-            if (response.success) {
-                showAlert('Login successful! Redirecting...', 'success');
-                
-                // Store auth data
-                localStorage.setItem('access_token', response.data.access_token);
-                localStorage.setItem('refresh_token', response.data.refresh_token);
-                localStorage.setItem('user_data', JSON.stringify(response.data.user));
-                localStorage.setItem('is_logged_in', 'true');  // Critical: Set flag for balance-manager.js
-                
-                // Redirect to home (dashboard)
-                setTimeout(() => {
-                    window.location.href = '/';
-                }, 1000);
-            } else {
-                showAlert(response.message || 'Login failed', 'danger');
-            }
-        } catch (error) {
-            console.error('Login error:', error);
-            showAlert('Login failed. Please check your credentials.', 'danger');
-        } finally {
-            setLoading(false);
-        }
-    });
-
-    // Guest access
-    demoLoginBtn.addEventListener('click', async function() {
-        setLoading(true);
-
-        try {
-            const response = await apiClient.auth.login({
-                username_or_email: 'demo@example.com',
-                password: 'demo123456'
-            });
-
-            if (response.success) {
-                showAlert('Guest access activated! Redirecting...', 'success');
-                localStorage.setItem('access_token', response.data.access_token);
-                localStorage.setItem('refresh_token', response.data.refresh_token);
-                localStorage.setItem('user_data', JSON.stringify(response.data.user));
-
-                setTimeout(() => {
-                    window.location.href = '/';
-                }, 1000);
-            } else {
-                showAlert('Guest access not available', 'warning');
-            }
-        } catch (error) {
-            showAlert('Guest access not available', 'warning');
-        } finally {
-            setLoading(false);
-        }
-    });
-
-    function validateForm() {
-        const usernameOrEmail = document.getElementById('usernameOrEmail');
-        const password = document.getElementById('password');
-        let isValid = true;
-
-        // Reset previous validation states
-        [usernameOrEmail, password].forEach(input => {
-            input.classList.remove('is-invalid');
-            input.nextElementSibling.textContent = '';
-        });
-
-        // Validate username/email
-        if (!usernameOrEmail.value.trim()) {
-            showFieldError(usernameOrEmail, 'Username or email is required');
-            isValid = false;
-        }
-
-        // Validate password
-        if (!password.value) {
-            showFieldError(password, 'Password is required');
-            isValid = false;
-        }
-
-        return isValid;
-    }
-
-    function showFieldError(field, message) {
-        field.classList.add('is-invalid');
-        field.nextElementSibling.textContent = message;
-    }
-
-    function setLoading(loading) {
-        const btnText = loginBtn.querySelector('.btn-text');
-        const spinner = loginBtn.querySelector('.spinner-border');
-        
-        if (loading) {
-            loginBtn.disabled = true;
-            btnText.textContent = 'Signing in...';
-            spinner.classList.remove('d-none');
+    const urlParams = new URLSearchParams(window.location.search);
+    const redirectUrl = urlParams.get('redirect');
+    
+    // Handle successful login
+    window.onLoginSuccess = function() {
+        if (redirectUrl) {
+            window.location.href = redirectUrl;
         } else {
-            loginBtn.disabled = false;
-            btnText.textContent = 'Sign In';
-            spinner.classList.add('d-none');
+            window.location.href = '/';
         }
+    };
+
+    // Initialize Auth module if available
+    if (window.Auth) {
+        Auth.init();
     }
 });
 </script>

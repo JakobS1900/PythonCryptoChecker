@@ -1,99 +1,22 @@
-🚀 APIClient initialized with baseURL: /api
-mock-api.js:612 🔄 Existing APIClient found, skipping EnhancedAPIClient initialization
-mock-api.js:629 🎉 Enhanced API Client ready! Use window.mockAPI.test() to test.
-main.js:695 ✅ Balance conflict detection re-enabled with improved auth synchronization
-utils.js:241 Utils initialized.
-balance-manager.js:32 🎯 Initializing Authenticated Balance Manager...
-balance-manager.js:362 ✅ Balance Manager initialized successfully
-main.js:500 🔄 Initializing cross-component balance synchronization
-main.js:517 🔗 Setting up balance synchronization across components
-inventory:791 🎒 Loading inventory with params: {page: 1}
-api.js:18 🌐 APIClient Request: {endpoint: '/inventory/?page=1', url: '/api/inventory/?page=1', baseURL: '/api'}
-balance-manager.js:76 🔍 Auth Status Detected via API - Authenticated: true
-auth.js:114 Checking auth status...
-inventory:799 🎒 Inventory response: {success: true, data: {…}, status: 200}
-inventory:814 ✅ Inventory loaded successfully - 3 items
-balance-manager.js:127 💰 Authenticated balance loaded: 5000 GEM
-balance-manager.js:48 ✅ Balance Manager initialized - Authenticated: true, Balance: 5000 GEM
-main.js:536 📊 Updated navbar balance: 5000
-auth.js:120 Auth status response: {status: 'success', user: {…}}
-auth.js:124 ✅ User is authenticated: {id: 'user-emuroot-1757945647', username: 'emuroot', email: 'emuroot@cryptochecker.com', display_name: 'emuroot', avatar_url: '/static/images/default-avatar.png', …}
-main.js:397 WebSocket disabled for demo mode
-main.js:419 WebSocket manager not initialized - real-time features disabled
-main.js:431 Global error: TypeError: window.utils.formatDate is not a function
-    at showItemDetails (inventory:1037:22)
-    at handleItemClick (inventory:1004:9)
-    at HTMLDivElement.onclick (inventory:1663:9)
-(anonymous) @ main.js:431
-utils.js:170 🚨 Alert (danger): An unexpected error occurred
-inventory:1037 Uncaught TypeError: window.utils.formatDate is not a function
-    at showItemDetails (inventory:1037:22)
-    at handleItemClick (inventory:1004:9)
-    at HTMLDivElement.onclick (inventory:1663:9)
-showItemDetails @ inventory:1037
-handleItemClick @ inventory:1004
-onclick @ inventory:1663
-inventory:791 🎒 Loading inventory with params: {page: 1}
-api.js:18 🌐 APIClient Request: {endpoint: '/inventory/?page=1', url: '/api/inventory/?page=1', baseURL: '/api'}
-inventory:799 🎒 Inventory response: {success: true, data: {…}, status: 200}
-inventory:814 ✅ Inventory loaded successfully - 3 items
-inventory:1380 🎁 Opening pack: standard cost: 500
-inventory:1394 🎁 Pack opening result: {success: true, pack_type: 'standard', cost: 500, items: Array(3), demo_mode: true}
-utils.js:170 🚨 Alert (success): STANDARD pack opened! You received 3 items (Demo Mode).
-inventory:1430 🔄 Refreshing inventory after pack opening
-inventory:791 🎒 Loading inventory with params: {page: 1}
-api.js:18 🌐 APIClient Request: {endpoint: '/inventory/?page=1', url: '/api/inventory/?page=1', baseURL: '/api'}
-inventory:799 🎒 Inventory response: {success: true, data: {…}, status: 200}
-inventory:814 ✅ Inventory loaded successfully - 3 items
-inventory:791 🎒 Loading inventory with params: {page: NaN}
-api.js:18 🌐 APIClient Request: {endpoint: '/inventory/?page=NaN', url: '/api/inventory/?page=NaN', baseURL: '/api'}
-api.js:34  GET http://localhost:8000/api/inventory/?page=NaN 422 (Unprocessable Entity)
-request @ api.js:34
-getItems @ api.js:234
-loadInventory @ inventory:793
-changePage @ inventory:1158
-onclick @ inventory:1
-api.js:59 API request failed: Error: [object Object]
-    at APIClient.request (api.js:50:23)
-    at async loadInventory (inventory:793:26)
-request @ api.js:59
-await in request
-getItems @ api.js:234
-loadInventory @ inventory:793
-changePage @ inventory:1158
-onclick @ inventory:1
-inventory:799 🎒 Inventory response: {success: false, message: '[object Object]', error: Error: [object Object]
-    at APIClient.request (http://localhost:8000/static/js/api.js:50:23)
-    …}
-inventory:818 ❌ Inventory load failed: [object Object] {success: false, message: '[object Object]', error: Error: [object Object]
-    at APIClient.request (http://localhost:8000/static/js/api.js:50:23)
-    …}
-loadInventory @ inventory:818
-await in loadInventory
-changePage @ inventory:1158
-onclick @ inventory:1
-inventory:791 🎒 Loading inventory with params: {page: NaN}
-api.js:18 🌐 APIClient Request: {endpoint: '/inventory/?page=NaN', url: '/api/inventory/?page=NaN', baseURL: '/api'}
-api.js:34  GET http://localhost:8000/api/inventory/?page=NaN 422 (Unprocessable Entity)
-request @ api.js:34
-getItems @ api.js:234
-loadInventory @ inventory:793
-onclick @ inventory:1
-api.js:59 API request failed: Error: [object Object]
-    at APIClient.request (api.js:50:23)
-    at async loadInventory (inventory:793:26)
-request @ api.js:59
-await in request
-getItems @ api.js:234
-loadInventory @ inventory:793
-onclick @ inventory:1
-inventory:799 🎒 Inventory response: {success: false, message: '[object Object]', error: Error: [object Object]
-    at APIClient.request (http://localhost:8000/static/js/api.js:50:23)
-    …}
-inventory:818 ❌ Inventory load failed: [object Object] {success: false, message: '[object Object]', error: Error: [object Object]
-    at APIClient.request (http://localhost:8000/static/js/api.js:50:23)
-    …}
-loadInventory @ inventory:818
-await in loadInventory
-onclick @ inventory:1
-balance-manager.js:127 💰 Authenticated balance loaded: 5000 GEM
+﻿main.js:186 CryptoChecker v3 initialized
+clicker:429 Initializing CryptoChecker v3...
+clicker:223 Balance check failed: undefined
+updateBalance @ clicker:223
+await in updateBalance
+(anonymous) @ clicker:232
+auth.js:57 User authenticated successfully: emuroot
+clicker:479 Auth state changed: Authenticated
+clicker:469 CryptoChecker v3 initialized successfully
+auth.js:57 User authenticated successfully: emuroot
+favicon.ico:1  GET http://localhost:8000/favicon.ico 404 (Not Found)
+clicker:269 Sending click request...
+clicker:278 Click response: {status: 'error', message: 'Not authenticated', details: 'Please log in or enter as guest to play'}
+clicker:297 Click failed: Not authenticated
+(anonymous) @ clicker:297
+auth.js:480 Auth token cleared from storage
+clicker:242  GET http://localhost:8000/api/auth/check 401 (Unauthorized)
+(anonymous) @ clicker:242
+auth.js:448 Auth token stored with expiration: Fri Sep 26 2025 13:23:34 GMT-0700 (Pacific Daylight Time)
+clicker:269 Sending click request...
+clicker:278 Click response: {status: 'error', message: 'Not authenticated', details: 'Please log in or enter as guest to play'}
+clicker:297 Click failed: Not authenticated

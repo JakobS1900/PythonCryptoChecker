@@ -3,120 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}CryptoChecker Gaming Platform{% endblock %}</title>
-    
-    <!-- CSS -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="/static/css/main.css" rel="stylesheet">
-    <link href="/static/css/enhanced-theme.css" rel="stylesheet">
-    
+    <title>{% block title %}CryptoChecker v3 - Real-Time Crypto Tracker{% endblock %}</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="{{ url_for('static', path='/css/main.css') }}" rel="stylesheet">
+
     {% block extra_css %}{% endblock %}
 </head>
-<body class="{% block body_class %}{% endblock %}">
+<body>
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
         <div class="container">
-            <a class="navbar-brand d-flex align-items-center" href="/">
-                <i class="fas fa-dice me-2"></i>
-                <span class="fw-bold">CryptoChecker</span>
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="bi bi-currency-bitcoin text-warning"></i>
+                CryptoChecker <span class="badge bg-primary">v3</span>
             </a>
-            
+
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            
+
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
                         <a class="nav-link" href="/">
-                            <i class="fas fa-home me-1"></i>Home
-                        </a>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-dice-d20 me-1"></i>Gaming
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="/gaming/roulette"><i class="fas fa-circle-dot me-2"></i>Crypto Roulette</a></li>
-                            <li><a class="dropdown-item" href="/gaming/dice"><i class="fas fa-dice me-2"></i>Dice Game</a></li>
-                            <li><a class="dropdown-item" href="/gaming/crash"><i class="fas fa-rocket me-2"></i>Crash Game</a></li>
-                            <li><a class="dropdown-item" href="/gaming/plinko"><i class="fas fa-circle me-2"></i>Plinko</a></li>
-                            <li><a class="dropdown-item" href="/gaming/tower"><i class="fas fa-building me-2"></i>Tower</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="/tournaments"><i class="fas fa-trophy me-2"></i>Tournaments</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/trading">
-                            <i class="fas fa-exchange-alt me-1"></i>Trading
+                            <i class="bi bi-house"></i> Dashboard
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/market">
-                            <i class="fas fa-chart-line me-1"></i>Market
+                        <a class="nav-link" href="/converter">
+                            <i class="bi bi-arrow-left-right"></i> Converter
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/gaming">
+                            <i class="bi bi-dice-5"></i> Roulette
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/clicker">
+                            <i class="bi bi-mouse"></i> GEM Clicker
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="/portfolio">
-                            <i class="fas fa-briefcase me-1"></i>Portfolio
+                            <i class="bi bi-wallet2"></i> Portfolio
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/inventory">
-                            <i class="fas fa-box me-1"></i>Inventory
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/social">
-                            <i class="fas fa-users me-1"></i>Social
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/leaderboards">
-                            <i class="fas fa-trophy me-1"></i>Leaderboards
+                        <a class="nav-link" href="/profile">
+                            <i class="bi bi-person-circle"></i> Profile
                         </a>
                     </li>
                 </ul>
-                
-                <!-- Auth UI Hooks (aligned with /static/js/auth.js) -->
-                <!-- Guest Buttons Container -->
-                <div class="navbar-nav" id="auth-buttons">
-                    <div class="nav-item">
-                        <a class="nav-link btn btn-light btn-sm" href="/register">
-                            <i class="fas fa-user-plus me-1"></i>Register
-                        </a>
-                    </div>
-                    <div class="nav-item ms-2">
-                        <a class="nav-link btn btn-outline-light btn-sm" href="/login">
-                            <i class="fas fa-right-to-bracket me-1"></i>Login
-                        </a>
-                    </div>
-                </div>
 
-                <!-- Authenticated User Menu Container -->
-                <div class="navbar-nav" id="user-menu" style="display: none;">
-                    <div class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
-                            <img src="/static/images/default-avatar.png" class="rounded-circle me-2" width="32" height="32" id="userAvatar" onerror="this.onerror=null;this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2732%27 height=%2732%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%276%27 fill=%27%23222%27/%3E%3C/svg%3E'">
-                            <div class="d-flex flex-column">
-                                <span class="fw-semibold" id="username-display">Username</span>
-                                <small class="text-light opacity-75">Level <span id="userLevel">1</span></small>
-                            </div>
-                            <div class="ms-3 text-end">
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-gem text-warning me-1"></i>
-                                    <span id="nav-gem-balance">0</span>
+                <!-- User Info / Auth -->
+                <div class="navbar-nav">
+                    <div id="user-info" class="d-flex align-items-center">
+                        <!-- Will be populated by JavaScript -->
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="text-end">
+                                <div class="fw-bold text-light">Loading...</div>
+                                <div class="small text-light-emphasis">
+                                    <i class="bi bi-gem"></i> <span id="navbar-balance">Loading...</span> GEM
                                 </div>
                             </div>
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="/profile"><i class="fas fa-user me-2"></i>Profile</a></li>
-                            <li><a class="dropdown-item" href="/achievements"><i class="fas fa-medal me-2"></i>Achievements</a></li>
-                            <li><a class="dropdown-item" href="/settings"><i class="fas fa-cog me-2"></i>Settings</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="#" id="logout-btn" data-action="logout"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
-                        </ul>
+                            <button class="btn btn-primary btn-sm" id="login-btn" data-action="showLoginModal">
+                                <i class="bi bi-person-plus"></i> Sign In
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -125,10 +84,12 @@
 
     <!-- Main Content -->
     <main class="main-content">
-        <!-- Alerts -->
-        <div id="alertContainer" class="container mt-3"></div>
-        
-        {% block content %}{% endblock %}
+        <div class="container mt-4">
+            <!-- Alerts -->
+            <div id="alerts-container"></div>
+
+            {% block content %}{% endblock %}
+        </div>
     </main>
 
     <!-- Footer -->
@@ -136,49 +97,42 @@
         <div class="container">
             <div class="row">
                 <div class="col-md-6">
-                    <h5><i class="fas fa-dice me-2"></i>CryptoChecker Gaming Platform</h5>
-                    <p class="text-muted">Virtual crypto gambling and gaming experience with comprehensive gamification features.</p>
+                    <h5><i class="bi bi-currency-bitcoin text-warning"></i> CryptoChecker v3</h5>
+                    <p class="text-muted">Real-time cryptocurrency tracking with integrated gaming.</p>
                 </div>
-                <div class="col-md-3">
-                    <h6>Platform</h6>
-                    <ul class="list-unstyled">
-                        <li><a href="/about" class="text-muted">About</a></li>
-                        <li><a href="/rules" class="text-muted">Game Rules</a></li>
-                        <li><a href="/fairness" class="text-muted">Provably Fair</a></li>
-                        <li><a href="/api/docs" class="text-muted">API Docs</a></li>
-                    </ul>
-                </div>
-                <div class="col-md-3">
-                    <h6>Support</h6>
-                    <ul class="list-unstyled">
-                        <li><a href="/help" class="text-muted">Help Center</a></li>
-                        <li><a href="/contact" class="text-muted">Contact</a></li>
-                        <li><a href="/privacy" class="text-muted">Privacy</a></li>
-                        <li><a href="/terms" class="text-muted">Terms</a></li>
-                    </ul>
-                </div>
-            </div>
-            <hr class="my-3">
-            <div class="row align-items-center">
-                <div class="col-md-6">
-                    <p class="text-muted mb-0">&copy; 2025 CryptoChecker Gaming Platform. All rights reserved.</p>
-                </div>
-                <div class="col-md-6 text-end">
-                    <small class="text-muted">Virtual gaming platform - No real money involved</small>
+                <div class="col-md-6 text-md-end">
+                    <p class="text-muted mb-0">
+                        <small>
+                            Powered by CoinGecko API<br>
+                            Built with FastAPI & Bootstrap 5
+                        </small>
+                    </p>
                 </div>
             </div>
         </div>
     </footer>
 
-    <!-- JavaScript -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
-    <script src="/static/js/utils.js"></script>
-    <script src="/static/js/balance-manager.js"></script>
-    <script src="/static/js/auth.js"></script>
-    <script src="/static/js/api.js"></script>
-    <script src="/static/js/mock-api.js"></script>
-    <script src="/static/js/main.js"></script>
-    
+    <!-- Modals -->
+    {% include 'modals/auth_modal.html' %}
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JavaScript -->
+    <script src="{{ url_for('static', path='/js/main.js') }}"></script>
+    <script src="{{ url_for('static', path='/js/auth.js') }}"></script>
+
     {% block extra_js %}{% endblock %}
+
+    <!-- Initialize App -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 CryptoChecker v3 DOM loaded');
+
+            // Simple initialization without complex async logic
+            setTimeout(() => {
+                console.log('✅ Base template initialization complete');
+            }, 100);
+        });
+    </script>
 </body>
 </html>

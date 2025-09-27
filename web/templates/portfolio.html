@@ -1,162 +1,302 @@
 {% extends "base.html" %}
 
-{% block title %}Portfolio - CryptoChecker Gaming Platform{% endblock %}
-
-{% block extra_css %}
-<link href="/static/css/dashboard-enhanced.css" rel="stylesheet">
-<link href="/static/css/enhanced-theme.css" rel="stylesheet">
-{% endblock %}
+{% block title %}Portfolio - CryptoChecker v3{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
-    <!-- Header Section -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card glass-effect border-0">
-                <div class="card-body text-center text-white">
-                    <h1 class="display-4 mb-3">
-                        <i class="fas fa-chart-line text-success me-3"></i>
-                        Virtual Portfolio
+<!-- Portfolio Header -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="bg-gradient-success text-white p-4 rounded-3">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="display-5 fw-bold mb-3">
+                        <i class="bi bi-wallet2 text-warning"></i>
+                        My Portfolio
                     </h1>
-                    <p class="lead mb-0">Track your virtual crypto holdings and trading performance</p>
+                    <p class="fs-5 mb-0">
+                        Track your GEM balance, transaction history, and portfolio performance.
+                    </p>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Portfolio Stats -->
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card glass-effect border-0 text-center">
-                <div class="card-body text-white">
-                    <i class="fas fa-wallet fa-2x text-warning mb-2"></i>
-                    <h4 id="totalValue">$0.00</h4>
-                    <small class="text-muted">Total Portfolio Value</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card glass-effect border-0 text-center">
-                <div class="card-body text-white">
-                    <i class="fas fa-trending-up fa-2x text-success mb-2"></i>
-                    <h4 id="dayChange">+0.00%</h4>
-                    <small class="text-muted">24H Change</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card glass-effect border-0 text-center">
-                <div class="card-body text-white">
-                    <i class="fas fa-coins fa-2x text-info mb-2"></i>
-                    <h4 id="gemBalance">5,000</h4>
-                    <small class="text-muted">GEM Coins</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card glass-effect border-0 text-center">
-                <div class="card-body text-white">
-                    <i class="fas fa-chart-pie fa-2x text-purple mb-2"></i>
-                    <h4 id="totalAssets">0</h4>
-                    <small class="text-muted">Assets Owned</small>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Portfolio Content -->
-    <div class="row">
-        <div class="col-lg-8">
-            <div class="card glass-effect border-0">
-                <div class="card-header border-0">
-                    <h3 class="text-white mb-0">
-                        <i class="fas fa-list me-2"></i>
-                        Virtual Holdings
-                    </h3>
-                </div>
-                <div class="card-body">
-                    <div class="text-center text-white py-5">
-                        <h4 class="mb-4">🌟 Paper Trading Coming Soon! 🌟</h4>
-                        <p class="lead mb-4">Practice crypto trading without real money risk.</p>
-                        
-                        <div class="row justify-content-center">
-                            <div class="col-md-8">
-                                <div class="card bg-dark bg-opacity-50">
-                                    <div class="card-body">
-                                        <h5 class="text-start">Features In Development:</h5>
-                                        <ul class="list-unstyled text-start">
-                                            <li class="mb-2"><i class="fas fa-chart-candlestick text-warning me-2"></i>Real-time market data</li>
-                                            <li class="mb-2"><i class="fas fa-exchange-alt text-info me-2"></i>Virtual trading simulator</li>
-                                            <li class="mb-2"><i class="fas fa-trophy text-success me-2"></i>Trading competitions</li>
-                                            <li class="mb-2"><i class="fas fa-graduation-cap text-primary me-2"></i>Educational trading tools</li>
-                                            <li class="mb-2"><i class="fas fa-medal text-warning me-2"></i>Trading achievement system</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
+                <div class="col-md-4 text-md-end">
+                    <div class="d-flex flex-column align-items-md-end">
+                        <div class="badge bg-light text-dark fs-6 mb-2">
+                            <i class="bi bi-gem"></i> <span id="portfolio-balance">Loading...</span> GEM
                         </div>
-                        
-                        <div class="mt-4">
-                            <a href="/gaming/roulette" class="btn btn-warning btn-lg me-3">
-                                <i class="fas fa-dice me-2"></i>Try Gaming Instead
-                            </a>
-                            <a href="/" class="btn btn-outline-light btn-lg">
-                                <i class="fas fa-home me-2"></i>Back to Dashboard
-                            </a>
+                        <div class="badge bg-warning text-dark fs-6">
+                            ≈ $<span id="portfolio-balance-usd">0.00</span> USD
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
+</div>
 
-        <div class="col-lg-4">
-            <div class="card glass-effect border-0 mb-4">
-                <div class="card-header border-0">
-                    <h4 class="text-white mb-0">
-                        <i class="fas fa-newspaper me-2"></i>Market News
-                    </h4>
-                </div>
-                <div class="card-body text-white">
-                    <p class="mb-3">📰 Market news integration coming soon!</p>
-                    <small class="text-muted">Stay updated with the latest crypto market movements</small>
+<!-- Portfolio Stats -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-wallet display-4 text-primary"></i>
+                <h5 class="card-title mt-2">Current Balance</h5>
+                <h3 class="text-success" id="current-balance">Loading...</h3>
+                <small class="text-muted">GEM Coins</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-graph-up display-4 text-success"></i>
+                <h5 class="card-title mt-2">Total Earned</h5>
+                <h3 class="text-primary" id="total-earned">0</h3>
+                <small class="text-muted">From gaming</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-dice-5 display-4 text-danger"></i>
+                <h5 class="card-title mt-2">Games Played</h5>
+                <h3 class="text-info" id="games-played">0</h3>
+                <small class="text-muted">Roulette rounds</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-percent display-4 text-warning"></i>
+                <h5 class="card-title mt-2">Win Rate</h5>
+                <h3 class="text-primary" id="win-rate">0%</h3>
+                <small class="text-muted">Success rate</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Portfolio Content -->
+<div class="row">
+    <div class="col-12">
+        <ul class="nav nav-tabs" id="portfolioTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="balance-tab" data-bs-toggle="tab" data-bs-target="#balance" type="button">
+                    <i class="bi bi-wallet2"></i> Balance Details
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="transactions-tab" data-bs-toggle="tab" data-bs-target="#transactions" type="button">
+                    <i class="bi bi-list-ul"></i> Transaction History
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="gaming-tab" data-bs-toggle="tab" data-bs-target="#gaming" type="button">
+                    <i class="bi bi-dice-5"></i> Gaming Stats
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="portfolioTabsContent">
+            <!-- Balance Details Tab -->
+            <div class="tab-pane fade show active" id="balance" role="tabpanel">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-wallet2"></i> Wallet Information
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Current GEM Balance</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-gem"></i></span>
+                                        <input type="text" class="form-control" id="balance-display" readonly>
+                                        <span class="input-group-text">GEM</span>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">USD Equivalent</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="text" class="form-control" id="balance-usd-display" readonly>
+                                        <span class="input-group-text">USD</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="alert alert-info">
+                                    <h6><i class="bi bi-info-circle"></i> About GEM Coins</h6>
+                                    <p class="mb-2">GEM is the virtual currency used throughout CryptoChecker:</p>
+                                    <ul class="mb-0">
+                                        <li>1,000 GEM ≈ $10 USD (reference value)</li>
+                                        <li>Use GEM for crypto roulette gaming</li>
+                                        <li>Earn GEM through successful bets</li>
+                                        <li>Track your balance in real-time</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quick Actions -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <h6>Quick Actions</h6>
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <a href="/gaming" class="btn btn-primary">
+                                        <i class="bi bi-dice-5"></i> Play Roulette
+                                    </a>
+                                    <a href="/converter" class="btn btn-outline-secondary">
+                                        <i class="bi bi-arrow-left-right"></i> Convert Crypto
+                                    </a>
+                                    <button class="btn btn-outline-success" onclick="Portfolio.refreshBalance()">
+                                        <i class="bi bi-arrow-clockwise"></i> Refresh Balance
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="card glass-effect border-0">
-                <div class="card-header border-0">
-                    <h4 class="text-white mb-0">
-                        <i class="fas fa-tools me-2"></i>Trading Tools
-                    </h4>
+            <!-- Transaction History Tab -->
+            <div class="tab-pane fade" id="transactions" role="tabpanel">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="bi bi-list-ul"></i> Transaction History
+                        </h5>
+                        <button class="btn btn-outline-primary btn-sm" onclick="Portfolio.refreshTransactions()">
+                            <i class="bi bi-arrow-clockwise"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Type</th>
+                                        <th>Description</th>
+                                        <th class="text-end">Amount</th>
+                                        <th class="text-end">Balance</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="transactions-table-body">
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4">
+                                            <div class="spinner-border spinner-border-sm" role="status"></div>
+                                            Loading transactions...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body text-white">
-                    <p class="mb-3">🛠️ Advanced trading tools in development</p>
-                    <ul class="list-unstyled small">
-                        <li class="mb-1">• Price alerts</li>
-                        <li class="mb-1">• Portfolio analyzer</li>
-                        <li class="mb-1">• Risk calculator</li>
-                        <li class="mb-1">• Performance tracker</li>
-                    </ul>
+            </div>
+
+            <!-- Gaming Stats Tab -->
+            <div class="tab-pane fade" id="gaming" role="tabpanel">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-dice-5"></i> Gaming Statistics
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Roulette Performance</h6>
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between">
+                                        <span>Games Won</span>
+                                        <span class="text-success" id="games-won-count">0</span>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between">
+                                        <span>Games Lost</span>
+                                        <span class="text-danger" id="games-lost-count">0</span>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between">
+                                        <span>Total Games</span>
+                                        <span class="text-primary" id="total-games-count">0</span>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between">
+                                        <span>Win Rate</span>
+                                        <span class="fw-bold" id="win-rate-percentage">0%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Financial Summary</h6>
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between">
+                                        <span>Total Wagered</span>
+                                        <span id="total-wagered">0 GEM</span>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between">
+                                        <span>Total Won</span>
+                                        <span class="text-success" id="total-won">0 GEM</span>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between">
+                                        <span>Net Gaming Result</span>
+                                        <span id="net-gaming-result" class="fw-bold">0 GEM</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Gaming Tips -->
+                        <div class="mt-4">
+                            <div class="alert alert-light">
+                                <h6><i class="bi bi-lightbulb"></i> Gaming Tips</h6>
+                                <ul class="mb-0">
+                                    <li>Start with smaller bets to learn the game mechanics</li>
+                                    <li>Set a budget and stick to it for responsible gaming</li>
+                                    <li>Remember that all games are provably fair and based on chance</li>
+                                    <li>Track your performance to understand your gaming patterns</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Guest Mode Notice -->
+<div id="guest-portfolio-notice" class="alert alert-warning mt-4" style="display: none;">
+    <h6><i class="bi bi-exclamation-triangle"></i> Guest Mode Limitations</h6>
+    <p class="mb-2">You're currently using CryptoChecker in guest mode. Some portfolio features are limited:</p>
+    <ul class="mb-2">
+        <li>Balance and transactions are temporary and not saved</li>
+        <li>No persistent transaction history</li>
+        <li>Portfolio data resets on page refresh</li>
+    </ul>
+    <button class="btn btn-primary btn-sm" onclick="Auth.showLoginModal()">
+        <i class="bi bi-person-plus"></i> Sign Up / Login for Full Features
+    </button>
+</div>
 {% endblock %}
 
 {% block extra_js %}
-<script src="/static/js/main.js"></script>
-<script src="/static/js/auth.js"></script>
-<script>
-// Mock portfolio data loading
-document.addEventListener('DOMContentLoaded', function() {
-    // Simulate loading portfolio data
-    setTimeout(() => {
-        document.getElementById('totalValue').textContent = '$10,250.45';
-        document.getElementById('dayChange').textContent = '+2.34%';
-        document.getElementById('dayChange').className = 'text-success';
-        document.getElementById('gemBalance').textContent = '5,000';
-        document.getElementById('totalAssets').textContent = '12';
-    }, 1000);
-});
-</script>
+<script src="{{ url_for('static', path='/js/portfolio.js') }}"></script>
+{% endblock %}
+
+{% block page_init %}
+Portfolio.init();
 {% endblock %}

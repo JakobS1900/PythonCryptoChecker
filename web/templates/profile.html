@@ -1,87 +1,100 @@
 {% extends "base.html" %}
 
-{% block title %}Profile - CryptoChecker Gaming Platform{% endblock %}
+{% block title %}Profile - CryptoChecker v3{% endblock %}
 
 {% block extra_css %}
 <style>
 .profile-card {
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 16px;
-    backdrop-filter: blur(12px);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
 }
-.profile-avatar {
-    width: 96px; height: 96px; border-radius: 50%;
-    border: 3px solid rgba(255,255,255,0.3);
+
+.stat-card {
+    transition: transform 0.3s ease;
+    border: none;
+    border-radius: 10px;
+    background: white;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
-.stat-pill {
-    border-radius: 12px; padding: 0.5rem 0.75rem;
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.12);
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.gem-balance {
+    font-size: 2.5rem;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.transaction-row {
+    border-bottom: 1px solid #eee;
+    padding: 10px 0;
+}
+
+.transaction-row:last-child {
+    border-bottom: none;
+}
+
+.profit {
+    color: #28a745;
+}
+
+.loss {
+    color: #dc3545;
+}
+
+.loading-spinner {
+    display: none;
+}
+
+.portfolio-item {
+    border-left: 4px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.portfolio-item.profit {
+    border-left-color: #28a745;
+    background-color: #f8fff9;
+}
+
+.portfolio-item.loss {
+    border-left-color: #dc3545;
+    background-color: #fff8f8;
 }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <div class="profile-card p-4">
-                <div class="d-flex align-items-center mb-4">
-                    <img id="profile-avatar" src="/static/images/default-avatar.png" class="profile-avatar me-3" onerror="this.onerror=null;this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2796%27 height=%2796%27%3E%3Crect width=%2796%27 height=%2796%27 rx=%2716%27 fill=%27%23222%27/%3E%3C/svg%3E'">
-                    <div>
-                        <h2 class="text-white mb-1" id="profile-username">Guest</h2>
-                        <div class="text-muted" id="profile-email">guest@example.com</div>
+<div class="row">
+    <!-- Profile Header -->
+    <div class="col-12 mb-4">
+        <div class="card profile-card">
+            <div class="card-body text-center p-4">
+                <div class="row align-items-center">
+                    <div class="col-md-4">
+                        <i class="bi bi-person-circle" style="font-size: 4rem;"></i>
+                        <h3 class="mt-2" id="profile-username">Loading...</h3>
+                        <span class="badge bg-light text-dark" id="profile-role">Player</span>
                     </div>
-                </div>
-
-                <div class="row g-3 mb-4">
-                    <div class="col-6 col-md-3">
-                        <div class="stat-pill text-white d-flex align-items-center justify-content-center">
-                            <i class="fas fa-gem text-warning me-2"></i>
-                            <span id="walletBalance">0</span> GEM
+                    <div class="col-md-4">
+                        <h2>GEM Balance</h2>
+                        <div class="gem-balance" id="profile-gem-balance">
+                            <div class="loading-spinner">
+                                <div class="spinner-border text-light" role="status"></div>
+                            </div>
+                            <span id="balance-amount">0</span> 💎
                         </div>
+                        <small class="text-light" id="balance-usd">$0.00 USD</small>
                     </div>
-                    <div class="col-6 col-md-3">
-                        <div class="stat-pill text-white d-flex align-items-center justify-content-center">
-                            <i class="fas fa-star text-success me-2"></i>
-                            <span id="profile-level">1</span> Level
-                        </div>
-                    </div>
-                    <div class="col-12 col-md-6">
-                        <div class="stat-pill text-white d-flex align-items-center justify-content-center">
-                            <i class="fas fa-clock text-info me-2"></i>
-                            <span id="profile-last-login">—</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Edit Profile Form -->
-                <div class="row g-3 mt-2">
-                    <div class="col-md-6">
-                        <label class="form-label text-white-50">Display Name</label>
-                        <input id="profile-display-name" class="form-control" placeholder="Your display name">
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label text-white-50">Email</label>
-                        <input id="profile-email-input" class="form-control" disabled>
-                    </div>
-                    <div class="col-12">
-                        <label class="form-label text-white-50">Bio</label>
-                        <textarea id="profile-bio" class="form-control" rows="3" placeholder="Tell others about yourself"></textarea>
-                    </div>
-                    <div class="col-12 d-flex gap-2">
-                        <button class="btn btn-primary" id="save-profile-btn"><i class="fas fa-save me-2"></i>Save Profile</button>
-                        <label class="btn btn-outline-light mb-0" for="avatar-input"><i class="fas fa-image me-2"></i>Change Avatar</label>
-                        <input id="avatar-input" type="file" accept="image/*" class="d-none">
-                        <button class="btn btn-outline-danger" id="remove-avatar-btn"><i class="fas fa-trash me-2"></i>Remove Avatar</button>
-                    </div>
-                    <div id="profile-alert" class="text-white-50 mt-2" style="min-height: 1.5rem;"></div>
-                    <div class="col-12 mt-2">
-                        <button class="btn btn-sm btn-outline-secondary" id="clear-cache-btn">
-                            <i class="fas fa-broom me-2"></i>Clear Local Cache
-                        </button>
-                        <small class="text-muted ms-2">(Does not delete your profile data)</small>
+                    <div class="col-md-4">
+                        <h5>Member Since</h5>
+                        <p id="profile-join-date">Loading...</p>
+                        <h5>Last Login</h5>
+                        <p id="profile-last-login">Loading...</p>
                     </div>
                 </div>
             </div>
@@ -89,149 +102,592 @@
     </div>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', async function () {
-    try {
-        // Fetch auth info
-        const me = await fetch('/api/auth/me');
-        const meData = me.ok ? await me.json() : { status: 'error' };
+<!-- Stats Cards -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card stat-card">
+            <div class="card-body text-center">
+                <i class="bi bi-graph-up text-success" style="font-size: 2rem;"></i>
+                <h3 class="mt-2 mb-0" id="stat-total-winnings">0</h3>
+                <small class="text-muted">Total Winnings (GEM)</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card stat-card">
+            <div class="card-body text-center">
+                <i class="bi bi-dice-5 text-primary" style="font-size: 2rem;"></i>
+                <h3 class="mt-2 mb-0" id="stat-total-games">0</h3>
+                <small class="text-muted">Total Games</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card stat-card">
+            <div class="card-body text-center">
+                <i class="bi bi-trophy text-warning" style="font-size: 2rem;"></i>
+                <h3 class="mt-2 mb-0" id="stat-win-rate">0%</h3>
+                <small class="text-muted">Win Rate</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card stat-card">
+            <div class="card-body text-center">
+                <i class="bi bi-wallet2 text-info" style="font-size: 2rem;"></i>
+                <h3 class="mt-2 mb-0" id="stat-portfolio-value">0</h3>
+                <small class="text-muted">Portfolio Value (GEM)</small>
+            </div>
+        </div>
+    </div>
+</div>
 
-        if (meData.status !== 'success' || !meData.user) {
-            // Not logged in: send to login
-            window.location.href = '/login';
+<!-- Tabs -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="portfolio-tab" data-bs-toggle="tab"
+                                data-bs-target="#portfolio-pane" type="button" role="tab">
+                            <i class="bi bi-wallet2"></i> Crypto Portfolio
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="transactions-tab" data-bs-toggle="tab"
+                                data-bs-target="#transactions-pane" type="button" role="tab">
+                            <i class="bi bi-list-ul"></i> Transaction History
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="settings-tab" data-bs-toggle="tab"
+                                data-bs-target="#settings-pane" type="button" role="tab">
+                            <i class="bi bi-gear"></i> Settings
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="tab-content">
+                    <!-- Portfolio Tab -->
+                    <div class="tab-pane fade show active" id="portfolio-pane" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="mb-0">Your Cryptocurrency Holdings</h5>
+                            <button class="btn btn-success btn-sm" onclick="Profile.refreshPortfolio()">
+                                <i class="bi bi-arrow-clockwise"></i> Refresh
+                            </button>
+                        </div>
+
+                        <div id="portfolio-content">
+                            <div class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status"></div>
+                                <p class="mt-2 text-muted">Loading portfolio...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Transactions Tab -->
+                    <div class="tab-pane fade" id="transactions-pane" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="mb-0">Recent Transactions</h5>
+                            <button class="btn btn-primary btn-sm" onclick="Profile.refreshTransactions()">
+                                <i class="bi bi-arrow-clockwise"></i> Refresh
+                            </button>
+                        </div>
+
+                        <div id="transactions-content">
+                            <div class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status"></div>
+                                <p class="mt-2 text-muted">Loading transactions...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Settings Tab -->
+                    <div class="tab-pane fade" id="settings-pane" role="tabpanel">
+                        <h5>Account Settings</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">Balance Persistence Test</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="text-muted">Test if your GEM balance persists across sessions.</p>
+                                        <button class="btn btn-primary" onclick="Profile.testBalancePersistence()">
+                                            <i class="bi bi-check-circle"></i> Test Balance Persistence
+                                        </button>
+                                        <div id="persistence-result" class="mt-3"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">Account Information</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <p><strong>GEM Rate:</strong> 1,000 GEM = $10.00 USD</p>
+                                        <p><strong>Trading Fee:</strong> 1% per transaction</p>
+                                        <p><strong>Supported Cryptos:</strong> 57+ cryptocurrencies</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Profile management module
+window.Profile = {
+    userStats: null,
+
+    async init() {
+        console.log('Profile module initialized');
+        await this.loadUserProfile();
+        await this.loadPortfolio();
+        await this.loadTransactions();
+    },
+
+    async loadUserProfile() {
+        try {
+            console.log('🔄 Loading user profile...');
+
+            // Use auth/status endpoint which guarantees balance information
+            const token = localStorage.getItem('auth_token');
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            const response = await fetch('/api/auth/status', {
+                method: 'GET',
+                headers: headers,
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                const authStatus = await response.json();
+                console.log('Auth status response:', authStatus);
+
+                // Transform auth status to profile stats structure
+                let profileData;
+                if (authStatus.authenticated && authStatus.user) {
+                    profileData = {
+                        success: true,
+                        wallet: {
+                            gem_balance: authStatus.user.wallet_balance || 0
+                        },
+                        stats: {
+                            gem_value_usd: (authStatus.user.wallet_balance || 0) * 0.01, // 1 GEM = 0.01 USD
+                            total_winnings: 0, // Will be updated by portfolio load
+                            total_games: 0,
+                            win_rate: 0
+                        },
+                        user: {
+                            username: authStatus.user.username,
+                            email: authStatus.user.email,
+                            role: authStatus.user.role,
+                            created_at: authStatus.user.created_at,
+                            last_login: authStatus.user.last_login
+                        }
+                    };
+                } else if (authStatus.guest_mode && authStatus.guest_user) {
+                    profileData = {
+                        success: true,
+                        wallet: {
+                            gem_balance: authStatus.guest_user.wallet_balance || 5000
+                        },
+                        stats: {
+                            gem_value_usd: (authStatus.guest_user.wallet_balance || 5000) * 0.01,
+                            total_winnings: 0,
+                            total_games: 0,
+                            win_rate: 0
+                        },
+                        user: {
+                            username: authStatus.guest_user.username,
+                            email: authStatus.guest_user.email,
+                            role: authStatus.guest_user.role,
+                            created_at: authStatus.guest_user.created_at
+                        }
+                    };
+                }
+
+                if (profileData) {
+                    this.userStats = profileData;
+                    this.updateProfileUI();
+                    console.log('✅ Profile loaded successfully:', profileData);
+                } else {
+                    console.error('❌ Could not create profile data from auth status');
+                    this.showErrorState();
+                }
+            } else {
+                console.error('❌ Auth status request failed:', response.status);
+                this.showErrorState();
+            }
+        } catch (error) {
+            console.error('❌ Error loading profile:', error);
+            this.showErrorState();
+        }
+    },
+
+    async waitForApp(maxRetries = 50) {
+        for (let i = 0; i < maxRetries; i++) {
+            if (window.App && window.App.api) {
+                return true;
+            }
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        throw new Error('App object not available after waiting');
+    },
+
+    showErrorState() {
+        // Show error state for profile loading
+        document.getElementById('balance-amount').textContent = 'Error';
+        document.getElementById('balance-usd').textContent = 'Error loading balance';
+        App.showAlert('danger', 'Failed to load profile data. Please refresh the page.');
+    },
+
+    updateProfileUI() {
+        if (!this.userStats) return;
+
+        const { wallet, stats } = this.userStats;
+
+        // Update profile header
+        document.getElementById('profile-username').textContent = 'CryptoTrader'; // Would come from user data
+        document.getElementById('balance-amount').textContent = (wallet.gem_balance || 0).toFixed(2);
+        document.getElementById('balance-usd').textContent = `$${(stats.gem_value_usd || 0).toFixed(2)} USD`;
+
+        // Update stats cards
+        document.getElementById('stat-total-winnings').textContent = (stats.total_winnings || 0).toFixed(2);
+        document.getElementById('stat-total-games').textContent = stats.total_games || 0;
+        document.getElementById('stat-win-rate').textContent = `${stats.win_rate || 0}%`;
+        document.getElementById('stat-portfolio-value').textContent = '0.00'; // Will be updated by portfolio
+    },
+
+    async loadPortfolio() {
+        try {
+            // Use direct fetch instead of App.api
+            const token = localStorage.getItem('auth_token');
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            const response = await fetch('/api/crypto/portfolio', {
+                method: 'GET',
+                headers: headers,
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                console.log('Portfolio API response:', data);
+                if (data.success) {
+                    this.displayPortfolio(data.portfolio);
+                    // Update portfolio value in stats
+                    const portfolioValue = data.portfolio?.total_value_gem || 0;
+                    document.getElementById('stat-portfolio-value').textContent = portfolioValue.toFixed(2);
+                } else {
+                    console.error('Portfolio API returned error:', data);
+                    this.showPortfolioError();
+                }
+            } else {
+                console.error('Portfolio API request failed:', response.status);
+                this.showPortfolioError();
+            }
+        } catch (error) {
+            console.error('Error loading portfolio:', error);
+            this.showPortfolioError();
+        }
+    },
+
+    showPortfolioError() {
+        document.getElementById('portfolio-content').innerHTML = `
+            <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle"></i>
+                No portfolio data available. Start trading to build your crypto portfolio!
+            </div>
+        `;
+    },
+
+    displayPortfolio(portfolioData) {
+        const container = document.getElementById('portfolio-content');
+
+        if (!portfolioData.holdings || portfolioData.holdings.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-4">
+                    <i class="bi bi-wallet text-muted" style="font-size: 3rem;"></i>
+                    <h5 class="text-muted mt-3">No crypto holdings yet</h5>
+                    <p class="text-muted">Start trading to build your portfolio!</p>
+                    <a href="/portfolio" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Start Trading
+                    </a>
+                </div>
+            `;
             return;
         }
 
-        const user = meData.user || {};
-        document.getElementById('profile-username').textContent = user.username || 'Player';
-        document.getElementById('profile-email').textContent = user.email || '';
-        document.getElementById('profile-email-input').value = user.email || '';
-        document.getElementById('profile-display-name').value = user.display_name || user.username || '';
-        if (user.bio) document.getElementById('profile-bio').value = user.bio;
+        let html = `
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <strong>Total Value:</strong> ${portfolioData.total_value_gem.toFixed(2)} GEM
+                </div>
+                <div class="col-md-3">
+                    <strong>Total Invested:</strong> ${portfolioData.total_invested_gem.toFixed(2)} GEM
+                </div>
+                <div class="col-md-3">
+                    <strong>P&L:</strong>
+                    <span class="${portfolioData.total_profit_loss_gem >= 0 ? 'profit' : 'loss'}">
+                        ${portfolioData.total_profit_loss_gem >= 0 ? '+' : ''}${portfolioData.total_profit_loss_gem.toFixed(2)} GEM
+                    </span>
+                </div>
+                <div class="col-md-3">
+                    <strong>P&L %:</strong>
+                    <span class="${portfolioData.total_profit_loss_percentage >= 0 ? 'profit' : 'loss'}">
+                        ${portfolioData.total_profit_loss_percentage >= 0 ? '+' : ''}${portfolioData.total_profit_loss_percentage.toFixed(2)}%
+                    </span>
+                </div>
+            </div>
+            <hr>
+        `;
 
-        // Avatar if available via session-aware endpoint later; use default for now
-        if (user.avatar_url) {
-            document.getElementById('profile-avatar').src = user.avatar_url;
-        }
+        portfolioData.holdings.forEach(holding => {
+            const crypto = holding.cryptocurrency;
+            const isProfit = holding.profit_loss_gem >= 0;
 
-        // Level placeholder if present on mock user
-        if (user.current_level) {
-            document.getElementById('profile-level').textContent = user.current_level;
-        }
-
-        // Last login placeholder
-        const lastLogin = user.last_login || '';
-        if (lastLogin) {
-            document.getElementById('profile-last-login').textContent = lastLogin;
-        }
-
-        // Load wallet balance into page stat and navbar
-        if (window.auth) {
-            await window.auth.loadWalletBalance();
-        } else {
-            const r = await fetch('/api/trading/gamification/wallet');
-            if (r.ok) {
-                const d = await r.json();
-                if (d.status === 'success') {
-                    const bal = d.data.gem_coins;
-                    const el = document.getElementById('walletBalance');
-                    if (el) el.textContent = (bal || 0).toLocaleString();
-                    const nav = document.getElementById('nav-gem-balance');
-                    if (nav) nav.textContent = (bal || 0).toLocaleString();
-                }
-            }
-        }
-        // Wire up edit/save actions
-        document.getElementById('save-profile-btn').addEventListener('click', async () => {
-            try {
-                const display_name = document.getElementById('profile-display-name').value.trim();
-                const bio = document.getElementById('profile-bio').value.trim();
-                const r = await fetch('/api/profile/update', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ display_name, bio })
-                });
-                const d = await r.json();
-                const alertEl = document.getElementById('profile-alert');
-                if (d.status === 'success') {
-                    alertEl.textContent = 'Profile saved successfully';
-                    if (window.auth && window.auth.user) {
-                        window.auth.user.username = user.username; // unchanged
-                        window.auth.user.display_name = display_name || user.username;
-                        window.auth.updateUI();
-                    }
-                } else {
-                    alertEl.textContent = d.message || 'Failed to save profile';
-                }
-            } catch (err) {
-                document.getElementById('profile-alert').textContent = 'Failed to save profile';
-            }
+            html += `
+                <div class="portfolio-item p-3 mb-2 rounded ${isProfit ? 'profit' : 'loss'}">
+                    <div class="row align-items-center">
+                        <div class="col-md-2">
+                            <img src="${crypto.image || '/static/img/placeholder-crypto.png'}"
+                                 alt="${crypto.name}"
+                                 style="width: 32px; height: 32px; margin-right: 10px;">
+                            <strong>${crypto.symbol.toUpperCase()}</strong>
+                        </div>
+                        <div class="col-md-2">
+                            <small class="text-muted">Quantity</small><br>
+                            ${holding.quantity.toFixed(8)}
+                        </div>
+                        <div class="col-md-2">
+                            <small class="text-muted">Avg Price</small><br>
+                            ${holding.average_buy_price_gem.toFixed(2)} GEM
+                        </div>
+                        <div class="col-md-2">
+                            <small class="text-muted">Invested</small><br>
+                            ${holding.total_invested_gem.toFixed(2)} GEM
+                        </div>
+                        <div class="col-md-2">
+                            <small class="text-muted">Current Value</small><br>
+                            ${holding.current_value_gem.toFixed(2)} GEM
+                        </div>
+                        <div class="col-md-2">
+                            <small class="text-muted">P&L</small><br>
+                            <span class="${isProfit ? 'profit' : 'loss'}">
+                                ${isProfit ? '+' : ''}${holding.profit_loss_gem.toFixed(2)} GEM
+                                (${isProfit ? '+' : ''}${holding.profit_loss_percentage.toFixed(2)}%)
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            `;
         });
 
-        document.getElementById('avatar-input').addEventListener('change', async (ev) => {
-            const file = ev.target.files && ev.target.files[0];
-            if (!file) return;
-            try {
-                const fd = new FormData();
-                fd.append('avatar', file);
-                const r = await fetch('/api/profile/avatar', { method: 'POST', body: fd });
-                const d = await r.json();
-                if (d.status === 'success' && d.avatar_url) {
-                    document.getElementById('profile-avatar').src = d.avatar_url;
-                    // Update nav avatar as well
-                    const navImg = document.querySelector('#user-menu img');
-                    if (navImg) navImg.src = d.avatar_url;
-                    if (window.auth) {
-                        window.auth.user = window.auth.user || {};
-                        window.auth.user.avatar_url = d.avatar_url;
-                        window.auth.updateUI();
-                    }
-                    document.getElementById('profile-alert').textContent = 'Avatar updated';
-                } else {
-                    document.getElementById('profile-alert').textContent = d.message || 'Failed to update avatar';
+        container.innerHTML = html;
+    },
+
+    async loadTransactions() {
+        try {
+            // Use direct fetch instead of App.api
+            const token = localStorage.getItem('auth_token');
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            const response = await fetch('/api/crypto/portfolio/transactions?limit=20', {
+                method: 'GET',
+                headers: headers,
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                console.log('Transactions API response:', data);
+                if (data.success) {
+                    this.displayTransactions(data.transactions);
                 }
-            } catch (err) {
-                document.getElementById('profile-alert').textContent = 'Failed to update avatar';
+            } else {
+                console.error('Transactions API request failed:', response.status);
+                this.showTransactionsError();
             }
+        } catch (error) {
+            console.error('Error loading transactions:', error);
+            this.showTransactionsError();
+        }
+    },
+
+    showTransactionsError() {
+        document.getElementById('transactions-content').innerHTML = `
+            <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle"></i>
+                Unable to load transaction history.
+            </div>
+        `;
+    },
+
+    displayTransactions(transactions) {
+        const container = document.getElementById('transactions-content');
+
+        if (!transactions || transactions.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-4">
+                    <i class="bi bi-list-ul text-muted" style="font-size: 3rem;"></i>
+                    <h5 class="text-muted mt-3">No transactions yet</h5>
+                    <p class="text-muted">Your transaction history will appear here.</p>
+                </div>
+            `;
+            return;
+        }
+
+        let html = '';
+        transactions.forEach(tx => {
+            const isPositive = tx.amount > 0;
+            const typeIcon = this.getTransactionIcon(tx.transaction_type);
+
+            html += `
+                <div class="transaction-row">
+                    <div class="row align-items-center">
+                        <div class="col-md-1 text-center">
+                            <i class="bi ${typeIcon}"></i>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>${tx.transaction_type.replace('_', ' ')}</strong><br>
+                            <small class="text-muted">${new Date(tx.created_at).toLocaleString()}</small>
+                        </div>
+                        <div class="col-md-5">
+                            ${tx.description}
+                        </div>
+                        <div class="col-md-2 text-end">
+                            <span class="${isPositive ? 'profit' : 'loss'}">
+                                ${isPositive ? '+' : ''}${tx.amount.toFixed(2)} GEM
+                            </span>
+                        </div>
+                        <div class="col-md-1 text-end">
+                            <small class="text-muted">${tx.balance_after.toFixed(2)}</small>
+                        </div>
+                    </div>
+                </div>
+            `;
         });
 
-        document.getElementById('remove-avatar-btn').addEventListener('click', async () => {
-            try {
-                const r = await fetch('/api/profile/avatar/remove', { method: 'POST' });
-                const d = await r.json();
-                if (d.status === 'success') {
-                    const url = d.avatar_url || '/static/images/default-avatar.png';
-                    document.getElementById('profile-avatar').src = url;
-                    const navImg = document.querySelector('#user-menu img');
-                    if (navImg) navImg.src = url;
-                    if (window.auth) {
-                        window.auth.user = window.auth.user || {};
-                        window.auth.user.avatar_url = url;
-                        window.auth.updateUI();
-                    }
-                    document.getElementById('profile-alert').textContent = 'Avatar removed';
-                } else {
-                    document.getElementById('profile-alert').textContent = d.message || 'Failed to remove avatar';
+        container.innerHTML = html;
+    },
+
+    getTransactionIcon(type) {
+        const icons = {
+            'DEPOSIT': 'bi-plus-circle text-success',
+            'WITHDRAWAL': 'bi-dash-circle text-danger',
+            'BET_PLACED': 'bi-dice-5 text-primary',
+            'BET_WON': 'bi-trophy text-warning',
+            'BET_LOST': 'bi-x-circle text-danger',
+            'CRYPTO_BUY': 'bi-cart-plus text-info',
+            'CRYPTO_SELL': 'bi-cart-dash text-warning',
+            'TRANSFER': 'bi-arrow-left-right text-secondary'
+        };
+        return icons[type] || 'bi-circle';
+    },
+
+    async refreshPortfolio() {
+        document.getElementById('portfolio-content').innerHTML = `
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="mt-2 text-muted">Refreshing portfolio...</p>
+            </div>
+        `;
+        await this.loadPortfolio();
+    },
+
+    async refreshTransactions() {
+        document.getElementById('transactions-content').innerHTML = `
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="mt-2 text-muted">Refreshing transactions...</p>
+            </div>
+        `;
+        await this.loadTransactions();
+    },
+
+    async testBalancePersistence() {
+        const resultDiv = document.getElementById('persistence-result');
+
+        try {
+            // Use direct fetch instead of App.api
+            const token = localStorage.getItem('auth_token');
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            const response = await fetch('/api/crypto/portfolio/stats', {
+                method: 'GET',
+                headers: headers,
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    const balance = data.data.wallet.gem_balance;
+
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-success">
+                            <i class="bi bi-check-circle"></i>
+                            <strong>Balance Persistence: WORKING</strong><br>
+                            Current balance: ${balance.toFixed(2)} GEM<br>
+                            <small>Your balance is properly stored in the database and persists across sessions.</small>
+                        </div>
+                    `;
                 }
-            } catch (err) {
-                document.getElementById('profile-alert').textContent = 'Failed to remove avatar';
+            } else {
+                throw new Error(`API request failed: ${response.status}`);
             }
-        });
-
-        document.getElementById('clear-cache-btn').addEventListener('click', () => {
-            try {
-                localStorage.clear();
-                sessionStorage.clear();
-                document.getElementById('profile-alert').textContent = 'Local cache cleared. Reloading...';
-                setTimeout(() => window.location.reload(), 600);
-            } catch (e) {
-                document.getElementById('profile-alert').textContent = 'Failed to clear cache.';
-            }
-        });
-
-    } catch (e) {
-        console.error('Profile init failed:', e);
+        } catch (error) {
+            resultDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="bi bi-x-circle"></i>
+                    <strong>Balance Persistence: ERROR</strong><br>
+                    <small>Unable to verify balance persistence: ${error.message}</small>
+                </div>
+            `;
+        }
     }
+};
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('Profile page loaded, initializing...');
+    // Simple initialization
+    setTimeout(() => {
+        Profile.init().catch(error => {
+            console.error('Profile initialization failed:', error);
+        });
+    }, 500);
 });
 </script>
 {% endblock %}

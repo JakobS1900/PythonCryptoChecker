@@ -1,0 +1,79 @@
+<!-- Authentication Modal -->
+<div class="modal fade" id="authModal" tabindex="-1" aria-labelledby="authModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="authModalTitle">Sign In</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Error/Success Messages -->
+                <div id="authMessages" class="mb-3" style="display: none;">
+                    <div id="authAlert" class="alert" role="alert"></div>
+                </div>
+
+                <!-- Login Form -->
+                <form id="loginForm" data-api-form data-api-endpoint="/api/auth/login" data-method="POST" style="display: block;">
+                    <div class="mb-3">
+                        <label for="loginUsername" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="loginUsername" name="username" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="loginPassword" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="loginPassword" name="password" required>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            <span class="spinner-border spinner-border-sm me-2" style="display: none;" aria-hidden="true"></span>
+                            Sign In
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Register Form -->
+                <form id="registerForm" data-api-form data-api-endpoint="/api/auth/register" data-method="POST" style="display: none;">
+                    <div class="mb-3">
+                        <label for="registerUsername" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="registerUsername" name="username" required minlength="3" maxlength="50">
+                        <div class="form-text">3-50 characters, letters and numbers only</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="registerEmail" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="registerEmail" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="registerPassword" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="registerPassword" name="password" required minlength="6">
+                        <div class="form-text">Minimum 6 characters</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="registerConfirmPassword" class="form-label">Confirm Password</label>
+                        <input type="password" class="form-control" id="registerConfirmPassword" name="confirmPassword" required>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-success">
+                            <span class="spinner-border spinner-border-sm me-2" style="display: none;" aria-hidden="true"></span>
+                            Create Account
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Toggle between forms -->
+                <div class="text-center mt-3">
+                    <button type="button" class="btn btn-link" id="toggleAuthForm">
+                        <span id="toggleAuthText">Don't have an account? Sign up</span>
+                    </button>
+                </div>
+
+                <!-- Guest Mode -->
+                <div class="text-center mt-3">
+                    <hr>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" onclick="Auth.setGuestMode()">
+                        <i class="bi bi-person"></i> Continue as Guest
+                    </button>
+                    <div class="form-text mt-2">Get 5,000 GEM to explore the platform</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
