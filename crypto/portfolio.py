@@ -9,8 +9,9 @@ from typing import Optional, Dict, List, Tuple
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, func, case
 
-from database.models import Wallet, Transaction, TransactionType
+from database.models import Wallet, Transaction, TransactionType, User
 from database.database import AsyncSessionLocal
+from sqlalchemy import select, and_
 
 
 
@@ -19,6 +20,15 @@ class PortfolioManager:
 
     def __init__(self):
         self.gem_to_usd_rate = 0.01  # 1 GEM = $0.01 USD (100 GEM = $1)
+
+    async def _is_user_bot(self, user_id: str) -> bool:
+        """Check if user is a bot."""
+        async with AsyncSessionLocal() as session:
+            result = await session.execute(
+                select(User.is_bot).where(User.id == user_id)
+            )
+            user = result.scalar_one_or_none()
+            return bool(user)
 
     async def get_user_wallet(self, user_id: str) -> Optional[Wallet]:
         """Get user's wallet."""
@@ -90,30 +100,62 @@ class PortfolioManager:
                 new_balance = 0.0
 
                 if current_balance is None:
-                    # Auto-create wallet for new user
-                    print(f">> Info: Creating wallet for new user {user_id}")
-                    wallet = Wallet(
-                        user_id=user_id,
-                        gem_balance=1000.0,
-                        total_deposited=1000.0,
-                        updated_at=datetime.utcnow()
-                    )
-                    session.add(wallet)
-                    
-                    # Create initial deposit transaction
-                    await self._create_transaction(
-                        session=session,
-                        user_id=user_id,
-                        transaction_type=TransactionType.DEPOSIT,
-                        amount=1000.0,
-                        balance_before=0.0,
-                        balance_after=1000.0,
-                        description="Initial GEM deposit"
-                    )
-                    
-                    await session.flush()
-                    old_balance = 1000.0
-                    new_balance = old_balance + amount
+                    # Check if this is a bot - bots should have wallets created by bot system
+                    is_bot = await self._is_user_bot(user_id)
+
+                    if is_bot:
+                        # CRITICAL: Bots should have wallets created by initialize_bots()
+                        print(f">> CRITICAL: Bot {user_id} has no wallet! Bot system failed to initialize properly.")
+                        print(f">> WARNING: Creating emergency wallet for bot {user_id} with 2000 GEM")
+
+                        # Create wallet with bot-appropriate balance
+                        wallet = Wallet(
+                            user_id=user_id,
+                            gem_balance=2000.0,  # Bot starting balance
+                            total_deposited=2000.0,
+                            updated_at=datetime.utcnow()
+                        )
+                        session.add(wallet)
+
+                        # Create initial deposit transaction for bot
+                        await self._create_transaction(
+                            session=session,
+                            user_id=user_id,
+                            transaction_type=TransactionType.DEPOSIT,
+                            amount=2000.0,
+                            balance_before=0.0,
+                            balance_after=2000.0,
+                            description="Bot initial GEM deposit"
+                        )
+
+                        await session.flush()
+                        old_balance = 2000.0
+                        new_balance = old_balance + amount
+                    else:
+                        # Auto-create wallet for new human user
+                        print(f">> Info: Creating wallet for new human user {user_id}")
+                        wallet = Wallet(
+                            user_id=user_id,
+                            gem_balance=1000.0,
+                            total_deposited=1000.0,
+                            updated_at=datetime.utcnow()
+                        )
+                        session.add(wallet)
+
+                        # Create initial deposit transaction
+                        await self._create_transaction(
+                            session=session,
+                            user_id=user_id,
+                            transaction_type=TransactionType.DEPOSIT,
+                            amount=1000.0,
+                            balance_before=0.0,
+                            balance_after=1000.0,
+                            description="Initial GEM deposit"
+                        )
+
+                        await session.flush()
+                        old_balance = 1000.0
+                        new_balance = old_balance + amount
                 else:
                     old_balance = float(current_balance)
                     new_balance = old_balance + amount
@@ -155,127 +197,153 @@ class PortfolioManager:
         amount: float,
         transaction_type: TransactionType,
         description: str,
-        game_session_id: Optional[str] = None
+        game_session_id: Optional[str] = None,
+        max_retries: int = 3
     ) -> bool:
-        """Deduct GEMs from user's wallet."""
-        async with AsyncSessionLocal() as session:
-            try:
-                # Get and verify wallet balance
-                stmt = select(Wallet).where(Wallet.user_id == user_id)
-                result = await session.execute(stmt)
-                wallet = result.scalar_one_or_none()
+        """Deduct GEMs from user's wallet with retry logic for database locks."""
+        for attempt in range(max_retries):
+            async with AsyncSessionLocal() as session:
+                try:
+                    # Get and verify wallet balance
+                    stmt = select(Wallet).where(Wallet.user_id == user_id)
+                    result = await session.execute(stmt)
+                    wallet = result.scalar_one_or_none()
 
-                if not wallet:
-                    raise ValueError(f"Wallet not found for user {user_id}")
+                    if not wallet:
+                        raise ValueError(f"Wallet not found for user {user_id}")
 
-                old_balance = float(wallet.gem_balance)
-                if old_balance < amount:
-                    return False  # Insufficient balance
+                    old_balance = float(wallet.gem_balance)
+                    if old_balance < amount:
+                        return False  # Insufficient balance
 
-                new_balance = old_balance - amount
+                    new_balance = old_balance - amount
 
-                # Prepare update values
-                update_values = {
-                    'gem_balance': new_balance,
-                    'updated_at': datetime.utcnow()
-                }
+                    # Prepare update values
+                    update_values = {
+                        'gem_balance': new_balance,
+                        'updated_at': datetime.utcnow()
+                    }
 
-                if transaction_type == TransactionType.WITHDRAWAL:
-                    update_values['total_withdrawn'] = (
-                        Wallet.total_withdrawn + amount
+                    if transaction_type == TransactionType.WITHDRAWAL:
+                        update_values['total_withdrawn'] = (
+                            Wallet.total_withdrawn + amount
+                        )
+                    elif transaction_type in [
+                        TransactionType.BET_PLACED,
+                        TransactionType.BET_LOST
+                    ]:
+                        update_values['total_wagered'] = (
+                            Wallet.total_wagered + amount
+                        )
+
+                    # Update wallet
+                    stmt = (
+                        update(Wallet)
+                        .where(Wallet.user_id == user_id)
+                        .values(**update_values)
                     )
-                elif transaction_type in [
-                    TransactionType.BET_PLACED,
-                    TransactionType.BET_LOST
-                ]:
-                    update_values['total_wagered'] = (
-                        Wallet.total_wagered + amount
+                    await session.execute(stmt)
+
+                    # Create transaction record
+                    await self._create_transaction(
+                        session=session,
+                        user_id=user_id,
+                        transaction_type=transaction_type,
+                        amount=-float(amount),  # Negative for deduction
+                        balance_before=old_balance,
+                        balance_after=new_balance,
+                        description=description,
+                        game_session_id=game_session_id
                     )
 
-                # Update wallet
-                stmt = (
-                    update(Wallet)
-                    .where(Wallet.user_id == user_id)
-                    .values(**update_values)
-                )
-                await session.execute(stmt)
+                    await session.commit()
+                    return True
 
-                # Create transaction record
-                await self._create_transaction(
-                    session=session,
-                    user_id=user_id,
-                    transaction_type=transaction_type,
-                    amount=-float(amount),  # Negative for deduction
-                    balance_before=old_balance,
-                    balance_after=new_balance,
-                    description=description,
-                    game_session_id=game_session_id
-                )
+                except Exception as e:
+                    await session.rollback()
 
-                await session.commit()
-                return True
+                    # Check if it's a database lock error and we haven't exhausted retries
+                    error_str = str(e).lower()
+                    is_lock_error = 'database is locked' in error_str or 'operationalerror' in error_str
 
-            except Exception as e:
-                await session.rollback()
-                print(f">> Error: Error deducting GEMs: {e}")
-                return False
+                    if is_lock_error and attempt < max_retries - 1:
+                        print(f">> Retry {attempt + 1}/{max_retries}: Database locked, retrying deduct GEMs...")
+                        import asyncio
+                        await asyncio.sleep(0.1 * (attempt + 1))  # Exponential backoff
+                        continue
+                    else:
+                        print(f">> Error: Error deducting GEMs: {e}")
+                        return False
 
     async def process_win(
         self,
         user_id: str,
         amount: float,
         description: str,
-        game_session_id: Optional[str] = None
+        game_session_id: Optional[str] = None,
+        max_retries: int = 3
     ) -> bool:
-        """Process a gambling win by adding GEMs."""
-        async with AsyncSessionLocal() as session:
-            try:
-                # Get current wallet
-                # Get current balance
-                stmt = (
-                    select(Wallet.gem_balance)
-                    .where(Wallet.user_id == user_id)
-                )
-                result = await session.execute(stmt)
-                current_balance = result.scalar_one_or_none()
-
-                if current_balance is None:
-                    raise ValueError(f"Wallet not found for user {user_id}")
-
-                old_balance = float(current_balance)
-                new_balance = old_balance + amount
-
-                # Update wallet
-                stmt = (
-                    update(Wallet)
-                    .where(Wallet.user_id == user_id)
-                    .values(
-                        gem_balance=new_balance,
-                        total_won=Wallet.total_won + amount,
-                        updated_at=datetime.utcnow()
+        """Process a gambling win by adding GEMs with retry logic."""
+        for attempt in range(max_retries):
+            async with AsyncSessionLocal() as session:
+                try:
+                    # Get current wallet
+                    # Get current balance
+                    stmt = (
+                        select(Wallet.gem_balance)
+                        .where(Wallet.user_id == user_id)
                     )
-                )
-                await session.execute(stmt)
+                    result = await session.execute(stmt)
+                    current_balance = result.scalar_one_or_none()
 
-                # Create transaction record
-                await self._create_transaction(
-                    session=session,
-                    user_id=user_id,
-                    transaction_type=TransactionType.BET_WON,
-                    amount=float(amount),
-                    balance_before=old_balance,
-                    balance_after=new_balance,
-                    description=description,
-                    game_session_id=game_session_id
-                )
+                    if current_balance is None:
+                        raise ValueError(f"Wallet not found for user {user_id}")
 
-                await session.commit()
-                return True
+                    old_balance = float(current_balance)
+                    new_balance = old_balance + amount
 
-            except Exception as e:
-                await session.rollback()
-                print(f">> Error: Error processing win: {e}")
-                return False
+                    # Update wallet
+                    stmt = (
+                        update(Wallet)
+                        .where(Wallet.user_id == user_id)
+                        .values(
+                            gem_balance=new_balance,
+                            total_won=Wallet.total_won + amount,
+                            updated_at=datetime.utcnow()
+                        )
+                    )
+                    await session.execute(stmt)
+
+                    # Create transaction record
+                    await self._create_transaction(
+                        session=session,
+                        user_id=user_id,
+                        transaction_type=TransactionType.BET_WON,
+                        amount=float(amount),
+                        balance_before=old_balance,
+                        balance_after=new_balance,
+                        description=description,
+                        game_session_id=game_session_id
+                    )
+
+                    await session.commit()
+                    return True
+
+                except Exception as e:
+                    await session.rollback()
+
+                    # Check if it's a database lock error and we haven't exhausted retries
+                    error_str = str(e).lower()
+                    is_lock_error = 'database is locked' in error_str or 'operationalerror' in error_str
+
+                    if is_lock_error and attempt < max_retries - 1:
+                        print(f">> Retry {attempt + 1}/{max_retries}: Database locked, retrying process win...")
+                        import asyncio
+                        await asyncio.sleep(0.1 * (attempt + 1))  # Exponential backoff
+                        continue
+                    else:
+                        print(f">> Error: Error processing win: {e}")
+                        return False
 
     async def transfer_gems(
         self,

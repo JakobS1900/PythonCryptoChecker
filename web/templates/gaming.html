@@ -102,11 +102,32 @@
             </div>
         </div>
 
-        <!-- Timer Bar Section -->
-        <div class="timer-container">
-            <div class="timer-bar">
-                <div class="timer-progress" id="timer-progress"></div>
-                <span class="timer-text" id="timer-text">20s</span>
+        <!-- Bot Arena & Timer Section -->
+        <div class="bot-arena-container">
+            <!-- Bot Activity Arena -->
+            <div class="bot-arena-section" id="bot-arena-section">
+                <div class="arena-header">
+                    <span class="arena-label">🤖 BOT ARENA</span>
+                    <div class="active-players" id="active-players">
+                        <span class="player-count" id="arena-player-count">0 players</span>
+                    </div>
+                </div>
+                <div class="bot-activity-arena" id="bot-activity-arena">
+                    <!-- Bot avatars will appear here -->
+                    <div class="bot-spinning-wheel" id="bot-spinning-wheel" style="display: none;">
+                        <div class="wheel-decoration">🎪</div>
+                        <span>Bots Calculating Bets...</span>
+                        <div class="wheel-decoration">🎰</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Timer Bar -->
+            <div class="timer-container-with-arena">
+                <div class="timer-bar">
+                    <div class="timer-progress" id="timer-progress"></div>
+                    <span class="timer-text" id="timer-text">20s</span>
+                </div>
             </div>
         </div>
 

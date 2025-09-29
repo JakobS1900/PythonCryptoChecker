@@ -46,7 +46,20 @@
       "Bash(wmic process:*)",
       "Bash(telnet:*)",
       "Bash(taskkill:*)",
-      "Bash(rg:*)"
+      "Bash(rg:*)",
+      "Bash(uv:*)",
+      "Bash(\".venv\\Scripts\\python.exe\" -m pip install uv)",
+      "Bash(\".venv\\Scripts\\uv.exe\" --version)",
+      "Bash(\".venv\\Scripts\\uv.exe\" tool install specify-cli --from git+https://github.com/github/spec-kit.git)",
+      "Bash(set PATH=%PATH%)",
+      "Bash(C:UsersEmu.localbin)",
+      "Bash(specify --help)",
+      "Bash(\"C:\\Users\\Emu\\.local\\bin\\specify.exe\" --help)",
+      "Bash(\".venv\\Scripts\\uv.exe\" tool run --from git+https://github.com/github/spec-kit.git specify init CryptoChecker)",
+      "Bash(\"..\\.venv\\Scripts\\python.exe\" .specify/scripts/list-specs.py)",
+      "Bash(\".venv\\Scripts\\python.exe\" .specify/scripts/list-specs.py)",
+      "Bash(\".venv\\Scripts\\python.exe\" .specify/scripts/list-specs.py --status)",
+      "Bash(\".venv\\Scripts\\python.exe\" .specify/scripts/list-specs.py 000)"
     ],
     "deny": [],
     "ask": []

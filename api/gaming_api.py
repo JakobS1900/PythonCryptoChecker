@@ -167,27 +167,57 @@ async def place_roulette_bet(
                     )
                 )
 
-        # Place the bet
-        result = await roulette_engine.place_bet(
-            game_session_id=game_id,
-            user_id=user_id,
-            bet_type=bet_request.bet_type.upper(),
-            bet_value=bet_request.bet_value.lower(),
-            amount=bet_request.amount
-        )
+        # CRITICAL FIX: Add exponential backoff retry mechanism for database locks
+        max_retries = 3
+        base_delay = 0.1  # Start with 100ms delay
 
-        if result["success"]:
-            return BetResponse(
-                success=True,
-                bet_id=result["bet_id"],
-                message=result["message"]
-            )
-        else:
-            return BetResponse(
-                success=False,
-                message="Failed to place bet",
-                error=result["error"]
-            )
+        for attempt in range(max_retries):
+            try:
+                # Place the bet - casino logic ensures balance deduction happens here
+                result = await roulette_engine.place_bet(
+                    game_session_id=game_id,
+                    user_id=user_id,
+                    bet_type=bet_request.bet_type.upper(),
+                    bet_value=bet_request.bet_value.lower(),
+                    amount=bet_request.amount
+                )
+
+                if result["success"]:
+                    return BetResponse(
+                        success=True,
+                        bet_id=result["bet_id"],
+                        message=result["message"]
+                    )
+                else:
+                    # Explicitly return failure when database operations fail
+                    return BetResponse(
+                        success=False,
+                        message=result.get("message", "Failed to place bet due to database issues"),
+                        error=result.get("error", "Database operation failed")
+                    )
+
+            except Exception as db_error:
+                error_msg = str(db_error).lower()
+
+                # Check if it's a database lock error and we still have retries left
+                is_lock_error = (
+                    "database is locked" in error_msg or
+                    "locked" in error_msg or
+                    "concurrent access" in error_msg
+                )
+
+                if is_lock_error and attempt < max_retries - 1:
+                    # Exponential backoff: 100ms, 200ms, 400ms...
+                    import asyncio
+                    delay = base_delay * (2 ** attempt)
+                    await asyncio.sleep(delay)
+                    continue
+
+                # If not a lock error or we've exhausted retries, raise the original error
+                raise db_error
+
+        # If we get here, we've exhausted retries
+        raise Exception("Failed to place bet after maximum retry attempts")
 
     except HTTPException:
         raise

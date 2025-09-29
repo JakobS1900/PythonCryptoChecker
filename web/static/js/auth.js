@@ -2,6 +2,11 @@
  * Authentication Module for CryptoChecker v3
  */
 
+// Debug Options - Set these to true for verbose logging during debugging
+window.DEBUG_AUTH_CHANGES = false;         // Log authentication state changes
+window.DEBUG_BALANCE_UPDATES = false;      // Log every balance display update
+window.DEBUG_GAMBLING_CHANGES = false;     // Log gambling win/loss changes
+
 window.Auth = {
     currentUser: null,
     isAuthenticated: false,
@@ -272,12 +277,15 @@ window.Auth = {
             return;
         }
 
-        console.log('🔄 Updating user interface:', {
-            isAuthenticated: this.isAuthenticated,
-            currentUser: this.currentUser?.username,
-            appUser: App.user?.username,
-            walletBalance: this.currentUser?.wallet_balance || App.user?.wallet_balance
-        });
+        // Reduced logging - only log important state changes, not every balance update
+        if (window.DEBUG_AUTH_CHANGES) {
+            console.log('🔄 Updating user interface:', {
+                isAuthenticated: this.isAuthenticated,
+                currentUser: this.currentUser?.username,
+                appUser: App.user?.username,
+                walletBalance: this.currentUser?.wallet_balance || App.user?.wallet_balance
+            });
+        }
 
         if (this.isAuthenticated && this.currentUser) {
             // Authenticated user UI - always replace the entire content
@@ -305,7 +313,10 @@ window.Auth = {
                     </div>
                 </div>
             `;
-            console.log(`✅ Updated navbar for user: ${this.currentUser.username}, balance: ${this.currentUser.wallet_balance} GEM`);
+            // Remove constant balance logging, only show important auth changes
+            if (window.DEBUG_AUTH_CHANGES) {
+                console.log(`✅ Updated navbar for user: ${this.currentUser.username}`);
+            }
         } else {
             // Guest mode UI - always replace the entire content
             const guestBalance = App.user?.wallet_balance || 5000;
@@ -318,17 +329,19 @@ window.Auth = {
                         </div>
                     </div>
                     <button class="btn btn-primary btn-sm" onclick="Auth.showLoginModal()">
-                        <i class="bi bi-person-plus"></i> Sign In
+                        <i class="bi bi-person-circle"></i> Sign In
                     </button>
                 </div>
             `;
-            console.log(`✅ Updated navbar for guest mode: ${guestBalance} GEM`);
+            if (window.DEBUG_AUTH_CHANGES) {
+                console.log(`✅ Updated navbar for guest mode`);
+            }
         }
 
-        // Update balance displays throughout the app
+        // Update balance displays throughout the app (with optimized logging)
         this.updateBalanceDisplays();
 
-        // Dispatch balance update event
+        // Dispatch balance update event (with throttled logging)
         document.dispatchEvent(new CustomEvent('balanceUpdated', {
             detail: {
                 balance: this.currentUser?.wallet_balance || App.user?.wallet_balance || 5000,
@@ -650,9 +663,12 @@ window.updateBalanceGlobally = async function() {
     return null;
 };
 
-// Direct balance update function for immediate UI updates
+// Direct balance update function for immediate UI updates (silent)
 window.updateNavbarBalance = function(newBalance) {
-    console.log('💎 Direct navbar balance update:', newBalance);
+    // Silent operation for performance - no logging in production
+    if (window.DEBUG_BALANCE_UPDATES) {
+        console.log('💎 Direct navbar balance update:', newBalance);
+    }
 
     // Find all balance displays in the navbar
     const balanceElements = document.querySelectorAll('#user-info .small.text-light-emphasis');
@@ -660,17 +676,14 @@ window.updateNavbarBalance = function(newBalance) {
     balanceElements.forEach(element => {
         if (newBalance !== null && newBalance !== undefined) {
             element.innerHTML = `<i class="bi bi-gem"></i> ${window.Auth?.formatBalance(newBalance) || newBalance.toLocaleString()} GEM`;
-            console.log('✅ Updated navbar balance element:', element);
         }
     });
 
     return balanceElements.length;
 };
 
-// Gaming system balance sync
+// Gaming system balance sync (silent)
 window.syncGamingBalance = function() {
-    console.log('🎮 Syncing gaming balance...');
-
     // Update gaming page balance displays
     const gamingBalanceElements = [
         document.getElementById('gaming-balance'),
@@ -684,7 +697,6 @@ window.syncGamingBalance = function() {
             const text = element.textContent || element.innerText || '';
             if (text.includes('Loading') || text.includes('0') || text.includes('5,000')) {
                 element.textContent = window.Auth?.formatBalance(currentBalance) || currentBalance.toLocaleString();
-                console.log('✅ Updated gaming balance display:', element);
             }
         }
     });
@@ -774,7 +786,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Listen for roulette balance change events and animate navbar
-    document.addEventListener('balanceUpdated', async (event) => {
+    document.addEventListener('balanceUpdated', (event) => {
         const { detail } = event;
         if (!detail) return;
 
@@ -783,8 +795,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const isFromRoulette = detail.source === 'roulette';
         const isSignificantChange = Math.abs(change) >= 10;
 
-        // Only animate for significant roulette changes
+        // Only animate for significant roulette changes (with reduced logging)
         if (isFromRoulette && isSignificantChange) {
+            // Throttled logging - only show every 5 seconds during active gambling
+            if (!window.lastBalanceLogTime || Date.now() - window.lastBalanceLogTime > 5000) {
+                if (window.DEBUG_GAMBLING_CHANGES) {
+                    console.log(`🎰 Gambling: ${change > 0 ? '+' : ''}${change} GEM`);
+                }
+                window.lastBalanceLogTime = Date.now();
+            }
+
             Auth.animateNavbarBalance(change, isPositive);
 
             // Also ensure gaming page displays are updated
@@ -793,7 +813,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Update navbar balance display
+        // Update navbar balance display with minimal logging
         setTimeout(() => {
             Auth.updateUserInterface();
         }, 350); // Delay to allow animation to complete

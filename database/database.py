@@ -1,8 +1,10 @@
 """
 Database connection and session management for CryptoChecker Version3.
+Supports both SQLite and PostgreSQL for concurrent write operations.
 """
 
 import os
+import logging
 from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy import text
@@ -13,16 +15,38 @@ from .models import Base, User, Wallet, CryptoCurrency, PortfolioHolding
 # Load environment variables
 load_dotenv()
 
-# Database configuration
+# Database configuration - supports SQLite and PostgreSQL
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./crypto_tracker_v3.db")
 
-# Create async engine
-engine = create_async_engine(
-    DATABASE_URL,
-    echo=False,  # Set to True for SQL debugging
-    pool_pre_ping=True,
-    pool_recycle=300
-)
+# Detect database type
+is_postgresql = DATABASE_URL.startswith("postgresql")
+
+# Create async engine with database-specific optimizations
+if is_postgresql:
+    # PostgreSQL configuration - optimized for concurrent writes
+    engine = create_async_engine(
+        DATABASE_URL,
+        echo=False,  # Set to True for SQL debugging
+        pool_pre_ping=True,
+        pool_size=20,  # Increase for concurrent connections
+        max_overflow=30,  # Allow more overflow connections
+        pool_recycle=300,  # Recycle connections frequently
+        pool_timeout=60,  # Wait longer for connections in pool
+    )
+    logging.info("🔧 Database: PostgreSQL configuration loaded")
+else:
+    # SQLite configuration - local development fallback
+    engine = create_async_engine(
+        DATABASE_URL,
+        echo=False,  # Set to True for SQL debugging
+        pool_pre_ping=True,
+        pool_recycle=300,
+        # SQLite optimizations
+        connect_args={
+            "check_same_thread": False,  # Allow multi-thread access
+        }
+    )
+    logging.info("🔧 Database: SQLite configuration loaded")
 
 # Create async session factory
 AsyncSessionLocal = async_sessionmaker(

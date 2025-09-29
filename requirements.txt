@@ -13,6 +13,10 @@ itsdangerous==2.1.2
 sqlalchemy[asyncio]==2.0.23
 aiosqlite==0.19.0
 
+# PostgreSQL Support
+asyncpg==0.29.0
+psycopg2-binary==2.9.7
+
 # Authentication & Security
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4

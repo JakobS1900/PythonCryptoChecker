@@ -76,8 +76,9 @@ class CryptoPriceService:
             except asyncio.CancelledError:
                 pass  # Normal shutdown
             except Exception as e:
-                print(f">> Error: Price service task crashed: {str(e)}")
-        
+                import sys
+                print(f">> Error: Price service task crashed: {str(e)}", file=sys.stderr)
+
         self._update_task.add_done_callback(_on_task_done)
         print(">> Crypto price service started")
 
@@ -108,7 +109,10 @@ class CryptoPriceService:
                 print(">> Info: Price update loop cancelled")
                 break
             except Exception as e:
-                print(f">> Error: Error in price update loop: {str(e)}\nTraceback:", exc_info=True)
+                import sys
+                print(f">> Error: Error in price update loop: {str(e)}")
+                import traceback
+                traceback.print_exc(file=sys.stderr)
                 # Don't exit the loop on error, just back off and retry
                 await asyncio.sleep(30)  # Longer backoff (30s) after error
                 continue
@@ -162,7 +166,10 @@ class CryptoPriceService:
 
             except Exception as e:
                 await db_session.rollback()
-                print(f">> Error: Error updating prices: {str(e)}\nTraceback:", exc_info=True)
+                import sys
+                print(f">> Error: Error updating prices: {str(e)}")
+                import traceback
+                traceback.print_exc(file=sys.stderr)
                 # Return early but don't re-raise
                 return
 

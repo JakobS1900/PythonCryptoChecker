@@ -462,14 +462,162 @@
 .result-item.green { background: linear-gradient(135deg, #22c55e, #16a34a); }
 
 /* =========================
-   TIMER BAR SECTION
+   BOT ARENA & TIMER SECTION
    ========================= */
-.timer-container {
-    margin: 1rem 0 2rem;
+.bot-arena-container {
+    position: relative;
+    margin: 1.5rem auto 2rem;
     max-width: 1400px;
-    margin-left: auto;
-    margin-right: auto;
     padding: 0 2rem;
+}
+
+.bot-arena-section {
+    margin-bottom: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 1rem;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.arena-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.arena-label {
+    font-weight: 700;
+    color: #fbbf24;
+    font-size: 0.9rem;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.active-players {
+    font-size: 0.8rem;
+    color: #9ca3af;
+}
+
+.player-count {
+    color: #fbbf24;
+    font-weight: 600;
+}
+
+.bot-activity-arena {
+    min-height: 80px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.bot-participant {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 20px;
+    padding: 0.5rem 1rem;
+    margin: 0.25rem;
+    font-size: 0.85rem;
+    color: white;
+    transition: all 0.3s ease;
+    position: relative;
+    animation: botEntrance 0.5s ease-out;
+}
+
+@keyframes botEntrance {
+    from {
+        opacity: 0;
+        transform: scale(0.8) translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.bot-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    font-size: 1.2rem;
+}
+
+.bot-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.bot-name {
+    font-weight: 600;
+    color: #fbbf24;
+    font-size: 0.8rem;
+}
+
+.bot-bet {
+    color: #10b981;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.bot-participant.betting {
+    background: rgba(16, 185, 129, 0.2);
+    border-color: rgba(16, 185, 129, 0.5);
+    animation: botBetting 1s ease-in-out infinite alternate;
+}
+
+@keyframes botBetting {
+    from {
+        transform: scale(1);
+        box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+    }
+    to {
+        transform: scale(1.05);
+        box-shadow: 0 0 20px rgba(16, 185, 129, 0.6);
+    }
+}
+
+.bot-spinning-wheel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.wheel-decoration {
+    font-size: 2rem;
+    color: #fbbf24;
+    animation: wheelSpinDecor 2s ease-in-out infinite;
+}
+
+@keyframes wheelSpinDecor {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.bot-spinning-wheel span {
+    color: #fbbf24;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.timer-container-with-arena {
+    margin-top: 1rem;
 }
 
 .timer-bar {
@@ -1660,13 +1808,21 @@
     box-shadow: 0 4px 20px rgba(251, 191, 36, 0.4);
 }
 
-/* Enhanced Animations */
-@keyframes wheelSpin {
+/* Enhanced Animations - HORIZONTAL ONLY */
+/* Override conflicting rotation animations */
+.wheel-segments.spinning,
+.wheel-container .wheel-numbers {
+    animation: horizontalSpin 3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards !important;
+    transform-origin: center center !important;
+}
+
+@keyframes horizontalSpin {
     from {
-        transform: translate(-50%, -50%) rotate(0deg);
+        transform: translateX(0px);
     }
     to {
-        transform: translate(-50%, -50%) rotate(1800deg);
+        /* JavaScript will override this with correct positioning */
+        transform: translateX(0px);
     }
 }
 

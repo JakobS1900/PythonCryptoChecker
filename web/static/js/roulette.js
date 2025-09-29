@@ -1,9 +1,9 @@
 ﻿class RouletteGame {
-    constructor() {
-        this.MIN_BET = 10;
-        this.MAX_BET = 10000;
-        this.ROUND_DURATION = 20000; // milliseconds
-        this.SPIN_ANIMATION_MS = 6000;
+constructor() {
+    this.MIN_BET = 10;
+    this.MAX_BET = 10000;
+    this.ROUND_DURATION = 15000; // milliseconds - REDUCED from 20000 for faster casino gameplay
+    this.SPIN_ANIMATION_MS = 3000; // REDUCED from 6000 for snappier experience
 
         this.gameId = null;
         this.balance = 0;
@@ -76,6 +76,10 @@
 
         // Initialize bots when game loads
         await this.initializeBotSystem();
+
+        // Initialize bot arena
+        this.initializeBotArena();
+
         this.startNewRound();
 
         window.addEventListener('balanceUpdated', (event) => {
@@ -109,6 +113,277 @@
         } catch (error) {
             console.error('❌ Failed to initialize bot system:', error);
         }
+    }
+
+    // Initialize the bot arena UI
+    initializeBotArena() {
+        console.log('🎭 Initializing bot arena...');
+
+        try {
+            // Create bot arena container in the game area
+            let arena = document.getElementById('bot-activity-arena');
+            if (!arena) {
+                arena = document.createElement('div');
+                arena.id = 'bot-activity-arena';
+                arena.className = 'bot-activity-arena';
+                arena.innerHTML = `
+                    <div class="arena-header">
+                        <span class="arena-title">🤖 Bot Arena</span>
+                        <span class="player-count" id="arena-player-count">0 players</span>
+                    </div>
+                    <div class="arena-participants">
+                        <div class="arena-placeholder">
+                            <div class="placeholder-icon">🎭</div>
+                            <div class="placeholder-text">Bot participants will appear here during betting rounds</div>
+                        </div>
+                    </div>
+                `;
+
+                // Add to the game interface - find a good spot
+                const gameContainer = document.querySelector('.game-container') ||
+                                    document.querySelector('.roulette-container') ||
+                                    document.querySelector('.game-interface');
+
+                if (gameContainer) {
+                    // Try to add after the betting controls or before the spin button
+                    const spinButton = document.getElementById('spinWheel');
+                    if (spinButton) {
+                        spinButton.parentNode.insertBefore(arena, spinButton);
+                    } else {
+                        gameContainer.appendChild(arena);
+                    }
+
+                    console.log('✅ Bot arena UI created');
+                } else {
+                    console.warn('⚠️ Could not find game container to add bot arena');
+                }
+            }
+
+            // Add CSS styles for bot arena
+            this.addBotArenaStyles();
+
+        } catch (error) {
+            console.error('❌ Failed to initialize bot arena:', error);
+        }
+    }
+
+    // Add CSS styles for bot arena
+    addBotArenaStyles() {
+        if (document.querySelector('#bot-arena-styles')) return;
+
+        const style = document.createElement('style');
+        style.id = 'bot-arena-styles';
+        style.textContent = `
+            .bot-activity-arena {
+                background: linear-gradient(135deg, #1a1a2e, #16213e);
+                border: 2px solid rgba(251, 191, 36, 0.3);
+                border-radius: 15px;
+                margin: 20px 0;
+                padding: 15px;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+                position: relative;
+                overflow: hidden;
+            }
+
+            .bot-activity-arena::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: linear-gradient(45deg,
+                    rgba(251, 191, 36, 0.02),
+                    rgba(34, 197, 94, 0.02),
+                    rgba(251, 191, 36, 0.02));
+                pointer-events: none;
+            }
+
+            .arena-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 15px;
+                position: relative;
+                z-index: 1;
+            }
+
+            .arena-title {
+                color: #fbbf24;
+                font-weight: 700;
+                font-size: 1.1rem;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .player-count {
+                color: #9ca3af;
+                font-size: 0.9rem;
+                font-weight: 500;
+                padding: 4px 12px;
+                background: rgba(251, 191, 36, 0.1);
+                border-radius: 20px;
+                border: 1px solid rgba(251, 191, 36, 0.2);
+            }
+
+            .arena-participants {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+                position: relative;
+                z-index: 1;
+                min-height: 60px;
+            }
+
+            .arena-placeholder {
+                width: 100%;
+                text-align: center;
+                color: #6b7280;
+                padding: 20px;
+                background: rgba(255, 255, 255, 0.02);
+                border-radius: 10px;
+                border: 1px dashed rgba(251, 191, 36, 0.2);
+            }
+
+            .placeholder-icon {
+                font-size: 2rem;
+                margin-bottom: 10px;
+                opacity: 0.5;
+            }
+
+            .placeholder-text {
+                font-size: 0.9rem;
+                font-style: italic;
+            }
+
+            .bot-participant {
+                background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(251, 191, 36, 0.1));
+                border: 1px solid rgba(34, 197, 94, 0.3);
+                border-radius: 12px;
+                padding: 12px;
+                min-width: 160px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                transition: all 0.3s ease;
+                position: relative;
+                overflow: hidden;
+                animation: botJoin 0.5s ease-out;
+            }
+
+            @keyframes botJoin {
+                from {
+                    opacity: 0;
+                    transform: scale(0.8) translateY(20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: scale(1) translateY(0);
+                }
+            }
+
+            .bot-participant::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -100%;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(90deg,
+                    transparent,
+                    rgba(34, 197, 94, 0.1),
+                    transparent);
+                transition: left 0.5s ease;
+            }
+
+            .bot-participant:hover::before {
+                left: 100%;
+            }
+
+            .bot-participant.betting {
+                animation: botBetting 1.5s ease-in-out infinite;
+            }
+
+            @keyframes botBetting {
+                0%, 100% {
+                    box-shadow: 0 0 10px rgba(34, 197, 94, 0.3);
+                }
+                50% {
+                    box-shadow: 0 0 20px rgba(34, 197, 94, 0.6);
+                }
+            }
+
+            .bot-participant .bot-avatar {
+                font-size: 2.2rem;
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: linear-gradient(135deg, rgba(251, 191, 36, 0.2), rgba(34, 197, 94, 0.2));
+                border: 1px solid rgba(251, 191, 36, 0.3);
+                flex-shrink: 0;
+            }
+
+            .bot-info {
+                flex: 1;
+                min-width: 0;
+            }
+
+            .bot-name {
+                color: #fbbf24;
+                font-weight: 600;
+                font-size: 0.95rem;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                margin-bottom: 2px;
+                display: block;
+            }
+
+            .bot-status {
+                color: #9ca3af;
+                font-size: 0.8rem;
+                font-style: italic;
+                transition: all 0.3s ease;
+            }
+
+            .bot-status.active-bet {
+                color: #22d3ee;
+                font-weight: 500;
+                animation: betActive 2s ease-in-out infinite;
+            }
+
+            @keyframes betActive {
+                0%, 100% { opacity: 1; }
+                50% { opacity: 0.7; }
+            }
+
+            /* Responsive design */
+            @media (max-width: 768px) {
+                .arena-participants {
+                    flex-direction: column;
+                }
+
+                .bot-participant {
+                    min-width: auto;
+                    width: 100%;
+                }
+
+                .arena-header {
+                    flex-direction: column;
+                    gap: 8px;
+                    align-items: flex-start;
+                }
+
+                .player-count {
+                    align-self: flex-end;
+                }
+            }
+        `;
+        document.head.appendChild(style);
     }
 
     // Load bot statistics and count
@@ -210,6 +485,257 @@
         const type = betTypes[Math.floor(Math.random() * betTypes.length)];
 
         this.generateBotActivity(name, amount, type);
+    }
+
+    // Create bot participants for the round when betting starts
+    createBotParticipants() {
+        // Clear existing participants
+        const arena = document.getElementById('bot-activity-arena');
+        if (arena) {
+            arena.innerHTML = '';
+        }
+
+        // Hide the spinning wheel
+        const spinningWheel = document.getElementById('bot-spinning-wheel');
+        if (spinningWheel) {
+            spinningWheel.style.display = 'none';
+        }
+
+        // Create 3-5 bot participants for this round
+        const numBots = 3 + Math.floor(Math.random() * 3); // 3-5 bots
+        const botNames = [
+            'DiamondHands', 'CryptoKing', 'LuckyCharm', 'MoonBob', 'NimbleBob',
+            'HodlMaxwell', 'BitBro', 'SatoshisBet', 'CryptoJoe', 'DiamondJoe'
+        ];
+
+        this.roundBots = [];
+
+        for (let i = 0; i < numBots; i++) {
+            const botName = botNames[i];
+            const personality = this.getBotPersonality(botName);
+            const avatar = this.getRandomBotAvatar(botName);
+
+            const botParticipant = {
+                name: botName,
+                personality: personality,
+                avatar: avatar,
+                bet: null,
+                element: this.createBotParticipantElement(botName, avatar, personality)
+            };
+
+            this.roundBots.push(botParticipant);
+            this.addBotToArena(botParticipant);
+        }
+
+        // Update player count
+        const playerCount = document.getElementById('arena-player-count');
+        if (playerCount) {
+            playerCount.textContent = `${this.roundBots.length} players`;
+        }
+    }
+
+    // Create HTML element for a bot participant
+    createBotParticipantElement(name, avatar, personality) {
+        const element = document.createElement('div');
+        element.className = 'bot-participant';
+        element.innerHTML = `
+            <div class="bot-avatar">${avatar}</div>
+            <div class="bot-info">
+                <div class="bot-name">${name}</div>
+                <div class="bot-status">Thinking...</div>
+            </div>
+        `;
+        return element;
+    }
+
+    // Add bot to the arena
+    addBotToArena(botParticipant) {
+        const arena = document.getElementById('bot-activity-arena');
+        if (arena) {
+            arena.appendChild(botParticipant.element);
+        }
+    }
+
+    // Make bots place bets during the betting round
+    botsPlaceBets() {
+        console.log('🤖 Bots starting to place bets...');
+
+        // Update arena placeholder to show activity
+        const placeholder = document.querySelector('.arena-placeholder');
+        if (placeholder) {
+            const placeholderText = placeholder.querySelector('.placeholder-text');
+            if (placeholderText) {
+                placeholderText.textContent = 'Bots are thinking...';
+            }
+        }
+
+        // Simulate bots making decisions during betting time
+        setTimeout(() => {
+            this.roundBots.forEach((bot, index) => {
+                setTimeout(() => {
+                    console.log(`🤖 ${bot.name} is deciding...`);
+                    this.botPlaceSpecificBet(bot);
+
+                    // Update bot status during thinking phase
+                    if (bot.element) {
+                        const statusElement = bot.element.querySelector('.bot-status');
+                        if (statusElement) {
+                            statusElement.textContent = 'Deciding...';
+                        }
+                    }
+                }, index * 1000); // Stagger bot bets more realistically (1 second apart)
+            });
+        }, 1000); // Start after a second
+    }
+
+    // Have a specific bot place a bet
+    botPlaceSpecificBet(bot) {
+        // Generate bot bet based on personality
+        const amount = this.generateBotBetAmount(bot.personality);
+        const betType = this.generateBotBetType(bot.personality);
+
+        // Convert to API-compatible bet format
+        const betMap = {
+            'RED': 'RED_BLACK',
+            'BLACK': 'RED_BLACK',
+            'GREEN': 'RED_BLACK',  // Green still uses RED_BLACK type but with 'green' value
+            '1-18': 'HIGH_LOW',
+            '19-36': 'HIGH_LOW',
+            'EVEN': 'EVEN_ODD',
+            'ODD': 'EVEN_ODD'
+        };
+
+        const betValueMap = {
+            'RED': 'red',
+            'BLACK': 'black',
+            'GREEN': 'green',
+            '1-18': 'low',
+            '19-36': 'high',
+            'EVEN': 'even',
+            'ODD': 'odd'
+        };
+
+        // Create the bet
+        const betData = {
+            type: betMap[betType],
+            value: betValueMap[betType],
+            amount: amount,
+            botName: bot.name
+        };
+
+        // Register the bot bet
+        this.registerBotBet(betData);
+
+        // Update bot element to show bet
+        this.updateBotElementBet(bot, betType, amount);
+    }
+
+    // Register bot bet in the system
+    registerBotBet(betData) {
+        // Actually place the bet through the API
+        this.placeBotBetOnServer(betData);
+
+        // Add to our current bets tracking (for UI)
+        const betObj = {
+            type: betData.type,
+            value: betData.value,
+            amount: betData.amount,
+            betId: `bot-${Date.now()}-${Math.random()}`,
+            isBot: true,
+            botName: betData.botName
+        };
+
+        this.currentBets.push(betObj);
+
+        // Update UI to show bot bets
+        this.updateBetSummary();
+
+        // Show announcement
+        this.showBetAnnouncement(`${betData.botName} bet ${this.formatAmount(betData.amount)} GEM on ${betData.value.toUpperCase()}`, false);
+    }
+
+    // Place bot bet on server (this would integrate with your backend)
+    async placeBotBetOnServer(betData) {
+        try {
+            // Actually place the bot bet through the existing betting API
+            // This makes bots' bets count in the actual round results!
+            console.log(`🤖 Placing bot bet for ${betData.botName}: ${betData.amount} GEM on ${betData.value}`);
+
+            // CRITICAL FIX: Refresh balance from server before checking/attempting bet
+            console.log('🔄 Refreshing balance before bot bet...');
+            await this.refreshBalanceFromServer();
+
+            // Check local balance AFTER sync (bots should all have 2000+ GEM now)
+            if (this.balance < betData.amount) {
+                console.warn(`⚠️ Failed to place bot bet for ${betData.botName}: Insufficient balance. Current: ${this.balance} GEM, Required: ${betData.amount} GEM`);
+                return null;
+            }
+
+            const betPayload = {
+                bet_type: betData.type,
+                bet_value: betData.value,
+                amount: betData.amount
+            };
+
+            // Use the existing API endpoint - no extra bot fields needed since bots are handled by the bot system
+            const response = await this.postJson(`/api/gaming/roulette/${this.gameId}/bet`, betPayload);
+
+            if (response && response.success) {
+                console.log(`✅ Bot bet placed successfully for ${betData.botName}: ${response.bet_id}`);
+                return response.bet_id;
+            } else {
+                console.warn(`⚠️ Failed to place bot bet for ${betData.botName}:`, response?.error);
+                return null;
+            }
+
+        } catch (error) {
+            console.warn('❌ Failed to place bot bet:', error);
+            return null;
+        }
+    }
+
+    // Update bot element to show active bet
+    updateBotElementBet(bot, betType, amount) {
+        const statusElement = bot.element.querySelector('.bot-status');
+        if (statusElement) {
+            statusElement.textContent = `${betType} (${this.formatAmount(amount)} GEM)`;
+            statusElement.classList.add('active-bet');
+        }
+
+        bot.element.classList.add('betting');
+        bot.bet = { type: betType, amount: amount };
+    }
+
+    // Generate appropriate bet amount based on bot personality
+    generateBotBetAmount(personality) {
+        const baseAmounts = {
+            'CONSERVATIVE': [10, 25, 50, 75],
+            'TREND_FOLLOWER': [20, 50, 100, 150],
+            'OPPORTUNISTIC': [15, 75, 150, 250],
+            'AGGRESSIVE': [50, 150, 300, 500],
+            'HIGHROLLER': [100, 250, 500, 1000],
+            'TIMID': [5, 10, 15, 25],
+            'PREDICTABLE_GAMBLER': [25, 50, 100, 200]
+        };
+
+        const amounts = baseAmounts[personality] || [20, 50, 100, 200];
+        return amounts[Math.floor(Math.random() * amounts.length)];
+    }
+
+    // Generate appropriate bet type based on bot personality
+    generateBotBetType(personality) {
+        const typePreferences = {
+            'CONSERVATIVE': ['RED', 'BLACK', 'EVEN', 'ODD', '1-18', '19-36'],
+            'TREND_FOLLOWER': ['RED', 'BLACK', '1-18', '19-36'],
+            'OPPORTUNISTIC': ['RED', 'BLACK', 'GREEN'],
+            'AGGRESSIVE': ['RED', 'BLACK', 'GREEN'],
+            'HIGHROLLER': ['GREEN', 'RED', 'BLACK'],
+            'TIMID': ['RED', 'BLACK'],
+            'PREDICTABLE_GAMBLER': ['EVEN', 'ODD', '1-18', '19-36']
+        };
+
+        const types = typePreferences[personality] || ['RED', 'BLACK'];
+        return types[Math.floor(Math.random() * types.length)];
     }
 
     // Add bot activity to feed (replaces fake bets)
@@ -558,13 +1084,17 @@
 
     async handleBet(type, rawValue, sourceButton) {
         if (this.isProcessing || this.currentBets.length > 0) {
+            console.log('🚫 Bet blocked: isProcessing=', this.isProcessing, 'currentBets=', this.currentBets.length);
             return;
         }
 
         const amount = this.currentAmount;
+        console.log('🎯 Starting human bet placement:', { type, rawValue, amount });
+
         // Check balance server-side instead of local balance
         try {
             const validation = await this.fetch('/api/gaming/validate-bet?amount=' + encodeURIComponent(amount));
+            console.log('📊 Balance validation result:', validation);
             if (!validation.valid) {
                 this.showNotification(validation.message, 'error');
                 // Refresh balance to show current amount
@@ -572,6 +1102,7 @@
                 return;
             }
         } catch (error) {
+            console.error('❌ Balance validation error:', error);
             this.showNotification('Unable to validate balance. Please refresh the page.', 'error');
             return;
         }
@@ -580,15 +1111,22 @@
             type: this.normalizeBetType(type),
             value: String(rawValue).toLowerCase(),
             amount,
-            source: sourceButton
+            source: sourceButton,
+            isPlayerBet: true,  // Mark as human player bet
+            playerName: window.Auth?.currentUser?.username || 'You',
+            playerAvatar: window.Auth?.currentUser?.avatar || '👤'
         };
+
+        console.log('📝 Human bet data prepared:', betData);
 
         // Add to pending queue for confirmation
         this.addToPendingBets(betData);
         this.showNotification(`${amount} GEM bet on ${this.formatBetLabel(betData)} added. Confirm to place order.`, 'info');
 
         // Auto-confirm after 2 seconds if not manually confirmed
+        console.log('⏰ Setting auto-confirm timer...');
         setTimeout(() => {
+            console.log('🤖 Auto-confirming pending bet...');
             this.confirmPendingBet();
         }, 2000);
     }
@@ -608,20 +1146,26 @@
 
     async confirmPendingBet() {
         if (this.pendingBets.length === 0 || this.isProcessing) {
+            console.log('🚫 confirmPendingBet blocked:', { pendingLength: this.pendingBets.length, isProcessing: this.isProcessing });
             return;
         }
 
         const betData = this.pendingBets[0];
+        console.log('🤖 confirmPendingBet starting with betData:', betData);
         this.isProcessing = true;
 
         try {
             // Remove highlight immediately
             if (betData.source) {
                 betData.source.classList.remove('bet-pending', 'bet-highlighted');
+                console.log('✅ Removed bet highlighting');
             }
 
+            console.log('🎰 Ensuring game session...');
             await this.ensureGameSession();
+            console.log('🎰 Game session result:', { gameId: this.gameId });
             if (!this.gameId) {
+                console.error('❌ No game session available');
                 this.showNotification('Game session unavailable.', 'error');
                 this.clearPendingBets();
                 return;
@@ -633,30 +1177,89 @@
                 amount: betData.amount
             };
 
-            const response = await this.postJson(`/api/gaming/roulette/${this.gameId}/bet`, betPayload);
+            const apiUrl = `/api/gaming/roulette/${this.gameId}/bet`;
+            console.log('🚀 [DEBUG] About to call API:', apiUrl);
+            console.log('📤 [DEBUG] Bet payload:', JSON.stringify(betPayload, null, 2));
+
+            // Get auth status
+            const authToken = localStorage.getItem('auth_token');
+            console.log('🔐 [DEBUG] Auth token exists:', !!authToken);
+            if (authToken) {
+                const tokenParts = authToken.split('.');
+                if (tokenParts.length === 3) {
+                    try {
+                        const payload = JSON.parse(atob(tokenParts[1]));
+                        console.log('🔐 [DEBUG] Token user:', payload.sub || payload.username || 'unknown');
+                    } catch (e) {
+                        console.log('🔐 [DEBUG] Could not decode token payload');
+                    }
+                }
+            }
+
+            const response = await this.postJson(apiUrl, betPayload);
+            console.log('📥 [DEBUG] Raw API response:', response);
+
             if (response && response.success) {
-                this.registerBet({
+                console.log('✅ Bet placement successful, bet_id:', response.bet_id);
+
+                // Register the bet locally
+                const localBet = {
                     type: betPayload.bet_type,
                     value: betPayload.bet_value,
                     amount: betData.amount,
-                    betId: response.bet_id || crypto.randomUUID()
-                });
+                    betId: response.bet_id || crypto.randomUUID(),
+                    isPlayerBet: betData.isPlayerBet || false,
+                    playerName: betData.playerName || 'Unknown',
+                    playerAvatar: betData.playerAvatar || '👤'
+                };
+
+                console.log('🎯 [DEBUG] Registering local bet:', localBet);
+                this.registerBet(localBet);
 
                 // Sync balance from server after successful bet placement
+                console.log('💰 Refreshing balance from server...');
                 await this.refreshBalanceFromServer();
 
                 this.showNotification(`Bet confirmed: ${betData.amount} GEM on ${this.formatBetLabel(betData)}`, 'success');
                 this.updateSpinButtonState(); // Enable spin button when bets are active
+                console.log('🎯 Human bet registration complete');
             } else {
                 const message = response?.error || response?.message || 'Failed to place bet.';
-                this.showNotification(message, 'error');
+                console.error('❌ [DEBUG] Bet placement failed:', { response, message });
+                console.error('❌ [DEBUG] Response details:', JSON.stringify(response, null, 2));
+
+                // More specific error messages
+                if (response?.error?.toLowerCase().includes('balance')) {
+                    this.showNotification('❌ Insufficient balance! Check your GEM amount.', 'error');
+                } else if (response?.error?.toLowerCase().includes('session')) {
+                    this.showNotification('❌ Game session expired - refreshing...', 'error');
+                    this.gameId = null; // Force new session
+                } else {
+                    this.showNotification(`❌ Bet failed: ${message}`, 'error');
+                }
 
                 // Refresh balance on bet failure to ensure UI is in sync
                 await this.refreshBalanceFromServer();
             }
         } catch (error) {
-            console.error('Bet confirmation error', error);
-            this.showNotification('Error confirming bet. Please try again.', 'error');
+            console.error('❌ [DEBUG] Bet confirmation error details:', {
+                error: error,
+                stack: error.stack,
+                message: error.message
+            });
+
+            // More specific error handling
+            if (error.message?.includes('401')) {
+                this.showNotification('❌ Please log in again - authentication expired', 'error');
+            } else if (error.message?.includes('403')) {
+                this.showNotification('❌ Access denied - check authentication', 'error');
+            } else if (error.message?.includes('404')) {
+                this.showNotification('❌ Bet API not found - check server connection', 'error');
+            } else if (error.message?.includes('500')) {
+                this.showNotification('❌ Server error - please try again', 'error');
+            } else {
+                this.showNotification(`❌ Network error: ${error.message || 'Unknown error'}`, 'error');
+            }
         } finally {
             this.clearPendingBets();
             this.isProcessing = false;
@@ -712,30 +1315,239 @@
         if (this.currentBets.length === 0) {
             this.elements.betsList.innerHTML = '<p class="empty-state">No bets placed yet.</p>';
         } else {
+            // Sort bets so player bets appear first, then bot bets
+            const sortedBets = [...this.currentBets].sort((a, b) => {
+                if (a.isPlayerBet && !b.isPlayerBet) return -1;
+                if (!a.isPlayerBet && b.isPlayerBet) return 1;
+                return 0;
+            });
+
             const fragment = document.createDocumentFragment();
-            this.currentBets.forEach((bet, index) => {
+            sortedBets.forEach((bet, originalIndex) => {  // Use sorted array, but pass original index for removal
                 const item = document.createElement('div');
-                item.className = 'bet-item';
-                item.innerHTML = `
-                    <span class="bet-label">${this.formatBetLabel(bet)}</span>
-                    <span class="bet-amount">${this.formatAmount(bet.amount)} GEM</span>
-                    <button class="remove-bet" aria-label="Remove bet">
-                        <i class="bi bi-x"></i>
-                    </button>
-                `;
-                item.querySelector('.remove-bet').addEventListener('click', () => {
-                    this.removeBet(index);
-                });
+                const isPlayerBet = bet.isPlayerBet || false;
+                item.className = `bet-item ${isPlayerBet ? 'player-bet' : 'bot-bet'}`;
+
+                if (isPlayerBet) {
+                    // Player's bet - highlight and show their info
+                    item.innerHTML = `
+                        <div class="bet-info">
+                            <div class="bet-player-info">
+                                <span class="player-avatar">${bet.playerAvatar || '👤'}</span>
+                                <span class="player-name">${bet.playerName || 'You'}</span>
+                            </div>
+                            <span class="bet-label">${this.formatBetLabel(bet)}</span>
+                        </div>
+                        <div class="bet-details">
+                            <span class="bet-amount">${this.formatAmount(bet.amount)} GEM</span>
+                            <button class="remove-bet" aria-label="Remove bet" title="Remove your bet">
+                                <i class="bi bi-x"></i>
+                            </button>
+                        </div>
+                    `;
+                    item.querySelector('.remove-bet').addEventListener('click', () => {
+                        this.removeBet(originalIndex);
+                    });
+                } else {
+                    // Bot's bet - show as read-only (immersion: don't show "Bot")
+                    item.innerHTML = `
+                        <div class="bet-info">
+                            <div class="bet-player-info">
+                                <span class="player-avatar">${this.getRandomAvatar(bet.botName || 'Player')}</span>
+                                <span class="player-name">${bet.botName || 'Player'}</span>
+                            </div>
+                            <span class="bet-label">${this.formatBetLabel(bet)}</span>
+                        </div>
+                        <div class="bet-details">
+                            <span class="bet-amount">${this.formatAmount(bet.amount)} GEM</span>
+                        </div>
+                    `;
+                }
+
                 fragment.appendChild(item);
             });
             this.elements.betsList.appendChild(fragment);
         }
+
+        // Add CSS styles for enhanced bet items if not already present
+        this.addBetItemStyles();
 
         const total = this.currentBets.reduce((acc, bet) => acc + bet.amount, 0);
         const potential = this.currentBets.reduce((acc, bet) => acc + (bet.amount * this.getPayoutMultiplier(bet.type, bet.value)), 0);
 
         this.elements.totalBet.textContent = `${this.formatAmount(total)} GEM`;
         this.elements.potentialWin.textContent = `${this.formatAmount(potential)} GEM`;
+    }
+
+    // Add styles for enhanced bet items
+    addBetItemStyles() {
+        if (document.querySelector('#enhanced-bet-styles')) return;
+
+        const style = document.createElement('style');
+        style.id = 'enhanced-bet-styles';
+        style.textContent = `
+            .bet-item {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 12px 16px;
+                margin-bottom: 8px;
+                border-radius: 8px;
+                background: rgba(255, 255, 255, 0.05);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                transition: all 0.3s ease;
+            }
+
+            .bet-item:hover {
+                background: rgba(255, 255, 255, 0.08);
+                transform: translateY(-1px);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            }
+
+            .player-bet {
+                background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(251, 191, 36, 0.05));
+                border: 1px solid rgba(16, 185, 129, 0.3);
+                box-shadow: 0 2px 8px rgba(16, 185, 129, 0.1);
+            }
+
+            .player-bet:hover {
+                background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(251, 191, 36, 0.08));
+                border-color: rgba(16, 185, 129, 0.5);
+                box-shadow: 0 4px 16px rgba(16, 185, 129, 0.2);
+            }
+
+            .bot-bet {
+                background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.05));
+                border: 1px solid rgba(59, 130, 246, 0.3);
+                box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+                opacity: 0.85;
+            }
+
+            .bot-bet:hover {
+                background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(139, 92, 246, 0.08));
+                border-color: rgba(59, 130, 246, 0.5);
+                box-shadow: 0 4px 16px rgba(59, 130, 246, 0.2);
+            }
+
+            .bet-info {
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+                flex: 1;
+            }
+
+            .bet-player-info {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                font-size: 0.9rem;
+            }
+
+            .player-avatar {
+                font-size: 1.5rem;
+                width: 28px;
+                height: 28px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 50%;
+                background: rgba(255, 255, 255, 0.1);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+            }
+
+            .player-name {
+                color: #fbbf24;
+                font-weight: 600;
+                text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+            }
+
+            .bot-bet .player-name {
+                color: #60a5fa;
+            }
+
+            .bet-label {
+                color: #ffffff;
+                font-weight: 500;
+                font-size: 0.95rem;
+                text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+            }
+
+            .bet-details {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+
+            .bet-amount {
+                color: #10b981;
+                font-weight: 600;
+                font-size: 1rem;
+                text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+            }
+
+            .bot-bet .bet-amount {
+                color: #60a5fa;
+            }
+
+            .remove-bet {
+                background: linear-gradient(45deg, #ef4444, #dc2626);
+                border: none;
+                border-radius: 50%;
+                width: 24px;
+                height: 24px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                font-size: 0.8rem;
+            }
+
+            .remove-bet:hover {
+                background: linear-gradient(45deg, #dc2626, #b91c1c);
+                transform: scale(1.1);
+                box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+            }
+
+            .remove-bet:active {
+                transform: scale(0.95);
+            }
+
+            .empty-state {
+                text-align: center;
+                color: #9ca3af;
+                font-style: italic;
+                padding: 20px;
+                margin: 0;
+            }
+
+            /* Mobile responsiveness */
+            @media (max-width: 768px) {
+                .bet-item {
+                    flex-direction: column;
+                    align-items: flex-start;
+                    gap: 8px;
+                    padding: 10px 12px;
+                }
+
+                .bet-details {
+                    width: 100%;
+                    justify-content: space-between;
+                }
+
+                .player-avatar {
+                    font-size: 1.3rem;
+                    width: 24px;
+                    height: 24px;
+                }
+
+                .bet-amount {
+                    font-size: 0.9rem;
+                }
+            }
+        `;
+        document.head.appendChild(style);
     }
 
     removeBet(index) {
@@ -793,15 +1605,17 @@
 
     async handleSpinResult(result) {
         const outcome = result?.result;
-        if (outcome && typeof outcome.number === 'number') {
-            this.animateWheel(outcome.number);
-            this.updateHistory(outcome.number, outcome.color || 'red');
+        if (!outcome || typeof outcome.number !== 'number') {
+            console.error('Invalid spin result', result);
+            this.showNotification('Invalid spin result', 'error');
+            this.startNewRound();
+            return;
         }
 
-        // Update session statistics and auto-betting logic
-        this.sessionRounds++;
+        // Start wheel animation immediately - only visual
+        this.animateWheel(outcome.number);
 
-        // Show detailed win/lose notifications based on individual bets
+        // Process bets but DON'T SHOW RESULTS YET
         const bets = result?.bets || [];
         let totalWinnings = 0;
         let totalLosses = 0;
@@ -816,255 +1630,267 @@
             }
         });
 
-        // Update session profit
-        this.sessionProfit += totalWinnings - totalLosses;
+        // Pre-calculate statistics
+        const isWin = totalWinnings > 0;
+        const netResult = totalWinnings - totalLosses;
+        const multiplier = bets.find(b => b.is_winner)?.multiplier || 1;
 
-        // Update achievements
-        this.updateAchievements(totalWinnings, totalLosses);
+        // CRITICAL FIX: Wait for animation to complete before showing ANY results
+        const waitForAnimation = () => {
+            return new Promise(resolve => {
+                const checkAnimationEnd = () => {
+                    const now = Date.now();
+                    if (this.wheelAnimationEndTime && now >= this.wheelAnimationEndTime) {
+                        resolve();
+                    } else {
+                        setTimeout(checkAnimationEnd, 50); // Check every 50ms
+                    }
+                };
+                checkAnimationEnd();
+            });
+        };
 
-        // Handle auto-betting progression
-        if (this.autoBetEnabled && totalWinnings === 0) { // Loss occurred
-            this.handleAutoBetLoss();
-        } else if (this.autoBetEnabled && totalWinnings > 0) { // Win occurred
-            this.handleAutoBetWin();
-        }
+        try {
+            // Wait for wheel animation to complete
+            await waitForAnimation();
 
-        // Check auto-bet stop conditions
-        if (this.autoBetEnabled) {
-            if (this.shouldStopAutoBet()) {
-                this.stopAutoBet();
-            } else if (this.autoBetRoundsLeft > 0) {
-                this.autoBetRoundsLeft--;
-                if (this.autoBetRoundsLeft === 0) {
+            // NOW we can update history and show results
+            this.updateHistory(outcome.number, outcome.color || 'red');
+
+            // Update session statistics
+            this.sessionRounds++;
+            this.sessionProfit += netResult;
+            this.updateAchievements(totalWinnings, totalLosses);
+
+            // Handle auto-betting
+            if (this.autoBetEnabled) {
+                if (totalWinnings === 0) { // Loss occurred
+                    this.handleAutoBetLoss();
+                } else if (totalWinnings > 0) { // Win occurred
+                    this.handleAutoBetWin();
+                }
+
+                // Check auto-bet stop conditions
+                if (this.shouldStopAutoBet()) {
                     this.stopAutoBet();
+                } else if (this.autoBetRoundsLeft > 0) {
+                    this.autoBetRoundsLeft--;
+                    if (this.autoBetRoundsLeft === 0) {
+                        this.stopAutoBet();
+                    }
                 }
             }
+
+            // Sync balance from server AFTER animation completes
+            await this.refreshBalanceFromServer();
+
+            // NOW show results - winner number was already displayed during animation
+            this.showPersistentResult(isWin, isWin ? totalWinnings : totalLosses);
+
+            // Show detailed result modal
+            await this.showResultSummary(totalWinnings, totalLosses, outcome);
+
+            // Clean up for next round
+            this.currentBets = [];
+            this.updateBetSummary();
+            this.updateSpinButtonState();
+
+            // Start new round
+            this.reEnableBetting();
+            this.startNewRound();
+
+        } catch (error) {
+            console.error('Error handling spin result:', error);
+            // Fallback - show notification even if animation timing failed
+            this.showNotification('Error displaying results, refresh if needed', 'warning');
+            this.startNewRound();
         }
-
-        // Sync balance from server after spin results
-        await this.refreshBalanceFromServer();
-
-    // Show persistent result notification first - instant feedback
-    this.showPersistentResult(totalWinnings > 0, totalWinnings > 0 ? totalWinnings : totalLosses);
-
-    // Show flashy casino-style result overlay with delay for maximum impact
-    if (totalWinnings > 0) {
-        const multiplier = bets.find(b => b.is_winner)?.multiplier || 1;
-        setTimeout(() => {
-            this.showCasinoStyleResult('win', {
-                winnings: totalWinnings,
-                multiplier: multiplier,
-                number: outcome?.number || '0',
-                crypto: outcome?.crypto || 'Unknown'
-            });
-        }, 1000); // Dramatic delay for wheel animation completion
-
-        // Only show JACKPOT overlay for significant wins (>=100 GEM)
-        if (totalWinnings >= 100) {
-            setTimeout(() => {
-                this.showWinNotification(totalWinnings, multiplier, winningBets);
-            }, 1500);
-        }
-    } else {
-        setTimeout(() => {
-            this.showCasinoStyleResult('loss', {
-                losses: totalLosses,
-                number: outcome?.number || '0',
-                crypto: outcome?.crypto || 'Unknown'
-            });
-        }, 1000); // Show after wheel animation
     }
 
-        this.currentBets = [];
-        this.updateBetSummary();
-        this.updateSpinButtonState();
-        this.startNewRound();
-    }
-
+    // Casino-style horizontal roulette bar animation with realistic physics
     animateWheel(number) {
         const wheel = document.getElementById('wheelNumbers');
         const wheelContainer = document.querySelector('.wheel-container');
         const pointer = document.querySelector('.roulette-pointer');
 
         if (!wheel || !wheelContainer || !pointer) {
-            console.warn('Roulette wheel elements not found, skipping animation');
+            console.warn('Roulette elements not found, skipping animation');
             return;
         }
 
-        // Create speed indicator if it doesn't exist
-        let speedIndicator = document.querySelector('.speed-indicator');
-        if (!speedIndicator) {
-            speedIndicator = document.createElement('div');
-            speedIndicator.className = 'speed-indicator';
-            speedIndicator.innerHTML = '<div class="speed-bar"></div><span class="speed-text">RPM</span>';
-            wheelContainer.appendChild(speedIndicator);
+        // Clear any conflicting animations and ensure only horizontal movement
+        this.stopWheelAnimations();
+        wheel.style.transform = '';
+        wheelContainer.classList.remove('wheel-spinning');
 
-            // Add CSS for speed indicator
-            if (!document.querySelector('#speed-indicator-styles')) {
-                const style = document.createElement('style');
-                style.id = 'speed-indicator-styles';
-                style.textContent = `
-                    .speed-indicator {
-                        position: absolute;
-                        top: 20px;
-                        right: 20px;
-                        width: 60px;
-                        height: 60px;
-                        border-radius: 50%;
-                        background: rgba(0, 0, 0, 0.7);
-                        border: 2px solid rgba(251, 191, 36, 0.5);
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                        justify-content: center;
-                        z-index: 10;
-                        opacity: 0;
-                        transform: scale(0.8);
-                        transition: all 0.3s ease;
-                    }
-                    .speed-indicator.active {
-                        opacity: 1;
-                        transform: scale(1);
-                    }
-                    .speed-bar {
-                        width: 6px;
-                        height: 20px;
-                        background: linear-gradient(180deg, #fbbf24, #f97316);
-                        border-radius: 3px;
-                        margin-bottom: 2px;
-                        transform-origin: bottom;
-                    }
-                    .speed-text {
-                        font-size: 0.7rem;
-                        color: #fbbf24;
-                        font-weight: bold;
-                    }
-                `;
-                document.head.appendChild(style);
-            }
-        }
+        // Casino-style horizontal sliding constants
+        const segmentWidth = 70; // px per number
+        const visibleSlots = 6; // How many numbers visible at once
+        const containerCenterX = wheelContainer.clientWidth / 2;
 
-        // Reset any existing animation and styles
-        wheel.style.transition = 'none';
-        wheel.style.transform = 'translateX(0)';
-        wheel.style.filter = '';
-        wheel.style.boxShadow = '';
-        speedIndicator.classList.remove('active');
+        // Calculate target position for winning number (center in viewport)
+        const winPosition = -(number * segmentWidth) + containerCenterX - (segmentWidth / 2);
 
-        // Multi-phase wheel animation with realistic physics and visual effects
-        const segmentWidth = 70;
-        const baseOffset = number * segmentWidth;
-        // Add extra rotations for realistic spin (5-8 full rotations)
-        const rotations = 5 + Math.random() * 3;
-        const finalOffset = -(rotations * 37 * segmentWidth + baseOffset);
+        // Realistic casino roulette bar physics in 3 phases
+        let currentPhase = 1;
+        const totalDuration = 2500; // Shorter casino-style duration
 
-        let currentSpeed = 0;
-        let phase = 1;
-
-        // Phase 1: Fast initial spin with quick acceleration (0-2s)
+        // Phase 1: Quick wind-up and acceleration (0-0.5s)
         setTimeout(() => {
-            phase = 1;
-            speedIndicator.classList.add('active');
-            const phase1Distance = finalOffset * 0.7;
+            if (currentPhase !== 1) return;
+            currentPhase = 1;
 
-            wheel.style.transition = 'transform 2s cubic-bezier(0.1, 0.8, 0.3, 1)';
-            wheel.style.transform = `translateX(${phase1Distance}px)`;
-            wheel.style.filter = 'blur(1px)';
-            wheel.style.boxShadow = 'inset 0 0 20px rgba(251, 191, 36, 0.3)';
+            // Start acceleration - casino bars wind up quickly
+            const windupDistance = winPosition - 1500;
+            wheel.style.transition = 'transform 0.5s cubic-bezier(0.25, 0.1, 0.25, 1)'; // Quick start
+            wheel.style.transform = `translateX(${windupDistance}px)`;
 
-            // Animate speed indicator for phase 1
-            let phase1Speed = 8000; // RPM
-            const phase1Interval = setInterval(() => {
-                if (phase !== 1) {
-                    clearInterval(phase1Interval);
-                    return;
-                }
-                phase1Speed = Math.max(2000, phase1Speed - 200);
-                currentSpeed = phase1Speed;
-                speedIndicator.querySelector('.speed-bar').style.transform = `scaleY(${Math.min(1, currentSpeed / 10000)})`;
-            }, 100);
+            // Add momentum visual effects
+            wheel.style.filter = 'blur(0.5px) brightness(1.1)';
+            wheelContainer.style.boxShadow = '0 0 20px rgba(0, 245, 255, 0.4)';
 
-            // Phase 2: Gradual deceleration (2-4s)
+            // Phase 2: High-speed steady movement (0.5-2.0s)
             setTimeout(() => {
-                phase = 2;
-                const phase2Distance = finalOffset * 0.9;
+                if (currentPhase !== 1) return;
+                currentPhase = 2;
 
-                wheel.style.transition = 'transform 2s cubic-bezier(0.4, 0.0, 0.6, 0.3)';
-                wheel.style.transform = `translateX(${phase2Distance}px)`;
-                wheel.style.filter = 'blur(0.5px)';
+                // Maintain blur for speed effect
+                wheel.style.filter = 'blur(1px) brightness(1.15)';
+                wheelContainer.style.boxShadow = '0 0 30px rgba(0, 245, 255, 0.6)';
 
-                // Animate speed indicator for phase 2
-                const phase2Interval = setInterval(() => {
-                    if (phase !== 2) {
-                        clearInterval(phase2Interval);
-                        return;
-                    }
-                    phase1Speed = Math.max(500, phase1Speed - 50);
-                    currentSpeed = phase1Speed;
-                    speedIndicator.querySelector('.speed-bar').style.transform = `scaleY(${Math.min(1, currentSpeed / 10000)})`;
-                }, 100);
+                // Smooth transition to reveal position with casino slowdown
+                wheel.style.transition = 'transform 1.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)'; // Casino ease-out
+                wheel.style.transform = `translateX(${winPosition - 50}px)`; // Get close
 
-                // Add streak effect during slow down
-                wheelContainer.style.boxShadow = '0 0 30px rgba(251, 191, 36, 0.4)';
-
-                // Phase 3: Slow final approach (4-5s)
+                // Phase 3: Precise final positioning and celebration (2.0-2.5s)
                 setTimeout(() => {
-                    phase = 3;
-                    wheel.style.transition = 'transform 1s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-                    wheel.style.transform = `translateX(${finalOffset}px)`;
+                    if (currentPhase !== 2) return;
+                    currentPhase = 3;
+
+                    // Clear blur, add precision
                     wheel.style.filter = 'none';
-                    wheel.style.boxShadow = '';
+                    wheel.style.transition = 'transform 0.5s cubic-bezier(0.4, 0.0, 0.2, 1)'; // Final precision
+                    wheel.style.transform = `translateX(${winPosition}px)`;
+
+                    // Clear glowing effects
                     wheelContainer.style.boxShadow = '';
 
-                    // Final highlight effect
+                    // Celebration after precise positioning
                     setTimeout(() => {
-                        // Highlight the winning number
-                        const winningNumberElement = wheel.querySelector(`[data-value="${number}"]`);
-                        if (winningNumberElement) {
-                            winningNumberElement.style.animation = 'winningPulse 2s ease-in-out';
-                            setTimeout(() => {
-                                winningNumberElement.style.animation = '';
-                            }, 2000);
-                        }
+                        this.playWinningCelebration(number, wheel, pointer, wheelContainer);
+                    }, 200);
 
-                        // Final celebration effect
-                        pointer.style.animation = 'pointerCelebration 1s ease-in-out';
-                        setTimeout(() => {
-                            pointer.style.animation = '';
-                        }, 1000);
+                }, 1500);
+            }, 500);
 
-                        // Hide speed indicator
-                        speedIndicator.classList.remove('active');
-                    }, 1000);
+        }, 10); // Minimal delay for smooth start
 
-                    // Clean up after animation completes
-                    setTimeout(() => {
-                        wheel.style.transition = '';
-                        wheel.style.filter = '';
-                        wheel.style.boxShadow = '';
-                        wheelContainer.style.boxShadow = '';
-                    }, 1100);
-                }, 2000);
+        // Store animation completion time for result timing
+        this.wheelAnimationEndTime = Date.now() + totalDuration;
+    }
+
+    // Play casino-style winning celebration
+    playWinningCelebration(number, wheel, pointer, wheelContainer) {
+        // Highlight winning number with casino effects
+        const winningNumberElement = wheel.querySelector(`[data-value="${number}"]`);
+        if (winningNumberElement) {
+            // Casino gold highlight
+            winningNumberElement.style.boxShadow = '0 0 30px rgba(251, 191, 36, 1)';
+            winningNumberElement.style.transform = 'scale(1.2)';
+            winningNumberElement.style.zIndex = '20';
+
+            // Remove highlight after celebration
+            setTimeout(() => {
+                winningNumberElement.style.boxShadow = '';
+                winningNumberElement.style.transform = '';
+                winningNumberElement.style.zIndex = '';
             }, 2000);
-        }, 10); // Small delay to ensure transition reset
+        }
 
-        // Add CSS animations for final effects
-        if (!document.querySelector('#wheel-celebration-styles')) {
+        // Casino pointer celebration
+        if (pointer) {
+            pointer.style.animation = 'pointerWinPulse 1.5s ease-in-out';
+            setTimeout(() => {
+                if (pointer) pointer.style.animation = '';
+            }, 1500);
+        }
+
+        // Add casino confetti effect
+        this.createCasinoSparkle(wheelContainer);
+    }
+
+    // Stop all wheel animations (for safety)
+    stopWheelAnimations() {
+        const wheels = document.querySelectorAll('.wheel-numbers');
+        const containers = document.querySelectorAll('.wheel-container');
+
+        wheels.forEach(wheel => {
+            wheel.style.transition = 'none';
+            wheel.style.transform = '';
+            wheel.style.filter = '';
+        });
+
+        containers.forEach(container => {
+            container.style.boxShadow = '';
+        });
+    }
+
+    // Create casino sparkle effects
+    createCasinoSparkle(container) {
+        for (let i = 0; i < 12; i++) {
+            setTimeout(() => {
+                const sparkle = document.createElement('div');
+                sparkle.className = 'casino-sparkle';
+                sparkle.style.cssText = `
+                    position: absolute;
+                    top: ${30 + Math.random() * 40}%;
+                    left: ${40 + Math.random() * 20}%;
+                    width: 6px;
+                    height: 6px;
+                    background: ${Math.random() > 0.5 ? '#fbbf24' : '#22d3ee'};
+                    border-radius: 50%;
+                    pointer-events: none;
+                    animation: casinoSparkle 1s ease-out forwards;
+                    z-index: 15;
+                `;
+
+                container.style.position = 'relative';
+                container.appendChild(sparkle);
+
+                setTimeout(() => {
+                    if (sparkle.parentNode) {
+                        sparkle.parentNode.removeChild(sparkle);
+                    }
+                }, 1000);
+            }, i * 100);
+        }
+
+        // Add sparkle animation CSS if not exists
+        if (!document.querySelector('#casino-sparkle-styles')) {
             const style = document.createElement('style');
-            style.id = 'wheel-celebration-styles';
+            style.id = 'casino-sparkle-styles';
             style.textContent = `
-                @keyframes pointerCelebration {
-                    0%, 100% { transform: translateX(-1px); }
-                    50% { transform: translateX(-1px) scale(1.2); box-shadow: 0 0 20px rgba(251, 191, 36, 0.8); }
-                }
-                @keyframes finalGlow {
-                    0%, 100% {
-                        box-shadow: 0 0 20px rgba(251, 191, 36, 0.5),
-                                    inset 0 0 20px rgba(251, 191, 36, 0.2);
+                @keyframes casinoSparkle {
+                    0% {
+                        opacity: 1;
+                        transform: scale(0) rotate(0deg);
                     }
                     50% {
-                        box-shadow: 0 0 40px rgba(251, 191, 36, 0.8),
-                                    inset 0 0 40px rgba(251, 191, 36, 0.4);
+                        opacity: 1;
+                        transform: scale(1.5) rotate(180deg);
+                    }
+                    100% {
+                        opacity: 0;
+                        transform: scale(2) rotate(360deg);
+                    }
+                }
+                @keyframes pointerWinPulse {
+                    0%, 100% {
+                        transform: translateX(-1px);
+                    }
+                    50% {
+                        transform: translateX(-1px) scale(1.3);
+                        filter: drop-shadow(0 0 20px rgba(251, 191, 36, 0.8));
                     }
                 }
             `;
@@ -2899,13 +3725,57 @@
         }
     }
 
-    // Override the startNewRound method for auto-betting
+    // Enhanced startNewRound with bot participant creation and improved flow
     startNewRound() {
+        // Clear any previous bot participants from the UI
+        this.clearBotArena();
+
+        // Create bot participants for this round
+        this.createBotParticipants();
+
+        // Wait a moment to show the bots, then start their betting
+        setTimeout(() => {
+            this.botsPlaceBets();
+        }, 2000);
+
+        // Restart bot activity announcements (only show round-start bots)
+        this.stopBotActivityFeed(); // Clear any old announcements
+        this.startBotActivityFeed(); // Start fresh for this round
+
+        // Start the countdown timer
+        this.startCountdownTimer();
+    }
+
+    // Clear the bot arena between rounds
+    clearBotArena() {
+        // Remove all bot participants from the arena
+        this.roundBots = []; // Clear the bot array
+        const arena = document.getElementById('bot-activity-arena');
+        if (arena) {
+            arena.innerHTML = `
+                <div class="arena-header">
+                    <span class="arena-title">🤖 Bot Arena</span>
+                    <span class="player-count" id="arena-player-count">0 players</span>
+                </div>
+                <div class="arena-participants">
+                    <div class="arena-placeholder">
+                        <div class="placeholder-icon">🎭</div>
+                        <div class="placeholder-text">Bots are thinking...</div>
+                    </div>
+                </div>
+            `;
+        }
+    }
+
+    // Start the countdown timer with enhanced flow
+    startCountdownTimer() {
         if (this.roundTimer) {
             clearInterval(this.roundTimer);
         }
+
         const startTime = Date.now();
-        this.updateRoundTimer(this.ROUND_DURATION);
+        this.gamePhase = 'betting';
+        this.updateGamePhase('Place Your Bets');
 
         this.roundTimer = setInterval(() => {
             const elapsed = Date.now() - startTime;
@@ -2919,13 +3789,728 @@
 
                 // If auto-betting is enabled and we have bets placed, auto-spin
                 if (this.autoBetEnabled && this.currentBets.length > 0) {
-                    this.requestSpin();
+                    this.startSpinSequence();
+                } else if (this.currentBets.length > 0) {
+                    // Regular spin with enhanced sequence
+                    this.startSpinSequence();
                 } else {
-                    // Regular behavior: just restart countdown
+                    // No bets placed, restart round
                     this.startNewRound();
                 }
             }
         }, 200);
+    }
+
+    // Enhanced spin sequence with proper timing
+    async startSpinSequence() {
+        console.log('🎰 Starting enhanced spin sequence...');
+
+        this.gamePhase = 'spinning';
+        this.updateGamePhase('Wheel Spinning...');
+        this.updateSpinButtonState();
+
+        // Disable all betting during spin - CRITICAL: stop bot betting
+        this.disableBetting();
+
+        // CLEAR BOT BET ANNOUNCEMENTS during spin
+        this.stopBotActivityFeed();
+        this.stopLiveBetFeed();
+
+        try {
+            // Start wheel animation
+            this.showWheelSpinning();
+
+            // Wait for animation to build anticipation (2 seconds)
+            await this.delay(2000);
+
+            // Actually perform the spin
+            const response = await this.postJson(`/api/gaming/roulette/${this.gameId}/spin`, {});
+
+            if (response && response.success) {
+                this.handleSpinResult(response);
+            } else {
+                const message = response?.error || 'Spin failed.';
+                this.showNotification(message, 'error');
+                this.reEnableBetting();
+                this.startNewRound();
+            }
+        } catch (error) {
+            console.error('Spin sequence error', error);
+            this.showNotification('Error during spin.', 'error');
+            this.reEnableBetting();
+            this.startNewRound();
+        }
+    }
+
+    // Enhanced spin result handling with proper timing
+    async handleSpinResult(result) {
+        console.log('🎰 Processing spin results...');
+
+        const outcome = result?.result;
+        if (outcome && typeof outcome.number === 'number') {
+            // Keep wheel animation running during result processing
+            this.animateWheel(outcome.number);
+            this.updateHistory(outcome.number, outcome.color || 'red');
+
+            this.gamePhase = 'results';
+            this.updateGamePhase('Calculating Results...');
+
+            // Simulate processing delay for excitement
+            await this.delay(2000);
+
+            // Update session statistics and auto-betting logic
+            this.sessionRounds++;
+
+            // Show detailed win/lose notifications based on individual bets
+            const bets = result?.bets || [];
+            let totalWinnings = 0;
+            let totalLosses = 0;
+            let winningBets = 0;
+
+            bets.forEach(bet => {
+                if (bet.is_winner && bet.payout > 0) {
+                    winningBets++;
+                    totalWinnings += bet.payout;
+                } else {
+                    totalLosses += bet.amount;
+                }
+            });
+
+            // Update session profit
+            this.sessionProfit += totalWinnings - totalLosses;
+
+            // Update achievements
+            this.updateAchievements(totalWinnings, totalLosses);
+
+            // Handle auto-betting progression
+            if (this.autoBetEnabled && totalWinnings === 0) { // Loss occurred
+                this.handleAutoBetLoss();
+            } else if (this.autoBetEnabled && totalWinnings > 0) { // Win occurred
+                this.handleAutoBetWin();
+            }
+
+            // Check auto-bet stop conditions
+            if (this.autoBetEnabled) {
+                if (this.shouldStopAutoBet()) {
+                    this.stopAutoBet();
+                } else if (this.autoBetRoundsLeft > 0) {
+                    this.autoBetRoundsLeft--;
+                    if (this.autoBetRoundsLeft === 0) {
+                        this.stopAutoBet();
+                    }
+                }
+            }
+
+            // Sync balance from server after spin results
+            await this.refreshBalanceFromServer();
+
+            // Show results screen with OK button
+            await this.showResultSummary(totalWinnings, totalLosses, outcome);
+
+            // Clear bets after results are shown
+            this.currentBets = [];
+
+            this.updateBetSummary();
+            this.updateSpinButtonState();
+
+            // Re-enable betting and start new round
+            this.reEnableBetting();
+            this.startNewRound();
+        } else {
+            console.error('Invalid spin result', result);
+            this.showNotification('Invalid spin result', 'error');
+            this.reEnableBetting();
+            this.startNewRound();
+        }
+    }
+
+    // Show detailed result summary with OK button
+    async showResultSummary(winnings, losses, outcome) {
+        const isWin = winnings > 0;
+        const userBets = this.currentBets.filter(bet => !bet.isBot && !bet.is_bot);
+        const userWagered = userBets.reduce((sum, bet) => sum + bet.amount, 0);
+        const potentialWin = userBets.reduce((sum, bet) => sum + (bet.amount * this.getPayoutMultiplier(bet.type, bet.value)), 0);
+
+        // Create detailed result modal
+        const resultModal = document.createElement('div');
+        resultModal.className = 'result-summary-modal';
+        resultModal.innerHTML = `
+            <div class="modal-overlay"></div>
+            <div class="modal-content">
+                <div class="result-header">
+                    <h2 class="result-title">${isWin ? '🎉 YOU WON!' : '💔 BETTER LUCK NEXT TIME'}</h2>
+                    <div class="result-crypto-info">
+                        <div class="winning-number">Number: <span class="number">${outcome.number}</span></div>
+                        <div class="crypto-name">${outcome.crypto || 'Unknown'}</div>
+                    </div>
+                </div>
+
+                <div class="result-breakdown">
+                    <div class="user-summary-stats">
+                        <div class="stat-box">
+                            <div class="stat-label">You Wagered:</div>
+                            <div class="stat-value">${this.formatAmount(userWagered)} GEM</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Potential Win:</div>
+                            <div class="stat-value">${this.formatAmount(potentialWin)} GEM</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Actual Result:</div>
+                            <div class="stat-value ${isWin ? 'win-amount' : 'loss-amount'}">${isWin ? '+' + this.formatAmount(winnings) : '-' + this.formatAmount(losses)} GEM</div>
+                        </div>
+                    </div>
+
+                    <div class="breakdown-section">
+                        <h3>Your Bets</h3>
+                        <div class="bet-breakdown" id="result-bet-breakdown">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <div class="pot-contribution">
+                        <div class="pot-label">Total Pot This Round</div>
+                        <div class="pot-amount" id="round-pot-amount">$0</div>
+                        <div class="contribution-breakdown">
+                            <div class="contribution-item">
+                                <span class="label">Your Contribution:</span>
+                                <span class="amount">${this.formatAmount(userWagered)} GEM</span>
+                            </div>
+                            <div class="contribution-item">
+                                <span class="label">Bot Contributions:</span>
+                                <span class="amount" id="bot-contributions">$0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="result-actions">
+                    <button class="continue-btn" id="result-continue-btn">
+                        ${isWin ? '🎰 PLAY AGAIN 🎰' : '🔄 TRY AGAIN 🔄'}
+                    </button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(resultModal);
+
+        // Populate bet breakdown
+        this.populateResultBetBreakdown(resultModal);
+
+        // Calculate and show total pot (all bets from users and bots)
+        this.calculateRoundPot(resultModal);
+
+        // Style the modal based on win/loss
+        if (isWin) {
+            resultModal.classList.add('win-result');
+        } else {
+            resultModal.classList.add('loss-result');
+        }
+
+        // Add result summary styles
+        this.addResultSummaryStyles();
+
+        return new Promise((resolve) => {
+            const continueBtn = resultModal.querySelector('#result-continue-btn');
+            const overlay = resultModal.querySelector('.modal-overlay');
+
+            let autoClosed = false;
+
+            const closeModal = (manual = false) => {
+                if (autoClosed && manual) return; // Prevent double-clicking after auto-close
+
+                resultModal.classList.add('fade-out');
+                setTimeout(() => {
+                    if (resultModal.parentNode) {
+                        resultModal.parentNode.removeChild(resultModal);
+                    }
+                    resolve();
+                }, 300);
+            };
+
+            continueBtn.addEventListener('click', () => closeModal(true));
+            overlay.addEventListener('click', () => closeModal(true));
+
+            // Auto-continue after 3 seconds for smooth gameplay flow
+            const autoContinueTimeout = setTimeout(() => {
+                autoClosed = true;
+                closeModal();
+
+                // Show a brief notification that the game continues automatically
+                this.showNotification('Continuing to next round...', 'info');
+            }, 3000);
+
+            // Add countdown indicator to the continue button
+            let countdownSeconds = 3;
+            continueBtn.textContent = `${continueBtn.textContent} (${countdownSeconds}s)`;
+
+            const countdownInterval = setInterval(() => {
+                countdownSeconds--;
+                if (countdownSeconds > 0 && !autoClosed) {
+                    continueBtn.textContent = `${isWin ? '🎰 PLAY AGAIN 🎰' : '🔄 TRY AGAIN 🔄'} (${countdownSeconds}s)`;
+                } else {
+                    clearInterval(countdownInterval);
+                    if (countdownSeconds <= 0 && !autoClosed) {
+                        continueBtn.textContent = isWin ? '🎰 PLAY AGAIN 🎰' : '🔄 TRY AGAIN 🔄';
+                    }
+                }
+            }, 1000);
+
+            // Clear intervals if modal closed manually
+            const originalResolve = resolve;
+            resolve = (...args) => {
+                clearTimeout(autoContinueTimeout);
+                clearInterval(countdownInterval);
+                return originalResolve.apply(this, args);
+            };
+        });
+    }
+
+    // Populate the bet breakdown in result modal
+    populateResultBetBreakdown(modal) {
+        const breakdownContainer = modal.querySelector('#result-bet-breakdown');
+
+        // Group bets by type and calculate results
+        const betGroups = {};
+        this.currentBets.forEach(bet => {
+            if (!betGroups[bet.type]) {
+                betGroups[bet.type] = [];
+            }
+            betGroups[bet.type].push(bet);
+        });
+
+        let breakdownHTML = '';
+        Object.keys(betGroups).forEach(type => {
+            const bets = betGroups[type];
+            const totalAmount = bets.reduce((sum, bet) => sum + bet.amount, 0);
+
+            // Simulate win/loss (in real implementation this would come from server)
+            const isWinner = Math.random() > 0.5; // Placeholder
+            const payout = isWinner ? totalAmount * this.getPayoutMultiplier(type, bets[0].value) : 0;
+
+            breakdownHTML += `
+                <div class="bet-result-item ${isWinner ? 'winner' : 'loser'}">
+                    <div class="bet-info">
+                        <span class="bet-type">${this.formatBetLabel({type: type, value: bets[0].value})}</span>
+                        <span class="bet-amount">${this.formatAmount(totalAmount)} GEM</span>
+                    </div>
+                    <div class="bet-outcome">
+                        ${isWinner ?
+                            `<span class="win-amount">+${this.formatAmount(payout)} GEM</span>` :
+                            `<span class="loss-amount">-${this.formatAmount(totalAmount)} GEM</span>`
+                        }
+                    </div>
+                </div>
+            `;
+        });
+
+        breakdownContainer.innerHTML = breakdownHTML;
+    }
+
+    // Calculate and display round pot
+    calculateRoundPot(modal) {
+        // Simulate bot contributions (in real implementation this would be tracked)
+        const yourContribution = this.currentBets.reduce((sum, bet) => sum + bet.amount, 0);
+
+        // Simulate bot contributions based on active bots
+        const botContribution = this.roundBots ?
+            this.roundBots.reduce((sum, bot) => sum + (bot.bet ? bot.bet.amount : 0), 0) :
+            0;
+
+        const totalPot = yourContribution + botContribution;
+
+        modal.querySelector('#round-pot-amount').textContent = `$${this.formatAmount(totalPot)}`;
+        modal.querySelector('#bot-contributions').textContent = `${this.formatAmount(botContribution)} GEM`;
+    }
+
+    // Add styles for result summary modal
+    addResultSummaryStyles() {
+        if (document.querySelector('#result-summary-styles')) return;
+
+        const style = document.createElement('style');
+        style.id = 'result-summary-styles';
+        style.textContent = `
+            .result-summary-modal {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+            }
+
+            .result-summary-modal.fade-out {
+                animation: modalFadeOut 0.3s ease-out forwards;
+            }
+
+            @keyframes modalFadeOut {
+                from { opacity: 1; }
+                to { opacity: 0; transform: scale(0.95); }
+            }
+
+            .result-summary-modal .modal-overlay {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.8);
+                backdrop-filter: blur(5px);
+            }
+
+            .result-summary-modal .modal-content {
+                background: linear-gradient(135deg, #1e293b, #334155);
+                border: 3px solid;
+                border-radius: 20px;
+                max-width: 500px;
+                width: 90%;
+                max-height: 80vh;
+                overflow-y: auto;
+                position: relative;
+                z-index: 1;
+                animation: resultModalEnter 0.5s ease-out;
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            }
+
+            @keyframes resultModalEnter {
+                from {
+                    opacity: 0;
+                    transform: scale(0.8) translateY(30px);
+                }
+                to {
+                    opacity: 1;
+                    transform: scale(1) translateY(0);
+                }
+            }
+
+            .result-summary-modal.win-result .modal-content {
+                border-color: #10b981;
+                box-shadow: 0 20px 40px rgba(16, 185, 129, 0.3);
+            }
+
+            .result-summary-modal.loss-result .modal-content {
+                border-color: #ef4444;
+                box-shadow: 0 20px 40px rgba(239, 68, 68, 0.3);
+            }
+
+            .result-header {
+                text-align: center;
+                padding: 2rem 2rem 1rem;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            }
+
+            .result-title {
+                font-size: 2rem;
+                font-weight: 900;
+                margin: 0 0 1rem;
+                text-transform: uppercase;
+                letter-spacing: 2px;
+            }
+
+            .win-result .result-title { color: #10b981; }
+            .loss-result .result-title { color: #ef4444; }
+
+            .result-crypto-info {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-top: 1rem;
+            }
+
+            .winning-number {
+                font-size: 1.1rem;
+                color: #fbbf24;
+                font-weight: 600;
+            }
+
+            .number {
+                font-size: 1.3rem;
+                font-weight: 900;
+                color: #ffffff;
+            }
+
+            .crypto-name {
+                font-size: 1rem;
+                color: #9ca3af;
+                font-weight: 500;
+            }
+
+            .result-breakdown {
+                padding: 1.5rem 2rem;
+            }
+
+            .user-summary-stats {
+                display: flex;
+                justify-content: space-between;
+                gap: 1rem;
+                margin-bottom: 2rem;
+                padding: 1.5rem;
+                background: rgba(0, 0, 0, 0.2);
+                border-radius: 12px;
+            }
+
+            .stat-box {
+                text-align: center;
+                flex: 1;
+            }
+
+            .stat-label {
+                font-size: 0.9rem;
+                color: #9ca3af;
+                margin-bottom: 0.5rem;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+
+            .stat-value {
+                font-size: 1.4rem;
+                font-weight: 700;
+                color: #fbbf24;
+            }
+
+            .stat-value.win-amount {
+                color: #10b981;
+            }
+
+            .stat-value.loss-amount {
+                color: #ef4444;
+            }
+
+            .breakdown-section h3 {
+                color: #fbbf24;
+                margin-bottom: 1rem;
+                font-size: 1.2rem;
+                text-align: center;
+            }
+
+            .bet-result-item {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 0.75rem;
+                margin-bottom: 0.5rem;
+                border-radius: 8px;
+                background: rgba(0, 0, 0, 0.3);
+            }
+
+            .bet-result-item.winner {
+                border-left: 4px solid #10b981;
+                background: rgba(16, 185, 129, 0.1);
+            }
+
+            .bet-result-item.loser {
+                border-left: 4px solid #ef4444;
+                background: rgba(239, 68, 68, 0.1);
+            }
+
+            .bet-info {
+                display: flex;
+                flex-direction: column;
+                gap: 0.25rem;
+            }
+
+            .bet-type {
+                font-weight: 600;
+                color: #ffffff;
+                font-size: 0.9rem;
+            }
+
+            .bet-amount {
+                color: #9ca3af;
+                font-size: 0.8rem;
+            }
+
+            .bet-outcome {
+                text-align: right;
+            }
+
+            .win-amount {
+                color: #10b981;
+                font-weight: 700;
+                font-size: 1.1rem;
+            }
+
+            .loss-amount {
+                color: #ef4444;
+                font-weight: 700;
+                font-size: 1.1rem;
+            }
+
+            .pot-contribution {
+                margin-top: 2rem;
+                text-align: center;
+                padding: 1rem;
+                background: rgba(0, 0, 0, 0.2);
+                border-radius: 12px;
+            }
+
+            .pot-label {
+                font-size: 0.9rem;
+                color: #9ca3af;
+                margin-bottom: 0.5rem;
+            }
+
+            .pot-amount {
+                font-size: 1.8rem;
+                font-weight: 900;
+                color: #fbbf24;
+                margin-bottom: 0.5rem;
+            }
+
+            .contribution-breakdown {
+                display: flex;
+                justify-content: space-between;
+                gap: 1rem;
+            }
+
+            .contribution-item {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                flex: 1;
+            }
+
+            .contribution-item .label {
+                font-size: 0.75rem;
+                color: #9ca3af;
+                margin-bottom: 0.25rem;
+            }
+
+            .contribution-item .amount {
+                font-size: 0.9rem;
+                font-weight: 600;
+                color: #fbbf24;
+            }
+
+            .result-actions {
+                padding: 1rem 2rem 2rem;
+                text-align: center;
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+            }
+
+            .continue-btn {
+                background: linear-gradient(45deg, #10b981, #059669);
+                border: none;
+                padding: 1rem 3rem;
+                border-radius: 12px;
+                color: white;
+                font-weight: 700;
+                font-size: 1.1rem;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+            }
+
+            .loss-result .continue-btn {
+                background: linear-gradient(45deg, #ef4444, #dc2626);
+            }
+
+            .continue-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+            }
+
+            @media (max-width: 768px) {
+                .result-summary-modal .modal-content {
+                    max-width: 95%;
+                    margin: 1rem;
+                }
+
+                .result-title {
+                    font-size: 1.5rem;
+                }
+
+                .contribution-breakdown {
+                    flex-direction: column;
+                    gap: 0.5rem;
+                }
+
+                .pot-amount {
+                    font-size: 1.5rem;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    // Show wheel spinning animation
+    showWheelSpinning() {
+        // Trigger wheel animation
+        const wheelElement = document.getElementById('wheelNumbers');
+        if (wheelElement) {
+            wheelElement.style.animation = 'wheelSpin 2s ease-in-out infinite';
+        }
+
+        // Update game phase display
+        this.updateGamePhase('🎰 Wheel Spinning...');
+
+        // Add spinning class to container for additional effects
+        const wheelContainer = document.querySelector('.wheel-container');
+        if (wheelContainer) {
+            wheelContainer.classList.add('spinning');
+        }
+    }
+
+    // Utility delay function
+    delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    // Update game phase display
+    updateGamePhase(phase) {
+        const phaseElement = document.getElementById('game-phase');
+        if (phaseElement) {
+            const phaseText = phaseElement.querySelector('.phase-text');
+            if (phaseText) {
+                phaseText.textContent = phase;
+            }
+        }
+    }
+
+    // Disable betting controls during spin
+    disableBetting() {
+        // Disable bet buttons
+        const betButtons = document.querySelectorAll('.bet-btn');
+        betButtons.forEach(btn => {
+            btn.disabled = true;
+            btn.classList.add('disabled');
+        });
+
+        // Disable chip buttons
+        const chipButtons = document.querySelectorAll('.chip-btn');
+        chipButtons.forEach(btn => {
+            btn.disabled = true;
+            btn.classList.add('disabled');
+        });
+
+        // Disable spin button initially
+        if (this.elements.spinButton) {
+            this.elements.spinButton.disabled = true;
+        }
+    }
+
+    // Re-enable betting controls
+    reEnableBetting() {
+        // Re-enable bet buttons
+        const betButtons = document.querySelectorAll('.bet-btn');
+        betButtons.forEach(btn => {
+            btn.disabled = false;
+            btn.classList.remove('disabled');
+        });
+
+        // Re-enable chip buttons
+        const chipButtons = document.querySelectorAll('.chip-btn');
+        chipButtons.forEach(btn => {
+            btn.disabled = false;
+            btn.classList.remove('disabled');
+        });
+
+        // Update spin button
+        this.updateSpinButtonState();
     }
 
     // ===== FUNNY USERNAME & AVATAR SYSTEM =====

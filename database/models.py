@@ -384,6 +384,22 @@ class CryptoCurrency(Base):
     last_updated = Column(DateTime, default=datetime.utcnow)
     is_active = Column(Boolean, default=True)
 
+    def to_dict(self):
+        """Convert cryptocurrency to dictionary."""
+        return {
+            "id": self.id,
+            "symbol": self.symbol,
+            "name": self.name,
+            "current_price_usd": self.current_price_usd,
+            "market_cap": self.market_cap,
+            "volume_24h": self.volume_24h,
+            "price_change_24h": self.price_change_24h,
+            "price_change_percentage_24h": self.price_change_percentage_24h,
+            "image": self.image,
+            "last_updated": self.last_updated.isoformat() if self.last_updated else None,
+            "is_active": self.is_active
+        }
+
 class PortfolioHolding(Base):
     """User's cryptocurrency holdings in their portfolio."""
     __tablename__ = "portfolio_holdings"

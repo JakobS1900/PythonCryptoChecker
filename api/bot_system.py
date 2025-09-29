@@ -244,8 +244,17 @@ class BotPopulationManager:
                     await session.commit()
                     await session.refresh(bot_user)
 
-                    # Create wallet with starting balance
+                    # Create wallet with starting balance (2000 GEM for bots)
                     await portfolio_manager.create_wallet(str(bot_user.id), initial_gems=2000.0)
+
+                    # Verify wallet was created correctly
+                    balance = await portfolio_manager.get_user_balance(str(bot_user.id))
+                    if balance < 2000.0:
+                        print(f">> ERROR: Bot wallet for {username} created with insufficient balance: {balance} GEM")
+                        # Try to correct the balance
+                        await portfolio_manager.add_gems(str(bot_user.id), 2000.0 - balance, "Bot balance correction")
+                    else:
+                        print(f">> SUCCESS: Bot {username} wallet created with {balance} GEM")
 
                     print(f"🤖 Created bot: {username} (Personality: {personality.value})")
                     needed_bots -= 1
@@ -266,6 +275,14 @@ class BotPopulationManager:
                 # Get bot's current balance
                 balance = await portfolio_manager.get_user_balance(str(bot_user.id))
                 personality = BotPersonalityType(bot_user.bot_personality)
+
+                # CRITICAL: Repair corrupted bot balances during load
+                if balance < 2000.0:
+                    print(f">> CRITICAL: Bot {bot_user.username} has corrupted balance: {balance} GEM. Repairing...")
+                    balance_diff = 2000.0 - balance
+                    await portfolio_manager.add_gems(str(bot_user.id), balance_diff, "Bot balance repair")
+                    balance = 2000.0
+                    print(f">> SUCCESS: Repaired bot {bot_user.username} balance to {balance} GEM")
 
                 # Create BotGambler instance
                 bot = BotGambler(str(bot_user.id), personality, balance)
