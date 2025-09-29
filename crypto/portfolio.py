@@ -463,114 +463,122 @@ class PortfolioManager:
     async def get_portfolio_stats(self, user_id: str) -> Dict:
         """Get comprehensive portfolio statistics."""
         async with AsyncSessionLocal() as session:
-            # Get wallet
-            wallet = await self.get_user_wallet(user_id)
-            if not wallet:
-                wallet = await self.create_wallet(user_id, initial_gems=1000.0)
+            try:
+                # Get wallet first
+                wallet = await self.get_user_wallet(user_id)
                 if not wallet:
-                    # Return a valid empty portfolio structure
-                    return {
-                        "wallet": {
-                            "gem_balance": 0,
-                            "total_deposited": 0,
-                            "total_withdrawn": 0,
-                            "total_wagered": 0,
-                            "total_won": 0
-                        },
-                        "stats": {
-                            "total_transactions": 0,
-                            "total_winnings": 0,
-                            "total_bets": 0,
-                            "games_won": 0,
-                            "games_lost": 0,
-                            "total_games": 0,
-                            "win_rate": 0,
-                            "net_gambling": 0,
-                            "gem_value_usd": 0
-                        }
+                    print(f">> Creating wallet for user {user_id}")
+                    wallet = await self.create_wallet(user_id, initial_gems=1000.0)
+                    if not wallet:
+                        print(f">> Failed to create wallet for user {user_id}")
+                        return self._get_empty_portfolio_stats()
+
+                # Get basic transaction counts
+                total_transactions = await session.execute(
+                    select(func.count(Transaction.id)).where(Transaction.user_id == user_id)
+                )
+                total_transactions = total_transactions.scalar() or 0
+
+                # Get winnings (positive BET_WON amounts)
+                winnings_result = await session.execute(
+                    select(func.coalesce(func.sum(Transaction.amount), 0))
+                    .where(
+                        and_(
+                            Transaction.user_id == user_id,
+                            Transaction.transaction_type == TransactionType.BET_WON.value
+                        )
+                    )
+                )
+                total_winnings = float(winnings_result.scalar() or 0)
+
+                # Get bets placed (negative BET_PLACED amounts, so we use absolute value)
+                bets_result = await session.execute(
+                    select(func.coalesce(func.sum(func.abs(Transaction.amount)), 0))
+                    .where(
+                        and_(
+                            Transaction.user_id == user_id,
+                            Transaction.transaction_type == TransactionType.BET_PLACED.value
+                        )
+                    )
+                )
+                total_bets = float(bets_result.scalar() or 0)
+
+                # Count games won and lost
+                games_won_result = await session.execute(
+                    select(func.count(Transaction.id))
+                    .where(
+                        and_(
+                            Transaction.user_id == user_id,
+                            Transaction.transaction_type == TransactionType.BET_WON.value
+                        )
+                    )
+                )
+                games_won = games_won_result.scalar() or 0
+
+                games_lost_result = await session.execute(
+                    select(func.count(Transaction.id))
+                    .where(
+                        and_(
+                            Transaction.user_id == user_id,
+                            Transaction.transaction_type == TransactionType.BET_LOST.value
+                        )
+                    )
+                )
+                games_lost = games_lost_result.scalar() or 0
+
+                # Calculate metrics
+                total_games = games_won + games_lost
+                win_rate = (100.0 * games_won / total_games) if total_games > 0 else 0.0
+                net_gambling = total_winnings - total_bets
+
+                # Get wallet value in USD
+                wallet_dict = wallet.to_dict()
+                gems = float(wallet_dict.get('gem_balance', 0))
+                gem_value_usd = gems * self.gem_to_usd_rate
+
+                return {
+                    "wallet": wallet.to_dict(),
+                    "stats": {
+                        "total_transactions": total_transactions,
+                        "total_winnings": total_winnings,
+                        "total_bets": total_bets,
+                        "games_won": games_won,
+                        "games_lost": games_lost,
+                        "total_games": total_games,
+                        "win_rate": round(win_rate, 2),
+                        "net_gambling": round(net_gambling, 2),
+                        "gem_value_usd": round(gem_value_usd, 2)
                     }
-
-            # Type conditions
-            bet_type = Transaction.transaction_type
-            won = bet_type == TransactionType.BET_WON.value
-            placed = bet_type == TransactionType.BET_PLACED.value
-            lost = bet_type == TransactionType.BET_LOST.value
-
-            # Build the query
-            query = select(
-                func.count(Transaction.id).label('total_transactions'),
-                func.coalesce(
-                    func.sum(
-                        case({won: Transaction.amount}, else_=0)
-                    ),
-                    0
-                ).label('total_winnings'),
-                func.coalesce(
-                    func.sum(
-                        case({placed: -Transaction.amount}, else_=0)
-                    ),
-                    0
-                ).label('total_bets'),
-                func.coalesce(
-                    func.count(
-                        case({won: 1}, else_=None)
-                    ),
-                    0
-                ).label('games_won'),
-                func.coalesce(
-                    func.count(
-                        case({lost: 1}, else_=None)
-                    ),
-                    0
-                ).label('games_lost')
-            ).where(Transaction.user_id == user_id)
-
-            # Execute query and get results with defaults
-            result = await session.execute(query)
-            row = result.first()
-            row_data = {
-                'total_transactions': 0,
-                'total_winnings': 0,
-                'total_bets': 0,
-                'games_won': 0,
-                'games_lost': 0
-            }
-
-            if row:
-                for key in row_data:
-                    row_data[key] = getattr(row, key, 0) or 0
-
-            # Calculate metrics
-            total_games = (
-                row_data['games_won'] + row_data['games_lost']
-            )
-            win_rate = (
-                100.0 * row_data['games_won'] / total_games
-                if total_games > 0 else 0.0
-            )
-            net_gambling = (
-                row_data['total_winnings'] - row_data['total_bets']
-            )
-            
-            # Get wallet value in USD
-            wallet_dict = wallet.to_dict()
-            gems = float(wallet_dict.get('gem_balance', 0))
-            gem_value_usd = gems * self.gem_to_usd_rate
-
-            return {
-                "wallet": wallet.to_dict(),
-                "stats": {
-                    "total_transactions": row_data['total_transactions'],
-                    "total_winnings": row_data['total_winnings'],
-                    "total_bets": row_data['total_bets'],
-                    "games_won": row_data['games_won'],
-                    "games_lost": row_data['games_lost'],
-                    "total_games": total_games,
-                    "win_rate": round(win_rate, 2),
-                    "net_gambling": round(net_gambling, 2),
-                    "gem_value_usd": round(gem_value_usd, 2)
                 }
+
+            except Exception as e:
+                print(f">> Error in get_portfolio_stats: {e}")
+                import traceback
+                traceback.print_exc()
+                return self._get_empty_portfolio_stats()
+
+    def _get_empty_portfolio_stats(self) -> Dict:
+        """Return empty portfolio stats structure."""
+        return {
+            "wallet": {
+                "gem_balance": 0,
+                "total_deposited": 0,
+                "total_withdrawn": 0,
+                "total_wagered": 0,
+                "total_won": 0
+            },
+            "stats": {
+                "total_transactions": 0,
+                "total_winnings": 0,
+                "total_bets": 0,
+                "games_won": 0,
+                "games_lost": 0,
+                "total_games": 0,
+                "win_rate": 0,
+                "net_gambling": 0,
+                "gem_value_usd": 0
             }
+        }
 
     async def validate_bet_amount(
         self,

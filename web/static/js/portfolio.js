@@ -35,12 +35,19 @@ window.Portfolio = {
     async loadPortfolioData() {
         try {
             this.isLoading = true;
+            console.log('Loading portfolio data...');
 
             // Load portfolio stats
             const portfolioResponse = await App.api.get('/crypto/portfolio');
-            if (portfolioResponse.success) {
+            console.log('Portfolio API response:', portfolioResponse);
+
+            if (portfolioResponse && portfolioResponse.success) {
                 this.portfolioData = portfolioResponse.portfolio;
+                console.log('Portfolio data loaded:', this.portfolioData);
                 this.updatePortfolioDisplay();
+            } else {
+                console.error('Portfolio API failed:', portfolioResponse);
+                this.showPortfolioError('Failed to load portfolio data');
             }
 
             // Show guest notice if in guest mode

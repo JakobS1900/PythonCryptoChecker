@@ -24,11 +24,6 @@ router = APIRouter()
 
 # ==================== PORTFOLIO ENDPOINTS ====================
 
-
-router = APIRouter()
-
-# ==================== PORTFOLIO ENDPOINTS ====================
-
 @router.get("/portfolio/stats", response_model=Dict[str, Any])
 async def portfolio_stats_api(
     current_user: Optional[User] = Depends(get_current_user)

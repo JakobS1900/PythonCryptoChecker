@@ -80,3 +80,6 @@ ClaudeTemp_*
 ## .allowed_markdown.txt
 ## *[INSERT_DATE]*.md
 ## INSTRUCTIONSFORGPT5.md
+.prohibited_words.txt
+/.specify
+nul
