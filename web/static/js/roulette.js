@@ -1860,9 +1860,9 @@
 
     // Casino-style horizontal roulette bar animation with realistic physics
     animateWheel(number) {
-        const wheel = document.getElementById('wheelNumbers');
+        const wheel = document.getElementById('wheelNumbers').parentElement; // Use parent wheel-positioner for animation
         const wheelContainer = document.querySelector('.wheel-container');
-        const pointer = document.querySelector('.roulette-pointer');
+        const pointer = document.querySelector('.wheel-pointer');
 
         if (!wheel || !wheelContainer || !pointer) {
             console.warn('Roulette elements not found, skipping animation');
@@ -4157,15 +4157,14 @@
             // Show results screen with OK button
             await this.showResultSummary(totalWinnings, totalLosses, outcome);
 
-            // Clear bets after results are shown
+            // CRITICAL FIX: Clear bets AFTER results are shown to maintain UI state during results display
             this.currentBets = [];
-
             this.updateBetSummary();
             this.updateSpinButtonState();
 
-            // Re-enable betting and start new round
-            this.reEnableBetting();
+            // CRITICAL FIX: Re-enable betting AFTER starting new round to prevent state conflicts
             this.startNewRound();
+            this.reEnableBetting();
         } else {
             console.error('Invalid spin result', result);
             this.showNotification('Invalid spin result', 'error');
