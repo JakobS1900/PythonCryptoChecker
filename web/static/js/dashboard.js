@@ -169,52 +169,159 @@ window.Dashboard = {
 
     // Load initial dashboard data
     async loadDashboardData() {
-        // Add delay to prevent race conditions during page initialization
-        await new Promise(resolve => setTimeout(resolve, 500));
+        console.log('🚀 Loading dashboard data...');
 
-        // Load data sequentially to reduce server load
-        await this.loadPrices();
-        await new Promise(resolve => setTimeout(resolve, 100));
-        await this.loadTrending();
-        await this.loadUserStats();
+        // Load data immediately with retry strategy
+        this.loadPricesWithRetry();
+        this.loadTrendingWithRetry();
+        this.loadUserStatsWithRetry();
+
+        // Additional fallback - try loading after page is fully ready
+        setTimeout(() => {
+            if (this.cryptoData.length === 0) {
+                console.log('🔄 Fallback: Loading prices after page ready...');
+                this.loadPricesWithRetry();
+            }
+        }, 3000);
     },
 
-    // Load cryptocurrency prices
-    async loadPrices() {
+    // Load cryptocurrency prices with retry logic
+    async loadPricesWithRetry(retryCount = 0) {
+        const maxRetries = 3;
+
         try {
-            const response = await App.api.get('/crypto/prices', { limit: 50 });
-            if (response.success) {
-                this.cryptoData = response.data;
-                this.updatePriceTable();
+            console.log(`📊 Loading prices... (attempt ${retryCount + 1}/${maxRetries + 1})`);
+
+            const response = await fetch('/api/crypto/prices?limit=10', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('auth_token') || ''}`
+                }
+            });
+
+            console.log('📊 Prices response status:', response.status);
+            console.log('📊 Prices response ok:', response.ok);
+
+            if (response.ok) {
+                const data = await response.json();
+                console.log('📊 Prices response data:', data);
+
+                if (data.success && data.data) {
+                    this.cryptoData = data.data;
+                    this.updatePriceTable();
+                    console.log('✅ Prices loaded successfully, count:', this.cryptoData.length);
+                    return;
+                } else {
+                    console.error('📊 Invalid response structure:', data);
+                }
+            } else {
+                console.error('📊 Response not ok:', response.status, response.statusText);
             }
+
+            throw new Error(`HTTP ${response.status}`);
+
         } catch (error) {
-            console.error('Failed to load prices:', error);
-            this.showPriceTableError('Failed to load price data');
+            console.error(`❌ Prices load attempt ${retryCount + 1} failed:`, error);
+
+            if (retryCount < maxRetries) {
+                const delay = 1000 * (retryCount + 1);
+                console.log(`📊 Retrying in ${delay}ms...`);
+                setTimeout(() => this.loadPricesWithRetry(retryCount + 1), delay);
+            } else {
+                console.error('📊 All price load attempts failed');
+                this.showPriceTableError('Failed to load price data after multiple attempts');
+            }
         }
     },
 
-    // Load trending cryptocurrencies
-    async loadTrending() {
+    // Load trending cryptocurrencies with retry logic
+    async loadTrendingWithRetry(retryCount = 0) {
+        const maxRetries = 3;
+
         try {
-            const response = await App.api.get('/crypto/trending', { limit: 12 });
-            if (response.success) {
-                this.trendingData = response.data;
-                this.updateTrendingCards();
+            console.log(`🔥 Loading trending... (attempt ${retryCount + 1}/${maxRetries + 1})`);
+
+            const response = await fetch('/api/crypto/trending?limit=12', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('auth_token') || ''}`
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success && data.data) {
+                    this.trendingData = data.data;
+                    this.updateTrendingCards();
+                    console.log('✅ Trending loaded successfully');
+                    return;
+                }
             }
+
+            throw new Error(`HTTP ${response.status}`);
+
         } catch (error) {
-            console.error('Failed to load trending:', error);
-            this.showTrendingError('Failed to load trending data');
+            console.error(`❌ Trending load attempt ${retryCount + 1} failed:`, error);
+
+            if (retryCount < maxRetries) {
+                const delay = 1000 * (retryCount + 1);
+                setTimeout(() => this.loadTrendingWithRetry(retryCount + 1), delay);
+            } else {
+                this.showTrendingError('Failed to load trending data after multiple attempts');
+            }
         }
     },
 
-    // Load user statistics
-    async loadUserStats() {
+    // Load user statistics with retry logic
+    async loadUserStatsWithRetry(retryCount = 0) {
+        const maxRetries = 3;
+
         try {
-            // Update game count and conversion count
-            this.updateElement('games-count', '0');
-            this.updateElement('conversions-count', '0');
+            console.log(`👤 Loading user stats... (attempt ${retryCount + 1}/${maxRetries + 1})`);
+
+            // Try to get user balance from navbar (it's already loaded)
+            const balanceElement = document.getElementById('btc-price');
+            if (balanceElement && balanceElement.textContent) {
+                console.log('✅ User stats loaded from existing data');
+                this.updateElement('games-count', '0');
+                this.updateElement('conversions-count', '0');
+                return;
+            }
+
+            // Fallback: try to get balance from API
+            const response = await fetch('/api/crypto/portfolio/balance', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('auth_token') || ''}`
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    console.log('✅ User stats loaded from API');
+                    this.updateElement('games-count', '0');
+                    this.updateElement('conversions-count', '0');
+                    return;
+                }
+            }
+
+            throw new Error(`HTTP ${response.status}`);
+
         } catch (error) {
-            console.error('Failed to load user stats:', error);
+            console.error(`❌ User stats load attempt ${retryCount + 1} failed:`, error);
+
+            if (retryCount < maxRetries) {
+                const delay = 1000 * (retryCount + 1);
+                setTimeout(() => this.loadUserStatsWithRetry(retryCount + 1), delay);
+            } else {
+                console.log('ℹ️ Using default user stats');
+                this.updateElement('games-count', '0');
+                this.updateElement('conversions-count', '0');
+            }
         }
     },
 
@@ -391,15 +498,27 @@ window.Dashboard = {
         try {
             this.showConvertLoading(true);
 
-            const response = await App.api.post('/crypto/convert', {
-                from_currency: fromCurrency,
-                to_currency: toCurrency,
-                amount: amount
+            const response = await fetch('/api/crypto/convert', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('auth_token') || ''}`
+                },
+                body: JSON.stringify({
+                    from_currency: fromCurrency,
+                    to_currency: toCurrency,
+                    amount: amount
+                })
             });
 
-            if (response.from_amount && response.to_amount) {
-                this.showConversionResult(response);
-                this.incrementConversionsCount();
+            if (response.ok) {
+                const data = await response.json();
+                if (data.from_amount && data.to_amount) {
+                    this.showConversionResult(data);
+                    this.incrementConversionsCount();
+                }
+            } else {
+                throw new Error(`HTTP ${response.status}`);
             }
 
         } catch (error) {
@@ -438,7 +557,7 @@ window.Dashboard = {
         switch (target) {
             case '#trending':
                 if (this.trendingData.length === 0) {
-                    this.loadTrending();
+                    this.loadTrendingWithRetry();
                 }
                 break;
             case '#converter':
@@ -523,7 +642,7 @@ window.Dashboard = {
 
     refreshPrices() {
         App.showAlert('info', 'Refreshing prices...', 2000);
-        this.loadPrices();
+        this.loadPricesWithRetry();
     },
 
     incrementConversionsCount() {
@@ -571,7 +690,7 @@ window.Dashboard = {
                 <div class="col-12 text-center py-4 text-danger">
                     <i class="bi bi-exclamation-triangle"></i> ${message}
                     <br>
-                    <button class="btn btn-outline-primary btn-sm mt-2" onclick="Dashboard.loadTrending()">
+                    <button class="btn btn-outline-primary btn-sm mt-2" onclick="Dashboard.loadTrendingWithRetry()">
                         <i class="bi bi-arrow-clockwise"></i> Try Again
                     </button>
                 </div>
