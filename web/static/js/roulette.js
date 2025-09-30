@@ -1,60 +1,90 @@
 ﻿class RouletteGame {
-constructor() {
-    this.MIN_BET = 10;
-    this.MAX_BET = 10000;
-    this.ROUND_DURATION = 15000; // milliseconds - REDUCED from 20000 for faster casino gameplay
-    this.SPIN_ANIMATION_MS = 3000; // REDUCED from 6000 for snappier experience
+    constructor() {
+        this.MIN_BET = 10;
+        this.MAX_BET = 10000;
+        this.ROUND_DURATION = 15000;
 
+        // Core game state - streamlined
         this.gameId = null;
         this.balance = 0;
         this.currentAmount = 100;
         this.currentBets = [];
-        this.pendingBets = []; // New: confirmation queue
         this.isProcessing = false;
         this.isSpinning = false;
         this.roundTimer = null;
 
-        // Auto-betting system
-        this.bettingStrategy = 'manual'; // 'manual', 'martingale', 'fibonacci'
-        this.autoBetEnabled = false;
-        this.autoBetRoundsLeft = 0;
-        this.autoBetTarget = 1000; // Profit target
-        this.autoBetMaxLoss = 500; // Stop loss
-        this.baseBet = 100; // Original bet amount
-        this.strategyStep = 0; // Current step in progression
-        this.sessionProfit = 0; // Track profit for the session
-        this.sessionRounds = 0;
+        // Balance management - critical fixes (enhanced)
+        this.pendingBalanceSync = false;
+        this.lastServerBalance = 0;
+        this.balanceSyncQueue = [];
+        this.betTransactionId = null;
+        this.balanceOperationLock = false; // Prevent concurrent balance operations
+        this.transactionQueue = []; // Queue for sequential balance transactions
 
-        // Social & Live Features
+        // Visual elements cache
+        this.elements = {};
+
+        // Bot system state
+        this.botActivityInterval = null;
         this.liveBetFeed = [];
-        this.betFeedInterval = null;
+        this.roundBots = [];
 
-        // Funny random name system
-        this.namePrefixes = ['Bob', 'Joe', 'Sally', 'Mike', 'Linda', 'Dave', 'Karen', 'Steve', 'Betty', 'Frank', 'Helen', 'George'];
-        this.nameSuffixes = ['Bob', 'Joe', 'Sally', 'Mike', 'Linda', 'Dave', 'Karen', 'Steve', 'Betty', 'Frank', 'Helen', 'George'];
-        this.nameWords = ['Bread', 'Cheese', 'Dog', 'Cat', 'Tree', 'Rock', 'Car', 'House', 'Chair', 'Table', 'Phone', 'Computer'];
+        // Auto-bet state
+        this.autoBetEnabled = false;
+        this.bettingStrategy = 'manual';
+        this.autoBetRoundsLeft = 0;
+        this.sessionProfit = 0;
+        this.sessionRounds = 0;
+        this.consecutiveWins = 0;
 
-        // Avatar system
-        this.playerAvatars = [
-            '🐕', '🐈', '🐄', '🐖', '🐑', '🦆', '🐔', '🦉', '🦋', '🐝',
-            '🍕', '🍔', '🍟', '🌭', '🍿', '🥨', '🍪', '🎂', '🍰', '🧁',
-            '🚗', '🚕', '🚙', '🚌', '🚎', '🏎️', '🚓', '🚑', '🚒', '🚐',
-            '👨', '👩', '👴', '👵', '🧑', '👨‍💼', '👩‍💼', '👨‍🔬', '👩‍🔬', '👨‍🍳'
-        ];
-
-        // Achievement System
+        // Achievement state
         this.achievements = {
             firstWin: false,
-            consecutiveWins5: false,
             bigBet: false,
+            consecutiveWins5: false,
             profit1000: false,
             spins100: false
         };
-        this.consecutiveWins = 0;
         this.totalRounds = 0;
         this.biggestBet = 0;
 
-        this.elements = {};
+        // ===== FUNNY USERNAME & AVATAR DATA =====
+
+        // Name components for generating funny usernames
+        this.namePrefixes = [
+            'Bob', 'Joe', 'Sally', 'Tom', 'Jenny', 'Mike', 'Dave', 'Steve',
+            'Chris', 'Pat', 'Alex', 'Taylor', 'Jordan', 'Morgan', 'Riley', 'Casey',
+            'Sam', 'Jamie', 'Lee', 'Robin', 'Robin', 'Jesse', 'Patty', 'Terry',
+            'Robin', 'Frank', 'Harry', 'Charlie', 'Max', 'Buddy', 'Sparky', 'Coco',
+            'Biscuit', 'Noodle', 'Pickle', 'Waffles', 'Cupcake', 'Marshmallow', 'Jello'
+        ];
+
+        this.nameSuffixes = [
+            'Bob', 'Joe', 'Smith', 'Jones', 'Brown', 'Davis', 'Miller', 'Wilson',
+            'Moore', 'Taylor', 'Anderson', 'Thomas', 'Jackson', 'White', 'Harris', 'Martin',
+            'Thompson', 'Garcia', 'Martinez', 'Robinson', 'Clark', 'Rodriguez', 'Lewis', 'Lee',
+            'Walker', 'Hall', 'Allen', 'Young', 'Hernandez', 'King', 'Wright', 'Lopez',
+            'Hill', 'Scott', 'Green', 'Adams', 'Baker', 'Gonzalez', 'Nelson', 'Carter',
+            'Mitchell', 'Perez', 'Roberts', 'Turner', 'Phillips', 'Campbell', 'Parker', 'Evans'
+        ];
+
+        this.nameWords = [
+            'Dog', 'Cat', 'Bread', 'Cheese', 'Tree', 'Rock', 'Cloud', 'Mountain',
+            'River', 'Ocean', 'Star', 'Moon', 'Sun', 'Rain', 'Snow', 'Fire',
+            'Ice', 'Wind', 'Thunder', 'Storm', 'Lightning', 'Rainbow', 'Bridge', 'Castle',
+            'Forest', 'Garden', 'Island', 'Desert', 'Candy', 'Cookie', 'Cake', 'Pie',
+            'Pizza', 'Burger', 'Hotdog', 'Taco', 'Nacho', 'Fries', 'Chicken', 'Duck',
+            'Bear', 'Wolf', 'Fox', 'Rabbit', 'Deer', 'Eagle', 'Owl', 'Hawk',
+            'Sword', 'Shield', 'Crown', 'Castle', 'Dragon', 'Wizard', 'Magic', 'Potion'
+        ];
+
+        // Avatar emojis for bot players
+        this.playerAvatars = [
+            '🤖', '💎', '⚡', '🚀', '🦄', '🌟', '🎯', '🔥', '💰', '🤑', '🎰', '🎲',
+            '🤡', '👻', '🧙', '🧌', '🧛', '🧟', '🦹', '🦸', '🦺', '🦴', '🦷', '🦊',
+            '🐺', '🐱', '🐶', '🐭', '🐹', '🐰', '🦌', '🐯', '🐱', '🐶', '🐭', '🐹',
+            '🦆', '🦢', '🦉', '🦅', '🦜', '🐔', '🐧', '🐦', '🐤', '🐣', '🦉', '🦅'
+        ];
 
         this.init();
     }
@@ -167,13 +197,20 @@ constructor() {
         }
     }
 
-    // Add CSS styles for bot arena
+    // Add CSS styles for bot arena - isolated to preserve professional styling
     addBotArenaStyles() {
         if (document.querySelector('#bot-arena-styles')) return;
+
+        // Use CSS variables from existing professional theme to maintain consistency
+        const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--gaming-primary') || '#fbbf24';
+        const secondaryColor = getComputedStyle(document.documentElement).getPropertyValue('--gaming-secondary') || '#10b981';
+        const bgSecondary = getComputedStyle(document.documentElement).getPropertyValue('--gaming-bg-secondary') || '#1e293b';
+        const bgTertiary = getComputedStyle(document.documentElement).getPropertyValue('--gaming-bg-tertiary') || '#334155';
 
         const style = document.createElement('style');
         style.id = 'bot-arena-styles';
         style.textContent = `
+            /* Visual Preservation: Bot Arena Styles */
             .bot-activity-arena {
                 background: linear-gradient(135deg, #1a1a2e, #16213e);
                 border: 2px solid rgba(251, 191, 36, 0.3);
@@ -183,6 +220,33 @@ constructor() {
                 box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
                 position: relative;
                 overflow: hidden;
+                /* Modal Compatibility: Ensure proper layering */
+                z-index: 10;
+            }
+
+            /* Wins Overlay: Highest Priority */
+            .win-celebration-overlay,
+            .persistent-result-notification,
+            .casino-result-overlay {
+                z-index: 9999 !important;
+            }
+
+            /* Result Modals: High Priority */
+            .result-summary-modal,
+            .achievement-modal,
+            .session-summary-modal {
+                z-index: 9000 !important;
+            }
+
+            /* Notifications: Medium Priority */
+            .toast-notification-container,
+            .bet-announcement {
+                z-index: 8000 !important;
+            }
+
+            /* Bot Elements: Low Priority */
+            .bet-feed-container {
+                z-index: 1000 !important;
             }
 
             .bot-activity-arena::before {
@@ -661,11 +725,7 @@ constructor() {
             // This makes bots' bets count in the actual round results!
             console.log(`🤖 Placing bot bet for ${betData.botName}: ${betData.amount} GEM on ${betData.value}`);
 
-            // CRITICAL FIX: Refresh balance from server before checking/attempting bet
-            console.log('🔄 Refreshing balance before bot bet...');
-            await this.refreshBalanceFromServer();
-
-            // Check local balance AFTER sync (bots should all have 2000+ GEM now)
+            // Check local balance (bots should all have sufficient balance)
             if (this.balance < betData.amount) {
                 console.warn(`⚠️ Failed to place bot bet for ${betData.botName}: Insufficient balance. Current: ${this.balance} GEM, Required: ${betData.amount} GEM`);
                 return null;
@@ -678,7 +738,7 @@ constructor() {
             };
 
             // Use the existing API endpoint - no extra bot fields needed since bots are handled by the bot system
-            const response = await this.postJson(`/api/gaming/roulette/${this.gameId}/bet`, betPayload);
+            const response = await this.post(`/api/gaming/roulette/${this.gameId}/bet`, betPayload);
 
             if (response && response.success) {
                 console.log(`✅ Bot bet placed successfully for ${betData.botName}: ${response.bet_id}`);
@@ -985,17 +1045,81 @@ constructor() {
         this.setBalance(5000, { source: 'guest-default' });
     }
 
+    // ===== TRANSACTION LOCKING SYSTEM =====
+
+    // Execute balance operation with proper locking to prevent race conditions
+    async executeBalanceTransaction(operation, options = {}) {
+        return new Promise((resolve, reject) => {
+            // Add operation to transaction queue
+            this.transactionQueue.push({
+                operation,
+                options,
+                resolve,
+                reject,
+                timestamp: Date.now()
+            });
+
+            // Process queue if not currently locked
+            this.processTransactionQueue();
+        });
+    }
+
+    // Process the transaction queue sequentially
+    async processTransactionQueue() {
+        if (this.balanceOperationLock || this.transactionQueue.length === 0) {
+            return; // Already processing or queue empty
+        }
+
+        this.balanceOperationLock = true;
+
+        while (this.transactionQueue.length > 0) {
+            const transaction = this.transactionQueue.shift();
+
+            // Check for transaction timeout (30 seconds)
+            if (Date.now() - transaction.timestamp > 30000) {
+                console.warn('⚠️ Transaction timeout, skipping:', transaction.operation.name);
+                transaction.reject(new Error('Transaction timeout'));
+                continue;
+            }
+
+            try {
+                console.log('🔒 Processing balance transaction:', transaction.operation.name);
+                const result = await transaction.operation.call(this, transaction.options);
+                transaction.resolve(result);
+                console.log('✅ Balance transaction completed successfully');
+            } catch (error) {
+                console.error('❌ Balance transaction failed:', error);
+                transaction.reject(error);
+            }
+
+            // Small delay between transactions to prevent overwhelming the server
+            await this.delay(100);
+        }
+
+        this.balanceOperationLock = false;
+    }
+
     setBalance(amount, { source } = {}) {
+        // Use transaction system for critical balance operations
+        if (source === 'server-sync' || source === 'roulette') {
+            return this.executeBalanceTransaction(this._setBalanceInternal, { amount, source });
+        }
+
+        // For non-critical operations, execute immediately
+        return this._setBalanceInternal({ amount, source });
+    }
+
+    _setBalanceInternal({ amount, source }) {
         const numeric = Number(amount);
         if (!Number.isFinite(numeric)) {
-            return;
+            return false;
         }
         const oldBalance = this.balance;
         const change = numeric - oldBalance;
         this.balance = Math.max(0, numeric);
 
-        // Animate balance change if it's a significant update
-        if (oldBalance !== this.balance && Math.abs(change) > 0) {
+        // Skip animation for sync operations to prevent visual glitches
+        if (source !== 'server-sync' && source !== 'auth' && oldBalance !== this.balance && Math.abs(change) > 0) {
             this.animateBalanceChange(change, source);
         }
 
@@ -1003,6 +1127,8 @@ constructor() {
         if (this.elements.availableBalance) {
             this.elements.availableBalance.textContent = this.formatAmount(this.balance);
         }
+
+        // Only update bet amount if not from roulette operations to prevent conflicts
         if (source !== 'roulette') {
             this.updateBetAmountDisplay();
         }
@@ -1018,14 +1144,14 @@ constructor() {
                 }
             }));
 
-            // Update Auth module balance immediately
-            if (window.Auth && window.Auth.currentUser) {
+            // Update Auth module balance immediately (but not during roulette operations)
+            if (window.Auth && window.Auth.currentUser && source !== 'roulette') {
                 window.Auth.currentUser.wallet_balance = this.balance;
-                if (source === 'roulette') {
-                    window.Auth.updateUserInterface();
-                }
+                window.Auth.updateUserInterface();
             }
         }
+
+        return true;
     }
 
     updateBalanceDisplay() {
@@ -1075,7 +1201,7 @@ constructor() {
         if (this.gameId) {
             return;
         }
-        const response = await this.postJson('/api/gaming/roulette/create', {});
+        const response = await this.post('/api/gaming/roulette/create', {});
         if (response && response.game_id) {
             this.gameId = response.game_id;
             console.log('Roulette session created', this.gameId);
@@ -1083,52 +1209,71 @@ constructor() {
     }
 
     async handleBet(type, rawValue, sourceButton) {
-        if (this.isProcessing || this.currentBets.length > 0) {
-            console.log('🚫 Bet blocked: isProcessing=', this.isProcessing, 'currentBets=', this.currentBets.length);
-            return;
-        }
+        if (this.isProcessing) return;
 
         const amount = this.currentAmount;
-        console.log('🎯 Starting human bet placement:', { type, rawValue, amount });
+        const betType = this.normalizeBetType(type);
+        const betValue = String(rawValue).toLowerCase();
 
-        // Check balance server-side instead of local balance
-        try {
-            const validation = await this.fetch('/api/gaming/validate-bet?amount=' + encodeURIComponent(amount));
-            console.log('📊 Balance validation result:', validation);
-            if (!validation.valid) {
-                this.showNotification(validation.message, 'error');
-                // Refresh balance to show current amount
-                await this.refreshBalanceFromServer();
-                return;
-            }
-        } catch (error) {
-            console.error('❌ Balance validation error:', error);
-            this.showNotification('Unable to validate balance. Please refresh the page.', 'error');
+        // Validate balance before proceeding
+        if (this.balance < amount) {
+            this.showNotification('Insufficient balance!', 'error');
             return;
         }
 
         const betData = {
-            type: this.normalizeBetType(type),
-            value: String(rawValue).toLowerCase(),
+            type: betType,
+            value: betValue,
             amount,
             source: sourceButton,
-            isPlayerBet: true,  // Mark as human player bet
+            isPlayerBet: true,
             playerName: window.Auth?.currentUser?.username || 'You',
             playerAvatar: window.Auth?.currentUser?.avatar || '👤'
         };
 
-        console.log('📝 Human bet data prepared:', betData);
+        // Place bet immediately (simplified flow)
+        await this.placeBet(betData);
+    }
 
-        // Add to pending queue for confirmation
-        this.addToPendingBets(betData);
-        this.showNotification(`${amount} GEM bet on ${this.formatBetLabel(betData)} added. Confirm to place order.`, 'info');
+    async placeBet(betData) {
+        try {
+            await this.ensureGameSession();
+            if (!this.gameId) {
+                this.showNotification('Game session unavailable.', 'error');
+                return;
+            }
 
-        // Auto-confirm after 2 seconds if not manually confirmed
-        console.log('⏰ Setting auto-confirm timer...');
-        setTimeout(() => {
-            console.log('🤖 Auto-confirming pending bet...');
-            this.confirmPendingBet();
-        }, 2000);
+            const betPayload = {
+                bet_type: betData.type,
+                bet_value: betData.value,
+                amount: betData.amount
+            };
+
+            const response = await this.post(`/api/gaming/roulette/${this.gameId}/bet`, betPayload);
+
+            if (response && response.success) {
+                // Register the bet locally
+                const localBet = {
+                    type: betPayload.bet_type,
+                    value: betPayload.bet_value,
+                    amount: betData.amount,
+                    betId: response.bet_id || crypto.randomUUID(),
+                    isPlayerBet: betData.isPlayerBet || false,
+                    playerName: betData.playerName || 'Unknown',
+                    playerAvatar: betData.playerAvatar || '👤'
+                };
+
+                this.registerBet(localBet);
+                this.showNotification(`Bet placed: ${betData.amount} GEM on ${this.formatBetLabel(betData)}`, 'success');
+                this.updateSpinButtonState();
+            } else {
+                const message = response?.error || 'Failed to place bet.';
+                this.showNotification(`Bet failed: ${message}`, 'error');
+            }
+        } catch (error) {
+            console.error('Bet placement error:', error);
+            this.showNotification(`Network error: ${error.message || 'Unknown error'}`, 'error');
+        }
     }
 
     addToPendingBets(betData) {
@@ -1188,15 +1333,18 @@ constructor() {
                 const tokenParts = authToken.split('.');
                 if (tokenParts.length === 3) {
                     try {
-                        const payload = JSON.parse(atob(tokenParts[1]));
-                        console.log('🔐 [DEBUG] Token user:', payload.sub || payload.username || 'unknown');
-                    } catch (e) {
-                        console.log('🔐 [DEBUG] Could not decode token payload');
+                        const response = await this.post('/api/gaming/roulette/create', {});
+                        if (response && response.game_id) {
+                            this.gameId = response.game_id;
+                            console.log('Roulette session created', this.gameId);
+                        }
+                    } catch (error) {
+                        console.warn('⚠️ Failed to create session during bet confirm:', error);
                     }
                 }
             }
 
-            const response = await this.postJson(apiUrl, betPayload);
+            const response = await this.post(apiUrl, betPayload);
             console.log('📥 [DEBUG] Raw API response:', response);
 
             if (response && response.success) {
@@ -1553,7 +1701,10 @@ constructor() {
     removeBet(index) {
         const [removed] = this.currentBets.splice(index, 1);
         if (removed) {
-            this.setBalance(this.balance + removed.amount, { source: 'roulette' });
+            // Only refund if it's a player bet, not a bot bet
+            if (removed.isPlayerBet) {
+                this.setBalance(this.balance + removed.amount, { source: 'roulette' });
+            }
         }
         this.updateBetSummary();
     }
@@ -1587,7 +1738,7 @@ constructor() {
         this.elements.spinButton?.classList.add('processing');
 
         try {
-            const response = await this.postJson(`/api/gaming/roulette/${this.gameId}/spin`, {});
+            const response = await this.post(`/api/gaming/roulette/${this.gameId}/spin`, {});
             if (response && response.success) {
                 this.handleSpinResult(response);
             } else {
@@ -1612,7 +1763,7 @@ constructor() {
             return;
         }
 
-        // Start wheel animation immediately - only visual
+        // Start wheel animation immediately - separate from balance operations
         this.animateWheel(outcome.number);
 
         // Process bets but DON'T SHOW RESULTS YET
@@ -1975,37 +2126,131 @@ constructor() {
         return Number(value).toLocaleString('en-US');
     }
 
+    // ===== ENHANCED BALANCE SYNC MANAGEMENT =====
+
     async refreshBalanceFromServer() {
+        // Prevent multiple concurrent sync operations (deduplication)
+        if (this.pendingBalanceSync) {
+            console.log('🛡️ Balance sync already in progress, skipping duplicate request');
+            return this.lastSyncPromise || null; // Return existing promise if available
+        }
+
+        this.pendingBalanceSync = true;
+        const syncId = Date.now(); // Track this sync operation
+
+        // Store the promise for deduplication
+        this.lastSyncPromise = this._performBalanceSync(syncId);
+
         try {
-            console.log('🔄 Refreshing roulette balance from server...');
-            const response = await this.fetch('/api/auth/status');
+            const result = await this.lastSyncPromise;
+            return result;
+        } finally {
+            // Clean up when this sync completes (only if it's still the active one)
+            if (this.pendingBalanceSync && !--this.activeSyncCount) {
+                this.pendingBalanceSync = false;
+                this.lastSyncPromise = null;
+            }
+        }
+    }
+
+    async _performBalanceSync(syncId) {
+        try {
+            // Initialize sync tracking
+            this.activeSyncCount = (this.activeSyncCount || 0) + 1;
+
+            console.log(`🔄 [${syncId}] Refreshing roulette balance from server...`);
+            const response = await this.get('/api/auth/status');
 
             if (response && response.authenticated && response.user) {
                 const serverBalance = response.user.wallet_balance;
                 this.setBalance(serverBalance, { source: 'server-sync' });
-                console.log(`✅ Server balance synced: ${serverBalance} GEM`);
+
+                // Update last known server balance for validation
+                this.lastServerBalance = serverBalance;
+
+                console.log(`✅ [${syncId}] Server balance synced: ${serverBalance} GEM`);
                 return serverBalance;
             } else if (response && response.guest_mode && response.guest_user) {
                 const serverBalance = response.guest_user.wallet_balance;
                 this.setBalance(serverBalance, { source: 'server-sync' });
-                console.log(`✅ Guest server balance synced: ${serverBalance} GEM`);
+
+                // Update last known server balance
+                this.lastServerBalance = serverBalance;
+
+                console.log(`✅ [${syncId}] Guest server balance synced: ${serverBalance} GEM`);
                 return serverBalance;
             }
 
-            console.warn('⚠️ No balance data in server response');
+            console.warn(`⚠️ [${syncId}] No balance data in server response`);
             return null;
         } catch (error) {
-            console.error('❌ Failed to refresh balance from server:', error);
-            // Fall back to Auth module if available
-            if (window.Auth && typeof window.Auth.refreshBalanceGlobally === 'function') {
-                try {
-                    return await window.Auth.refreshBalanceGlobally();
-                } catch (authError) {
-                    console.error('❌ Auth module sync also failed:', authError);
-                }
-            }
-            return null;
+            console.error(`❌ [${syncId}] Failed to refresh balance from server:`, error);
+
+            // Enhanced error recovery
+            return await this._handleBalanceSyncFailure(syncId, error);
         }
+    }
+
+    async _handleBalanceSyncFailure(syncId, originalError) {
+        console.warn(`🔄 [${syncId}] Attempting fallback balance sync...`);
+
+        // Try Auth module fallback
+        if (window.Auth && typeof window.Auth.refreshBalanceGlobally === 'function') {
+            try {
+                const fallbackBalance = await window.Auth.refreshBalanceGlobally();
+                if (fallbackBalance !== null) {
+                    console.log(`✅ [${syncId}] Fallback balance sync successful: ${fallbackBalance} GEM`);
+                    return fallbackBalance;
+                }
+            } catch (authError) {
+                console.error(`❌ [${syncId}] Auth module fallback also failed:`, authError);
+            }
+        }
+
+        // If both primary and fallback fail, use last known good balance
+        if (this.lastServerBalance && this.lastServerBalance > 0) {
+            console.warn(`🛡️ [${syncId}] Using last known balance as emergency fallback: ${this.lastServerBalance} GEM`);
+            this.setBalance(this.lastServerBalance, { source: 'emergency-fallback' });
+            return this.lastServerBalance;
+        }
+
+        console.error(`💥 [${syncId}] All balance sync methods failed, balance may be out of sync`);
+        throw new Error(`Balance sync failure: ${originalError.message}`);
+    }
+
+    // Validate balance operations before executing
+    validateBalanceOperation(amount, operation) {
+        const currentBalance = this.balance;
+        const requestedAmount = Math.abs(amount);
+
+        // Basic validation
+        if (!Number.isFinite(amount) || amount <= 0) {
+            throw new Error(`Invalid amount: ${amount}`);
+        }
+
+        if (amount > this.MAX_BET) {
+            throw new Error(`Amount exceeds maximum bet limit: ${amount} > ${this.MAX_BET}`);
+        }
+
+        // Insufficient balance check (with small buffer for race conditions)
+        if (requestedAmount > currentBalance + 10) { // 10 GEM buffer
+            throw new Error(`Insufficient balance: ${currentBalance} GEM available, ${requestedAmount} GEM required`);
+        }
+
+        // Check against minimum bet
+        if (amount < this.MIN_BET) {
+            throw new Error(`Amount below minimum bet: ${amount} < ${this.MIN_BET}`);
+        }
+
+        // Additional validation based on operation type
+        if (operation === 'bet' && currentBalance < requestedAmount) {
+            // Force balance sync before critical operations
+            console.warn('💰 Suspicious balance state detected, forcing immediate sync');
+            this.refreshBalanceFromServer();
+            throw new Error('Balance validation failed - forcing sync');
+        }
+
+        return true;
     }
 
     updateSpinButtonState() {
@@ -2020,13 +2265,25 @@ constructor() {
         this.elements.spinButton.textContent = isSpinning ? 'SPINNING...' : 'SPIN TO WIN';
     }
 
-    async fetch(url) {
-        const headers = {};
+    async apiRequest(url, options = {}) {
+        const defaultOptions = {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        };
+
         const token = localStorage.getItem('auth_token');
         if (token) {
-            headers['Authorization'] = `Bearer ${token}`;
+            defaultOptions.headers['Authorization'] = `Bearer ${token}`;
         }
-        const response = await fetch(url, { method: 'GET', headers });
+
+        const finalOptions = { ...defaultOptions, ...options };
+        if (finalOptions.body && typeof finalOptions.body === 'object') {
+            finalOptions.body = JSON.stringify(finalOptions.body);
+        }
+
+        const response = await fetch(url, finalOptions);
         if (!response.ok) {
             const data = await response.json().catch(() => ({}));
             throw new Error(data.detail || `Request failed with status ${response.status}`);
@@ -2034,22 +2291,15 @@ constructor() {
         return response.json();
     }
 
-    async postJson(url, payload) {
-        const headers = { 'Content-Type': 'application/json' };
-        const token = localStorage.getItem('auth_token');
-        if (token) {
-            headers['Authorization'] = `Bearer ${token}`;
-        }
-        const response = await fetch(url, {
+    async get(url) {
+        return this.apiRequest(url, { method: 'GET' });
+    }
+
+    async post(url, data = null) {
+        return this.apiRequest(url, {
             method: 'POST',
-            headers,
-            body: JSON.stringify(payload)
+            body: data
         });
-        if (!response.ok) {
-            const data = await response.json().catch(() => ({}));
-            throw new Error(data.detail || `Request failed with status ${response.status}`);
-        }
-        return response.json();
     }
 
     showWinNotification(amount, multiplier, betCount = 1) {
@@ -3824,7 +4074,7 @@ constructor() {
             await this.delay(2000);
 
             // Actually perform the spin
-            const response = await this.postJson(`/api/gaming/roulette/${this.gameId}/spin`, {});
+            const response = await this.post(`/api/gaming/roulette/${this.gameId}/spin`, {});
 
             if (response && response.success) {
                 this.handleSpinResult(response);
@@ -4517,6 +4767,13 @@ constructor() {
 
     // Generate a funny random username
     generateFunnyUsername() {
+        // Safety check to prevent undefined array errors
+        if (!this.namePrefixes || !Array.isArray(this.namePrefixes) ||
+            !this.nameSuffixes || !Array.isArray(this.nameSuffixes) ||
+            !this.nameWords || !Array.isArray(this.nameWords)) {
+            return 'BobRoss'; // Fallback
+        }
+
         const nameMethods = Math.floor(Math.random() * 4);
 
         switch (nameMethods) {
@@ -4526,7 +4783,8 @@ constructor() {
                 return prefix + suffix;
 
             case 1: // Name + Number (Bob42, Sally7)
-                const singleName = [...this.namePrefixes, ...this.nameSuffixes][Math.floor(Math.random() * (this.namePrefixes.length + this.nameSuffixes.length))];
+                const combinedNames = [...this.namePrefixes, ...this.nameSuffixes];
+                const singleName = combinedNames[Math.floor(Math.random() * combinedNames.length)];
                 const number = Math.floor(Math.random() * 999) + 1;
                 return singleName + number;
 
@@ -4536,7 +4794,8 @@ constructor() {
                 return word1 + word2;
 
             case 3: // Mixed combinations (BobBread, CheeseSteve, Dog42)
-                const namePart = [...this.namePrefixes, ...this.nameSuffixes][Math.floor(Math.random() * (this.namePrefixes.length + this.nameSuffixes.length))];
+                const combinedNamesAgain = [...this.namePrefixes, ...this.nameSuffixes];
+                const namePart = combinedNamesAgain[Math.floor(Math.random() * combinedNamesAgain.length)];
                 const wordPart = this.nameWords[Math.floor(Math.random() * this.nameWords.length)];
                 return Math.random() > 0.5 ? namePart + wordPart : wordPart + namePart;
 
@@ -4547,6 +4806,9 @@ constructor() {
 
     // Get random avatar emoji
     getRandomAvatar() {
+        if (!this.playerAvatars || !Array.isArray(this.playerAvatars)) {
+            return '🤖'; // Fallback
+        }
         return this.playerAvatars[Math.floor(Math.random() * this.playerAvatars.length)];
     }
 
