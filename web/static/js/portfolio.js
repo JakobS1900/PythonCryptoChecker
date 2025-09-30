@@ -1,6 +1,6 @@
 /**
  * Portfolio Module for CryptoChecker v3
- * Handles portfolio management, balance tracking, and transaction history
+ * Simple, reliable portfolio data loading
  */
 
 window.Portfolio = {
@@ -9,60 +9,67 @@ window.Portfolio = {
     transactions: [],
     isLoading: false,
 
-    // Initialize portfolio
+    // Initialize portfolio - simple and reliable
     init() {
-        this.setupEventListeners();
-        this.loadPortfolioData();
-        console.log('Portfolio module initialized');
-    },
+        console.log('🚀 Portfolio initializing...');
 
-    // Set up event listeners
-    setupEventListeners() {
-        // Tab switch events
-        document.querySelectorAll('[data-bs-toggle="tab"]').forEach(tab => {
-            tab.addEventListener('shown.bs.tab', (e) => {
-                this.handleTabSwitch(e.target.getAttribute('data-bs-target'));
+        // Wait for DOM to be ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                this.loadDataWhenReady();
             });
-        });
-
-        // Authentication state changes
-        document.addEventListener('authStateChanged', () => {
-            this.loadPortfolioData();
-        });
-    },
-
-    // Load portfolio data
-    async loadPortfolioData() {
-        try {
-            this.isLoading = true;
-            console.log('Loading portfolio data...');
-
-            // Load portfolio stats
-            const portfolioResponse = await App.api.get('/crypto/portfolio');
-            console.log('Portfolio API response:', portfolioResponse);
-
-            if (portfolioResponse && portfolioResponse.success) {
-                this.portfolioData = portfolioResponse.portfolio;
-                console.log('Portfolio data loaded:', this.portfolioData);
-                this.updatePortfolioDisplay();
-            } else {
-                console.error('Portfolio API failed:', portfolioResponse);
-                this.showPortfolioError('Failed to load portfolio data');
-            }
-
-            // Show guest notice if in guest mode
-            this.handleGuestModeDisplay();
-
-        } catch (error) {
-            console.error('Failed to load portfolio data:', error);
-            this.showPortfolioError('Failed to load portfolio data');
-        } finally {
-            this.isLoading = false;
+        } else {
+            this.loadDataWhenReady();
         }
     },
 
-    // Update portfolio display
-    updatePortfolioDisplay() {
+    // Load data when everything is ready
+    loadDataWhenReady() {
+        // Try multiple strategies to ensure data loads
+        this.attemptLoad();
+
+        // Fallback attempts
+        setTimeout(() => this.attemptLoad(), 1000);
+        setTimeout(() => this.attemptLoad(), 3000);
+    },
+
+    // Simple load attempt
+    async attemptLoad() {
+        try {
+            console.log('📊 Attempting to load portfolio data...');
+
+            // Make direct API call
+            const response = await fetch('/api/crypto/portfolio', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('auth_token') || ''}`
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                console.log('✅ Portfolio data loaded:', data);
+
+                if (data.success && data.portfolio) {
+                    this.portfolioData = data.portfolio;
+                    this.updateDisplay();
+                    return;
+                }
+            }
+
+            console.log('❌ API call failed, response:', response.status);
+
+        } catch (error) {
+            console.error('💥 Portfolio load error:', error);
+        }
+
+        // If we get here, the load failed - show error
+        this.showError();
+    },
+
+    // Update all display elements
+    updateDisplay() {
         if (!this.portfolioData) return;
 
         const wallet = this.portfolioData.wallet || {};
@@ -72,14 +79,14 @@ window.Portfolio = {
         const balance = wallet.gem_balance || 0;
         const balanceUsd = (balance * 0.01).toFixed(2);
 
-        this.updateElement('portfolio-balance', this.formatBalance(balance));
+        this.updateElement('portfolio-balance', this.formatNumber(balance));
         this.updateElement('portfolio-balance-usd', balanceUsd);
-        this.updateElement('current-balance', this.formatBalance(balance) + ' GEM');
-        this.updateElement('balance-display', this.formatBalance(balance));
+        this.updateElement('current-balance', this.formatNumber(balance) + ' GEM');
+        this.updateElement('balance-display', this.formatNumber(balance));
         this.updateElement('balance-usd-display', balanceUsd);
 
         // Update stats
-        this.updateElement('total-earned', this.formatBalance(wallet.total_won || 0) + ' GEM');
+        this.updateElement('total-earned', this.formatNumber(wallet.total_won || 0) + ' GEM');
         this.updateElement('games-played', stats.total_games || 0);
         this.updateElement('win-rate', ((stats.win_rate || 0) * 100).toFixed(1) + '%');
 
@@ -89,193 +96,47 @@ window.Portfolio = {
         this.updateElement('total-games-count', stats.total_games || 0);
         this.updateElement('win-rate-percentage', ((stats.win_rate || 0) * 100).toFixed(1) + '%');
 
-        this.updateElement('total-wagered', this.formatBalance(wallet.total_wagered || 0) + ' GEM');
-        this.updateElement('total-won', this.formatBalance(wallet.total_won || 0) + ' GEM');
+        this.updateElement('total-wagered', this.formatNumber(wallet.total_wagered || 0) + ' GEM');
+        this.updateElement('total-won', this.formatNumber(wallet.total_won || 0) + ' GEM');
 
         const netResult = (wallet.total_won || 0) - (wallet.total_wagered || 0);
         const netResultElement = document.getElementById('net-gaming-result');
         if (netResultElement) {
-            netResultElement.textContent = this.formatBalance(netResult) + ' GEM';
+            netResultElement.textContent = this.formatNumber(netResult) + ' GEM';
             netResultElement.className = netResult >= 0 ? 'fw-bold text-success' : 'fw-bold text-danger';
         }
+
+        console.log('🎉 Portfolio display updated successfully');
     },
 
-    // Load transaction history
-    async loadTransactionHistory() {
-        try {
-            const response = await App.api.get('/crypto/portfolio/transactions', { limit: 50 });
-            if (response.success) {
-                this.transactions = response.transactions || [];
-                this.updateTransactionTable();
-            } else {
-                this.showTransactionError(response.message || 'Failed to load transactions');
-            }
-        } catch (error) {
-            console.error('Failed to load transactions:', error);
-            this.showTransactionError('Failed to load transaction history');
-        }
-    },
-
-    // Update transaction table
-    updateTransactionTable() {
-        const tableBody = document.getElementById('transactions-table-body');
-        if (!tableBody) return;
-
-        if (!this.transactions || this.transactions.length === 0) {
-            tableBody.innerHTML = `
-                <tr>
-                    <td colspan="6" class="text-center py-4 text-muted">
-                        ${App.isGuest ? 'Transaction history not available in guest mode' : 'No transactions found'}
-                    </td>
-                </tr>
-            `;
-            return;
-        }
-
-        const rows = this.transactions.map(transaction => this.createTransactionRow(transaction)).join('');
-        tableBody.innerHTML = rows;
-    },
-
-    // Create transaction row
-    createTransactionRow(transaction) {
-        const date = new Date(transaction.created_at).toLocaleDateString();
-        const time = new Date(transaction.created_at).toLocaleTimeString();
-
-        const amountClass = transaction.amount >= 0 ? 'text-success' : 'text-danger';
-        const amountSymbol = transaction.amount >= 0 ? '+' : '';
-
-        return `
-            <tr>
-                <td>
-                    <div>${date}</div>
-                    <small class="text-muted">${time}</small>
-                </td>
-                <td>
-                    <span class="badge ${this.getTransactionTypeBadge(transaction.transaction_type)}">
-                        ${this.formatTransactionType(transaction.transaction_type)}
-                    </span>
-                </td>
-                <td>
-                    <div>${transaction.description || 'No description'}</div>
-                    ${transaction.details ? `<small class="text-muted">${transaction.details}</small>` : ''}
-                </td>
-                <td class="text-end ${amountClass}">
-                    <strong>${amountSymbol}${this.formatBalance(Math.abs(transaction.amount))} GEM</strong>
-                </td>
-                <td class="text-end">
-                    ${this.formatBalance(transaction.balance_after)} GEM
-                </td>
-                <td>
-                    <span class="badge ${this.getStatusBadge(transaction.status)}">
-                        ${transaction.status || 'completed'}
-                    </span>
-                </td>
-            </tr>
-        `;
-    },
-
-    // Handle tab switch
-    handleTabSwitch(target) {
-        switch (target) {
-            case '#transactions':
-                if (this.transactions.length === 0) {
-                    this.loadTransactionHistory();
-                }
-                break;
-            case '#gaming':
-                // Gaming stats are already loaded with portfolio data
-                break;
-        }
-    },
-
-    // Handle guest mode display
-    handleGuestModeDisplay() {
-        const guestNotice = document.getElementById('guest-portfolio-notice');
-        if (guestNotice) {
-            guestNotice.style.display = App.isGuest ? 'block' : 'none';
-        }
-    },
-
-    // Utility functions
-    refreshBalance() {
-        App.showAlert('info', 'Refreshing balance...', 2000);
-        this.loadPortfolioData();
-    },
-
-    refreshTransactions() {
-        App.showAlert('info', 'Refreshing transactions...', 2000);
-        this.loadTransactionHistory();
-    },
-
-    formatBalance(balance) {
-        return new Intl.NumberFormat('en-US').format(balance || 0);
-    },
-
-    getTransactionTypeBadge(type) {
-        const badges = {
-            'deposit': 'bg-success',
-            'withdrawal': 'bg-danger',
-            'gaming_win': 'bg-primary',
-            'gaming_loss': 'bg-warning',
-            'bonus': 'bg-info',
-            'fee': 'bg-secondary'
-        };
-        return badges[type] || 'bg-secondary';
-    },
-
-    formatTransactionType(type) {
-        const types = {
-            'deposit': 'Deposit',
-            'withdrawal': 'Withdrawal',
-            'gaming_win': 'Gaming Win',
-            'gaming_loss': 'Gaming Loss',
-            'bonus': 'Bonus',
-            'fee': 'Fee'
-        };
-        return types[type] || type.charAt(0).toUpperCase() + type.slice(1);
-    },
-
-    getStatusBadge(status) {
-        const badges = {
-            'completed': 'bg-success',
-            'pending': 'bg-warning',
-            'failed': 'bg-danger',
-            'cancelled': 'bg-secondary'
-        };
-        return badges[status] || 'bg-success';
-    },
-
-    showPortfolioError(message) {
-        App.showAlert('danger', message);
-
-        // Update displays with error state
+    // Show error state
+    showError() {
+        console.log('❌ Showing portfolio error state');
         this.updateElement('portfolio-balance', 'Error');
         this.updateElement('current-balance', 'Error loading balance');
     },
 
-    showTransactionError(message) {
-        const tableBody = document.getElementById('transactions-table-body');
-        if (tableBody) {
-            tableBody.innerHTML = `
-                <tr>
-                    <td colspan="6" class="text-center py-4 text-danger">
-                        <i class="bi bi-exclamation-triangle"></i> ${message}
-                        <br>
-                        <button class="btn btn-outline-primary btn-sm mt-2" onclick="Portfolio.refreshTransactions()">
-                            <i class="bi bi-arrow-clockwise"></i> Try Again
-                        </button>
-                    </td>
-                </tr>
-            `;
+    // Format numbers
+    formatNumber(num) {
+        return new Intl.NumberFormat('en-US').format(num || 0);
+    },
+
+    // Update element safely
+    updateElement(id, content) {
+        const element = document.getElementById(id);
+        if (element) {
+            element.textContent = content;
         }
     },
 
-    updateElement(id, content) {
-        App.updateElement(id, content);
+    // Manual refresh function
+    refreshBalance() {
+        console.log('🔄 Manual refresh requested');
+        this.loadDataWhenReady();
     }
 };
 
 // Auto-initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    // Portfolio will be initialized by the page_init block in template
+    Portfolio.init();
 });
