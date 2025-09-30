@@ -1,4 +1,12 @@
 ﻿class RouletteGame {
+    // Round phases - sequential, prevent concurrent operations
+    static ROUND_PHASES = {
+        BETTING: 'betting',
+        SPINNING: 'spinning',
+        RESULTS: 'results',
+        CLEANUP: 'cleanup'
+    };
+
     constructor() {
         this.MIN_BET = 10;
         this.MAX_BET = 10000;
@@ -12,6 +20,12 @@
         this.isProcessing = false;
         this.isSpinning = false;
         this.roundTimer = null;
+
+            // Round state management - PREVENTS timing conflicts and multi-spin issues
+        this.roundPhase = RouletteGame.ROUND_PHASES.BETTING;
+        this.roundId = 1;
+        this.spinInProgress = false; // Prevent multiple simultaneous spin attempts
+        this.spinLockActive = false; // Guards against rapid multiple spin requests
 
         // Balance management - critical fixes (enhanced)
         this.pendingBalanceSync = false;
@@ -1721,36 +1735,65 @@
     }
 
     async requestSpin() {
-        if (this.isSpinning) {
+        // ROUND STATE MANAGEMENT: Prevent multiple simultaneous spin attempts
+        if (this.roundPhase !== RouletteGame.ROUND_PHASES.BETTING) {
+            console.warn(`🚫 Can't spin during ${this.roundPhase} phase`);
             return;
         }
+
+        if (this.spinInProgress || this.spinLockActive) {
+            console.warn('🚫 Spin already in progress (lock active)');
+            return;
+        }
+
         if (this.currentBets.length === 0) {
             this.showNotification('Place a bet before spinning.', 'warning');
             return;
         }
+
         await this.ensureGameSession();
         if (!this.gameId) {
             this.showNotification('Game session unavailable.', 'error');
             return;
         }
 
-        this.isSpinning = true;
+        // ACTIVATE SPIN LOCK to prevent rapid multiple requests
+        this.spinLockActive = true;
+        this.spinInProgress = true;
+        this.roundPhase = RouletteGame.ROUND_PHASES.SPINNING; // Transition phase
+        this.roundId++;
+
+        console.log(`🎰 Round ${this.roundId} spin requested - PHASE: ${this.roundPhase}`);
+
         this.elements.spinButton?.classList.add('processing');
+        this.elements.spinButton.disabled = true;
+        this.showNotification('Wheel spinning...', 'info');
 
         try {
             const response = await this.post(`/api/gaming/roulette/${this.gameId}/spin`, {});
+
             if (response && response.success) {
-                this.handleSpinResult(response);
+                // Transition to results phase
+                this.roundPhase = RouletteGame.ROUND_PHASES.RESULTS;
+                console.log(`✅ Spin successful - PHASE: ${this.roundPhase}`);
+                await this.handleSpinResult(response);
             } else {
                 const message = response?.error || 'Spin failed.';
+                console.error('❌ Spin failed:', message);
                 this.showNotification(message, 'error');
+                // Reset to betting phase on failure
+                this.roundPhase = RouletteGame.ROUND_PHASES.BETTING;
             }
         } catch (error) {
-            console.error('Spin error', error);
+            console.error('❌ Spin error:', error);
             this.showNotification('Error spinning the wheel.', 'error');
+            // Reset to betting phase on error
+            this.roundPhase = RouletteGame.ROUND_PHASES.BETTING;
         } finally {
-            this.isSpinning = false;
+            // RELEASE SPIN LOCK after server operation completes
+            this.spinInProgress = false;
             this.elements.spinButton?.classList.remove('processing');
+            this.updateSpinButtonState();
         }
     }
 
@@ -1838,21 +1881,42 @@
             // NOW show results - winner number was already displayed during animation
             this.showPersistentResult(isWin, isWin ? totalWinnings : totalLosses);
 
+            // TRANSITION TO CLEANUP PHASE - PREVENT STUCK ROUNDS
+            this.roundPhase = RouletteGame.ROUND_PHASES.CLEANUP;
+            console.log(`🧹 Round ${this.roundId} entering CLEANUP phase`);
+
             // Show detailed result modal
             await this.showResultSummary(totalWinnings, totalLosses, outcome);
 
-            // Clean up for next round
+            // COMPLETE CLEANUP PHASE - RESET FOR NEXT ROUND
+            console.log(`🐣 Round ${this.roundId} completed, resetting for next round`);
+
+            // Clean up bets and state
             this.currentBets = [];
             this.updateBetSummary();
             this.updateSpinButtonState();
 
-            // Start new round
+            // CRITICAL FIX: Reset all phase flags and locks
+            this.spinInProgress = false;
+            this.spinLockActive = false;
+
+            // TRANSITION TO BETTING PHASE - READY FOR NEXT ROUND
+            this.roundPhase = RouletteGame.ROUND_PHASES.BETTING;
+            console.log(`🎰 Round ${this.roundId + 1} ready - PHASE: ${this.roundPhase}`);
+
+            // Ensure controls are re-enabled
             this.reEnableBetting();
+
+            // Start next round countdown
             this.startNewRound();
 
         } catch (error) {
             console.error('Error handling spin result:', error);
-            // Fallback - show notification even if animation timing failed
+            // Fallback - force reset to betting phase even on error
+            this.roundPhase = RouletteGame.ROUND_PHASES.BETTING;
+            this.spinInProgress = false;
+            this.spinLockActive = false;
+            this.reEnableBetting();
             this.showNotification('Error displaying results, refresh if needed', 'warning');
             this.startNewRound();
         }
@@ -2258,11 +2322,17 @@
             return;
         }
 
-        const hasBets = this.currentBets.length > 0;
-        const isSpinning = this.isSpinning;
+        // ROUND STATE MANAGEMENT: Respect phase system
+        const canSpin = this.roundPhase === RouletteGame.ROUND_PHASES.BETTING &&
+                       this.currentBets.length > 0 &&
+                       !this.spinInProgress &&
+                       !this.spinLockActive;
 
-        this.elements.spinButton.disabled = !hasBets || isSpinning;
-        this.elements.spinButton.textContent = isSpinning ? 'SPINNING...' : 'SPIN TO WIN';
+        const isCurrentlySpinning = this.roundPhase === RouletteGame.ROUND_PHASES.SPINNING;
+
+        this.elements.spinButton.disabled = !canSpin && !isCurrentlySpinning;
+        this.elements.spinButton.textContent = isCurrentlySpinning ? 'SPINNING...' :
+                                            canSpin ? 'SPIN TO WIN' : 'PLACE BETS TO SPIN';
     }
 
     async apiRequest(url, options = {}) {
@@ -4024,8 +4094,17 @@
         }
 
         const startTime = Date.now();
+
+        // CRITICAL FIX: Reset BOTH phase systems for proper betting state
         this.gamePhase = 'betting';
+        this.roundPhase = RouletteGame.ROUND_PHASES.BETTING;
+        console.log(`⏰ Starting countdown - phase reset: ${this.roundPhase}`);
+
         this.updateGamePhase('Place Your Bets');
+
+        // FORCE control re-enable when countdown starts
+        this.reEnableBetting();
+        this.updateSpinButtonState();
 
         this.roundTimer = setInterval(() => {
             const elapsed = Date.now() - startTime;
@@ -4051,44 +4130,59 @@
         }, 200);
     }
 
-    // Enhanced spin sequence with proper timing
+    // ENHANCED SYNCED SPIN SEQUENCE - PREVENTS CHAOS
     async startSpinSequence() {
-        console.log('🎰 Starting enhanced spin sequence...');
+        console.log('🎰 Starting synced spin sequence...');
 
         this.gamePhase = 'spinning';
+        this.roundPhase = RouletteGame.ROUND_PHASES.SPINNING;
         this.updateGamePhase('Wheel Spinning...');
         this.updateSpinButtonState();
 
-        // Disable all betting during spin - CRITICAL: stop bot betting
+        // CRITICAL: Disable ALL betting during spin - no exceptions
         this.disableBetting();
 
-        // CLEAR BOT BET ANNOUNCEMENTS during spin
+        // Stop bot announcements during spin
         this.stopBotActivityFeed();
         this.stopLiveBetFeed();
 
         try {
-            // Start wheel animation
-            this.showWheelSpinning();
+            // FIRE API CALL IMMEDIATELY - don't wait for animation
+            const spinPromise = this.post(`/api/gaming/roulette/${this.gameId}/spin`, {});
 
-            // Wait for animation to build anticipation (2 seconds)
-            await this.delay(2000);
+            // Start wheel animation at SAME TIME as API call
+            await this.delay(50); // Tiny delay for smooth start
+            const animationPromise = this.startUnifiedWheelAnimation();
 
-            // Actually perform the spin
-            const response = await this.post(`/api/gaming/roulette/${this.gameId}/spin`, {});
+            // Wait for API to complete (this is usually faster than animation)
+            const response = await spinPromise;
 
             if (response && response.success) {
+                console.log('✅ Spin API success, waiting for animation to complete...');
+                // Wait for animation to finish, then handle results
                 this.handleSpinResult(response);
             } else {
                 const message = response?.error || 'Spin failed.';
+                console.error('❌ Spin failed:', message);
+
+                // FORCE cleanup on failure - no stuck states
+                this.roundPhase = RouletteGame.ROUND_PHASES.BETTING;
+                this.spinInProgress = false;
+                this.spinLockActive = false;
+
                 this.showNotification(message, 'error');
-                this.reEnableBetting();
-                this.startNewRound();
+                this.statusForceReEnable();
             }
         } catch (error) {
-            console.error('Spin sequence error', error);
+            console.error('❌ Spin sequence error:', error);
+
+            // ULTIMATE FAILSAFE - force reset all state
+            this.roundPhase = RouletteGame.ROUND_PHASES.BETTING;
+            this.spinInProgress = false;
+            this.spinLockActive = false;
+
             this.showNotification('Error during spin.', 'error');
-            this.reEnableBetting();
-            this.startNewRound();
+            this.statusForceReEnable();
         }
     }
 
@@ -4686,13 +4780,12 @@
         document.head.appendChild(style);
     }
 
-    // Show wheel spinning animation
-    showWheelSpinning() {
-        // Trigger wheel animation
-        const wheelElement = document.getElementById('wheelNumbers');
-        if (wheelElement) {
-            wheelElement.style.animation = 'wheelSpin 2s ease-in-out infinite';
-        }
+    // UNIFIED WHEEL ANIMATION - PREVENTS CHAOS
+    startUnifiedWheelAnimation() {
+        console.log('🎰 Starting unified wheel animation...');
+
+        // Start the complete wheel animation sequence
+        this.animateWheel(0); // Start with number 0, animation will take ~2.5s
 
         // Update game phase display
         this.updateGamePhase('🎰 Wheel Spinning...');
@@ -4702,6 +4795,8 @@
         if (wheelContainer) {
             wheelContainer.classList.add('spinning');
         }
+
+        return this.wheelAnimationEndTime; // Return completion time
     }
 
     // Utility delay function
@@ -4760,6 +4855,38 @@
 
         // Update spin button
         this.updateSpinButtonState();
+    }
+
+    // FORCE re-enable ALL controls (ultimate failsafe)
+    statusForceReEnable() {
+        console.log('🚨 FORCE RE-ENABLING ALL CONTROLS (ultimate failsafe)');
+
+        // Force reset all state flags
+        this.roundPhase = RouletteGame.ROUND_PHASES.BETTING;
+        this.gamePhase = 'betting';
+        this.spinInProgress = false;
+        this.spinLockActive = false;
+        this.isProcessing = false;
+
+        // Force re-enable all controls
+        this.reEnableBetting();
+        this.updateSpinButtonState();
+
+        // Clear any ongoing timers
+        if (this.roundTimer) {
+            clearInterval(this.roundTimer);
+            this.roundTimer = null;
+        }
+
+        // Restart normal countdown if we're not in a spin
+        if (this.currentBets.length > 0) {
+            this.startNewRound();
+        }
+
+        this.updateGamePhase('Ready to Play');
+        this.stopWheelAnimations();
+
+        console.log('✅ All controls force-re-enabled successfully');
     }
 
     // ===== FUNNY USERNAME & AVATAR SYSTEM =====
