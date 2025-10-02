@@ -210,7 +210,7 @@ class BotPopulationManager:
             existing_bots = result.scalars().all()
 
             if len(existing_bots) >= num_bots:
-                print(f"✅ {len(existing_bots)} bots already exist")
+                print(f"[OK] {len(existing_bots)} bots already exist")
             else:
                 # Create missing bots
                 existing_names = {bot.username for bot in existing_bots}
@@ -288,7 +288,7 @@ class BotPopulationManager:
                 bot = BotGambler(str(bot_user.id), personality, balance)
                 self.bots[str(bot_user.id)] = bot
 
-            print(f"🎰 Loaded {len(self.bots)} bot gamblers")
+            print(f"[Bot System] Loaded {len(self.bots)} bot gamblers")
 
     async def get_bots_for_room(self, room_code: str, max_bots: int = 8) -> List[Dict]:
         """Get a subset of bots to populate a room."""

@@ -4,18 +4,22 @@ Simplified, focused gaming system with proper GEM economy.
 """
 
 import os
+import json
+import asyncio
 from typing import List, Optional, Dict, Any
 from fastapi import APIRouter, HTTPException, Depends, Query
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.database import get_db
 from database.models import (
-    User, BetType,
+    User, BetType, RoundPhase,
     DailyBonus, UserAchievement, Achievement,
     EmergencyTask, UserEmergencyTask
 )
 from gaming.roulette import roulette_engine
+from gaming.round_manager import round_manager
 from crypto.portfolio import portfolio_manager
 from api.auth_api import get_current_user
 
@@ -1045,3 +1049,68 @@ async def initialize_default_achievements(
     except Exception as e:
         await db.rollback()
         raise HTTPException(status_code=500, detail=f"Error initializing achievements: {str(e)}")
+
+
+# ==================== SERVER-MANAGED ROUND ENDPOINTS ====================
+
+@router.get("/roulette/round/current")
+async def get_current_round(current_user: User = Depends(get_current_user)):
+    """Get current round state"""
+    current = round_manager.get_current_round()
+    if not current:
+        # No round active, this shouldn't happen but handle gracefully
+        return {"success": False, "error": "No active round"}
+
+    return {"success": True, "round": current}
+
+
+@router.post("/roulette/round/spin")
+async def trigger_manual_spin(
+    game_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """Player-initiated spin (manual trigger)"""
+    try:
+        outcome = await round_manager.trigger_spin(
+            user_id=current_user.id,
+            game_session_id=game_id
+        )
+        return {"success": True, "outcome": outcome}
+    except ValueError as e:
+        raise HTTPException(status_code=409, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Spin error: {str(e)}")
+
+
+@router.get("/roulette/round/stream")
+async def round_event_stream(current_user: Optional[User] = Depends(get_current_user)):
+    """Server-Sent Events stream for round updates"""
+    # Generate a unique ID for guest users
+    user_id = current_user.id if current_user else f"guest-{id(current_user)}"
+    queue = await round_manager.subscribe_sse(user_id)
+
+    async def event_generator():
+        try:
+            while True:
+                event_data = await queue.get()
+                # SSE format: event: <type>\ndata: <json>\n\n
+                event_type = event_data.get("event", "message")
+                data = event_data.get("data", {})
+                yield f"event: {event_type}\ndata: {json.dumps(data)}\n\n"
+        except asyncio.CancelledError:
+            round_manager.unsubscribe_sse(user_id)
+            raise
+        except Exception as e:
+            print(f"[SSE] Error for user {user_id}: {e}")
+            round_manager.unsubscribe_sse(user_id)
+            raise
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no"  # Disable nginx buffering
+        }
+    )

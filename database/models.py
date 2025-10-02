@@ -105,6 +105,13 @@ class AchievementType(Enum):
     HIGH_ROLLER = "HIGH_ROLLER"       # Place high-value bets
     COMEBACK = "COMEBACK"             # Win after losing streak
 
+class RoundPhase(Enum):
+    """Phases of a roulette round (server-managed round system)."""
+    BETTING = "betting"       # Players can place bets
+    SPINNING = "spinning"     # Wheel is spinning, bets locked
+    RESULTS = "results"       # Displaying results, calculating payouts
+    CLEANUP = "cleanup"       # Round completed, preparing for next
+
 # ==================== MODELS ====================
 
 class User(Base):
@@ -292,6 +299,55 @@ class GameSession(Base):
             "completed_at": self.completed_at.isoformat() if self.completed_at else None
         }
 
+class RouletteRound(Base):
+    """
+    Server-managed roulette round.
+    Represents a single round of roulette that all players participate in.
+    """
+    __tablename__ = "roulette_rounds"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    round_number = Column(Integer, autoincrement=True, nullable=False, unique=True)
+    phase = Column(String(20), nullable=False, default=RoundPhase.BETTING.value)
+
+    # Timing
+    started_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    betting_ends_at = Column(DateTime)
+
+    # Outcome (NULL until wheel spins)
+    outcome_number = Column(Integer)  # 0-36
+    outcome_color = Column(String(10))  # red/black/green
+    outcome_crypto = Column(String(10))  # BTC, ETH, etc.
+
+    # Who triggered the spin
+    triggered_by = Column(String(36), ForeignKey('users.id'))
+
+    # Metadata
+    created_at = Column(DateTime, default=datetime.utcnow)
+    completed_at = Column(DateTime)
+
+    # Relationships
+    bets = relationship("GameBet", back_populates="round")
+    trigger_user = relationship("User", foreign_keys=[triggered_by])
+
+    def to_dict(self):
+        """Convert round to dictionary."""
+        return {
+            "id": self.id,
+            "round_number": self.round_number,
+            "phase": self.phase,
+            "started_at": self.started_at.isoformat() if self.started_at else None,
+            "betting_ends_at": self.betting_ends_at.isoformat() if self.betting_ends_at else None,
+            "outcome": {
+                "number": self.outcome_number,
+                "color": self.outcome_color,
+                "crypto": self.outcome_crypto
+            } if self.outcome_number is not None else None,
+            "triggered_by": self.triggered_by,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "completed_at": self.completed_at.isoformat() if self.completed_at else None
+        }
+
 class GameBet(Base):
     """Individual bet within a game session."""
     __tablename__ = "game_bets"
@@ -299,6 +355,7 @@ class GameBet(Base):
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     game_session_id = Column(String, ForeignKey("game_sessions.id"), nullable=False)
     user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    round_id = Column(String(36), ForeignKey("roulette_rounds.id"))  # NEW: Link to round
 
     # Bet details
     bet_type = Column(String(20), nullable=False)
@@ -315,6 +372,7 @@ class GameBet(Base):
     # Relationships
     game_session = relationship("GameSession", back_populates="bets")
     user = relationship("User")
+    round = relationship("RouletteRound", back_populates="bets")  # NEW: Round relationship
 
     def calculate_payout(self, winning_number: int, winning_color: str, winning_crypto: str) -> tuple:
         """Calculate if bet wins and payout amount."""

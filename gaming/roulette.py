@@ -112,8 +112,22 @@ class CryptoRouletteEngine:
         amount: float
     ) -> Dict[str, Any]:
         """Place a bet in the game session."""
+        # Import here to avoid circular dependency
+        from gaming.round_manager import round_manager
+
         async with AsyncSessionLocal() as session:
             try:
+                # Get current round_id from round manager
+                current_round = round_manager.get_current_round()
+                round_id = current_round["round_id"] if current_round else None
+
+                # Validate that betting is allowed (must be in BETTING phase)
+                if not current_round or current_round["phase"] != "betting":
+                    return {
+                        "success": False,
+                        "error": "Betting is not allowed during this phase. Please wait for the next round."
+                    }
+
                 # Validate bet amount
                 is_valid, message = await portfolio_manager.validate_bet_amount(user_id, amount)
                 if not is_valid:
@@ -131,10 +145,11 @@ class CryptoRouletteEngine:
                 if not success:
                     return {"success": False, "error": "Failed to deduct bet amount"}
 
-                # Create bet record
+                # Create bet record with round_id
                 bet = GameBet(
                     game_session_id=game_session_id,
                     user_id=user_id,
+                    round_id=round_id,  # Link to current round
                     bet_type=bet_type,
                     bet_value=bet_value,
                     amount=amount
@@ -144,9 +159,13 @@ class CryptoRouletteEngine:
                 await session.commit()
                 await session.refresh(bet)
 
+                # Register bet with round manager
+                await round_manager.register_bet(bet.id, user_id)
+
                 return {
                     "success": True,
                     "bet_id": bet.id,
+                    "round_id": round_id,
                     "message": f"Bet placed: {amount} GEM on {bet_type} {bet_value}"
                 }
 

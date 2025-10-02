@@ -43,6 +43,12 @@
         this.liveBetFeed = [];
         this.roundBots = [];
 
+        // Server-managed round system (SSE)
+        this.sseConnection = null;
+        this.sseReconnectAttempts = 0;
+        this.pollingFallbackInterval = null;
+        this.serverRoundState = null;
+
         // Auto-bet state
         this.autoBetEnabled = false;
         this.bettingStrategy = 'manual';
@@ -124,7 +130,8 @@
         // Initialize bot arena
         this.initializeBotArena();
 
-        this.startNewRound();
+        // Connect to server-managed rounds (SSE)
+        this.connectToRoundStream();
 
         window.addEventListener('balanceUpdated', (event) => {
             const { detail } = event;
@@ -635,8 +642,9 @@
     }
 
     // Make bots place bets during the betting round
+    // FIX: Synchronize with round timer (15s) instead of fixed delays
     botsPlaceBets() {
-        console.log('🤖 Bots starting to place bets...');
+        console.log(`🤖 Bots starting to place bets synchronized with round timer... (Current bets before: ${this.currentBets.length})`);
 
         // Update arena placeholder to show activity
         const placeholder = document.querySelector('.arena-placeholder');
@@ -647,23 +655,37 @@
             }
         }
 
-        // Simulate bots making decisions during betting time
-        setTimeout(() => {
-            this.roundBots.forEach((bot, index) => {
-                setTimeout(() => {
-                    console.log(`🤖 ${bot.name} is deciding...`);
-                    this.botPlaceSpecificBet(bot);
+        // FIX: Spread bot bets across first 10 seconds of 15s round
+        // This ensures bots finish betting before round timer expires
+        const roundDuration = this.ROUND_DURATION || 15000; // 15 seconds
+        const bettingWindow = roundDuration * 0.67; // Use first 10 seconds (67% of round)
+        const botCount = this.roundBots.length;
+        const timeBetweenBots = bettingWindow / (botCount + 1); // Evenly space bot bets
 
-                    // Update bot status during thinking phase
-                    if (bot.element) {
-                        const statusElement = bot.element.querySelector('.bot-status');
-                        if (statusElement) {
-                            statusElement.textContent = 'Deciding...';
-                        }
+        this.roundBots.forEach((bot, index) => {
+            // Calculate delay for this bot (staggered throughout betting window)
+            const botDelay = timeBetweenBots * (index + 1);
+
+            setTimeout(() => {
+                console.log(`🤖 ${bot.name} placing bet at ${(botDelay/1000).toFixed(1)}s into round...`);
+                this.botPlaceSpecificBet(bot);
+
+                // Update bot status during thinking phase
+                if (bot.element) {
+                    const statusElement = bot.element.querySelector('.bot-status');
+                    if (statusElement) {
+                        statusElement.textContent = 'Deciding...';
                     }
-                }, index * 1000); // Stagger bot bets more realistically (1 second apart)
-            });
-        }, 1000); // Start after a second
+                }
+            }, botDelay);
+        });
+
+        console.log(`🤖 ${botCount} bots will place bets over ${(bettingWindow/1000).toFixed(1)} seconds`);
+
+        // Log final bet count after all bots finish
+        setTimeout(() => {
+            console.log(`✅ Bots finished betting - Total bets now: ${this.currentBets.length}`);
+        }, bettingWindow + 1000);
     }
 
     // Have a specific bot place a bet
@@ -734,38 +756,14 @@
 
     // Place bot bet on server (this would integrate with your backend)
     async placeBotBetOnServer(betData) {
-        try {
-            // Actually place the bot bet through the existing betting API
-            // This makes bots' bets count in the actual round results!
-            console.log(`🤖 Placing bot bet for ${betData.botName}: ${betData.amount} GEM on ${betData.value}`);
+        // FIX: Bots should NOT use the player's balance or API!
+        // Bots are visual only - they don't actually place real bets
+        // Real bot betting would need a separate backend system with bot accounts
 
-            // Check local balance (bots should all have sufficient balance)
-            if (this.balance < betData.amount) {
-                console.warn(`⚠️ Failed to place bot bet for ${betData.botName}: Insufficient balance. Current: ${this.balance} GEM, Required: ${betData.amount} GEM`);
-                return null;
-            }
+        console.log(`🤖 Bot ${betData.botName} bet SIMULATED: ${betData.amount} GEM on ${betData.value} (visual only)`);
 
-            const betPayload = {
-                bet_type: betData.type,
-                bet_value: betData.value,
-                amount: betData.amount
-            };
-
-            // Use the existing API endpoint - no extra bot fields needed since bots are handled by the bot system
-            const response = await this.post(`/api/gaming/roulette/${this.gameId}/bet`, betPayload);
-
-            if (response && response.success) {
-                console.log(`✅ Bot bet placed successfully for ${betData.botName}: ${response.bet_id}`);
-                return response.bet_id;
-            } else {
-                console.warn(`⚠️ Failed to place bot bet for ${betData.botName}:`, response?.error);
-                return null;
-            }
-
-        } catch (error) {
-            console.warn('❌ Failed to place bot bet:', error);
-            return null;
-        }
+        // Return a fake bet ID for UI purposes
+        return `bot-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     }
 
     // Update bot element to show active bet
@@ -1223,7 +1221,11 @@
     }
 
     async handleBet(type, rawValue, sourceButton) {
-        if (this.isProcessing) return;
+        // FIX: Don't block multiple bets with isProcessing during betting phase
+        if (this.isProcessing && this.roundPhase !== RouletteGame.ROUND_PHASES.BETTING) {
+            console.log('🚫 Bet blocked - processing other operation');
+            return;
+        }
 
         const amount = this.currentAmount;
         const betType = this.normalizeBetType(type);
@@ -1250,10 +1252,21 @@
     }
 
     async placeBet(betData) {
+        // FIX: Snapshot balance before bet to detect phantom deductions
+        const balanceBeforeBet = this.balance;
+
+        console.log(`🎯 placeBet called - isProcessing: ${this.isProcessing}, phase: ${this.roundPhase}`);
+
         try {
             await this.ensureGameSession();
             if (!this.gameId) {
                 this.showNotification('Game session unavailable.', 'error');
+                return;
+            }
+
+            // FIX: Check sufficient balance before attempting bet
+            if (this.balance < betData.amount) {
+                this.showNotification(`Insufficient balance! Need ${betData.amount} GEM, have ${this.balance} GEM`, 'error');
                 return;
             }
 
@@ -1263,30 +1276,63 @@
                 amount: betData.amount
             };
 
+            console.log(`💰 Placing bet - Balance before: ${balanceBeforeBet} GEM`);
             const response = await this.post(`/api/gaming/roulette/${this.gameId}/bet`, betPayload);
 
             if (response && response.success) {
                 // Register the bet locally
+                // FIX: Explicitly set isPlayerBet and isBot flags for proper detection
                 const localBet = {
                     type: betPayload.bet_type,
                     value: betPayload.bet_value,
                     amount: betData.amount,
                     betId: response.bet_id || crypto.randomUUID(),
-                    isPlayerBet: betData.isPlayerBet || false,
+                    isPlayerBet: true,  // CRITICAL: Must be explicitly true
+                    isBot: false,        // CRITICAL: Must be explicitly false
                     playerName: betData.playerName || 'Unknown',
                     playerAvatar: betData.playerAvatar || '👤'
                 };
 
                 this.registerBet(localBet);
+
+                // DEBUG: Verify the bet was registered correctly
+                console.log(`🔍 DEBUG: Bet registered. localBet =`, JSON.stringify(localBet, null, 2));
+                console.log(`🔍 DEBUG: currentBets.length = ${this.currentBets.length}`);
+                console.log(`🔍 DEBUG: All currentBets =`, JSON.stringify(this.currentBets, null, 2));
+
+                // FIX: Sync balance from server after successful bet
+                await this.refreshBalanceFromServer();
+                console.log(`✅ Bet placed successfully - Balance after: ${this.balance} GEM (deducted: ${balanceBeforeBet - this.balance} GEM)`);
+
+                // FIX: Force UI refresh after balance sync
+                this.updateBalanceDisplay();
+                this.updateBetAmountDisplay();
+
                 this.showNotification(`Bet placed: ${betData.amount} GEM on ${this.formatBetLabel(betData)}`, 'success');
+
+                // DEBUG: Check spin button state after bet
+                console.log(`🔍 DEBUG: About to update spin button state...`);
                 this.updateSpinButtonState();
+                console.log(`🔍 DEBUG: Spin button state updated. Button disabled? ${this.elements.spinButton?.disabled}, Text: ${this.elements.spinButton?.textContent}`);
+
+                console.log(`✅ placeBet completed - ready for next bet`);
             } else {
                 const message = response?.error || 'Failed to place bet.';
+                console.error(`❌ Bet failed: ${message} - Balance unchanged: ${this.balance} GEM`);
                 this.showNotification(`Bet failed: ${message}`, 'error');
             }
         } catch (error) {
-            console.error('Bet placement error:', error);
+            console.error('❌ Bet placement error:', error);
+            // FIX: Rollback balance if bet failed but balance changed
+            if (this.balance < balanceBeforeBet) {
+                console.warn(`⚠️ Balance mismatch detected! Rolling back from ${this.balance} to ${balanceBeforeBet}`);
+                this.setBalance(balanceBeforeBet, { source: 'rollback' });
+            }
             this.showNotification(`Network error: ${error.message || 'Unknown error'}`, 'error');
+        } finally {
+            // FIX: Always ensure isProcessing is reset
+            this.isProcessing = false;
+            console.log(`🏁 placeBet finally block - isProcessing reset to false`);
         }
     }
 
@@ -1365,12 +1411,14 @@
                 console.log('✅ Bet placement successful, bet_id:', response.bet_id);
 
                 // Register the bet locally
+                // FIX: Explicitly set isPlayerBet and isBot flags for proper detection
                 const localBet = {
                     type: betPayload.bet_type,
                     value: betPayload.bet_value,
                     amount: betData.amount,
                     betId: response.bet_id || crypto.randomUUID(),
-                    isPlayerBet: betData.isPlayerBet || false,
+                    isPlayerBet: true,  // CRITICAL: Must be explicitly true
+                    isBot: false,        // CRITICAL: Must be explicitly false
                     playerName: betData.playerName || 'Unknown',
                     playerAvatar: betData.playerAvatar || '👤'
                 };
@@ -1886,12 +1934,23 @@
             console.log(`🧹 Round ${this.roundId} entering CLEANUP phase`);
 
             // Show detailed result modal
-            await this.showResultSummary(totalWinnings, totalLosses, outcome);
+            // FIX: Don't wait for modal - show it but continue immediately
+            this.showResultSummary(totalWinnings, totalLosses, outcome).catch(err => {
+                console.error('❌ Result modal error (ignored):', err);
+            });
+
+            // Wait 2 seconds to show result, then continue
+            await this.delay(2000);
 
             // COMPLETE CLEANUP PHASE - RESET FOR NEXT ROUND
             console.log(`🐣 Round ${this.roundId} completed, resetting for next round`);
 
-            // Clean up bets and state
+            // Clear the "CALCULATING RESULTS..." message
+            this.updateGamePhase('Round Complete');
+
+            // FIX: Clean up bets AFTER result modal is dismissed by user
+            // This prevents visual glitches where bet summary disappears before user sees results
+            console.log(`🧹 Clearing ${this.currentBets.length} bets from current round`);
             this.currentBets = [];
             this.updateBetSummary();
             this.updateSpinButtonState();
@@ -1943,8 +2002,12 @@
         const visibleSlots = 6; // How many numbers visible at once
         const containerCenterX = wheelContainer.clientWidth / 2;
 
-        // Calculate target position for winning number (center in viewport)
-        const winPosition = -(number * segmentWidth) + containerCenterX - (segmentWidth / 2);
+        // FIX: Calculate target position accounting for wheel element's actual position
+        // The winning number should align perfectly with the center pointer
+        const pointerCenterX = pointer.offsetLeft + (pointer.offsetWidth / 2);
+        const winPosition = -(number * segmentWidth) + pointerCenterX - (segmentWidth / 2);
+
+        console.log(`🎯 Animation sync: number=${number}, segmentWidth=${segmentWidth}, pointerCenter=${pointerCenterX}, targetPos=${winPosition}`);
 
         // Realistic casino roulette bar physics in 3 phases
         let currentPhase = 1;
@@ -2126,10 +2189,343 @@
         }
     }
 
-    startNewRound() {
+    // ===== SERVER-MANAGED ROUNDS (SSE) =====
+
+    connectToRoundStream() {
+        console.log('[Round Sync] Starting polling-based round sync (SSE temporarily disabled)...');
+
+        // TEMPORARY: Use polling instead of SSE due to authentication issues
+        // EventSource doesn't send cookies/auth headers properly in all browsers
+        this.fallbackToPolling();
+        return;  // Skip SSE for now
+
+        // EventSource for Server-Sent Events (DISABLED TEMPORARILY)
+        console.log('[SSE] Connecting to server round stream...');
+        this.sseConnection = new EventSource('/api/gaming/roulette/round/stream');
+
+        this.sseConnection.addEventListener('round_started', (event) => {
+            const data = JSON.parse(event.data);
+            console.log('[SSE] Round started:', data);
+            this.handleRoundStarted(data);
+        });
+
+        this.sseConnection.addEventListener('phase_changed', (event) => {
+            const data = JSON.parse(event.data);
+            console.log('[SSE] Phase changed:', data);
+            this.handlePhaseChanged(data);
+        });
+
+        this.sseConnection.addEventListener('round_results', (event) => {
+            const data = JSON.parse(event.data);
+            console.log('[SSE] Round results:', data);
+            this.handleRoundResults(data);
+        });
+
+        this.sseConnection.addEventListener('round_ended', (event) => {
+            const data = JSON.parse(event.data);
+            console.log('[SSE] Round ended:', data);
+            this.handleRoundEnded(data);
+        });
+
+        this.sseConnection.addEventListener('round_current', (event) => {
+            const data = JSON.parse(event.data);
+            console.log('[SSE] Current round state:', data);
+            this.handleRoundCurrent(data);
+        });
+
+        this.sseConnection.onerror = (error) => {
+            console.error('[SSE] Connection error:', error);
+            this.sseConnection.close();
+            this.fallbackToPolling();
+        };
+
+        this.sseConnection.onopen = () => {
+            console.log('[SSE] Connection established');
+            this.sseReconnectAttempts = 0;
+            if (this.pollingFallbackInterval) {
+                clearInterval(this.pollingFallbackInterval);
+                this.pollingFallbackInterval = null;
+            }
+        };
+    }
+
+    fallbackToPolling() {
+        console.log('[Round Sync] Using polling mode (checking server every 2s)');
+        if (!this.pollingFallbackInterval) {
+            // Fetch immediately
+            this.fetchCurrentRound();
+
+            // Then poll every 2 seconds
+            this.pollingFallbackInterval = setInterval(() => {
+                this.fetchCurrentRound();
+            }, 2000);
+        }
+
+        // DON'T attempt SSE reconnection since we disabled it
+        // (Uncomment below when SSE auth is fixed)
+        /*
+        setTimeout(() => {
+            this.sseReconnectAttempts++;
+            if (this.sseReconnectAttempts < 5) {
+                console.log(`[SSE] Attempting reconnection (${this.sseReconnectAttempts}/5)...`);
+                this.connectToRoundStream();
+            }
+        }, 10000);
+        */
+    }
+
+    async fetchCurrentRound() {
+        try {
+            const response = await this.get('/api/gaming/roulette/round/current');
+            if (response && response.round) {
+                this.handleRoundCurrent(response.round);
+            }
+        } catch (error) {
+            console.error('[Polling] Failed to fetch current round:', error);
+        }
+    }
+
+    handleRoundStarted(data) {
+        this.serverRoundState = data;
+        this.roundId = data.round_number;
+
+        // Clear previous round's bets (server-driven)
+        this.currentBets = [];
+        this.updateBetSummary();
+
+        // Reset UI
+        this.updateGamePhase('Place Your Bets');
+        this.updateSpinButtonState();
+
+        // Start server-synchronized timer
+        this.startServerSyncedTimer(data.betting_duration, data.started_at, data.ends_at);
+
+        // Re-enable betting controls
+        this.reEnableBetting();
+
+        // Trigger bot activity (visual only, synced to round)
+        this.createBotParticipants();
+        setTimeout(() => this.botsPlaceBets(), 500);
+    }
+
+    handlePhaseChanged(data) {
+        this.serverRoundState = data;
+
+        if (data.phase === 'SPINNING') {
+            // Disable betting immediately
+            this.disableBetting();
+            this.updateGamePhase('Wheel Spinning...');
+
+            // Stop timer
+            if (this.roundTimer) {
+                clearInterval(this.roundTimer);
+                this.roundTimer = null;
+            }
+
+            // Trigger wheel animation with server's outcome
+            if (data.outcome !== undefined) {
+                this.animateWheel(data.outcome);
+            }
+        }
+    }
+
+    handleRoundResults(data) {
+        this.serverRoundState = data;
+        this.updateGamePhase('Calculating Results...');
+
+        // Update history
+        this.updateHistory(data.outcome, data.color);
+
+        // Show results notification
+        setTimeout(() => {
+            this.updateGamePhase('Round Complete');
+        }, 2000);
+    }
+
+    handleRoundEnded(data) {
+        // Round completed, waiting for new round to start
+        // Server will send round_started event shortly
+        console.log('[SSE] Round ending, next round starting soon...');
+    }
+
+    handleRoundCurrent(data) {
+        // Received current round state (on connection or polling)
+        this.serverRoundState = data;
+
+        // Update round number if it changed (new round started)
+        if (data.round_number !== this.roundId) {
+            console.log(`[Round Sync] New round detected: ${this.roundId} → ${data.round_number}`);
+            this.roundId = data.round_number;
+
+            // Clear bets when new round starts
+            if (data.phase === 'betting') {
+                this.currentBets = [];
+                this.updateBetSummary();
+
+                // Reset spin locks for new round
+                this.spinInProgress = false;
+                this.spinLockActive = false;
+                this.isProcessing = false;
+            }
+        }
+
+        switch (data.phase) {
+            case 'betting':
+                this.updateGamePhase('Place Your Bets');
+                this.reEnableBetting();
+                this.updateSpinButtonState();
+
+                // Update timer display with remaining time from server
+                if (data.time_remaining > 0) {
+                    this.startPollingTimer(data.time_remaining * 1000);
+                }
+                break;
+
+            case 'spinning':
+                this.updateGamePhase('Spinning...');
+                this.disableBetting();
+                this.spinInProgress = true;
+                this.updateSpinButtonState();
+                break;
+
+            case 'results':
+                // CRITICAL FIX: Don't show result immediately - let animation complete first
+                // The handleSpinResult() function will show the result after animation
+                // Only update if we're already showing results (prevents spoiling outcome)
+                if (this.roundPhase === RouletteGame.ROUND_PHASES.RESULTS) {
+                    if (data.outcome) {
+                        this.updateGamePhase(`Result: ${data.outcome.crypto} on ${data.outcome.number} (${data.outcome.color})`);
+                    } else {
+                        this.updateGamePhase('Round Complete');
+                    }
+                }
+                this.disableBetting();
+                break;
+        }
+    }
+
+    startPollingTimer(remainingMs) {
+        // Update timer display using server's time_remaining
         if (this.roundTimer) {
             clearInterval(this.roundTimer);
         }
+
+        this.updateRoundTimer(remainingMs);
+
+        this.roundTimer = setInterval(() => {
+            remainingMs -= 200;
+            if (remainingMs <= 0) {
+                clearInterval(this.roundTimer);
+                this.roundTimer = null;
+                remainingMs = 0;
+            }
+            this.updateRoundTimer(remainingMs);
+        }, 200);
+    }
+
+    startServerSyncedTimer(duration, startedAt, endsAt) {
+        // Calculate time remaining based on SERVER time, not local time
+        const serverStartTime = new Date(startedAt).getTime();
+        const serverEndTime = new Date(endsAt).getTime();
+
+        if (this.roundTimer) {
+            clearInterval(this.roundTimer);
+        }
+
+        this.roundTimer = setInterval(() => {
+            const now = Date.now();
+            const remaining = Math.max(0, serverEndTime - now);
+
+            this.updateRoundTimer(remaining);
+
+            if (remaining <= 0) {
+                clearInterval(this.roundTimer);
+                this.roundTimer = null;
+                this.updateGamePhase('Waiting for spin...');
+            }
+        }, 200);
+    }
+
+    // FIX: Consolidated startNewRound - handles timer AND bot logic
+    startNewRound() {
+        // CRITICAL FIX: Only block during SPINNING (wheel animation)
+        // Allow transition from RESULTS → BETTING (this is how rounds progress)
+        if (this.roundPhase === RouletteGame.ROUND_PHASES.SPINNING) {
+            console.log(`⚠️ startNewRound blocked - currently in ${this.roundPhase} phase`);
+            return;
+        }
+
+        // CRITICAL FIX: Clear ALL bets from previous round FIRST (only if not already cleared)
+        // This prevents infinite bet accumulation bug
+        if (this.currentBets.length > 0) {
+            console.log(`🔄 startNewRound - Clearing ${this.currentBets.length} bets from previous round`);
+            this.currentBets = [];
+            this.updateBetSummary();
+        } else {
+            console.log(`✓ startNewRound - Bets already cleared (likely by server sync)`);
+        }
+
+        // CRITICAL FIX: Reset ALL spin locks that were stuck
+        console.log(`🔓 Resetting spin locks - Before: spinInProgress=${this.spinInProgress}, spinLockActive=${this.spinLockActive}`);
+        this.spinInProgress = false;
+        this.spinLockActive = false;
+        this.isProcessing = false;
+        console.log(`✅ Spin locks reset - After: spinInProgress=${this.spinInProgress}, spinLockActive=${this.spinLockActive}`);
+
+        this.updateSpinButtonState();
+
+        // Clear any previous timer
+        if (this.roundTimer) {
+            clearInterval(this.roundTimer);
+        }
+
+        // Clear any previous bot participants from the UI
+        if (typeof this.clearBotArena === 'function') {
+            this.clearBotArena();
+        }
+
+        // Create bot participants for this round
+        if (typeof this.createBotParticipants === 'function') {
+            this.createBotParticipants();
+
+            // Start bot betting with synchronized timing
+            setTimeout(() => {
+                if (typeof this.botsPlaceBets === 'function') {
+                    this.botsPlaceBets();
+                }
+            }, 500);
+        }
+
+        // Restart bot activity feed
+        if (typeof this.stopBotActivityFeed === 'function') {
+            this.stopBotActivityFeed();
+        }
+        if (typeof this.startBotActivityFeed === 'function') {
+            this.startBotActivityFeed();
+        }
+
+        // Set round phase to betting
+        this.roundPhase = RouletteGame.ROUND_PHASES.BETTING;
+        console.log(`✅ Round phase set to BETTING`);
+
+        // Clear "Round Complete" message and show betting phase
+        this.updateGamePhase('Place Your Bets');
+
+        // Re-enable betting controls
+        if (typeof this.reEnableBetting === 'function') {
+            this.reEnableBetting();
+        }
+        this.updateSpinButtonState();
+
+        // FIX: Force-enable all bet buttons to ensure they're clickable
+        const betButtons = document.querySelectorAll('.bet-btn');
+        betButtons.forEach(btn => {
+            btn.disabled = false;
+            btn.classList.remove('disabled');
+        });
+        console.log(`✅ Force-enabled ${betButtons.length} bet buttons`);
+
+        // Start countdown timer
         const startTime = Date.now();
         this.updateRoundTimer(this.ROUND_DURATION);
 
@@ -2138,11 +2534,25 @@
             const remaining = Math.max(this.ROUND_DURATION - elapsed, 0);
             this.updateRoundTimer(remaining);
 
-            // When countdown reaches 0, simply restart the timer (no auto-spin)
+            // When countdown reaches 0, handle next round
             if (remaining === 0) {
                 clearInterval(this.roundTimer);
                 this.roundTimer = null;
-                this.startNewRound(); // Restart timer
+
+                // Check if we should auto-spin or restart round
+                if (this.autoBetEnabled && this.currentBets.length > 0) {
+                    // Auto-betting mode - spin automatically
+                    if (typeof this.startSpinSequence === 'function') {
+                        this.startSpinSequence();
+                    }
+                } else if (this.currentBets.length > 0) {
+                    // Player has bets but hasn't spun - could auto-spin here
+                    // For now, just restart the round
+                    this.startNewRound();
+                } else {
+                    // No bets placed, restart round
+                    this.startNewRound();
+                }
             }
         }, 200);
     }
@@ -2322,13 +2732,47 @@
             return;
         }
 
-        // ROUND STATE MANAGEMENT: Respect phase system
-        const canSpin = this.roundPhase === RouletteGame.ROUND_PHASES.BETTING &&
-                       this.currentBets.length > 0 &&
+        // FIX: Only count PLAYER bets for spin button, not bot bets
+        // Use explicit boolean checks to avoid truthy/falsy issues
+        const playerBets = this.currentBets.filter(bet =>
+            bet.isPlayerBet === true && bet.isBot !== true
+        );
+        const hasPlayerBets = playerBets.length > 0;
+
+        // DEBUG: Log each bet's properties for debugging
+        if (this.currentBets.length > 0) {
+            console.log(`🎮 Spin button check: ${this.currentBets.length} total bets, ${playerBets.length} player bets, phase: ${this.roundPhase}`);
+            console.log('📋 Current bets breakdown:', this.currentBets.map(bet => ({
+                player: bet.playerName,
+                isPlayerBet: bet.isPlayerBet,
+                isBot: bet.isBot,
+                amount: bet.amount,
+                type: bet.type
+            })));
+        } else {
+            console.log(`🎮 Spin button check: 0 total bets, phase: ${this.roundPhase}`);
+        }
+
+        // ROUND STATE MANAGEMENT: Check SERVER round state if available (server-managed rounds)
+        const serverPhaseCheck = this.serverRoundState
+            ? this.serverRoundState.phase === 'betting'
+            : this.roundPhase === RouletteGame.ROUND_PHASES.BETTING;
+
+        const canSpin = serverPhaseCheck &&
+                       hasPlayerBets &&  // FIX: Use hasPlayerBets instead of total bets
                        !this.spinInProgress &&
                        !this.spinLockActive;
 
         const isCurrentlySpinning = this.roundPhase === RouletteGame.ROUND_PHASES.SPINNING;
+
+        // DEBUG: Log all the conditions
+        console.log(`🔍 SPIN BUTTON CONDITIONS:
+            roundPhase === BETTING: ${this.roundPhase === RouletteGame.ROUND_PHASES.BETTING} (${this.roundPhase})
+            hasPlayerBets: ${hasPlayerBets} (${playerBets.length} bets)
+            !spinInProgress: ${!this.spinInProgress} (spinInProgress=${this.spinInProgress})
+            !spinLockActive: ${!this.spinLockActive} (spinLockActive=${this.spinLockActive})
+            canSpin: ${canSpin}
+            isCurrentlySpinning: ${isCurrentlySpinning}`);
 
         this.elements.spinButton.disabled = !canSpin && !isCurrentlySpinning;
         this.elements.spinButton.textContent = isCurrentlySpinning ? 'SPINNING...' :
@@ -4045,26 +4489,7 @@
         }
     }
 
-    // Enhanced startNewRound with bot participant creation and improved flow
-    startNewRound() {
-        // Clear any previous bot participants from the UI
-        this.clearBotArena();
-
-        // Create bot participants for this round
-        this.createBotParticipants();
-
-        // Wait a moment to show the bots, then start their betting
-        setTimeout(() => {
-            this.botsPlaceBets();
-        }, 2000);
-
-        // Restart bot activity announcements (only show round-start bots)
-        this.stopBotActivityFeed(); // Clear any old announcements
-        this.startBotActivityFeed(); // Start fresh for this round
-
-        // Start the countdown timer
-        this.startCountdownTimer();
-    }
+    // FIX: REMOVED DUPLICATE - using consolidated startNewRound() at line 2167
 
     // Clear the bot arena between rounds
     clearBotArena() {
@@ -4087,54 +4512,19 @@
         }
     }
 
-    // Start the countdown timer with enhanced flow
-    startCountdownTimer() {
-        if (this.roundTimer) {
-            clearInterval(this.roundTimer);
-        }
-
-        const startTime = Date.now();
-
-        // CRITICAL FIX: Reset BOTH phase systems for proper betting state
-        this.gamePhase = 'betting';
-        this.roundPhase = RouletteGame.ROUND_PHASES.BETTING;
-        console.log(`⏰ Starting countdown - phase reset: ${this.roundPhase}`);
-
-        this.updateGamePhase('Place Your Bets');
-
-        // FORCE control re-enable when countdown starts
-        this.reEnableBetting();
-        this.updateSpinButtonState();
-
-        this.roundTimer = setInterval(() => {
-            const elapsed = Date.now() - startTime;
-            const remaining = Math.max(this.ROUND_DURATION - elapsed, 0);
-            this.updateRoundTimer(remaining);
-
-            // When countdown reaches 0, handle auto-betting logic
-            if (remaining === 0) {
-                clearInterval(this.roundTimer);
-                this.roundTimer = null;
-
-                // If auto-betting is enabled and we have bets placed, auto-spin
-                if (this.autoBetEnabled && this.currentBets.length > 0) {
-                    this.startSpinSequence();
-                } else if (this.currentBets.length > 0) {
-                    // Regular spin with enhanced sequence
-                    this.startSpinSequence();
-                } else {
-                    // No bets placed, restart round
-                    this.startNewRound();
-                }
-            }
-        }, 200);
-    }
-
     // ENHANCED SYNCED SPIN SEQUENCE - PREVENTS CHAOS
     async startSpinSequence() {
         console.log('🎰 Starting synced spin sequence...');
 
-        this.gamePhase = 'spinning';
+        // CRITICAL FIX: Clear the round timer IMMEDIATELY to prevent race condition
+        // This stops the timer from calling startNewRound() while spin is processing
+        if (this.roundTimer) {
+            console.log('⏹️ Clearing round timer to prevent double startNewRound() race condition');
+            clearInterval(this.roundTimer);
+            this.roundTimer = null;
+        }
+
+        // FIX: Use only roundPhase system
         this.roundPhase = RouletteGame.ROUND_PHASES.SPINNING;
         this.updateGamePhase('Wheel Spinning...');
         this.updateSpinButtonState();
@@ -4159,8 +4549,13 @@
 
             if (response && response.success) {
                 console.log('✅ Spin API success, waiting for animation to complete...');
-                // Wait for animation to finish, then handle results
-                this.handleSpinResult(response);
+
+                // CRITICAL FIX: Wait for animation to complete BEFORE showing results
+                await animationPromise;
+                console.log('🎨 Animation complete, now showing results...');
+
+                // NOW handle the results
+                await this.handleSpinResult(response);
             } else {
                 const message = response?.error || 'Spin failed.';
                 console.error('❌ Spin failed:', message);
@@ -4190,37 +4585,42 @@
     async handleSpinResult(result) {
         console.log('🎰 Processing spin results...');
 
-        const outcome = result?.result;
-        if (outcome && typeof outcome.number === 'number') {
-            // Keep wheel animation running during result processing
-            this.animateWheel(outcome.number);
-            this.updateHistory(outcome.number, outcome.color || 'red');
+        try {
+            const outcome = result?.result;
+            if (outcome && typeof outcome.number === 'number') {
+                // Keep wheel animation running during result processing
+                this.animateWheel(outcome.number);
+                this.updateHistory(outcome.number, outcome.color || 'red');
 
-            this.gamePhase = 'results';
-            this.updateGamePhase('Calculating Results...');
+                // FIX: Use roundPhase system consistently
+                this.roundPhase = RouletteGame.ROUND_PHASES.RESULTS;
+                this.updateGamePhase('Calculating Results...');
 
-            // Simulate processing delay for excitement
-            await this.delay(2000);
+                // Simulate processing delay for excitement
+                await this.delay(2000);
 
             // Update session statistics and auto-betting logic
             this.sessionRounds++;
 
             // Show detailed win/lose notifications based on individual bets
             const bets = result?.bets || [];
-            let totalWinnings = 0;
+            let totalWinnings = 0;  // Net profit (not including original bet)
             let totalLosses = 0;
             let winningBets = 0;
 
             bets.forEach(bet => {
                 if (bet.is_winner && bet.payout > 0) {
                     winningBets++;
-                    totalWinnings += bet.payout;
+                    // FIX: Backend payout includes original bet (amount * (multiplier + 1))
+                    // We want NET PROFIT for display, so subtract the original bet amount
+                    const netProfit = bet.payout - bet.amount;
+                    totalWinnings += netProfit;
                 } else {
                     totalLosses += bet.amount;
                 }
             });
 
-            // Update session profit
+            // Update session profit (now using net profit)
             this.sessionProfit += totalWinnings - totalLosses;
 
             // Update achievements
@@ -4248,30 +4648,55 @@
             // Sync balance from server after spin results
             await this.refreshBalanceFromServer();
 
-            // Show results screen with OK button
-            await this.showResultSummary(totalWinnings, totalLosses, outcome);
+            // CRITICAL FIX: Capture user bet info BEFORE clearing bets
+            const userBetsSnapshot = this.currentBets.filter(bet => !bet.isBot && !bet.is_bot);
+            const userWagered = userBetsSnapshot.reduce((sum, bet) => sum + bet.amount, 0);
 
-            // CRITICAL FIX: Clear bets AFTER results are shown to maintain UI state during results display
+            // Show results screen with OK button
+            // Pass captured bet data to avoid reading from cleared array
+            this.showResultSummary(totalWinnings, totalLosses, outcome, userWagered, userBetsSnapshot).catch(err => {
+                console.error('❌ Result modal error (ignored):', err);
+            });
+
+            // Wait 2 seconds to show result number, then continue
+            await this.delay(2000);
+
+            // Clear the "CALCULATING RESULTS..." message
+            this.updateGamePhase('Round Complete');
+
+            // CRITICAL FIX: Don't clear bets here - let startNewRound() handle it
+            // Clearing here causes race condition where new bets can't be placed
+            // this.currentBets = []; // ← REMOVED: Was causing "can only bet once" bug
+
+            // FIX: Re-enable betting controls and start new round
+            // startNewRound() will clear bets at the RIGHT time
+            this.reEnableBetting();
+            this.startNewRound();
+            } else {
+                console.error('Invalid spin result', result);
+                this.showNotification('Invalid spin result', 'error');
+                this.reEnableBetting();
+                this.startNewRound();
+            }
+        } catch (error) {
+            console.error('❌ Error in handleSpinResult:', error);
+            this.showNotification('Error processing results - continuing anyway', 'error');
+
+            // FAILSAFE: Force reset to betting phase
+            this.roundPhase = RouletteGame.ROUND_PHASES.BETTING;
             this.currentBets = [];
             this.updateBetSummary();
-            this.updateSpinButtonState();
-
-            // CRITICAL FIX: Re-enable betting AFTER starting new round to prevent state conflicts
-            this.startNewRound();
-            this.reEnableBetting();
-        } else {
-            console.error('Invalid spin result', result);
-            this.showNotification('Invalid spin result', 'error');
             this.reEnableBetting();
             this.startNewRound();
         }
     }
 
     // Show detailed result summary with OK button
-    async showResultSummary(winnings, losses, outcome) {
+    async showResultSummary(winnings, losses, outcome, userWagered = 0, userBetsSnapshot = []) {
         const isWin = winnings > 0;
-        const userBets = this.currentBets.filter(bet => !bet.isBot && !bet.is_bot);
-        const userWagered = userBets.reduce((sum, bet) => sum + bet.amount, 0);
+        // FIX: Use passed snapshot instead of reading from currentBets (which may be cleared)
+        const userBets = userBetsSnapshot.length > 0 ? userBetsSnapshot : this.currentBets.filter(bet => !bet.isBot && !bet.is_bot);
+        const actualWagered = userWagered > 0 ? userWagered : userBets.reduce((sum, bet) => sum + bet.amount, 0);
         const potentialWin = userBets.reduce((sum, bet) => sum + (bet.amount * this.getPayoutMultiplier(bet.type, bet.value)), 0);
 
         // Create detailed result modal
@@ -4292,7 +4717,7 @@
                     <div class="user-summary-stats">
                         <div class="stat-box">
                             <div class="stat-label">You Wagered:</div>
-                            <div class="stat-value">${this.formatAmount(userWagered)} GEM</div>
+                            <div class="stat-value">${this.formatAmount(actualWagered)} GEM</div>
                         </div>
                         <div class="stat-box">
                             <div class="stat-label">Potential Win:</div>
@@ -4317,7 +4742,7 @@
                         <div class="contribution-breakdown">
                             <div class="contribution-item">
                                 <span class="label">Your Contribution:</span>
-                                <span class="amount">${this.formatAmount(userWagered)} GEM</span>
+                                <span class="amount">${this.formatAmount(actualWagered)} GEM</span>
                             </div>
                             <div class="contribution-item">
                                 <span class="label">Bot Contributions:</span>
@@ -4861,9 +5286,8 @@
     statusForceReEnable() {
         console.log('🚨 FORCE RE-ENABLING ALL CONTROLS (ultimate failsafe)');
 
-        // Force reset all state flags
+        // FIX: Force reset all state flags (use only roundPhase)
         this.roundPhase = RouletteGame.ROUND_PHASES.BETTING;
-        this.gamePhase = 'betting';
         this.spinInProgress = false;
         this.spinLockActive = false;
         this.isProcessing = false;

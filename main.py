@@ -45,6 +45,7 @@ from api.clicker_api import router as clicker_router
 from database.database import init_database, get_db
 from crypto.price_service import price_service
 from api.bot_system import initialize_bot_population
+from gaming.round_manager import round_manager
 
 # Load environment variables
 load_dotenv()
@@ -65,6 +66,10 @@ async def lifespan(app: FastAPI):
     # Initialize bot population for gambling
     await initialize_bot_population()
     print(">> Bot population initialized")
+
+    # Initialize round manager (server-managed rounds)
+    await round_manager.initialize()
+    print(">> Round manager initialized")
 
     print(">> CryptoChecker Version3 ready!")
     print("   >> Crypto Tracker: http://localhost:8000")
