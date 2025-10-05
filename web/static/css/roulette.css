@@ -691,11 +691,11 @@
 
 .wheel-numbers {
     position: absolute;
-    left: 50%;
+    top: 0;
+    left: 0;
     height: 100%;
     display: flex;
-    transform: translateX(-50%);
-    transition: transform 6s cubic-bezier(0.21, 0.53, 0.29, 0.99);
+    /* Transform and transition are controlled by JavaScript for animation */
 }
 
 .wheel-numbers .number-slot {
@@ -1810,11 +1810,12 @@
 
 /* Enhanced Animations - HORIZONTAL ONLY */
 /* Override conflicting rotation animations */
-.wheel-segments.spinning,
-.wheel-container .wheel-numbers {
+.wheel-segments.spinning {
     animation: horizontalSpin 3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards !important;
     transform-origin: center center !important;
 }
+
+/* .wheel-container .wheel-numbers - Animation now controlled by JavaScript */
 
 @keyframes horizontalSpin {
     from {

@@ -2048,9 +2048,15 @@
             - Will spin through ${extraCycles * totalNumbers} numbers`);
 
         // IMPORTANT: Reset to start position WITHOUT transition (instant jump)
-        wheelNumbers.style.transition = 'none';
-        wheelNumbers.style.transform = `translateX(${startPosition}px)`;
-        wheelNumbers.style.filter = 'none';
+        wheelNumbers.style.setProperty('transition', 'none', 'important');
+        wheelNumbers.style.setProperty('transform', `translateX(${startPosition}px)`, 'important');
+        wheelNumbers.style.setProperty('filter', 'none', 'important');
+
+        console.log(`📍 [DEBUG] Initial position set to: ${startPosition}px`);
+        console.log(`📍 [DEBUG] Current transform: ${wheelNumbers.style.transform}`);
+        console.log(`📍 [DEBUG] wheelNumbers actual width: ${wheelNumbers.offsetWidth}px`);
+        console.log(`📍 [DEBUG] wheelNumbers scroll width: ${wheelNumbers.scrollWidth}px`);
+        console.log(`📍 [DEBUG] Computed transform:`, window.getComputedStyle(wheelNumbers).transform);
 
         // Two-stage animation timing for realistic casino feel
         const fastSpinDuration = 2000;  // 2s - SUPER FAST initial spin
@@ -2067,34 +2073,42 @@
         // STAGE 1: SUPER FAST SPIN
         setTimeout(() => {
             console.log(`🚀 [ANIMATION STAGE 1] FAST SPIN - Rolling through ${extraCycles} cycles at high speed`);
+            console.log(`📍 [DEBUG] Intermediate position: ${intermediatePosition}px`);
 
             // Heavy blur for super fast spinning
-            wheelNumbers.style.filter = 'blur(4px) brightness(1.2)';
+            wheelNumbers.style.setProperty('filter', 'blur(4px) brightness(1.2)', 'important');
             wheelContainer.style.boxShadow = '0 0 40px rgba(0, 245, 255, 0.6)';
 
             // Fast linear spin (almost no easing - constant high speed)
-            wheelNumbers.style.transition = `transform ${fastSpinDuration / 1000}s linear`;
-            wheelNumbers.style.transform = `translateX(${intermediatePosition}px)`;
+            wheelNumbers.style.setProperty('transition', `transform ${fastSpinDuration / 1000}s linear`, 'important');
+            wheelNumbers.style.setProperty('transform', `translateX(${intermediatePosition}px)`, 'important');
+
+            console.log(`📍 [DEBUG] Stage 1 transform applied: ${wheelNumbers.style.transform}`);
+            console.log(`📍 [DEBUG] Stage 1 transition: ${wheelNumbers.style.transition}`);
 
             // STAGE 2: GRADUAL SLOWDOWN
             setTimeout(() => {
                 console.log(`🎯 [ANIMATION STAGE 2] SLOWDOWN - Decelerating to winning number ${number}`);
+                console.log(`📍 [DEBUG] Final position: ${finalPosition}px`);
 
                 // Reduce blur as we enter slowdown phase
-                wheelNumbers.style.filter = 'blur(2px) brightness(1.1)';
+                wheelNumbers.style.setProperty('filter', 'blur(2px) brightness(1.1)', 'important');
 
                 // Smooth deceleration with strong ease-out (realistic physics)
-                wheelNumbers.style.transition = `transform ${slowdownDuration / 1000}s cubic-bezier(0.15, 0.7, 0.2, 1)`;
-                wheelNumbers.style.transform = `translateX(${finalPosition}px)`;
+                wheelNumbers.style.setProperty('transition', `transform ${slowdownDuration / 1000}s cubic-bezier(0.15, 0.7, 0.2, 1)`, 'important');
+                wheelNumbers.style.setProperty('transform', `translateX(${finalPosition}px)`, 'important');
+
+                console.log(`📍 [DEBUG] Stage 2 transform applied: ${wheelNumbers.style.transform}`);
+                console.log(`📍 [DEBUG] Stage 2 transition: ${wheelNumbers.style.transition}`);
 
                 // Progressive blur reduction during slowdown
                 setTimeout(() => {
-                    wheelNumbers.style.filter = 'blur(1px) brightness(1.05)';
+                    wheelNumbers.style.setProperty('filter', 'blur(1px) brightness(1.05)', 'important');
                 }, slowdownDuration * 0.5);
 
                 // Final stop - no blur
                 setTimeout(() => {
-                    wheelNumbers.style.filter = 'none';
+                    wheelNumbers.style.setProperty('filter', 'none', 'important');
                 }, slowdownDuration * 0.8);
 
             }, fastSpinDuration);

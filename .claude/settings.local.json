@@ -1,7 +1,7 @@
 {
   "permissions": {
     "allow": [
-      "Bash(\".venv/Scripts/python.exe\":*)"
+      "Bash(python -c \"\n# Check the wheelNumbers inline styles\nwith open(''web/templates/gaming.html'', ''r'', encoding=''utf-8'') as f:\n    content = f.read()\n    # Find the wheelNumbers div\n    import re\n    match = re.search(r''id=\"\"wheelNumbers\"\"[^>]*style=\"\"([^\"\"]+)\"\"'', content)\n    if match:\n        print(''Inline styles on #wheelNumbers:'')\n        print(match.group(1))\n\")"
     ],
     "deny": [],
     "ask": []
