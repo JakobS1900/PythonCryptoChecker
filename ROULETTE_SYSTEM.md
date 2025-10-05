@@ -4,6 +4,14 @@
 
 The Enhanced Crypto Crypto Roulette System represents a complete rebuild and modernization of our gaming platform's flagship feature. Built with professional Crypto aesthetics, advanced JavaScript functionality, and real-time WebSocket integration, this system delivers a premium gaming experience that matches industry standards.
 
+### 🆕 Latest Update (October 2025): Animation Visibility Fix
+The roulette wheel animation has been completely overhauled to ensure a smooth, visible casino-style roll:
+- **FIXED**: Wheel no longer flies off-screen during spins
+- **IMPROVED**: 3 full visible rotation cycles before landing on winner
+- **ENHANCED**: Smooth deceleration with professional cubic-bezier easing
+- **CENTERED**: Winning number properly aligned with container center
+- **FILE**: `web/static/js/roulette.js` - `animateWheel()` function optimized
+
 ## 🚀 System Architecture
 
 ### **Frontend Components**
@@ -152,7 +160,11 @@ POST /api/gaming/roulette/spin
 - **Clean Typography**: Professional font choices
 
 ### **Animation System**
-- **Wheel Spinning**: 6-second smooth animation with easing
+- **Wheel Spinning**: 6-second smooth animation with easing (Updated October 2025)
+  - **Visible Rotation**: Wheel stays on-screen during entire animation
+  - **3 Full Cycles**: Players see numbers scroll through 3 complete rotations
+  - **Centered Position**: Final winning number aligns with container center
+  - **Realistic Deceleration**: Cubic-bezier easing mimics casino roulette physics
 - **Winning Segments**: Pulse animation for winning numbers
 - **Floating Chips**: Bet confirmation animations
 - **Loading States**: Professional loading indicators

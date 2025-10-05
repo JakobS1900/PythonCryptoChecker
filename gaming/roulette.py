@@ -195,13 +195,16 @@ class CryptoRouletteEngine:
                 winning_number = result["number"]
                 winning_data = self.crypto_wheel[winning_number]
 
-                # Update game session with results
+                # Update game session with LAST spin results (for display purposes)
                 game_session.winning_number = winning_number
                 game_session.winning_crypto = winning_data["crypto"]
                 game_session.winning_color = winning_data["color"]
                 game_session.nonce += 1
-                game_session.status = GameStatus.COMPLETED.value
-                game_session.completed_at = datetime.utcnow()
+                # CRITICAL FIX: Keep session ACTIVE for multiple rounds
+                # Session should only be COMPLETED when user explicitly leaves/logs out
+                # This allows players to spin multiple times without creating new sessions
+                # game_session.status = GameStatus.COMPLETED.value  # REMOVED - stay ACTIVE
+                # game_session.completed_at = datetime.utcnow()  # REMOVED
 
                 # Process all bets for this session
                 bets_result = await session.execute(

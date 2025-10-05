@@ -55,9 +55,9 @@ class RoundManager:
         print("[Round Manager] Initializing...")
         await self.start_new_round()
 
-        # Start background timer task
+        # Start background timer task for automatic round advancement
         self._timer_task = asyncio.create_task(self.auto_advance_timer())
-        print("[Round Manager] Initialized - first round started, timer running")
+        print("[Round Manager] Initialized - first round started, auto-advance timer enabled")
 
     async def start_new_round(self, triggered_by: Optional[str] = None) -> RoundState:
         """Initialize a new betting round"""
@@ -173,8 +173,8 @@ class RoundManager:
 
             print(f"[Round Manager] Outcome: {outcome_number} ({outcome_color})")
 
-            # Schedule automatic transition to RESULTS phase after animation (3s)
-            asyncio.create_task(self._auto_transition_to_results(delay=3))
+            # Schedule automatic transition to RESULTS phase after animation (5s to match frontend)
+            asyncio.create_task(self._auto_transition_to_results(delay=5))
 
             return {
                 "number": outcome_number,

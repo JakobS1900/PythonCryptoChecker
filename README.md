@@ -2,7 +2,22 @@
 
 ## 📋 Project Overview
 
-## 🚨 Latest Critical Fixes: Roulette System & Daily Bonus (September 2025)
+## 🚨 Latest Critical Fixes: Roulette System & Daily Bonus (October 2025)
+
+### **LATEST FIX - Roulette Wheel Animation Visibility (October 2025) ✅**
+
+#### **Roulette Wheel Flying Off-Screen - FIXED ✅**
+**PROBLEM**: Wheel animation moving completely off-screen during spins
+- **"Roulette bar flies off the screen"**: Animation calculating positions thousands of pixels off-screen
+- **"Winning number pops up instantly"**: No smooth roll effect to reveal winner
+- **"Invisible wheel during animation"**: Users couldn't see the actual number roll
+
+**SOLUTION**: Simplified visible animation with proper centering
+- **Visible Rotations**: Wheel now stays on-screen during entire animation
+- **Smooth Roll Effect**: 3 full visible cycles through all numbers before landing
+- **Centered Positioning**: Final position calculated relative to container center
+- **Professional Deceleration**: Cubic-bezier easing for realistic casino-style slowdown
+- **File Modified**: `web/static/js/roulette.js` - `animateWheel()` function (lines 2004-2026)
 
 ### **PRODUCTION EMERGENCY RESOLVED - Complete Roulette Architecture Overhaul**
 

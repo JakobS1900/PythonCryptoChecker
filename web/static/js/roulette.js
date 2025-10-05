@@ -113,6 +113,7 @@
         this.cacheElements();
         this.bindEventListeners();
         this.generateNumberGrid();
+        this.initializeWheelLoop(); // NEW: Initialize seamless wheel scrolling
         this.syncInitialBalance();
         this.updateBetAmountDisplay();
         this.updateBetSummary();
@@ -145,6 +146,33 @@
 
         window.rouletteGame = this;
         console.log('RouletteGame ready');
+    }
+
+    initializeWheelLoop() {
+        // IMPORTANT: For now, skip wheel duplication to keep it simple
+        // The existing HTML already has all 37 numbers visible
+        // We'll add duplication later only if needed for seamless looping
+
+        const wheelNumbers = document.getElementById('wheelNumbers');
+        if (!wheelNumbers) {
+            console.warn('⚠️ wheelNumbers element not found - wheel initialization skipped');
+            return;
+        }
+
+        // Get all existing wheel number elements
+        const numbers = Array.from(wheelNumbers.children);
+        console.log(`🎡 Wheel ready with ${numbers.length} numbers (duplication disabled for debugging)`);
+
+        if (numbers.length === 0) {
+            console.warn('⚠️ No wheel numbers found in wheelNumbers container');
+            return;
+        }
+
+        // Don't offset or duplicate - just leave wheel in default centered position
+        // This ensures numbers are visible while we debug
+        wheelNumbers.style.transform = 'translateX(0px)';
+
+        console.log(`✅ Wheel visible with ${numbers.length} numbers, starting at center position`);
     }
 
     // ===== BOT SYSTEM INTEGRATION =====
@@ -1783,9 +1811,13 @@
     }
 
     async requestSpin() {
-        // ROUND STATE MANAGEMENT: Prevent multiple simultaneous spin attempts
+        // SERVER-MANAGED SPIN: Trigger the server's round manager to advance to SPINNING phase
+        console.log('[Spin] Requesting server-managed spin...');
+
+        // Validate current state
         if (this.roundPhase !== RouletteGame.ROUND_PHASES.BETTING) {
             console.warn(`🚫 Can't spin during ${this.roundPhase} phase`);
+            this.showNotification(`Cannot spin during ${this.roundPhase} phase`, 'warning');
             return;
         }
 
@@ -1799,46 +1831,37 @@
             return;
         }
 
-        await this.ensureGameSession();
-        if (!this.gameId) {
-            this.showNotification('Game session unavailable.', 'error');
-            return;
-        }
-
         // ACTIVATE SPIN LOCK to prevent rapid multiple requests
         this.spinLockActive = true;
         this.spinInProgress = true;
-        this.roundPhase = RouletteGame.ROUND_PHASES.SPINNING; // Transition phase
-        this.roundId++;
 
-        console.log(`🎰 Round ${this.roundId} spin requested - PHASE: ${this.roundPhase}`);
+        console.log(`[Spin] Triggering server round manager spin...`);
 
         this.elements.spinButton?.classList.add('processing');
         this.elements.spinButton.disabled = true;
-        this.showNotification('Wheel spinning...', 'info');
+        this.showNotification('Requesting spin...', 'info');
 
         try {
-            const response = await this.post(`/api/gaming/roulette/${this.gameId}/spin`, {});
+            // Call server-managed round spin endpoint (NOT the old game-session spin)
+            const response = await this.post('/api/gaming/roulette/round/spin', {});
 
             if (response && response.success) {
-                // Transition to results phase
-                this.roundPhase = RouletteGame.ROUND_PHASES.RESULTS;
-                console.log(`✅ Spin successful - PHASE: ${this.roundPhase}`);
-                await this.handleSpinResult(response);
+                console.log('✅ Server spin triggered successfully');
+                this.showNotification('Spin triggered! Watch the wheel...', 'success');
+                // Server will broadcast phase change via polling/SSE
+                // UI will update automatically when server transitions to SPINNING phase
             } else {
-                const message = response?.error || 'Spin failed.';
-                console.error('❌ Spin failed:', message);
+                const message = response?.error || 'Failed to trigger spin';
+                console.error('❌ Server spin failed:', message);
                 this.showNotification(message, 'error');
-                // Reset to betting phase on failure
-                this.roundPhase = RouletteGame.ROUND_PHASES.BETTING;
             }
         } catch (error) {
-            console.error('❌ Spin error:', error);
-            this.showNotification('Error spinning the wheel.', 'error');
-            // Reset to betting phase on error
-            this.roundPhase = RouletteGame.ROUND_PHASES.BETTING;
+            console.error('❌ Spin request error:', error);
+            this.showNotification('Error requesting spin from server', 'error');
         } finally {
-            // RELEASE SPIN LOCK after server operation completes
+            // RELEASE SPIN LOCK after server request completes
+            // Note: We don't manually change phase here - let server polling handle it
+            this.spinLockActive = false;
             this.spinInProgress = false;
             this.elements.spinButton?.classList.remove('processing');
             this.updateSpinButtonState();
@@ -1983,88 +2006,93 @@
 
     // Casino-style horizontal roulette bar animation with realistic physics
     animateWheel(number) {
-        const wheel = document.getElementById('wheelNumbers').parentElement; // Use parent wheel-positioner for animation
+        console.log('🎰 [ANIMATION START] animateWheel called with number:', number);
+
+        const wheelNumbers = document.getElementById('wheelNumbers');
         const wheelContainer = document.querySelector('.wheel-container');
         const pointer = document.querySelector('.wheel-pointer');
 
-        if (!wheel || !wheelContainer || !pointer) {
-            console.warn('Roulette elements not found, skipping animation');
-            return;
+        if (!wheelNumbers || !wheelContainer || !pointer) {
+            console.warn('❌ [ANIMATION] Roulette elements not found, skipping animation');
+            return Promise.resolve();
         }
 
-        // Clear any conflicting animations and ensure only horizontal movement
+        console.log('✅ [ANIMATION] Elements found, starting wheel animation to number:', number);
+
+        // Clear any existing animations
         this.stopWheelAnimations();
-        wheel.style.transform = '';
         wheelContainer.classList.remove('wheel-spinning');
 
         // Casino-style horizontal sliding constants
         const segmentWidth = 70; // px per number
-        const visibleSlots = 6; // How many numbers visible at once
-        const containerCenterX = wheelContainer.clientWidth / 2;
+        const totalNumbers = 37; // 0-36
+        const containerWidth = wheelContainer.clientWidth;
+        const containerCenterX = containerWidth / 2;
 
-        // FIX: Calculate target position accounting for wheel element's actual position
-        // The winning number should align perfectly with the center pointer
-        const pointerCenterX = pointer.offsetLeft + (pointer.offsetWidth / 2);
-        const winPosition = -(number * segmentWidth) + pointerCenterX - (segmentWidth / 2);
+        // Calculate final position: center the winning number under the pointer
+        // The wheel starts at left: 0, so we need to move it LEFT (negative) to center a number
+        const targetNumberOffset = number * segmentWidth; // How far right the number is
+        const centeringAdjustment = containerCenterX - (segmentWidth / 2); // Center of container minus half a segment
 
-        console.log(`🎯 Animation sync: number=${number}, segmentWidth=${segmentWidth}, pointerCenter=${pointerCenterX}, targetPos=${winPosition}`);
+        // Move wheel left to bring winning number to center
+        const finalPosition = centeringAdjustment - targetNumberOffset;
 
-        // Realistic casino roulette bar physics in 3 phases
-        let currentPhase = 1;
-        const totalDuration = 2500; // Shorter casino-style duration
+        // Add extra spinning distance for excitement (spin past 3 full wheel lengths)
+        const fullWheelWidth = totalNumbers * segmentWidth; // 37 × 70 = 2590px
+        const extraCycles = 3; // Spin 3 full times before landing
+        const startPosition = finalPosition + (extraCycles * fullWheelWidth);
 
-        // Phase 1: Quick wind-up and acceleration (0-0.5s)
+        console.log(`🎯 [ANIMATION] Targeting number ${number}:
+            - Container width: ${containerWidth}px, center: ${containerCenterX}px
+            - Target offset: ${targetNumberOffset}px
+            - Final position: ${finalPosition}px
+            - Start position: ${startPosition}px (${extraCycles} extra cycles)`);
+
+        // Reset to start position
+        wheelNumbers.style.transition = 'none';
+        wheelNumbers.style.transform = `translateX(${startPosition}px)`;
+
+        // Animation timing
+        const totalDuration = 4000; // 4 seconds for smooth casino feel
+
+        // Trigger animation after brief delay
         setTimeout(() => {
-            if (currentPhase !== 1) return;
-            currentPhase = 1;
+            console.log('🚀 [ANIMATION] Rolling to winning number...');
 
-            // Start acceleration - casino bars wind up quickly
-            const windupDistance = winPosition - 1500;
-            wheel.style.transition = 'transform 0.5s cubic-bezier(0.25, 0.1, 0.25, 1)'; // Quick start
-            wheel.style.transform = `translateX(${windupDistance}px)`;
+            // Add visual effects
+            wheelNumbers.style.filter = 'blur(2px) brightness(1.1)';
+            wheelContainer.style.boxShadow = '0 0 30px rgba(0, 245, 255, 0.5)';
 
-            // Add momentum visual effects
-            wheel.style.filter = 'blur(0.5px) brightness(1.1)';
-            wheelContainer.style.boxShadow = '0 0 20px rgba(0, 245, 255, 0.4)';
+            // Animate to final position with smooth deceleration
+            wheelNumbers.style.transition = `transform ${totalDuration / 1000}s cubic-bezier(0.17, 0.67, 0.35, 0.95)`;
+            wheelNumbers.style.transform = `translateX(${finalPosition}px)`;
 
-            // Phase 2: High-speed steady movement (0.5-2.0s)
+            // Reduce blur as we slow down
             setTimeout(() => {
-                if (currentPhase !== 1) return;
-                currentPhase = 2;
+                wheelNumbers.style.filter = 'blur(1px) brightness(1.05)';
+            }, totalDuration * 0.7);
 
-                // Maintain blur for speed effect
-                wheel.style.filter = 'blur(1px) brightness(1.15)';
-                wheelContainer.style.boxShadow = '0 0 30px rgba(0, 245, 255, 0.6)';
+            // Final cleanup and celebration
+            setTimeout(() => {
+                wheelNumbers.style.filter = 'none';
+                wheelContainer.style.boxShadow = '';
 
-                // Smooth transition to reveal position with casino slowdown
-                wheel.style.transition = 'transform 1.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)'; // Casino ease-out
-                wheel.style.transform = `translateX(${winPosition - 50}px)`; // Get close
+                console.log('🎉 [ANIMATION] Wheel stopped on number:', number);
+                this.playWinningCelebration(number, wheelNumbers, pointer, wheelContainer);
+            }, totalDuration - 200);
 
-                // Phase 3: Precise final positioning and celebration (2.0-2.5s)
-                setTimeout(() => {
-                    if (currentPhase !== 2) return;
-                    currentPhase = 3;
+        }, 50);
 
-                    // Clear blur, add precision
-                    wheel.style.filter = 'none';
-                    wheel.style.transition = 'transform 0.5s cubic-bezier(0.4, 0.0, 0.2, 1)'; // Final precision
-                    wheel.style.transform = `translateX(${winPosition}px)`;
-
-                    // Clear glowing effects
-                    wheelContainer.style.boxShadow = '';
-
-                    // Celebration after precise positioning
-                    setTimeout(() => {
-                        this.playWinningCelebration(number, wheel, pointer, wheelContainer);
-                    }, 200);
-
-                }, 1500);
-            }, 500);
-
-        }, 10); // Minimal delay for smooth start
-
-        // Store animation completion time for result timing
+        // Store animation completion time
         this.wheelAnimationEndTime = Date.now() + totalDuration;
+
+        // Return Promise that resolves when animation completes
+        return new Promise(resolve => {
+            setTimeout(() => {
+                console.log('✅ [ANIMATION END] Animation completed, resolving promise');
+                resolve();
+            }, totalDuration + 500); // +500ms buffer for celebration effects
+        });
     }
 
     // Play casino-style winning celebration
@@ -2099,18 +2127,23 @@
 
     // Stop all wheel animations (for safety)
     stopWheelAnimations() {
-        const wheels = document.querySelectorAll('.wheel-numbers');
-        const containers = document.querySelectorAll('.wheel-container');
+        // Stop any ongoing wheel animations and reset to default position
+        const wheelNumbers = document.getElementById('wheelNumbers');
+        const wheelContainer = document.querySelector('.wheel-container');
 
-        wheels.forEach(wheel => {
-            wheel.style.transition = 'none';
-            wheel.style.transform = '';
-            wheel.style.filter = '';
-        });
+        if (wheelNumbers) {
+            // Reset wheel-numbers to starting position
+            wheelNumbers.style.transition = 'none';
+            wheelNumbers.style.transform = 'translateX(0px)';
+            wheelNumbers.style.filter = '';
+        }
 
-        containers.forEach(container => {
-            container.style.boxShadow = '';
-        });
+        if (wheelContainer) {
+            wheelContainer.style.boxShadow = '';
+            wheelContainer.classList.remove('spinning');
+        }
+
+        // DON'T touch .wheel-positioner - it has inline transform that needs to stay
     }
 
     // Create casino sparkle effects
@@ -2352,25 +2385,22 @@
         // Received current round state (on connection or polling)
         this.serverRoundState = data;
 
+        // Track old phase for transition detection
+        const oldPhase = this.roundPhase;
+        const oldRoundId = this.roundId;
+
         // Update round number if it changed (new round started)
         if (data.round_number !== this.roundId) {
             console.log(`[Round Sync] New round detected: ${this.roundId} → ${data.round_number}`);
             this.roundId = data.round_number;
-
-            // Clear bets when new round starts
-            if (data.phase === 'betting') {
-                this.currentBets = [];
-                this.updateBetSummary();
-
-                // Reset spin locks for new round
-                this.spinInProgress = false;
-                this.spinLockActive = false;
-                this.isProcessing = false;
-            }
         }
 
-        switch (data.phase) {
+        // Update local phase to match server (server is single source of truth)
+        const serverPhase = data.phase;
+
+        switch (serverPhase) {
             case 'betting':
+                // Enable betting UI
                 this.updateGamePhase('Place Your Bets');
                 this.reEnableBetting();
                 this.updateSpinButtonState();
@@ -2379,29 +2409,102 @@
                 if (data.time_remaining > 0) {
                     this.startPollingTimer(data.time_remaining * 1000);
                 }
+
+                // If transitioning FROM results TO betting, clear bets and reset UI
+                if (oldPhase === 'results' || oldPhase === 'spinning') {
+                    console.log('[Round Sync] Transitioning to BETTING - clearing old bets and resetting UI');
+                    this.currentBets = [];
+                    this.updateBetSummary();
+
+                    // Reset spin locks for new round
+                    this.spinInProgress = false;
+                    this.spinLockActive = false;
+                    this.isProcessing = false;
+
+                    // Reset wheel to center position for new round
+                    const wheelNumbers = document.getElementById('wheelNumbers');
+                    if (wheelNumbers) {
+                        wheelNumbers.style.transition = 'none';
+                        // Reset to starting position (no offset)
+                        wheelNumbers.style.transform = 'translateX(0px)';
+                        wheelNumbers.style.filter = '';
+                        console.log('🔄 [Wheel Reset] Wheel position reset to center for new betting round');
+                    }
+
+                    // Create new bot participants for this round
+                    if (typeof this.createBotParticipants === 'function') {
+                        this.createBotParticipants();
+                        setTimeout(() => {
+                            if (typeof this.botsPlaceBets === 'function') {
+                                this.botsPlaceBets();
+                            }
+                        }, 500);
+                    }
+                }
                 break;
 
             case 'spinning':
+                // Disable betting, show spinning UI
                 this.updateGamePhase('Spinning...');
                 this.disableBetting();
                 this.spinInProgress = true;
                 this.updateSpinButtonState();
+
+                // Trigger wheel animation if we have outcome data and weren't already spinning
+                console.log('[Round Sync] SPINNING phase - oldPhase:', oldPhase, 'data.outcome:', data.outcome, 'data:', data);
+
+                if (oldPhase !== 'spinning') {
+                    // Extract outcome number from server data
+                    let outcomeNumber = null;
+
+                    // Server might send outcome_number directly
+                    if (typeof data.outcome_number === 'number') {
+                        outcomeNumber = data.outcome_number;
+                    }
+                    // Or nested in outcome object
+                    else if (data.outcome && typeof data.outcome.number === 'number') {
+                        outcomeNumber = data.outcome.number;
+                    }
+                    // Or just outcome as number
+                    else if (typeof data.outcome === 'number') {
+                        outcomeNumber = data.outcome;
+                    }
+
+                    if (outcomeNumber !== null) {
+                        console.log(`🎰 [Round Sync] Triggering wheel animation to number: ${outcomeNumber}`);
+                        this.animateWheel(outcomeNumber);
+                    } else {
+                        console.warn('⚠️ [Round Sync] SPINNING phase but no outcome number found in data:', data);
+                    }
+                }
                 break;
 
             case 'results':
-                // CRITICAL FIX: Don't show result immediately - let animation complete first
-                // The handleSpinResult() function will show the result after animation
-                // Only update if we're already showing results (prevents spoiling outcome)
-                if (this.roundPhase === RouletteGame.ROUND_PHASES.RESULTS) {
-                    if (data.outcome) {
-                        this.updateGamePhase(`Result: ${data.outcome.crypto} on ${data.outcome.number} (${data.outcome.color})`);
-                    } else {
-                        this.updateGamePhase('Round Complete');
-                    }
-                }
+                // Show results phase
                 this.disableBetting();
+
+                // CRITICAL FIX: Clear spin locks when entering results phase
+                this.spinInProgress = false;
+                this.spinLockActive = false;
+
+                this.updateSpinButtonState();
+
+                // Only display result details if we have outcome data
+                if (data.outcome) {
+                    this.updateGamePhase(`Result: ${data.outcome.number} (${data.outcome.color})`);
+
+                    // Update history if not already added
+                    if (oldPhase !== 'results') {
+                        this.updateHistory(data.outcome.number, data.outcome.color);
+                    }
+                } else {
+                    this.updateGamePhase('Round Complete');
+                }
                 break;
         }
+
+        // Update local phase to match server
+        this.roundPhase = serverPhase;
     }
 
     startPollingTimer(remainingMs) {
@@ -2733,25 +2836,15 @@
         }
 
         // FIX: Only count PLAYER bets for spin button, not bot bets
-        // Use explicit boolean checks to avoid truthy/falsy issues
-        const playerBets = this.currentBets.filter(bet =>
-            bet.isPlayerBet === true && bet.isBot !== true
-        );
+        // Check for player bets properly - bets without isBot flag OR isBot === false
+        const playerBets = this.currentBets.filter(bet => {
+            // A bet is a player bet if it's explicitly marked OR if it has neither isBot nor isPlayerBet flags
+            // (since user-placed bets may not have these flags set)
+            const isNotBot = !bet.isBot && !bet.botName;
+            const isExplicitlyPlayer = bet.isPlayerBet === true;
+            return isNotBot || isExplicitlyPlayer;
+        });
         const hasPlayerBets = playerBets.length > 0;
-
-        // DEBUG: Log each bet's properties for debugging
-        if (this.currentBets.length > 0) {
-            console.log(`🎮 Spin button check: ${this.currentBets.length} total bets, ${playerBets.length} player bets, phase: ${this.roundPhase}`);
-            console.log('📋 Current bets breakdown:', this.currentBets.map(bet => ({
-                player: bet.playerName,
-                isPlayerBet: bet.isPlayerBet,
-                isBot: bet.isBot,
-                amount: bet.amount,
-                type: bet.type
-            })));
-        } else {
-            console.log(`🎮 Spin button check: 0 total bets, phase: ${this.roundPhase}`);
-        }
 
         // ROUND STATE MANAGEMENT: Check SERVER round state if available (server-managed rounds)
         const serverPhaseCheck = this.serverRoundState
@@ -2759,21 +2852,14 @@
             : this.roundPhase === RouletteGame.ROUND_PHASES.BETTING;
 
         const canSpin = serverPhaseCheck &&
-                       hasPlayerBets &&  // FIX: Use hasPlayerBets instead of total bets
+                       hasPlayerBets &&
                        !this.spinInProgress &&
                        !this.spinLockActive;
 
-        const isCurrentlySpinning = this.roundPhase === RouletteGame.ROUND_PHASES.SPINNING;
+        const isCurrentlySpinning = this.roundPhase === RouletteGame.ROUND_PHASES.SPINNING ||
+                                    this.roundPhase === 'spinning';
 
-        // DEBUG: Log all the conditions
-        console.log(`🔍 SPIN BUTTON CONDITIONS:
-            roundPhase === BETTING: ${this.roundPhase === RouletteGame.ROUND_PHASES.BETTING} (${this.roundPhase})
-            hasPlayerBets: ${hasPlayerBets} (${playerBets.length} bets)
-            !spinInProgress: ${!this.spinInProgress} (spinInProgress=${this.spinInProgress})
-            !spinLockActive: ${!this.spinLockActive} (spinLockActive=${this.spinLockActive})
-            canSpin: ${canSpin}
-            isCurrentlySpinning: ${isCurrentlySpinning}`);
-
+        // Set button state
         this.elements.spinButton.disabled = !canSpin && !isCurrentlySpinning;
         this.elements.spinButton.textContent = isCurrentlySpinning ? 'SPINNING...' :
                                             canSpin ? 'SPIN TO WIN' : 'PLACE BETS TO SPIN';
@@ -4588,16 +4674,16 @@
         try {
             const outcome = result?.result;
             if (outcome && typeof outcome.number === 'number') {
-                // Keep wheel animation running during result processing
-                this.animateWheel(outcome.number);
+                // CRITICAL FIX: Animate wheel to winning number and WAIT for animation to complete
+                const animationPromise = this.animateWheel(outcome.number);
                 this.updateHistory(outcome.number, outcome.color || 'red');
 
                 // FIX: Use roundPhase system consistently
                 this.roundPhase = RouletteGame.ROUND_PHASES.RESULTS;
                 this.updateGamePhase('Calculating Results...');
 
-                // Simulate processing delay for excitement
-                await this.delay(2000);
+                // CRITICAL: Wait for wheel animation to complete before showing results
+                await animationPromise;
 
             // Update session statistics and auto-betting logic
             this.sessionRounds++;
@@ -5209,19 +5295,19 @@
     startUnifiedWheelAnimation() {
         console.log('🎰 Starting unified wheel animation...');
 
-        // Start the complete wheel animation sequence
-        this.animateWheel(0); // Start with number 0, animation will take ~2.5s
+        // Don't animate yet - just add visual "waiting" indicator
+        const wheelContainer = document.querySelector('.wheel-container');
+        if (wheelContainer) {
+            wheelContainer.classList.add('spinning');
+            wheelContainer.style.boxShadow = '0 0 30px rgba(0, 245, 255, 0.6)';
+        }
 
         // Update game phase display
         this.updateGamePhase('🎰 Wheel Spinning...');
 
-        // Add spinning class to container for additional effects
-        const wheelContainer = document.querySelector('.wheel-container');
-        if (wheelContainer) {
-            wheelContainer.classList.add('spinning');
-        }
-
-        return this.wheelAnimationEndTime; // Return completion time
+        // Return a Promise that resolves immediately
+        // The actual wheel animation will happen in handleSpinResult() when we know the winning number
+        return Promise.resolve();
     }
 
     // Utility delay function
