@@ -2019,8 +2019,7 @@
 
         console.log('✅ [ANIMATION] Elements found, starting wheel animation to number:', number);
 
-        // Clear any existing animations
-        this.stopWheelAnimations();
+        // Clear any existing animations and reset to neutral starting position
         wheelContainer.classList.remove('wheel-spinning');
 
         // Casino-style horizontal sliding constants
@@ -2030,49 +2029,77 @@
         const containerCenterX = containerWidth / 2;
 
         // Calculate final position: center the winning number under the pointer
-        // The wheel starts at left: 0, so we need to move it LEFT (negative) to center a number
         const targetNumberOffset = number * segmentWidth; // How far right the number is
         const centeringAdjustment = containerCenterX - (segmentWidth / 2); // Center of container minus half a segment
 
         // Move wheel left to bring winning number to center
         const finalPosition = centeringAdjustment - targetNumberOffset;
 
-        // Add extra spinning distance for excitement (spin past 3 full wheel lengths)
+        // Add extra spinning distance for excitement (spin past 3-5 full wheel lengths)
         const fullWheelWidth = totalNumbers * segmentWidth; // 37 × 70 = 2590px
-        const extraCycles = 3; // Spin 3 full times before landing
+        const extraCycles = 3 + Math.floor(Math.random() * 3); // Random 3-5 full cycles for variety
         const startPosition = finalPosition + (extraCycles * fullWheelWidth);
 
         console.log(`🎯 [ANIMATION] Targeting number ${number}:
             - Container width: ${containerWidth}px, center: ${containerCenterX}px
             - Target offset: ${targetNumberOffset}px
             - Final position: ${finalPosition}px
-            - Start position: ${startPosition}px (${extraCycles} extra cycles)`);
+            - Start position: ${startPosition}px (${extraCycles} extra cycles)
+            - Will spin through ${extraCycles * totalNumbers} numbers`);
 
-        // Reset to start position
+        // IMPORTANT: Reset to start position WITHOUT transition (instant jump)
         wheelNumbers.style.transition = 'none';
         wheelNumbers.style.transform = `translateX(${startPosition}px)`;
+        wheelNumbers.style.filter = 'none';
 
-        // Animation timing
-        const totalDuration = 4000; // 4 seconds for smooth casino feel
+        // Two-stage animation timing for realistic casino feel
+        const fastSpinDuration = 2000;  // 2s - SUPER FAST initial spin
+        const slowdownDuration = 3000;  // 3s - Gradual deceleration to winning number
+        const totalDuration = fastSpinDuration + slowdownDuration;
 
-        // Trigger animation after brief delay
+        // Calculate intermediate position (80% of the way through)
+        const fastSpinDistance = (startPosition - finalPosition) * 0.80;
+        const intermediatePosition = startPosition - fastSpinDistance;
+
+        // Force browser to apply the instant position change before animating
+        wheelNumbers.offsetHeight; // Trigger reflow
+
+        // STAGE 1: SUPER FAST SPIN
         setTimeout(() => {
-            console.log('🚀 [ANIMATION] Rolling to winning number...');
+            console.log(`🚀 [ANIMATION STAGE 1] FAST SPIN - Rolling through ${extraCycles} cycles at high speed`);
 
-            // Add visual effects
-            wheelNumbers.style.filter = 'blur(2px) brightness(1.1)';
-            wheelContainer.style.boxShadow = '0 0 30px rgba(0, 245, 255, 0.5)';
+            // Heavy blur for super fast spinning
+            wheelNumbers.style.filter = 'blur(4px) brightness(1.2)';
+            wheelContainer.style.boxShadow = '0 0 40px rgba(0, 245, 255, 0.6)';
 
-            // Animate to final position with smooth deceleration
-            wheelNumbers.style.transition = `transform ${totalDuration / 1000}s cubic-bezier(0.17, 0.67, 0.35, 0.95)`;
-            wheelNumbers.style.transform = `translateX(${finalPosition}px)`;
+            // Fast linear spin (almost no easing - constant high speed)
+            wheelNumbers.style.transition = `transform ${fastSpinDuration / 1000}s linear`;
+            wheelNumbers.style.transform = `translateX(${intermediatePosition}px)`;
 
-            // Reduce blur as we slow down
+            // STAGE 2: GRADUAL SLOWDOWN
             setTimeout(() => {
-                wheelNumbers.style.filter = 'blur(1px) brightness(1.05)';
-            }, totalDuration * 0.7);
+                console.log(`🎯 [ANIMATION STAGE 2] SLOWDOWN - Decelerating to winning number ${number}`);
 
-            // Final cleanup and celebration
+                // Reduce blur as we enter slowdown phase
+                wheelNumbers.style.filter = 'blur(2px) brightness(1.1)';
+
+                // Smooth deceleration with strong ease-out (realistic physics)
+                wheelNumbers.style.transition = `transform ${slowdownDuration / 1000}s cubic-bezier(0.15, 0.7, 0.2, 1)`;
+                wheelNumbers.style.transform = `translateX(${finalPosition}px)`;
+
+                // Progressive blur reduction during slowdown
+                setTimeout(() => {
+                    wheelNumbers.style.filter = 'blur(1px) brightness(1.05)';
+                }, slowdownDuration * 0.5);
+
+                // Final stop - no blur
+                setTimeout(() => {
+                    wheelNumbers.style.filter = 'none';
+                }, slowdownDuration * 0.8);
+
+            }, fastSpinDuration);
+
+            // Final cleanup and celebration (after both stages complete)
             setTimeout(() => {
                 wheelNumbers.style.filter = 'none';
                 wheelContainer.style.boxShadow = '';
@@ -2421,14 +2448,17 @@
                     this.spinLockActive = false;
                     this.isProcessing = false;
 
-                    // Reset wheel to center position for new round
+                    // Reset wheel to random position for new round (prevents showing same numbers)
                     const wheelNumbers = document.getElementById('wheelNumbers');
                     if (wheelNumbers) {
                         wheelNumbers.style.transition = 'none';
-                        // Reset to starting position (no offset)
-                        wheelNumbers.style.transform = 'translateX(0px)';
+                        // Reset to a random starting offset so wheel doesn't always show the same numbers
+                        const segmentWidth = 70;
+                        const totalNumbers = 37;
+                        const randomOffset = -Math.floor(Math.random() * totalNumbers) * segmentWidth;
+                        wheelNumbers.style.transform = `translateX(${randomOffset}px)`;
                         wheelNumbers.style.filter = '';
-                        console.log('🔄 [Wheel Reset] Wheel position reset to center for new betting round');
+                        console.log(`🔄 [Wheel Reset] Wheel position reset to random offset ${randomOffset}px for new betting round`);
                     }
 
                     // Create new bot participants for this round
