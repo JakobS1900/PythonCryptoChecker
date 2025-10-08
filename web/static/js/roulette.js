@@ -658,7 +658,10 @@
             <div class="bot-avatar">${avatar}</div>
             <div class="bot-info">
                 <div class="bot-name">${name}</div>
-                <div class="bot-status">Thinking...</div>
+                <div class="bot-status">Deciding...</div>
+                <div class="bot-bet-info" style="display: none; font-size: 0.75rem; color: #10b981; margin-top: 2px;">
+                    <span class="bet-details"></span>
+                </div>
             </div>
         `;
         return element;
@@ -799,10 +802,19 @@
 
     // Update bot element to show active bet
     updateBotElementBet(bot, betType, amount) {
+        // Update status to show they placed a bet
         const statusElement = bot.element.querySelector('.bot-status');
         if (statusElement) {
-            statusElement.textContent = `${betType} (${this.formatAmount(amount)} GEM)`;
+            statusElement.textContent = 'Bet Placed';
             statusElement.classList.add('active-bet');
+        }
+
+        // Show bet details
+        const betInfoElement = bot.element.querySelector('.bot-bet-info');
+        const betDetailsElement = bot.element.querySelector('.bet-details');
+        if (betInfoElement && betDetailsElement) {
+            betDetailsElement.textContent = `${betType}: ${this.formatAmount(amount)} GEM`;
+            betInfoElement.style.display = 'block';
         }
 
         bot.element.classList.add('betting');
