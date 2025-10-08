@@ -2736,6 +2736,12 @@
         this.elements.timerText.textContent = `${seconds.toFixed(1)}s`;
         const percent = Math.min(100, Math.max(0, (remainingMs / this.ROUND_DURATION) * 100));
         this.elements.timerBar.style.width = `${percent}%`;
+
+        // Store current timer for button display
+        this.currentTimerSeconds = Math.ceil(seconds);
+
+        // Update spin button with realtime countdown
+        this.updateSpinButtonState();
     }
 
     getPayoutMultiplier(type, value) {
@@ -2927,20 +2933,30 @@
         const isCurrentlySpinning = this.roundPhase === RouletteGame.ROUND_PHASES.SPINNING ||
                                     this.roundPhase === 'spinning';
 
-        // Set button state with countdown timer
-        this.elements.spinButton.disabled = !canSpin && !isCurrentlySpinning;
+        // Update button to show it's an info display, not an action button
+        // The button is always disabled since server auto-spins
+        this.elements.spinButton.disabled = true;
 
-        // Show countdown if spinning phase
+        // Show clear status messages with realtime countdown
         if (isCurrentlySpinning) {
-            // Get remaining time from server state if available
-            const remainingTime = this.serverRoundState?.time_remaining || 0;
+            // Use realtime timer if available, otherwise fall back to server state
+            const remainingTime = this.currentTimerSeconds || this.serverRoundState?.time_remaining || 0;
             if (remainingTime > 0) {
-                this.elements.spinButton.textContent = `SPINNING... (${remainingTime}s)`;
+                this.elements.spinButton.textContent = `⏱️ SPINNING IN ${remainingTime}s`;
             } else {
-                this.elements.spinButton.textContent = 'SPINNING...';
+                this.elements.spinButton.textContent = '🎰 SPINNING NOW...';
+            }
+        } else if (hasPlayerBets) {
+            // Player has bets placed - show countdown to auto-spin
+            const remainingTime = this.currentTimerSeconds || 0;
+            if (remainingTime > 0) {
+                this.elements.spinButton.textContent = `✅ AUTO-SPIN IN ${remainingTime}s`;
+            } else {
+                this.elements.spinButton.textContent = '✅ BETS PLACED - WAITING FOR SPIN';
             }
         } else {
-            this.elements.spinButton.textContent = canSpin ? 'SPIN TO WIN' : 'PLACE BETS TO SPIN';
+            // No bets yet
+            this.elements.spinButton.textContent = '📍 PLACE YOUR BETS';
         }
     }
 
@@ -4334,6 +4350,9 @@
 
     // Update bet feed display
     updateBetFeedDisplay() {
+        // DISABLED: Live Bets popup removed per user request
+        return;
+
         // Create floating bet feed in bottom left
         let feedContainer = document.querySelector('.bet-feed-container');
         if (!feedContainer) {
@@ -5529,6 +5548,9 @@
 
     // Update bet feed display (enhanced with avatars)
     updateBetFeedDisplay() {
+        // DISABLED: Live Bets popup removed per user request
+        return;
+
         // Create floating bet feed in bottom left
         let feedContainer = document.querySelector('.bet-feed-container');
         if (!feedContainer) {
