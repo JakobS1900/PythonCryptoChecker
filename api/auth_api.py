@@ -175,6 +175,7 @@ async def get_guest_user_data() -> Dict[str, Any]:
 
 @router.post("/register", response_model=Token, status_code=status.HTTP_201_CREATED)
 async def register_user(
+    request: Request,
     user_data: UserRegister,
     db: AsyncSession = Depends(get_db)
 ):
@@ -219,6 +220,11 @@ async def register_user(
             data={"sub": user.id},
             expires_delta=access_token_expires
         )
+
+        # Set session data (same as login)
+        request.session["user_id"] = str(user.id)
+        request.session["auth_token"] = access_token
+        print(f">> Registration Success: Set session for new user {user.id}")
 
         return {
             "access_token": access_token,

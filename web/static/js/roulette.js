@@ -168,11 +168,14 @@
             return;
         }
 
-        // Don't offset or duplicate - just leave wheel in default centered position
-        // This ensures numbers are visible while we debug
-        wheelNumbers.style.transform = 'translateX(0px)';
+        // Clone all numbers to create seamless looping (prevents blank spaces during animation)
+        const originalNumbers = Array.from(numbers);
+        originalNumbers.forEach(number => {
+            const clone = number.cloneNode(true);
+            wheelNumbers.appendChild(clone);
+        });
 
-        console.log(`✅ Wheel visible with ${numbers.length} numbers, starting at center position`);
+        console.log(`✅ Wheel visible with ${numbers.length} numbers (${originalNumbers.length} original + ${originalNumbers.length} cloned for seamless looping)`);
     }
 
     // ===== BOT SYSTEM INTEGRATION =====
@@ -2119,6 +2122,8 @@
                 wheelContainer.style.boxShadow = '';
 
                 console.log('🎉 [ANIMATION] Wheel stopped on number:', number);
+                // Store the last winning number so we can keep the wheel positioned on it
+                this.lastWinningNumber = number;
                 this.playWinningCelebration(number, wheelNumbers, pointer, wheelContainer);
             }, totalDuration - 200);
 
@@ -2462,17 +2467,24 @@
                     this.spinLockActive = false;
                     this.isProcessing = false;
 
-                    // Reset wheel to random position for new round (prevents showing same numbers)
+                    // Keep wheel on last winning number (don't reset between rounds)
                     const wheelNumbers = document.getElementById('wheelNumbers');
-                    if (wheelNumbers) {
-                        wheelNumbers.style.transition = 'none';
-                        // Reset to a random starting offset so wheel doesn't always show the same numbers
+                    if (wheelNumbers && this.lastWinningNumber !== undefined) {
+                        // Keep the wheel positioned on the last winning number
+                        // The wheel already landed on this number, so just keep it there
+                        console.log(`🎯 [Wheel Position] Keeping wheel on last winning number: ${this.lastWinningNumber}`);
+                        // Clear any filters but keep the position
+                        wheelNumbers.style.setProperty('filter', 'none', 'important');
+                    } else if (wheelNumbers) {
+                        // First round or no previous winner - center the wheel
                         const segmentWidth = 70;
                         const totalNumbers = 37;
-                        const randomOffset = -Math.floor(Math.random() * totalNumbers) * segmentWidth;
-                        wheelNumbers.style.transform = `translateX(${randomOffset}px)`;
-                        wheelNumbers.style.filter = '';
-                        console.log(`🔄 [Wheel Reset] Wheel position reset to random offset ${randomOffset}px for new betting round`);
+                        const containerWidth = wheelNumbers.parentElement.clientWidth;
+                        const containerCenterX = containerWidth / 2;
+                        const centerPosition = containerCenterX - (segmentWidth / 2);
+                        wheelNumbers.style.setProperty('transition', 'none', 'important');
+                        wheelNumbers.style.setProperty('transform', `translateX(${centerPosition}px)`, 'important');
+                        console.log(`🔄 [Wheel Reset] First round - centering wheel at ${centerPosition}px`);
                     }
 
                     // Create new bot participants for this round

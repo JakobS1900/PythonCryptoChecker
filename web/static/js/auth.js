@@ -11,6 +11,7 @@ window.Auth = {
     currentUser: null,
     isAuthenticated: false,
     authModal: null,
+    _updateUITimeout: null,  // Debounce timer for UI updates
 
     // Initialize authentication
     init() {
@@ -269,11 +270,37 @@ window.Auth = {
         this.updateUserInterface();
     },
 
-    // Update user interface based on auth state
+    // Update user interface based on auth state (debounced to prevent flickering)
     updateUserInterface() {
+        // Clear any pending updates
+        if (this._updateUITimeout) {
+            clearTimeout(this._updateUITimeout);
+        }
+
+        // Debounce the actual update by 100ms to prevent rapid re-renders
+        this._updateUITimeout = setTimeout(() => {
+            this._performUIUpdate();
+        }, 100);
+    },
+
+    // Actual UI update implementation (called after debounce delay)
+    _performUIUpdate() {
         const userInfo = document.getElementById('user-info');
         if (!userInfo) {
             console.warn('❌ user-info element not found in DOM');
+            return;
+        }
+
+        // Check if any Bootstrap dropdown is currently open
+        const openDropdown = userInfo.querySelector('.dropdown-menu.show');
+        if (openDropdown) {
+            // Dropdown is open - skip UI update to prevent closing it
+            console.log('⏸️ Skipping UI update - dropdown is open');
+            // Just update the balance text without destroying the DOM
+            const balanceElement = userInfo.querySelector('.small.text-light-emphasis');
+            if (balanceElement && this.currentUser) {
+                balanceElement.innerHTML = `<i class="bi bi-gem"></i> ${this.formatBalance(this.currentUser.wallet_balance)} GEM`;
+            }
             return;
         }
 
