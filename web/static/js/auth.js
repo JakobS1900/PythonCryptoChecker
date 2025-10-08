@@ -315,6 +315,10 @@ window.Auth = {
         }
 
         if (this.isAuthenticated && this.currentUser) {
+            // Get avatar URL or generate default
+            const avatarUrl = this.currentUser.avatar_url ||
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(this.currentUser.username || 'User')}&size=32&background=667eea&color=fff`;
+
             // Authenticated user UI - always replace the entire content
             userInfo.innerHTML = `
                 <div class="d-flex align-items-center gap-3">
@@ -325,10 +329,15 @@ window.Auth = {
                         </div>
                     </div>
                     <div class="dropdown">
-                        <button class="btn btn-outline-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                            <i class="bi bi-person-circle"></i>
+                        <button class="btn btn-outline-light btn-sm dropdown-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown">
+                            <img src="${avatarUrl}" alt="Avatar"
+                                 style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover;"
+                                 onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(this.currentUser.username || 'User')}&size=28&background=667eea&color=fff'">
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="/profile">
+                                <i class="bi bi-person"></i> Profile
+                            </a></li>
                             <li><a class="dropdown-item" href="/portfolio">
                                 <i class="bi bi-wallet2"></i> Portfolio
                             </a></li>

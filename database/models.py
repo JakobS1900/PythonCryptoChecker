@@ -126,6 +126,10 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     last_login = Column(DateTime)
+    # Profile fields
+    avatar_url = Column(String(500), nullable=True)  # Avatar image URL or path
+    bio = Column(String(500), nullable=True)  # User bio/description
+    profile_theme = Column(String(50), default='purple', nullable=True)  # Profile card theme color
     # Bot-specific fields
     is_bot = Column(Boolean, default=False, nullable=False)  # New field to identify bots
     bot_personality = Column(String(30), nullable=True)      # Bot personality type if applicable
@@ -154,6 +158,9 @@ class User(Base):
             "is_active": self.is_active,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "last_login": self.last_login.isoformat() if self.last_login else None,
+            "avatar_url": self.avatar_url,
+            "bio": self.bio,
+            "profile_theme": self.profile_theme,
             "is_bot": self.is_bot,
             "bot_personality": self.bot_personality
         }

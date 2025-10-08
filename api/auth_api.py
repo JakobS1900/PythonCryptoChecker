@@ -454,3 +454,107 @@ async def debug_users(db: AsyncSession = Depends(get_db)):
             "role": str(user.role) if user.role else None
         })
     return {"users": user_list, "total": len(user_list)}
+
+# Profile Management Endpoints
+
+class ProfileUpdateRequest(BaseModel):
+    username: Optional[str] = Field(None, min_length=3, max_length=50)
+    email: Optional[EmailStr] = None
+    bio: Optional[str] = Field(None, max_length=500)
+    avatar_url: Optional[str] = Field(None, max_length=500)
+    profile_theme: Optional[str] = Field(None, max_length=50)
+
+@router.get("/profile")
+async def get_profile(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Get user profile with full details."""
+    try:
+        # Get wallet info
+        from sqlalchemy import select
+        from database.models import Wallet
+
+        wallet_result = await db.execute(
+            select(Wallet).filter(Wallet.user_id == current_user.id)
+        )
+        wallet = wallet_result.scalar_one_or_none()
+
+        profile_data = {
+            "id": current_user.id,
+            "username": current_user.username,
+            "email": current_user.email,
+            "role": current_user.role,
+            "avatar_url": current_user.avatar_url,
+            "bio": current_user.bio,
+            "profile_theme": current_user.profile_theme,
+            "created_at": format_datetime(current_user.created_at),
+            "last_login": format_datetime(current_user.last_login),
+            "wallet_balance": wallet.gem_balance if wallet else 0,
+            "total_wagered": wallet.total_wagered if wallet else 0,
+            "total_won": wallet.total_won if wallet else 0
+        }
+
+        return {"success": True, "profile": profile_data}
+
+    except Exception as e:
+        print(f">> Error: Failed to get profile: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get profile: {str(e)}")
+
+@router.put("/profile")
+async def update_profile(
+    request: Request,
+    profile_update: ProfileUpdateRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Update user profile."""
+    try:
+        from sqlalchemy import select
+
+        # Check if username is being changed and if it's available
+        if profile_update.username and profile_update.username != current_user.username:
+            existing = await db.execute(
+                select(User).filter(User.username == profile_update.username)
+            )
+            if existing.scalar_one_or_none():
+                raise HTTPException(status_code=400, detail="Username already taken")
+            current_user.username = profile_update.username
+
+        # Check if email is being changed and if it's available
+        if profile_update.email and profile_update.email != current_user.email:
+            existing = await db.execute(
+                select(User).filter(User.email == profile_update.email)
+            )
+            if existing.scalar_one_or_none():
+                raise HTTPException(status_code=400, detail="Email already taken")
+            current_user.email = profile_update.email
+
+        # Update other fields
+        if profile_update.bio is not None:
+            current_user.bio = profile_update.bio
+
+        if profile_update.avatar_url is not None:
+            current_user.avatar_url = profile_update.avatar_url
+
+        if profile_update.profile_theme is not None:
+            current_user.profile_theme = profile_update.profile_theme
+
+        await db.commit()
+        await db.refresh(current_user)
+
+        print(f">> Success: Profile updated for user {current_user.id}")
+
+        return {
+            "success": True,
+            "message": "Profile updated successfully",
+            "profile": current_user.to_dict()
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        await db.rollback()
+        print(f">> Error: Failed to update profile: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to update profile: {str(e)}")

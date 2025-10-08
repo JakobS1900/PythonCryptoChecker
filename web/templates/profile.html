@@ -5,10 +5,35 @@
 {% block extra_css %}
 <style>
 .profile-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     border-radius: 15px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+/* Profile theme gradients */
+.profile-card.theme-purple {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+.profile-card.theme-blue {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+.profile-card.theme-green {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+.profile-card.theme-orange {
+    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+}
+.profile-card.theme-red {
+    background: linear-gradient(135deg, #f83600 0%, #f9d423 100%);
+}
+.profile-card.theme-pink {
+    background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+}
+.profile-card.theme-dark {
+    background: linear-gradient(135deg, #232526 0%, #414345 100%);
+}
+.profile-card.theme-ocean {
+    background: linear-gradient(135deg, #2e3192 0%, #1bffff 100%);
 }
 
 .stat-card {
@@ -76,9 +101,24 @@
             <div class="card-body text-center p-4">
                 <div class="row align-items-center">
                     <div class="col-md-4">
-                        <i class="bi bi-person-circle" style="font-size: 4rem;"></i>
-                        <h3 class="mt-2" id="profile-username">Loading...</h3>
+                        <div class="position-relative d-inline-block">
+                            <img id="profile-avatar" src="/static/img/default-avatar.png"
+                                 alt="Profile Avatar"
+                                 style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 4px solid rgba(255,255,255,0.3);"
+                                 onerror="this.src='https://ui-avatars.com/api/?name=User&size=120&background=667eea&color=fff'">
+                            <button class="btn btn-sm btn-light position-absolute"
+                                    style="bottom: 0; right: 0; border-radius: 50%; width: 36px; height: 36px; padding: 0;"
+                                    onclick="document.getElementById('avatar-input').click()"
+                                    title="Change Avatar">
+                                <i class="bi bi-camera"></i>
+                            </button>
+                            <input type="file" id="avatar-input" accept="image/*" style="display: none;" onchange="Profile.handleAvatarUpload(event)">
+                        </div>
+                        <h3 class="mt-3" id="profile-username">Loading...</h3>
                         <span class="badge bg-light text-dark" id="profile-role">Player</span>
+                        <button class="btn btn-sm btn-outline-light ms-2" onclick="Profile.showEditModal()">
+                            <i class="bi bi-pencil"></i> Edit Profile
+                        </button>
                     </div>
                     <div class="col-md-4">
                         <h2>GEM Balance</h2>
@@ -241,6 +281,58 @@
         </div>
     </div>
 </div>
+
+<!-- Edit Profile Modal -->
+<div class="modal fade" id="editProfileModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Profile</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editProfileForm">
+                    <div class="mb-3">
+                        <label for="edit-username" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="edit-username" required minlength="3" maxlength="50">
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="edit-email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-bio" class="form-label">Bio</label>
+                        <textarea class="form-control" id="edit-bio" rows="3" maxlength="500"></textarea>
+                        <small class="text-muted">Tell us about yourself (max 500 characters)</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-avatar-url" class="form-label">Avatar URL</label>
+                        <input type="url" class="form-control" id="edit-avatar-url" placeholder="https://...">
+                        <small class="text-muted">Or use the camera button above to upload an image</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-theme" class="form-label">Profile Theme</label>
+                        <select class="form-select" id="edit-theme">
+                            <option value="purple">Purple Haze</option>
+                            <option value="blue">Ocean Blue</option>
+                            <option value="green">Emerald Green</option>
+                            <option value="orange">Sunset Orange</option>
+                            <option value="red">Fire Red</option>
+                            <option value="pink">Cherry Blossom</option>
+                            <option value="dark">Dark Knight</option>
+                            <option value="ocean">Deep Ocean</option>
+                        </select>
+                        <small class="text-muted">Choose your profile card color theme</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="Profile.saveProfile()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -360,15 +452,41 @@ window.Profile = {
     updateProfileUI() {
         if (!this.userStats) return;
 
-        const { wallet, stats } = this.userStats;
+        const { wallet, stats, user } = this.userStats;
 
         // Update profile header
-        document.getElementById('profile-username').textContent = 'CryptoTrader'; // Would come from user data
+        document.getElementById('profile-username').textContent = user.username || 'CryptoTrader';
+        document.getElementById('profile-role').textContent = user.role || 'Player';
+
+        // Update avatar
+        const avatarImg = document.getElementById('profile-avatar');
+        if (user.avatar_url) {
+            avatarImg.src = user.avatar_url;
+        } else {
+            // Use UI Avatars as fallback with username
+            avatarImg.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || 'User')}&size=120&background=667eea&color=fff`;
+        }
+
+        // Apply profile theme
+        const profileCard = document.querySelector('.profile-card');
+        const theme = user.profile_theme || 'purple';
+        profileCard.className = `card profile-card theme-${theme}`;
+
+        // Update dates
+        if (user.created_at) {
+            document.getElementById('profile-join-date').textContent = new Date(user.created_at).toLocaleDateString();
+        }
+        if (user.last_login) {
+            document.getElementById('profile-last-login').textContent = new Date(user.last_login).toLocaleString();
+        } else {
+            document.getElementById('profile-last-login').textContent = 'First login';
+        }
+
         document.getElementById('balance-amount').textContent = (wallet.gem_balance || 0).toFixed(2);
         document.getElementById('balance-usd').textContent = `$${(stats.gem_value_usd || 0).toFixed(2)} USD`;
 
         // Update stats cards
-        document.getElementById('stat-total-winnings').textContent = (stats.total_winnings || 0).toFixed(2);
+        document.getElementById('stat-total-winnings').textContent = (wallet.total_won || 0).toFixed(2);
         document.getElementById('stat-total-games').textContent = stats.total_games || 0;
         document.getElementById('stat-win-rate').textContent = `${stats.win_rate || 0}%`;
         document.getElementById('stat-portfolio-value').textContent = '0.00'; // Will be updated by portfolio
@@ -675,6 +793,139 @@ window.Profile = {
                     <small>Unable to verify balance persistence: ${error.message}</small>
                 </div>
             `;
+        }
+    },
+
+    // Profile editing functions
+    showEditModal() {
+        if (!this.userStats || !this.userStats.user) {
+            alert('Profile data not loaded yet');
+            return;
+        }
+
+        const user = this.userStats.user;
+
+        // Populate form with current values
+        document.getElementById('edit-username').value = user.username || '';
+        document.getElementById('edit-email').value = user.email || '';
+        document.getElementById('edit-bio').value = user.bio || '';
+        document.getElementById('edit-avatar-url').value = user.avatar_url || '';
+        document.getElementById('edit-theme').value = user.profile_theme || 'purple';
+
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('editProfileModal'));
+        modal.show();
+    },
+
+    async saveProfile() {
+        try {
+            const username = document.getElementById('edit-username').value;
+            const email = document.getElementById('edit-email').value;
+            const bio = document.getElementById('edit-bio').value;
+            const avatar_url = document.getElementById('edit-avatar-url').value;
+            const profile_theme = document.getElementById('edit-theme').value;
+
+            const token = localStorage.getItem('auth_token');
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            const response = await fetch('/api/auth/profile', {
+                method: 'PUT',
+                headers: headers,
+                credentials: 'include',
+                body: JSON.stringify({ username, email, bio, avatar_url, profile_theme })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    // Close modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('editProfileModal'));
+                    modal.hide();
+
+                    // Reload profile
+                    await this.loadUserProfile();
+
+                    // Show success message
+                    if (window.App && window.App.showAlert) {
+                        App.showAlert('success', 'Profile updated successfully!');
+                    } else {
+                        alert('Profile updated successfully!');
+                    }
+                }
+            } else {
+                const error = await response.json();
+                throw new Error(error.detail || 'Failed to update profile');
+            }
+        } catch (error) {
+            console.error('Error saving profile:', error);
+            if (window.App && window.App.showAlert) {
+                App.showAlert('danger', `Error: ${error.message}`);
+            } else {
+                alert(`Error: ${error.message}`);
+            }
+        }
+    },
+
+    async handleAvatarUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        // Check file type
+        if (!file.type.startsWith('image/')) {
+            alert('Please select an image file');
+            return;
+        }
+
+        // Check file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            alert('Image size must be less than 5MB');
+            return;
+        }
+
+        try {
+            // Convert to data URL and store
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const dataUrl = e.target.result;
+
+                // Update avatar immediately for preview
+                document.getElementById('profile-avatar').src = dataUrl;
+
+                // Save to profile
+                const token = localStorage.getItem('auth_token');
+                const headers = {
+                    'Content-Type': 'application/json'
+                };
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+
+                const response = await fetch('/api/auth/profile', {
+                    method: 'PUT',
+                    headers: headers,
+                    credentials: 'include',
+                    body: JSON.stringify({ avatar_url: dataUrl })
+                });
+
+                if (response.ok) {
+                    if (window.App && window.App.showAlert) {
+                        App.showAlert('success', 'Avatar updated successfully!');
+                    }
+                    // Reload to update everywhere
+                    await this.loadUserProfile();
+                } else {
+                    throw new Error('Failed to upload avatar');
+                }
+            };
+            reader.readAsDataURL(file);
+        } catch (error) {
+            console.error('Error uploading avatar:', error);
+            alert('Error uploading avatar: ' + error.message);
         }
     }
 };
