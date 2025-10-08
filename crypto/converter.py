@@ -230,6 +230,64 @@ class CryptoConverter:
             from_currency = from_currency.upper()
             to_currency = to_currency.upper()
 
+            # Special handling for GEM (virtual currency)
+            # GEM to USD rate: 1 GEM = $0.01 USD
+            GEM_TO_USD_RATE = 0.01
+
+            if from_currency == "GEM":
+                # Converting FROM GEM
+                if to_currency == "USD":
+                    result = amount * GEM_TO_USD_RATE
+                elif to_currency in self.supported_fiat:
+                    # GEM -> USD -> other fiat
+                    usd_amount = amount * GEM_TO_USD_RATE
+                    fiat_rate = await self._get_fiat_rate(to_currency)
+                    if fiat_rate:
+                        result = usd_amount * fiat_rate
+                else:
+                    # GEM -> USD -> crypto
+                    usd_amount = amount * GEM_TO_USD_RATE
+                    result = await self.convert_fiat_to_crypto("USD", to_currency, usd_amount)
+
+                if result is not None:
+                    return {
+                        "from_currency": "GEM",
+                        "to_currency": to_currency,
+                        "from_amount": amount,
+                        "to_amount": result,
+                        "conversion_type": "gem_conversion",
+                        "rate": result / amount if amount > 0 else 0,
+                        "timestamp": datetime.utcnow().isoformat()
+                    }
+                return None
+
+            elif to_currency == "GEM":
+                # Converting TO GEM
+                if from_currency == "USD":
+                    result = amount / GEM_TO_USD_RATE
+                elif from_currency in self.supported_fiat:
+                    # other fiat -> USD -> GEM
+                    usd_amount = await self.convert_fiat_to_fiat(from_currency, "USD", amount)
+                    if usd_amount:
+                        result = usd_amount / GEM_TO_USD_RATE
+                else:
+                    # crypto -> USD -> GEM
+                    usd_amount = await self.convert_crypto_to_fiat(from_currency, "USD", amount)
+                    if usd_amount:
+                        result = usd_amount / GEM_TO_USD_RATE
+
+                if result is not None:
+                    return {
+                        "from_currency": from_currency,
+                        "to_currency": "GEM",
+                        "from_amount": amount,
+                        "to_amount": result,
+                        "conversion_type": "gem_conversion",
+                        "rate": result / amount if amount > 0 else 0,
+                        "timestamp": datetime.utcnow().isoformat()
+                    }
+                return None
+
             from_is_fiat = from_currency in self.supported_fiat
             to_is_fiat = to_currency in self.supported_fiat
 
@@ -304,7 +362,10 @@ class CryptoConverter:
 
     def get_supported_fiat_currencies(self) -> Dict[str, str]:
         """Get list of supported fiat currencies."""
-        return self.supported_fiat.copy()
+        # Include GEM as a special virtual currency
+        fiat_with_gem = self.supported_fiat.copy()
+        fiat_with_gem["GEM"] = "GEM (Virtual Currency)"
+        return fiat_with_gem
 
     async def get_supported_crypto_currencies(self) -> Dict[str, str]:
         """Get list of supported cryptocurrencies."""

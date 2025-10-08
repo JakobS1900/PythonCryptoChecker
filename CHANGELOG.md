@@ -2,6 +2,27 @@
 
 All notable changes to the CryptoChecker Gaming Platform are documented in this file.
 
+## [2.2.1] - 2025-10-04 - "Roulette Animation Visibility Fix"
+
+### 🎮 Gaming Fixes
+
+#### Roulette Wheel Animation
+- **CRITICAL FIX**: Roulette wheel animation now stays visible during entire spin
+- **PROBLEM RESOLVED**: Wheel was flying thousands of pixels off-screen, making animation invisible
+- **SOLUTION**: Simplified animation logic to keep wheel centered and visible
+  - Removed large negative offset calculations (`finalPosition - 1500`)
+  - Implemented visible rotation cycles (3 full wheel rotations)
+  - Calculated final position relative to container center
+  - Added smooth deceleration with cubic-bezier easing
+- **FILE MODIFIED**: `web/static/js/roulette.js` - `animateWheel()` function (lines 2004-2026)
+- **USER EXPERIENCE**: Players now see smooth casino-style roll revealing winning number
+
+### 🎨 Visual Improvements
+- **Smooth Roll Effect**: 3 visible cycles through all 37 numbers before landing
+- **Professional Animation**: Realistic deceleration matching casino roulette behavior
+- **Centered Display**: Wheel remains properly centered throughout animation
+- **Winning Number Reveal**: Natural slow-down reveals winner instead of instant pop-up
+
 ## [2.2.0] - 2025-09-11 - "Trading Restored, GEM Economy, Roulette Cleanup"
 
 ### 💹 Trading & GEM Economy

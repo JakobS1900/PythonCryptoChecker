@@ -2927,10 +2927,21 @@
         const isCurrentlySpinning = this.roundPhase === RouletteGame.ROUND_PHASES.SPINNING ||
                                     this.roundPhase === 'spinning';
 
-        // Set button state
+        // Set button state with countdown timer
         this.elements.spinButton.disabled = !canSpin && !isCurrentlySpinning;
-        this.elements.spinButton.textContent = isCurrentlySpinning ? 'SPINNING...' :
-                                            canSpin ? 'SPIN TO WIN' : 'PLACE BETS TO SPIN';
+
+        // Show countdown if spinning phase
+        if (isCurrentlySpinning) {
+            // Get remaining time from server state if available
+            const remainingTime = this.serverRoundState?.time_remaining || 0;
+            if (remainingTime > 0) {
+                this.elements.spinButton.textContent = `SPINNING... (${remainingTime}s)`;
+            } else {
+                this.elements.spinButton.textContent = 'SPINNING...';
+            }
+        } else {
+            this.elements.spinButton.textContent = canSpin ? 'SPIN TO WIN' : 'PLACE BETS TO SPIN';
+        }
     }
 
     async apiRequest(url, options = {}) {
