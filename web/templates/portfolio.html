@@ -6,23 +6,23 @@
 <!-- Portfolio Header -->
 <div class="row mb-4">
     <div class="col-12">
-        <div class="bg-gradient-success text-white p-4 rounded-3">
+        <div class="card-modern" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.05) 100%); border-color: var(--success); padding: var(--space-8);">
             <div class="row align-items-center">
                 <div class="col-md-8">
-                    <h1 class="display-5 fw-bold mb-3">
-                        <i class="bi bi-wallet2 text-warning"></i>
+                    <h1 style="font-size: var(--text-4xl); font-weight: var(--font-bold); color: var(--text-primary); margin-bottom: var(--space-3);">
+                        <i class="bi bi-wallet2" style="color: var(--success);"></i>
                         My Portfolio
                     </h1>
-                    <p class="fs-5 mb-0">
+                    <p style="font-size: var(--text-lg); color: var(--text-secondary); margin: 0;">
                         Track your GEM balance, transaction history, and portfolio performance.
                     </p>
                 </div>
                 <div class="col-md-4 text-md-end">
-                    <div class="d-flex flex-column align-items-md-end">
-                        <div class="badge bg-light text-dark fs-6 mb-2">
+                    <div class="d-flex flex-column align-items-md-end gap-2">
+                        <div class="badge-modern badge-modern-gem" style="font-size: var(--text-base); padding: var(--space-2) var(--space-4);">
                             <i class="bi bi-gem"></i> <span id="portfolio-balance">Loading...</span> GEM
                         </div>
-                        <div class="badge bg-warning text-dark fs-6">
+                        <div class="badge-modern badge-modern-success" style="font-size: var(--text-sm); padding: var(--space-2) var(--space-4);">
                             ≈ $<span id="portfolio-balance-usd">0.00</span> USD
                         </div>
                     </div>
@@ -35,43 +35,43 @@
 <!-- Portfolio Stats -->
 <div class="row mb-4">
     <div class="col-md-3 mb-3">
-        <div class="card h-100">
-            <div class="card-body text-center">
-                <i class="bi bi-wallet display-4 text-primary"></i>
-                <h5 class="card-title mt-2">Current Balance</h5>
-                <h3 class="text-success" id="current-balance">Loading...</h3>
-                <small class="text-muted">GEM Coins</small>
+        <div class="stat-card-modern h-100">
+            <div class="stat-icon">
+                <i class="bi bi-wallet2" style="color: var(--gem);"></i>
             </div>
+            <div class="stat-value" id="current-balance">Loading...</div>
+            <div class="stat-label">Current Balance</div>
+            <small class="text-muted" style="display: block; margin-top: var(--space-2); font-size: var(--text-xs);">GEM Coins</small>
         </div>
     </div>
     <div class="col-md-3 mb-3">
-        <div class="card h-100">
-            <div class="card-body text-center">
-                <i class="bi bi-graph-up display-4 text-success"></i>
-                <h5 class="card-title mt-2">Total Earned</h5>
-                <h3 class="text-primary" id="total-earned">0</h3>
-                <small class="text-muted">From gaming</small>
+        <div class="stat-card-modern h-100">
+            <div class="stat-icon">
+                <i class="bi bi-graph-up-arrow" style="color: var(--success);"></i>
             </div>
+            <div class="stat-value" id="total-earned">0</div>
+            <div class="stat-label">Total Earned</div>
+            <small class="text-muted" style="display: block; margin-top: var(--space-2); font-size: var(--text-xs);">From gaming</small>
         </div>
     </div>
     <div class="col-md-3 mb-3">
-        <div class="card h-100">
-            <div class="card-body text-center">
-                <i class="bi bi-dice-5 display-4 text-danger"></i>
-                <h5 class="card-title mt-2">Games Played</h5>
-                <h3 class="text-info" id="games-played">0</h3>
-                <small class="text-muted">Roulette rounds</small>
+        <div class="stat-card-modern h-100">
+            <div class="stat-icon">
+                <i class="bi bi-dice-5-fill" style="color: var(--error);"></i>
             </div>
+            <div class="stat-value" id="games-played">0</div>
+            <div class="stat-label">Games Played</div>
+            <small class="text-muted" style="display: block; margin-top: var(--space-2); font-size: var(--text-xs);">Roulette rounds</small>
         </div>
     </div>
     <div class="col-md-3 mb-3">
-        <div class="card h-100">
-            <div class="card-body text-center">
-                <i class="bi bi-percent display-4 text-warning"></i>
-                <h5 class="card-title mt-2">Win Rate</h5>
-                <h3 class="text-primary" id="win-rate">0%</h3>
-                <small class="text-muted">Success rate</small>
+        <div class="stat-card-modern h-100">
+            <div class="stat-icon">
+                <i class="bi bi-trophy-fill" style="color: var(--warning);"></i>
             </div>
+            <div class="stat-value" id="win-rate">0%</div>
+            <div class="stat-label">Win Rate</div>
+            <small class="text-muted" style="display: block; margin-top: var(--space-2); font-size: var(--text-xs);">Success rate</small>
         </div>
     </div>
 </div>
@@ -79,34 +79,34 @@
 <!-- Portfolio Content -->
 <div class="row">
     <div class="col-12">
-        <ul class="nav nav-tabs" id="portfolioTabs" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="balance-tab" data-bs-toggle="tab" data-bs-target="#balance" type="button">
-                    <i class="bi bi-wallet2"></i> Balance Details
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="transactions-tab" data-bs-toggle="tab" data-bs-target="#transactions" type="button">
-                    <i class="bi bi-list-ul"></i> Transaction History
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="gaming-tab" data-bs-toggle="tab" data-bs-target="#gaming" type="button">
-                    <i class="bi bi-dice-5"></i> Gaming Stats
-                </button>
-            </li>
-        </ul>
+        <div class="card-modern" style="padding: 0; overflow: hidden;">
+            <ul class="nav nav-tabs" id="portfolioTabs" role="tablist" style="background: var(--bg-tertiary); border-bottom: 1px solid var(--border-subtle); margin: 0; padding: var(--space-2) var(--space-6);">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="balance-tab" data-bs-toggle="tab" data-bs-target="#balance" type="button" style="border: none; background: rgba(99, 102, 241, 0.1); color: var(--primary); border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); font-weight: var(--font-medium);">
+                        <i class="bi bi-wallet2"></i> Balance Details
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="transactions-tab" data-bs-toggle="tab" data-bs-target="#transactions" type="button" style="border: none; background: transparent; color: var(--text-secondary); border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); font-weight: var(--font-medium);">
+                        <i class="bi bi-list-ul"></i> Transaction History
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="gaming-tab" data-bs-toggle="tab" data-bs-target="#gaming" type="button" style="border: none; background: transparent; color: var(--text-secondary); border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); font-weight: var(--font-medium);">
+                        <i class="bi bi-dice-5-fill"></i> Gaming Stats
+                    </button>
+                </li>
+            </ul>
 
-        <div class="tab-content" id="portfolioTabsContent">
-            <!-- Balance Details Tab -->
-            <div class="tab-pane fade show active" id="balance" role="tabpanel">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">
+            <div class="tab-content" id="portfolioTabsContent">
+                <!-- Balance Details Tab -->
+                <div class="tab-pane fade show active" id="balance" role="tabpanel">
+                    <div class="card-modern-header" style="padding: var(--space-6);">
+                        <h5 class="card-modern-title">
                             <i class="bi bi-wallet2"></i> Wallet Information
                         </h5>
                     </div>
-                    <div class="card-body">
+                    <div style="padding: var(--space-6);">
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">

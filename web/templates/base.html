@@ -5,22 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}CryptoChecker v3 - Real-Time Crypto Tracker{% endblock %}</title>
 
+    <!-- Google Fonts - Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Modern Design System -->
+    <link href="{{ url_for('static', path='/css/design-system.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', path='/css/modern-components.css') }}" rel="stylesheet">
+
     <!-- Custom CSS -->
     <link href="{{ url_for('static', path='/css/main.css') }}" rel="stylesheet">
 
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+    <!-- Modern Navigation -->
+    <nav class="navbar-modern">
         <div class="container">
-            <a class="navbar-brand fw-bold" href="/">
-                <i class="bi bi-currency-bitcoin text-warning"></i>
-                CryptoChecker <span class="badge bg-primary">v3</span>
+            <a class="navbar-brand-modern" href="/">
+                <i class="bi bi-currency-bitcoin" style="color: var(--primary);"></i>
+                CryptoChecker
+                <span class="badge-modern badge-modern-primary">v3</span>
             </a>
 
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -28,52 +39,60 @@
             </button>
 
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
+                <ul class="navbar-nav-modern mx-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="/">
-                            <i class="bi bi-house"></i> Dashboard
+                        <a class="nav-link-modern" href="/" data-page="dashboard">
+                            <i class="bi bi-house-door"></i>
+                            <span>Dashboard</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/converter">
-                            <i class="bi bi-arrow-left-right"></i> Converter
+                        <a class="nav-link-modern" href="/gaming" data-page="gaming">
+                            <i class="bi bi-dice-5-fill"></i>
+                            <span>Roulette</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/gaming">
-                            <i class="bi bi-dice-5"></i> Roulette
+                        <a class="nav-link-modern" href="/clicker" data-page="clicker">
+                            <i class="bi bi-mouse"></i>
+                            <span>GEM Clicker</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/clicker">
-                            <i class="bi bi-mouse"></i> GEM Clicker
+                        <a class="nav-link-modern" href="/portfolio" data-page="portfolio">
+                            <i class="bi bi-wallet2"></i>
+                            <span>Portfolio</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/portfolio">
-                            <i class="bi bi-wallet2"></i> Portfolio
+                        <a class="nav-link-modern" href="/converter" data-page="converter">
+                            <i class="bi bi-arrow-left-right"></i>
+                            <span>Converter</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/profile">
-                            <i class="bi bi-person-circle"></i> Profile
+                        <a class="nav-link-modern" href="/profile" data-page="profile">
+                            <i class="bi bi-person-circle"></i>
+                            <span>Profile</span>
                         </a>
                     </li>
                 </ul>
 
                 <!-- User Info / Auth -->
                 <div class="navbar-nav">
-                    <div id="user-info" class="d-flex align-items-center">
+                    <div id="user-info" class="d-flex align-items-center gap-3">
                         <!-- Will be populated by JavaScript -->
                         <div class="d-flex align-items-center gap-3">
-                            <div class="text-end">
-                                <div class="fw-bold text-light">Loading...</div>
-                                <div class="small text-light-emphasis">
-                                    <i class="bi bi-gem"></i> <span id="navbar-balance">Loading...</span> GEM
+                            <div class="d-none d-md-block text-end">
+                                <div class="fw-semibold" style="font-size: var(--text-sm); color: var(--text-primary);">Loading...</div>
+                                <div class="d-flex align-items-center justify-content-end gap-1" style="font-size: var(--text-xs); color: var(--text-muted);">
+                                    <i class="bi bi-gem" style="color: var(--gem);"></i>
+                                    <span id="navbar-balance">Loading...</span>
                                 </div>
                             </div>
-                            <button class="btn btn-primary btn-sm" id="login-btn" data-action="showLoginModal">
-                                <i class="bi bi-person-plus"></i> Sign In
+                            <button class="btn-modern btn-modern-primary btn-modern-sm" id="login-btn" data-action="showLoginModal">
+                                <i class="bi bi-box-arrow-in-right"></i>
+                                <span>Sign In</span>
                             </button>
                         </div>
                     </div>
@@ -83,8 +102,8 @@
     </nav>
 
     <!-- Main Content -->
-    <main class="main-content">
-        <div class="container mt-4">
+    <main class="main-content" style="min-height: calc(100vh - 200px); padding-top: 80px;">
+        <div class="container" style="max-width: var(--container-max-width);">
             <!-- Alerts -->
             <div id="alerts-container"></div>
 
@@ -93,19 +112,20 @@
     </main>
 
     <!-- Footer -->
-    <footer class="bg-dark text-light py-4 mt-5">
-        <div class="container">
+    <footer style="background: var(--bg-secondary); border-top: 1px solid var(--border-subtle); padding: var(--space-12) 0; margin-top: var(--space-16);">
+        <div class="container" style="max-width: var(--container-max-width);">
             <div class="row">
                 <div class="col-md-6">
-                    <h5><i class="bi bi-currency-bitcoin text-warning"></i> CryptoChecker v3</h5>
-                    <p class="text-muted">Real-time cryptocurrency tracking with integrated gaming.</p>
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <i class="bi bi-currency-bitcoin" style="font-size: var(--text-2xl); color: var(--primary);"></i>
+                        <h5 style="margin: 0; color: var(--text-primary); font-weight: var(--font-semibold);">CryptoChecker v3</h5>
+                    </div>
+                    <p style="color: var(--text-muted); font-size: var(--text-sm);">Real-time cryptocurrency tracking with integrated gaming.</p>
                 </div>
                 <div class="col-md-6 text-md-end">
-                    <p class="text-muted mb-0">
-                        <small>
-                            Powered by CoinGecko API<br>
-                            Built with FastAPI & Bootstrap 5
-                        </small>
+                    <p style="color: var(--text-muted); margin-bottom: 0; font-size: var(--text-sm);">
+                        Powered by CoinGecko API<br>
+                        Built with FastAPI & Bootstrap 5
                     </p>
                 </div>
             </div>

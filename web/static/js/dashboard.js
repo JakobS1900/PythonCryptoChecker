@@ -131,6 +131,30 @@ window.Dashboard = {
     init() {
         this.setupEventListeners();
         this.loadDashboardData();
+
+        // Automatically trigger refresh on page load to ensure prices load
+        // Use multiple attempts with different timing to ensure it works
+        setTimeout(() => {
+            console.log('Auto-refreshing prices on page load...');
+            this.refreshPrices();
+        }, 1000); // First attempt after 1 second
+
+        // Backup attempt in case first one fails
+        setTimeout(() => {
+            if (this.cryptoData.length === 0) {
+                console.log('Backup auto-refresh attempt...');
+                this.refreshPrices();
+            }
+        }, 3000); // Second attempt after 3 seconds
+
+        // Final fallback attempt
+        setTimeout(() => {
+            if (this.cryptoData.length === 0) {
+                console.log('Final auto-refresh attempt...');
+                this.refreshPrices();
+            }
+        }, 5000); // Final attempt after 5 seconds
+
         console.log('Dashboard module initialized');
     },
 

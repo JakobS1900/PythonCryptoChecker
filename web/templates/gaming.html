@@ -3,7 +3,7 @@
 {% block title %}Crypto Roulette - CryptoChecker v3{% endblock %}
 
 {% block extra_css %}
-<link href="{{ url_for('static', path='/css/roulette.css') }}?v=3" rel="stylesheet">
+<link href="{{ url_for('static', path='/css/roulette.css') }}?v=4" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 {% endblock %}
 
@@ -14,7 +14,7 @@
         <div class="header-content">
             <div class="brand-section">
                 <div class="brand-icon">
-                    <i class="fas fa-dice-five"></i>
+                    <i class="bi bi-dice-5-fill"></i>
                 </div>
                 <h1 class="brand-title">CRYPTO ROULETTE</h1>
                 <div class="live-indicator">
@@ -27,7 +27,7 @@
                 <div class="stat-card">
                     <div class="stat-label">Balance</div>
                     <div class="stat-value">
-                        <i class="fas fa-gem"></i>
+                        <i class="bi bi-gem"></i>
                         <span id="gaming-balance">Loading...</span>
                         <span class="currency">GEM</span>
                     </div>
@@ -35,7 +35,7 @@
                 <div class="stat-card earning-card" id="daily-bonus-card">
                     <div class="stat-label">Daily Bonus</div>
                     <div class="stat-value daily-bonus-status" id="daily-bonus-status">
-                        <i class="fas fa-calendar-day"></i>
+                        <i class="bi bi-calendar-check"></i>
                         <span id="bonus-status-text">Available</span>
                     </div>
                 </div>
@@ -46,7 +46,7 @@
             <div class="stat-card bots-stat-card">
                     <div class="stat-label">Active Bots</div>
                     <div class="stat-value">
-                        <i class="fas fa-robot"></i>
+                        <i class="bi bi-robot"></i>
                         <span id="bots-online-count">0</span>
                         <span class="bots-indicator" id="bots-indicator">
                             <span class="pulse-dot online"></span>
@@ -57,17 +57,17 @@
 
             <div class="header-controls">
                 <button class="control-btn earn-gem-btn" id="earn-gem-btn" title="Get More GEM">
-                    <i class="fas fa-plus-circle"></i>
+                    <i class="bi bi-plus-circle"></i>
                     <span class="earn-text">Earn GEM</span>
                 </button>
                 <button class="control-btn sound-btn" id="sound-toggle">
-                    <i class="fas fa-volume-up"></i>
+                    <i class="bi bi-volume-up"></i>
                 </button>
                 <button class="control-btn settings-btn">
-                    <i class="fas fa-cog"></i>
+                    <i class="bi bi-gear"></i>
                 </button>
                 <button class="control-btn fullscreen-btn">
-                    <i class="fas fa-expand"></i>
+                    <i class="bi bi-arrows-fullscreen"></i>
                 </button>
             </div>
         </div>
@@ -107,7 +107,7 @@
             <!-- Bot Activity Arena -->
             <div class="bot-arena-section" id="bot-arena-section">
                 <div class="arena-header">
-                    <span class="arena-label">🤖 BOT ARENA</span>
+                    <span class="arena-label"><i class="bi bi-robot"></i> BOT ARENA</span>
                     <div class="active-players" id="active-players">
                         <span class="player-count" id="arena-player-count">0 players</span>
                     </div>
@@ -115,18 +115,24 @@
                 <div class="bot-activity-arena" id="bot-activity-arena">
                     <!-- Bot avatars will appear here -->
                     <div class="bot-spinning-wheel" id="bot-spinning-wheel" style="display: none;">
-                        <div class="wheel-decoration">🎪</div>
+                        <div class="wheel-decoration"><i class="bi bi-controller"></i></div>
                         <span>Bots Calculating Bets...</span>
-                        <div class="wheel-decoration">🎰</div>
+                        <div class="wheel-decoration"><i class="bi bi-dice-3"></i></div>
                     </div>
                 </div>
             </div>
 
-            <!-- Timer Bar -->
+            <!-- Round Timer Bar -->
             <div class="timer-container-with-arena">
-                <div class="timer-bar">
-                    <div class="timer-progress" id="timer-progress"></div>
-                    <span class="timer-text" id="timer-text">20s</span>
+                <div class="round-timer-wrapper">
+                    <div class="timer-label">
+                        <i class="bi bi-clock-history"></i>
+                        <span>TIME UNTIL AUTO-SPIN</span>
+                    </div>
+                    <div class="timer-bar">
+                        <div class="timer-progress" id="auto-spin-timer-progress"></div>
+                        <span class="timer-text" id="auto-spin-timer-text">15.0s</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -316,7 +322,7 @@
                     <div class="bets-container">
                         <div class="bets-list" id="betsList">
                             <div class="no-bets-message">
-                                <i class="fas fa-dice"></i>
+                                <i class="bi bi-dice-3"></i>
                                 <span>No active bets</span>
                             </div>
                         </div>
@@ -334,7 +340,7 @@
 
                         <div class="action-buttons">
                             <button class="action-btn spin-btn enhanced-hover" id="spinWheel" disabled>
-                                <i class="fas fa-play"></i>
+                                <i class="bi bi-play-fill"></i>
                                 <span>SPIN TO WIN</span>
                                 <div class="button-shine"></div>
                             </button>
@@ -355,9 +361,9 @@
         <!-- GEM Earning Panel -->
         <section class="gem-earning-panel" id="gem-earning-panel" style="display: none;">
             <div class="earning-header">
-                <h3><i class="fas fa-coins"></i> Get More GEM</h3>
+                <h3><i class="bi bi-coin"></i> Get More GEM</h3>
                 <button class="close-earning-btn" id="close-earning-btn">
-                    <i class="fas fa-times"></i>
+                    <i class="bi bi-x-lg"></i>
                 </button>
             </div>
 
@@ -373,7 +379,7 @@
                     <div class="daily-bonus-section">
                         <div class="bonus-card">
                             <div class="bonus-icon">
-                                <i class="fas fa-calendar-check"></i>
+                                <i class="bi bi-calendar-check"></i>
                             </div>
                             <div class="bonus-info">
                                 <h4>Daily Bonus Reward</h4>
@@ -384,7 +390,7 @@
                                 </div>
                             </div>
                             <button class="claim-bonus-btn" id="claim-daily-bonus-btn">
-                                <i class="fas fa-gift"></i>
+                                <i class="bi bi-gift"></i>
                                 <span>Claim Bonus</span>
                             </button>
                         </div>
@@ -395,14 +401,14 @@
                 <div class="earning-tab-content" id="achievements-content">
                     <div class="achievements-section">
                         <div class="achievements-header">
-                            <h4><i class="fas fa-trophy"></i> Your Achievements</h4>
+                            <h4><i class="bi bi-trophy"></i> Your Achievements</h4>
                             <div class="unclaimed-rewards" id="unclaimed-rewards">
                                 <span>Unclaimed: 0 GEM</span>
                             </div>
                         </div>
                         <div class="achievements-list" id="achievements-list">
                             <div class="achievements-loading">
-                                <i class="fas fa-spinner fa-spin"></i>
+                                <i class="bi bi-arrow-clockwise spin"></i>
                                 <span>Loading achievements...</span>
                             </div>
                         </div>
@@ -413,12 +419,12 @@
                 <div class="earning-tab-content" id="emergency-tasks-content">
                     <div class="emergency-section">
                         <div class="emergency-header">
-                            <h4><i class="fas fa-exclamation-triangle"></i> Emergency GEM Tasks</h4>
+                            <h4><i class="bi bi-exclamation-triangle"></i> Emergency GEM Tasks</h4>
                             <p class="emergency-description">Quick tasks to earn GEM when you're running low on balance!</p>
                         </div>
                         <div class="emergency-tasks-list" id="emergency-tasks-list">
                             <div class="tasks-loading">
-                                <i class="fas fa-spinner fa-spin"></i>
+                                <i class="bi bi-arrow-clockwise spin"></i>
                                 <span>Loading emergency tasks...</span>
                             </div>
                         </div>
@@ -433,7 +439,7 @@
         <div class="notification win-notification" id="win-notification">
             <div class="notification-content">
                 <div class="win-icon">
-                    <i class="fas fa-trophy"></i>
+                    <i class="bi bi-trophy-fill"></i>
                 </div>
                 <div class="win-text">
                     <div class="win-title">CONGRATULATIONS!</div>
@@ -448,17 +454,17 @@
         <div class="modal-content achievement-content">
             <div class="achievement-celebration">
                 <div class="achievement-icon">
-                    <i class="fas fa-trophy achievement-trophy"></i>
+                    <i class="bi bi-trophy-fill achievement-trophy"></i>
                 </div>
                 <h3 class="achievement-title">Achievement Unlocked!</h3>
                 <div class="achievement-name" id="achievement-name">First Bet</div>
                 <div class="achievement-description" id="achievement-description">You placed your first bet!</div>
                 <div class="achievement-reward">
-                    <i class="fas fa-gem"></i>
+                    <i class="bi bi-gem"></i>
                     <span id="achievement-reward-amount">50 GEM</span> Earned!
                 </div>
                 <button class="claim-achievement-btn" id="claim-achievement-btn">
-                    <i class="fas fa-hand-holding-usd"></i>
+                    <i class="bi bi-cash-coin"></i>
                     Claim Reward
                 </button>
             </div>
@@ -471,7 +477,7 @@
             <div class="task-header">
                 <h3 id="task-title">Watch Advertisement</h3>
                 <button class="close-task-btn" id="close-task-btn">
-                    <i class="fas fa-times"></i>
+                    <i class="bi bi-x-lg"></i>
                 </button>
             </div>
             <div class="task-body">
@@ -487,7 +493,7 @@
             </div>
             <div class="task-footer">
                 <button class="complete-task-btn" id="complete-task-btn">
-                    <i class="fas fa-check"></i>
+                    <i class="bi bi-check-lg"></i>
                     Complete Task
                 </button>
             </div>
@@ -502,7 +508,7 @@
 <!-- Font Awesome -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
 <!-- Game script -->
-<script src="{{ url_for('static', path='/js/roulette.js') }}?v=15"></script>
+<script src="{{ url_for('static', path='/js/roulette.js') }}?v=16"></script>
 <!-- GEM Earning System script -->
 <script src="{{ url_for('static', path='/js/gem-earning.js') }}"></script>
 <script>

@@ -13,24 +13,24 @@
     </div>
 </div>
 
-<div class="container mt-4 position-relative" style="z-index: 10;">
+<div class="container position-relative" style="z-index: 10; padding-top: var(--space-8);">
     <div class="row">
         <div class="col-md-10 offset-md-1">
-            <div class="card clicker-card">
-                <div class="card-body text-center">
+            <div class="card-modern clicker-card" style="background: rgba(30, 41, 59, 0.95); backdrop-filter: blur(20px);">
+                <div style="text-align: center; padding: var(--space-8);">
                     <!-- Title with animation -->
-                    <h2 class="card-title mb-4 text-primary clicker-title">
-                        <i class="fas fa-gem"></i> Crypto Clicker <i class="fas fa-gem"></i>
+                    <h2 class="clicker-title" style="font-size: var(--text-4xl); font-weight: var(--font-bold); color: var(--text-primary); margin-bottom: var(--space-6);">
+                        <i class="bi bi-gem" style="color: var(--gem);"></i> GEM Clicker <i class="bi bi-gem" style="color: var(--gem);"></i>
                     </h2>
 
                     <!-- Enhanced Gem Balance Display -->
                     <div class="mb-4 balance-container">
-                        <h3 class="balance-display">
+                        <h3 class="balance-display" style="font-size: var(--text-5xl); font-weight: var(--font-bold); color: var(--gem); text-shadow: 0 0 30px var(--gem-glow);">
                             <span class="balance-icon">
-                                <i class="fas fa-gem"></i>
+                                <i class="bi bi-gem"></i>
                             </span>
                             <span id="gem-balance" class="balance-amount">0</span>
-                            <span class="balance-unit">GEM</span>
+                            <span class="balance-unit" style="font-size: var(--text-2xl); color: var(--text-secondary); margin-left: var(--space-2);">GEM</span>
                         </h3>
                     </div>
 
@@ -58,53 +58,62 @@
                     </div>
 
                     <!-- Stats -->
-                    <div class="row mt-4">
-                        <div class="col-md-4">
-                            <div class="card bg-light">
-                                <div class="card-body">
-                                    <h5>Total Clicks</h5>
-                                    <p id="total-clicks" class="h3">0</p>
+                    <div class="row" style="margin-top: var(--space-8);">
+                        <div class="col-md-4 mb-3">
+                            <div class="stat-card-modern">
+                                <div class="stat-icon">
+                                    <i class="bi bi-mouse-fill" style="color: var(--primary);"></i>
                                 </div>
+                                <div class="stat-value" id="total-clicks">0</div>
+                                <div class="stat-label">Total Clicks</div>
                             </div>
                         </div>
-                        <div class="col-md-4">
-                            <div class="card bg-light">
-                                <div class="card-body">
-                                    <h5>Gems/Click</h5>
-                                    <p id="gems-per-click" class="h3">10-100</p>
+                        <div class="col-md-4 mb-3">
+                            <div class="stat-card-modern">
+                                <div class="stat-icon">
+                                    <i class="bi bi-gem" style="color: var(--gem);"></i>
                                 </div>
+                                <div class="stat-value" id="gems-per-click">10-100</div>
+                                <div class="stat-label">Gems per Click</div>
                             </div>
                         </div>
-                        <div class="col-md-4">
-                            <div class="card bg-light">
-                                <div class="card-body">
-                                    <h5>Bonus Rate</h5>
-                                    <p class="h3">15%</p>
+                        <div class="col-md-4 mb-3">
+                            <div class="stat-card-modern">
+                                <div class="stat-icon">
+                                    <i class="bi bi-lightning-charge-fill" style="color: var(--warning);"></i>
                                 </div>
+                                <div class="stat-value">15%</div>
+                                <div class="stat-label">Bonus Rate</div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Bonus Chances -->
-                    <div class="mt-4">
-                        <h4>Bonus Chances</h4>
+                    <div style="margin-top: var(--space-8);">
+                        <h4 style="font-size: var(--text-2xl); font-weight: var(--font-semibold); color: var(--text-primary); margin-bottom: var(--space-4);">Bonus Chances</h4>
                         <div class="row">
-                            <div class="col-md-4">
-                                <div class="alert alert-info">
-                                    <strong>MEGA Bonus (100 GEM)</strong>
-                                    <br>1% Chance
+                            <div class="col-md-4 mb-3">
+                                <div class="alert-modern alert-modern-success" style="text-align: center;">
+                                    <div class="alert-modern-content">
+                                        <div class="alert-modern-title" style="font-size: var(--text-lg);">MEGA Bonus</div>
+                                        <div class="alert-modern-message">100 GEM · 1% Chance</div>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="col-md-4">
-                                <div class="alert alert-info">
-                                    <strong>Big Bonus (50 GEM)</strong>
-                                    <br>4% Chance
+                            <div class="col-md-4 mb-3">
+                                <div class="alert-modern alert-modern-info" style="text-align: center;">
+                                    <div class="alert-modern-content">
+                                        <div class="alert-modern-title" style="font-size: var(--text-lg);">Big Bonus</div>
+                                        <div class="alert-modern-message">50 GEM · 4% Chance</div>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="col-md-4">
-                                <div class="alert alert-info">
-                                    <strong>Medium Bonus (25 GEM)</strong>
-                                    <br>10% Chance
+                            <div class="col-md-4 mb-3">
+                                <div class="alert-modern alert-modern-warning" style="text-align: center;">
+                                    <div class="alert-modern-content">
+                                        <div class="alert-modern-title" style="font-size: var(--text-lg);">Medium Bonus</div>
+                                        <div class="alert-modern-message">25 GEM · 10% Chance</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -124,7 +133,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.4) 0%, rgba(139, 92, 246, 0.4) 100%);
     overflow: hidden;
     z-index: 1;
 }

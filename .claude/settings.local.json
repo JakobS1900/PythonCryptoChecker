@@ -1,7 +1,17 @@
 {
   "permissions": {
     "allow": [
-      "Bash(python -c \"\n# Check the wheelNumbers inline styles\nwith open(''web/templates/gaming.html'', ''r'', encoding=''utf-8'') as f:\n    content = f.read()\n    # Find the wheelNumbers div\n    import re\n    match = re.search(r''id=\"\"wheelNumbers\"\"[^>]*style=\"\"([^\"\"]+)\"\"'', content)\n    if match:\n        print(''Inline styles on #wheelNumbers:'')\n        print(match.group(1))\n\")"
+      "Bash(find:*)",
+      "Bash(python:*)",
+      "Bash(sqlite3:*)",
+      "Bash(cat:*)",
+      "Bash(.venvScriptspython.exe database/migrations/add_profile_fields_postgres.py)",
+      "Bash(.venv/Scripts/python.exe database/migrations/add_profile_fields_postgres.py:*)",
+      "Bash(pip install:*)",
+      "Bash(.venv/Scripts/python.exe -m pip install:*)",
+      "Bash(\".venv/Scripts/python.exe\" main.py)",
+      "Bash(curl:*)",
+      "Bash(taskkill:*)"
     ],
     "deny": [],
     "ask": []

@@ -796,4 +796,13 @@ window.showLoginModal = function() {
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     CryptoChecker.init();
+
+    // Set active nav link based on current page
+    const currentPath = window.location.pathname;
+    document.querySelectorAll('.nav-link-modern').forEach(link => {
+        const href = link.getAttribute('href');
+        if (currentPath === href || (currentPath === '/' && href === '/')) {
+            link.classList.add('active');
+        }
+    });
 });

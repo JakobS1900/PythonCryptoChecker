@@ -940,8 +940,27 @@
             roundIndicator: $('#round-number'),
             timerText: document.getElementById('timer-text'),
             timerBar: document.getElementById('timer-progress'),
-            previousRolls: document.getElementById('previous-rolls')
+            autoSpinTimerText: document.getElementById('auto-spin-timer-text'),
+            autoSpinTimerBar: document.getElementById('auto-spin-timer-progress'),
+            previousRolls: document.getElementById('previous-rolls'),
+            rollsHistory: document.getElementById('rollsHistory')
         };
+
+        // DEBUG: Verify timer elements were found
+        console.log('🎮 Timer elements cached:', {
+            timerText: !!this.elements.timerText,
+            timerBar: !!this.elements.timerBar,
+            timerBarElement: this.elements.timerBar
+        });
+
+        // If timer bar not found, try to find it again after a delay
+        if (!this.elements.timerBar) {
+            console.warn('⚠️ Timer bar not found initially, retrying in 1 second...');
+            setTimeout(() => {
+                this.elements.timerBar = document.getElementById('timer-progress');
+                console.log('🔄 Retry result:', !!this.elements.timerBar);
+            }, 1000);
+        }
     }
 
     bindEventListeners() {
@@ -2268,15 +2287,27 @@
     }
 
     updateHistory(number, color) {
-        if (!this.elements.previousRolls) {
-            return;
+        // Update top display (above wheel)
+        if (this.elements.previousRolls) {
+            const entry = document.createElement('div');
+            entry.className = `previous-roll ${color || 'red'}`;
+            entry.textContent = String(number);
+            this.elements.previousRolls.prepend(entry);
+            while (this.elements.previousRolls.children.length > 10) {
+                this.elements.previousRolls.removeChild(this.elements.previousRolls.lastElementChild);
+            }
         }
-        const entry = document.createElement('div');
-        entry.className = `previous-roll ${color || 'red'}`;
-        entry.textContent = String(number);
-        this.elements.previousRolls.prepend(entry);
-        while (this.elements.previousRolls.children.length > 10) {
-            this.elements.previousRolls.removeChild(this.elements.previousRolls.lastElementChild);
+
+        // Also update bottom "Previous Results" section
+        if (this.elements.rollsHistory) {
+            const historyEntry = document.createElement('div');
+            historyEntry.className = `history-number ${color || 'red'}`;
+            historyEntry.textContent = String(number);
+            this.elements.rollsHistory.prepend(historyEntry);
+            // Keep last 20 results in the bottom history
+            while (this.elements.rollsHistory.children.length > 20) {
+                this.elements.rollsHistory.removeChild(this.elements.rollsHistory.lastElementChild);
+            }
         }
     }
 
@@ -2730,12 +2761,47 @@
 
     updateRoundTimer(remainingMs) {
         if (!this.elements.timerText || !this.elements.timerBar) {
+            console.warn('⚠️ Timer elements not found:', {
+                timerText: !!this.elements.timerText,
+                timerBar: !!this.elements.timerBar
+            });
             return;
         }
         const seconds = Math.max(0, remainingMs / 1000);
-        this.elements.timerText.textContent = `${seconds.toFixed(1)}s`;
         const percent = Math.min(100, Math.max(0, (remainingMs / this.ROUND_DURATION) * 100));
+
+        // Update top timer (circular)
+        this.elements.timerText.textContent = `${seconds.toFixed(1)}s`;
         this.elements.timerBar.style.width = `${percent}%`;
+
+        // Update auto-spin timer bar (horizontal gradient bar)
+        if (this.elements.autoSpinTimerText && this.elements.autoSpinTimerBar) {
+            this.elements.autoSpinTimerText.textContent = `${seconds.toFixed(1)}s`;
+            this.elements.autoSpinTimerBar.style.width = `${percent}%`;
+
+            // Apply same color classes to auto-spin timer
+            this.elements.autoSpinTimerBar.classList.remove('warning', 'critical');
+            if (seconds <= 3) {
+                this.elements.autoSpinTimerBar.classList.add('critical');
+            } else if (seconds <= 7) {
+                this.elements.autoSpinTimerBar.classList.add('warning');
+            }
+        }
+
+        // DEBUG: Log timer state every 5 seconds
+        if (Math.floor(seconds) % 5 === 0 && Math.abs(seconds - Math.floor(seconds)) < 0.2) {
+            console.log(`⏱️ Timer: ${seconds.toFixed(1)}s | Progress: ${percent.toFixed(1)}% | Width: ${this.elements.timerBar.style.width}`);
+        }
+
+        // Change timer color based on remaining time
+        this.elements.timerBar.classList.remove('warning', 'critical');
+        if (seconds <= 3) {
+            this.elements.timerBar.classList.add('critical');
+            console.log('🔴 Timer CRITICAL');
+        } else if (seconds <= 7) {
+            this.elements.timerBar.classList.add('warning');
+            console.log('🟡 Timer WARNING');
+        }
 
         // Store current timer for button display
         this.currentTimerSeconds = Math.ceil(seconds);
