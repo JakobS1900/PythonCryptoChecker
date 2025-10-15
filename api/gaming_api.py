@@ -187,6 +187,23 @@ async def place_roulette_bet(
                 )
 
                 if result["success"]:
+                    # Track mission progress for authenticated users
+                    if current_user:
+                        try:
+                            from services.mission_tracker import mission_tracker
+                            from database.database import get_db
+                            async for db in get_db():
+                                await mission_tracker.track_event(
+                                    user_id=current_user.id,
+                                    event_name="roulette_bet_placed",
+                                    amount=1,
+                                    db=db
+                                )
+                                break
+                        except Exception as mission_error:
+                            # Don't fail bet if mission tracking fails
+                            print(f"Mission tracking error: {mission_error}")
+
                     return BetResponse(
                         success=True,
                         bet_id=result["bet_id"],
@@ -242,6 +259,28 @@ async def spin_roulette(
         result = await roulette_engine.spin_wheel(game_id)
 
         if result["success"]:
+            # Track mission progress for wins (authenticated users only)
+            if current_user and result.get("total_winnings", 0) > 0:
+                try:
+                    from services.mission_tracker import mission_tracker
+                    from database.database import get_db
+
+                    # Count how many bets won
+                    winning_bets = sum(1 for bet in result.get("bets", []) if bet.get("won", False))
+
+                    if winning_bets > 0:
+                        async for db in get_db():
+                            await mission_tracker.track_event(
+                                user_id=current_user.id,
+                                event_name="roulette_bet_won",
+                                amount=winning_bets,
+                                db=db
+                            )
+                            break
+                except Exception as mission_error:
+                    # Don't fail spin if mission tracking fails
+                    print(f"Mission tracking error (win): {mission_error}")
+
             return SpinResult(
                 success=True,
                 result=result["result"],

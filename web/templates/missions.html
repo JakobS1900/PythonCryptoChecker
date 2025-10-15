@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}Daily Missions - CryptoChecker v3{% endblock %}
+
+{% block content %}
+<!-- Missions Header -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card-modern" style="background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 152, 0, 0.05) 100%); border-color: var(--warning); padding: var(--space-8);">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 style="font-size: var(--text-4xl); font-weight: var(--font-bold); color: var(--text-primary); margin-bottom: var(--space-3);">
+                        <i class="bi bi-trophy-fill" style="color: var(--warning);"></i>
+                        Daily Missions & Challenges
+                    </h1>
+                    <p style="font-size: var(--text-lg); color: var(--text-secondary); margin: 0;">
+                        Complete missions and challenges to earn free GEM rewards every day!
+                    </p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <div class="d-flex flex-column align-items-md-end gap-2">
+                        <div class="badge-modern badge-modern-gem" style="font-size: var(--text-base); padding: var(--space-2) var(--space-4);">
+                            <i class="bi bi-gem"></i> <span id="available-gems">0</span> GEM Available
+                        </div>
+                        <div class="badge-modern badge-modern-warning" style="font-size: var(--text-sm); padding: var(--space-2) var(--space-4);">
+                            <i class="bi bi-clock"></i> Resets in <span id="daily-reset-timer">--:--:--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mission Stats -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="stat-card-modern h-100">
+            <div class="stat-icon">
+                <i class="bi bi-star-fill" style="color: var(--warning);"></i>
+            </div>
+            <div class="stat-value"><span id="daily-completed">0</span>/<span id="daily-total">5</span></div>
+            <div class="stat-label">Daily Missions</div>
+            <small class="text-muted" style="display: block; margin-top: var(--space-2); font-size: var(--text-xs);">Completed today</small>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="stat-card-modern h-100">
+            <div class="stat-icon">
+                <i class="bi bi-trophy-fill" style="color: var(--primary);"></i>
+            </div>
+            <div class="stat-value"><span id="weekly-completed">0</span>/<span id="weekly-total">4</span></div>
+            <div class="stat-label">Weekly Challenges</div>
+            <small class="text-muted" style="display: block; margin-top: var(--space-2); font-size: var(--text-xs);">Completed this week</small>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="stat-card-modern h-100">
+            <div class="stat-icon">
+                <i class="bi bi-gem" style="color: var(--gem);"></i>
+            </div>
+            <div class="stat-value" id="daily-rewards">1,725</div>
+            <div class="stat-label">Daily Rewards</div>
+            <small class="text-muted" style="display: block; margin-top: var(--space-2); font-size: var(--text-xs);">Total GEM/day</small>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="stat-card-modern h-100">
+            <div class="stat-icon">
+                <i class="bi bi-cash-coin" style="color: var(--success);"></i>
+            </div>
+            <div class="stat-value" id="weekly-rewards">14,500</div>
+            <div class="stat-label">Weekly Rewards</div>
+            <small class="text-muted" style="display: block; margin-top: var(--space-2); font-size: var(--text-xs);">Total GEM/week</small>
+        </div>
+    </div>
+</div>
+
+<!-- Missions Content -->
+<div class="row">
+    <div class="col-12">
+        <div class="card-modern" style="padding: 0; overflow: hidden;">
+            <ul class="nav nav-tabs" id="missionsTabs" role="tablist" style="background: var(--bg-tertiary); border-bottom: 1px solid var(--border-subtle); margin: 0; padding: var(--space-2) var(--space-6);">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="daily-tab" data-bs-toggle="tab" data-bs-target="#daily-missions" type="button" style="border: none; background: rgba(255, 193, 7, 0.1); color: var(--warning); border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); font-weight: var(--font-medium);">
+                        <i class="bi bi-star-fill"></i> Daily Missions
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="weekly-tab" data-bs-toggle="tab" data-bs-target="#weekly-challenges" type="button" style="border: none; background: transparent; color: var(--text-secondary); border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); font-weight: var(--font-medium);">
+                        <i class="bi bi-trophy-fill"></i> Weekly Challenges
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="missionsTabContent" style="padding: var(--space-6);">
+                <!-- Daily Missions Tab -->
+                <div class="tab-pane fade show active" id="daily-missions" role="tabpanel">
+                    <div id="daily-missions-container">
+                        <!-- Loading state -->
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading missions...</span>
+                            </div>
+                            <p class="text-muted mt-3">Loading daily missions...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Weekly Challenges Tab -->
+                <div class="tab-pane fade" id="weekly-challenges" role="tabpanel">
+                    <div class="alert" style="background: rgba(99, 102, 241, 0.1); border-color: var(--primary); color: var(--text-primary); margin-bottom: var(--space-6);">
+                        <i class="bi bi-info-circle-fill" style="color: var(--primary);"></i>
+                        Weekly challenges are more difficult but offer bigger rewards! They reset every Monday.
+                    </div>
+                    <div id="weekly-challenges-container">
+                        <!-- Loading state -->
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading challenges...</span>
+                            </div>
+                            <p class="text-muted mt-3">Loading weekly challenges...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', path='/js/missions.js') }}"></script>
+{% endblock %}

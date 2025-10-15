@@ -40,6 +40,7 @@ from api.gaming_api import router as gaming_router
 from api.auth_api import router as auth_router
 from api.trading_api import router as trading_router
 from api.clicker_api import router as clicker_router
+from api.missions_api import router as missions_router
 
 # Import database and services
 from database.database import init_database, get_db
@@ -150,6 +151,10 @@ app.include_router(
     prefix="/api/clicker",
     tags=["Clicker"]
 )
+app.include_router(
+    missions_router,
+    tags=["Missions"]  # Prefix already in router definition
+)
 
 # Authentication routes
 @app.get("/login")
@@ -228,6 +233,11 @@ async def portfolio(request: Request):
 async def profile(request: Request):
     """User profile page with GEM balance and stats."""
     return templates.TemplateResponse("profile.html", {"request": request})
+
+@app.get("/missions", response_class=HTMLResponse)
+async def missions(request: Request):
+    """Daily missions and weekly challenges page."""
+    return templates.TemplateResponse("missions.html", {"request": request})
 
 @app.exception_handler(404)
 async def not_found_handler(request: Request, exc: HTTPException):

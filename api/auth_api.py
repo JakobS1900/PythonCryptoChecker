@@ -266,8 +266,7 @@ async def login_user(
                 db,
                 username="testuser",
                 email="test@example.com",
-                password="testpass",
-                role=UserRole.USER
+                password="testpass"
             )
         elif not user:
             raise HTTPException(
@@ -292,6 +291,19 @@ async def login_user(
         # Update last login
         user.last_login = datetime.utcnow()
         await db.commit()
+
+        # Track login mission
+        try:
+            from services.mission_tracker import mission_tracker
+            await mission_tracker.track_event(
+                user_id=user.id,
+                event_name="user_login",
+                amount=1,
+                db=db
+            )
+        except Exception as mission_error:
+            # Don't fail login if mission tracking fails
+            print(f"Mission tracking error (login): {mission_error}")
 
         # Create access token
         access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
