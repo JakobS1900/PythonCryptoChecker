@@ -48,20 +48,19 @@ async def migrate():
         await conn.execute(
             """
             CREATE TABLE daily_missions_progress (
-                id SERIAL PRIMARY KEY,
+                id VARCHAR(36) PRIMARY KEY,
                 user_id VARCHAR(36) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-                mission_id VARCHAR(50) NOT NULL,
-                mission_name VARCHAR(100) NOT NULL,
-                mission_description TEXT,
-                progress INTEGER DEFAULT 0,
-                target INTEGER NOT NULL,
-                status VARCHAR(20) DEFAULT 'active',
-                reward_gems INTEGER NOT NULL,
+                mission_key VARCHAR(50) NOT NULL,
+                current_progress INTEGER DEFAULT 0,
+                target_value INTEGER NOT NULL,
+                reward_amount FLOAT NOT NULL,
+                is_completed BOOLEAN DEFAULT FALSE,
                 completed_at TIMESTAMP,
-                claimed_at TIMESTAMP,
-                date DATE NOT NULL,
+                reward_claimed BOOLEAN DEFAULT FALSE,
+                reward_claimed_at TIMESTAMP,
+                reset_at TIMESTAMP NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                UNIQUE(user_id, mission_id, date)
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
             """
         )
@@ -69,38 +68,27 @@ async def migrate():
 
         # Create indexes for daily missions
         await conn.execute(
-            "CREATE INDEX idx_missions_user_date ON daily_missions_progress(user_id, date)"
+            "CREATE INDEX idx_user_mission_daily ON daily_missions_progress(user_id, mission_key, reset_at)"
         )
-        print("[SUCCESS] Created index: idx_missions_user_date")
-
-        await conn.execute(
-            "CREATE INDEX idx_missions_status ON daily_missions_progress(status)"
-        )
-        print("[SUCCESS] Created index: idx_missions_status")
-
-        await conn.execute(
-            "CREATE INDEX idx_missions_date ON daily_missions_progress(date)"
-        )
-        print("[SUCCESS] Created index: idx_missions_date")
+        print("[SUCCESS] Created index: idx_user_mission_daily")
 
         # ==================== CREATE WEEKLY CHALLENGES PROGRESS TABLE ====================
         await conn.execute(
             """
             CREATE TABLE weekly_challenges_progress (
-                id SERIAL PRIMARY KEY,
+                id VARCHAR(36) PRIMARY KEY,
                 user_id VARCHAR(36) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-                challenge_id VARCHAR(50) NOT NULL,
-                challenge_name VARCHAR(100) NOT NULL,
-                challenge_description TEXT,
-                progress INTEGER DEFAULT 0,
-                target INTEGER NOT NULL,
-                status VARCHAR(20) DEFAULT 'active',
-                reward_gems INTEGER NOT NULL,
+                challenge_key VARCHAR(50) NOT NULL,
+                current_progress FLOAT DEFAULT 0.0,
+                target_value FLOAT NOT NULL,
+                reward_amount FLOAT NOT NULL,
+                is_completed BOOLEAN DEFAULT FALSE,
                 completed_at TIMESTAMP,
-                claimed_at TIMESTAMP,
-                week_start DATE NOT NULL,
+                reward_claimed BOOLEAN DEFAULT FALSE,
+                reward_claimed_at TIMESTAMP,
+                reset_at TIMESTAMP NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                UNIQUE(user_id, challenge_id, week_start)
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
             """
         )
@@ -108,22 +96,12 @@ async def migrate():
 
         # Create indexes for weekly challenges
         await conn.execute(
-            "CREATE INDEX idx_challenges_user_week ON weekly_challenges_progress(user_id, week_start)"
+            "CREATE INDEX idx_user_challenge_weekly ON weekly_challenges_progress(user_id, challenge_key, reset_at)"
         )
-        print("[SUCCESS] Created index: idx_challenges_user_week")
-
-        await conn.execute(
-            "CREATE INDEX idx_challenges_status ON weekly_challenges_progress(status)"
-        )
-        print("[SUCCESS] Created index: idx_challenges_status")
-
-        await conn.execute(
-            "CREATE INDEX idx_challenges_week ON weekly_challenges_progress(week_start)"
-        )
-        print("[SUCCESS] Created index: idx_challenges_week")
+        print("[SUCCESS] Created index: idx_user_challenge_weekly")
 
         print("[MIGRATION] ✅ Migration completed successfully!")
-        print("[INFO] Created 2 tables with 6 indexes")
+        print("[INFO] Created 2 tables with 2 indexes")
 
         # Close connection
         await conn.close()

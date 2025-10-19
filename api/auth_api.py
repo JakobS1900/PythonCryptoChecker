@@ -126,19 +126,30 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     return encoded_jwt
 
 async def get_current_user(
+    request: Request,
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
     db: AsyncSession = Depends(get_db)
 ) -> Optional[User]:
     """Get current authenticated user or None for guest mode."""
-    if not credentials:
-        return None
+    user_id = None
 
-    try:
-        payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id: str = payload.get("sub")
-        if user_id is None:
+    # 1) Check Authorization header (Bearer token)
+    if credentials and credentials.credentials:
+        try:
+            payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
+            user_id = payload.get("sub")
+        except JWTError:
+            pass
+
+    # 2) Fall back to session-based authentication
+    if not user_id:
+        user_id = request.session.get("user_id")
+        auth_token = request.session.get("auth_token")
+        # If we have both user_id and auth_token in session, use the user_id
+        if not (user_id and auth_token):
             return None
-    except JWTError:
+
+    if not user_id:
         return None
 
     # Get user from database
@@ -479,7 +490,7 @@ class ProfileUpdateRequest(BaseModel):
 @router.get("/profile")
 async def get_profile(
     request: Request,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_authentication),
     db: AsyncSession = Depends(get_db)
 ):
     """Get user profile with full details."""
@@ -518,7 +529,7 @@ async def get_profile(
 async def update_profile(
     request: Request,
     profile_update: ProfileUpdateRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_authentication),
     db: AsyncSession = Depends(get_db)
 ):
     """Update user profile."""

@@ -1103,7 +1103,9 @@
         if (number === 0) {
             return 'green';
         }
-        const redNumbers = new Set([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]);
+        // FIXED: Match backend crypto_wheel configuration from gaming/roulette.py
+        // RED numbers: all odd numbers from 1-35
+        const redNumbers = new Set([1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35]);
         return redNumbers.has(number) ? 'red' : 'black';
     }
 
@@ -1902,6 +1904,12 @@
         }
     }
 
+    // ============================================================================
+    // LEGACY CODE: This is the OLD handleSpinResult function - DO NOT USE
+    // The ACTIVE version is at line ~4835
+    // Keeping this for reference only - it can be deleted after testing
+    // ============================================================================
+    /*
     async handleSpinResult(result) {
         const outcome = result?.result;
         if (!outcome || typeof outcome.number !== 'number') {
@@ -2037,6 +2045,8 @@
             this.startNewRound();
         }
     }
+    */
+    // ============================================================================
 
     // Casino-style horizontal roulette bar animation with realistic physics
     animateWheel(number) {
@@ -2595,6 +2605,13 @@
                     // Update history if not already added
                     if (oldPhase !== 'results') {
                         this.updateHistory(data.outcome.number, data.outcome.color);
+
+                        // CRITICAL FIX: Show result modal when entering results phase with user bets
+                        const userBets = this.currentBets.filter(bet => !bet.isBot && !bet.is_bot);
+                        if (userBets.length > 0) {
+                            console.log('🎯 [Round Sync] User had bets, fetching results and showing modal...');
+                            this.fetchAndShowRoundResults(data.round_id, data.outcome, userBets);
+                        }
                     }
                 } else {
                     this.updateGamePhase('Round Complete');
@@ -4898,9 +4915,26 @@
             // Sync balance from server after spin results
             await this.refreshBalanceFromServer();
 
-            // CRITICAL FIX: Capture user bet info BEFORE clearing bets
-            const userBetsSnapshot = this.currentBets.filter(bet => !bet.isBot && !bet.is_bot);
+            // CRITICAL FIX: Capture user bet info BEFORE clearing bets and merge with server results
+            const userBetsSnapshot = this.currentBets
+                .filter(bet => !bet.isBot && !bet.is_bot)
+                .map(bet => {
+                    // Find matching result from server bets array
+                    const serverBet = bets.find(b =>
+                        (b.bet_id === bet.betId) ||
+                        (b.bet_type?.toUpperCase() === bet.type?.toUpperCase() &&
+                         b.bet_value?.toLowerCase() === bet.value?.toLowerCase())
+                    );
+
+                    return {
+                        ...bet,
+                        is_winner: serverBet?.is_winner || false,
+                        payout: serverBet?.payout || 0
+                    };
+                });
             const userWagered = userBetsSnapshot.reduce((sum, bet) => sum + bet.amount, 0);
+
+            console.log('🎲 User bets with results:', userBetsSnapshot);
 
             // Show results screen with OK button
             // Pass captured bet data to avoid reading from cleared array
@@ -4941,17 +4975,119 @@
         }
     }
 
+    // Fetch round results from server and show modal (for round sync flow)
+    async fetchAndShowRoundResults(roundId, outcome, userBets) {
+        try {
+            console.log('📊 Fetching round results from server for round:', roundId);
+
+            // Make API call to get the round results with bet details
+            const response = await this.apiRequest(`/api/gaming/roulette/round/${roundId}/results`, 'GET');
+
+            if (!response || !response.bets) {
+                console.warn('⚠️ No bet results returned from server, showing modal without details');
+                // Show modal anyway with calculated results
+                const userWagered = userBets.reduce((sum, bet) => sum + bet.amount, 0);
+                await this.showResultSummary(0, userWagered, outcome, userWagered, userBets);
+                return;
+            }
+
+            // Process results similar to handleSpinResult
+            const bets = response.bets || [];
+            let totalWinnings = 0;
+            let totalLosses = 0;
+            let totalWagered = 0;
+
+            // Merge server bet results with local user bets
+            const userBetsWithResults = userBets.map(localBet => {
+                const serverBet = bets.find(b =>
+                    b.bet_id === localBet.betId ||
+                    (b.bet_type?.toUpperCase() === localBet.type?.toUpperCase() &&
+                     b.bet_value?.toLowerCase() === localBet.value?.toLowerCase())
+                );
+
+                if (serverBet) {
+                    // Track total wagered
+                    totalWagered += serverBet.amount;
+
+                    // If winner, add to winnings; if loser, add to losses
+                    if (serverBet.is_winner && serverBet.payout > 0) {
+                        // totalWinnings = what you got back (includes original bet)
+                        totalWinnings += serverBet.payout;
+                        console.log(`✅ WIN: Bet ${serverBet.bet_type} ${serverBet.bet_value} - Amount: ${serverBet.amount}, Payout: ${serverBet.payout}`);
+                    } else {
+                        // Lost bet - track the amount lost
+                        totalLosses += serverBet.amount;
+                        console.log(`❌ LOSS: Bet ${serverBet.bet_type} ${serverBet.bet_value} - Amount: ${serverBet.amount}`);
+                    }
+
+                    return {
+                        ...localBet,
+                        is_winner: serverBet.is_winner,
+                        payout: serverBet.payout
+                    };
+                }
+
+                // Bet not found in server response, assume loss
+                totalWagered += localBet.amount;
+                totalLosses += localBet.amount;
+                return {
+                    ...localBet,
+                    is_winner: false,
+                    payout: 0
+                };
+            });
+
+            console.log('📊 Round results processed:', {
+                totalWinnings,
+                totalLosses,
+                totalWagered,
+                netResult: totalWinnings - totalWagered,
+                betsWithResults: userBetsWithResults.length
+            });
+
+            // Show the modal
+            // totalWinnings = total payouts received (includes original bets)
+            // totalWagered = total amount bet
+            // totalLosses = amount lost on losing bets (redundant, kept for compatibility)
+            // Net result = what you got back - what you wagered
+            await this.showResultSummary(totalWinnings, totalLosses, outcome, totalWagered, userBetsWithResults);
+
+        } catch (error) {
+            console.error('❌ Error fetching round results:', error);
+            // Show modal anyway with basic info
+            const userWagered = userBets.reduce((sum, bet) => sum + bet.amount, 0);
+            await this.showResultSummary(0, userWagered, outcome, userWagered, userBets);
+        }
+    }
+
     // Show detailed result summary with OK button
     async showResultSummary(winnings, losses, outcome, userWagered = 0, userBetsSnapshot = []) {
-        const isWin = winnings > 0;
-        // FIX: Use passed snapshot instead of reading from currentBets (which may be cleared)
-        const userBets = userBetsSnapshot.length > 0 ? userBetsSnapshot : this.currentBets.filter(bet => !bet.isBot && !bet.is_bot);
-        const actualWagered = userWagered > 0 ? userWagered : userBets.reduce((sum, bet) => sum + bet.amount, 0);
-        const potentialWin = userBets.reduce((sum, bet) => sum + (bet.amount * this.getPayoutMultiplier(bet.type, bet.value)), 0);
+        console.log('🎯 showResultSummary called', {
+            winnings,
+            losses,
+            outcome,
+            userWagered,
+            userBetsSnapshot_length: userBetsSnapshot.length,
+            currentBets_length: this.currentBets.length
+        });
 
-        // Create detailed result modal
-        const resultModal = document.createElement('div');
-        resultModal.className = 'result-summary-modal';
+        try {
+            // Calculate NET result (what you got back - what you wagered)
+            // winnings = total payouts (includes original bets)
+            // userWagered = total amount bet
+            const netResult = winnings - userWagered;
+            const isWin = netResult > 0;
+
+            // FIX: Use passed snapshot instead of reading from currentBets (which may be cleared)
+            const userBets = userBetsSnapshot.length > 0 ? userBetsSnapshot : this.currentBets.filter(bet => !bet.isBot && !bet.is_bot);
+            const actualWagered = userWagered > 0 ? userWagered : userBets.reduce((sum, bet) => sum + bet.amount, 0);
+            const potentialWin = userBets.reduce((sum, bet) => sum + (bet.amount * this.getPayoutMultiplier(bet.type, bet.value)), 0);
+
+            console.log('📊 Modal data prepared:', { isWin, netResult, winnings, losses, userBets_count: userBets.length, actualWagered, potentialWin });
+
+            // Create detailed result modal
+            const resultModal = document.createElement('div');
+            resultModal.className = 'result-summary-modal';
         resultModal.innerHTML = `
             <div class="modal-overlay"></div>
             <div class="modal-content">
@@ -4974,8 +5110,8 @@
                             <div class="stat-value">${this.formatAmount(potentialWin)} GEM</div>
                         </div>
                         <div class="stat-box">
-                            <div class="stat-label">Actual Result:</div>
-                            <div class="stat-value ${isWin ? 'win-amount' : 'loss-amount'}">${isWin ? '+' + this.formatAmount(winnings) : '-' + this.formatAmount(losses)} GEM</div>
+                            <div class="stat-label">Net Result:</div>
+                            <div class="stat-value ${isWin ? 'win-amount' : 'loss-amount'}">${netResult >= 0 ? '+' : ''}${this.formatAmount(netResult)} GEM</div>
                         </div>
                     </div>
 
@@ -5012,8 +5148,8 @@
 
         document.body.appendChild(resultModal);
 
-        // Populate bet breakdown
-        this.populateResultBetBreakdown(resultModal);
+        // Populate bet breakdown with actual user bets and outcome
+        this.populateResultBetBreakdown(resultModal, userBets, outcome);
 
         // Calculate and show total pot (all bets from users and bots)
         this.calculateRoundPot(resultModal);
@@ -5021,8 +5157,14 @@
         // Style the modal based on win/loss
         if (isWin) {
             resultModal.classList.add('win-result');
+            // Trigger confetti celebration for wins
+            this.triggerConfetti();
+            // Play win sound
+            this.playWinSound();
         } else {
             resultModal.classList.add('loss-result');
+            // Play loss sound
+            this.playLossSound();
         }
 
         // Add result summary styles
@@ -5049,17 +5191,17 @@
             continueBtn.addEventListener('click', () => closeModal(true));
             overlay.addEventListener('click', () => closeModal(true));
 
-            // Auto-continue after 3 seconds for smooth gameplay flow
+            // Auto-continue after 10 seconds for better user experience
             const autoContinueTimeout = setTimeout(() => {
                 autoClosed = true;
                 closeModal();
 
                 // Show a brief notification that the game continues automatically
                 this.showNotification('Continuing to next round...', 'info');
-            }, 3000);
+            }, 10000);
 
             // Add countdown indicator to the continue button
-            let countdownSeconds = 3;
+            let countdownSeconds = 10;
             continueBtn.textContent = `${continueBtn.textContent} (${countdownSeconds}s)`;
 
             const countdownInterval = setInterval(() => {
@@ -5082,15 +5224,32 @@
                 return originalResolve.apply(this, args);
             };
         });
+
+        } catch (error) {
+            console.error('❌ CRITICAL: showResultSummary failed:', error);
+            console.error('Stack trace:', error.stack);
+            // Show a simple alert as fallback
+            const resultMsg = winnings > 0 ? `WON ${winnings} GEM` : `LOST ${losses} GEM`;
+            alert(`🎰 Spin Result: ${resultMsg} on number ${outcome?.number || '?'}`);
+            throw error; // Re-throw so caller knows it failed
+        }
     }
 
     // Populate the bet breakdown in result modal
-    populateResultBetBreakdown(modal) {
+    populateResultBetBreakdown(modal, userBets, outcome) {
         const breakdownContainer = modal.querySelector('#result-bet-breakdown');
+
+        // Safety check
+        if (!userBets || userBets.length === 0) {
+            breakdownContainer.innerHTML = '<p style="text-align: center; color: #9ca3af; padding: 1rem;">No bets placed this round</p>';
+            return;
+        }
+
+        console.log('📊 Populating bet breakdown:', { userBets, outcome });
 
         // Group bets by type and calculate results
         const betGroups = {};
-        this.currentBets.forEach(bet => {
+        userBets.forEach(bet => {
             if (!betGroups[bet.type]) {
                 betGroups[bet.type] = [];
             }
@@ -5102,9 +5261,9 @@
             const bets = betGroups[type];
             const totalAmount = bets.reduce((sum, bet) => sum + bet.amount, 0);
 
-            // Simulate win/loss (in real implementation this would come from server)
-            const isWinner = Math.random() > 0.5; // Placeholder
-            const payout = isWinner ? totalAmount * this.getPayoutMultiplier(type, bets[0].value) : 0;
+            // Use actual bet results from server data
+            const isWinner = bets.some(bet => bet.is_winner || false);
+            const payout = bets.reduce((sum, bet) => sum + (bet.payout || 0), 0);
 
             breakdownHTML += `
                 <div class="bet-result-item ${isWinner ? 'winner' : 'loser'}">
@@ -5207,11 +5366,26 @@
             .result-summary-modal.win-result .modal-content {
                 border-color: #10b981;
                 box-shadow: 0 20px 40px rgba(16, 185, 129, 0.3);
+                animation: winBorderGlow 2s ease-in-out infinite;
             }
 
             .result-summary-modal.loss-result .modal-content {
                 border-color: #ef4444;
                 box-shadow: 0 20px 40px rgba(239, 68, 68, 0.3);
+            }
+
+            @keyframes winBorderGlow {
+                0%, 100% {
+                    border-color: #10b981;
+                    box-shadow: 0 20px 40px rgba(16, 185, 129, 0.3),
+                                0 0 20px rgba(16, 185, 129, 0.5) inset;
+                }
+                50% {
+                    border-color: #34d399;
+                    box-shadow: 0 20px 60px rgba(16, 185, 129, 0.6),
+                                0 0 40px rgba(16, 185, 129, 0.8) inset,
+                                0 0 60px rgba(16, 185, 129, 0.4);
+                }
             }
 
             .result-header {
@@ -5221,15 +5395,27 @@
             }
 
             .result-title {
-                font-size: 2rem;
+                font-size: 2.5rem;
                 font-weight: 900;
                 margin: 0 0 1rem;
                 text-transform: uppercase;
                 letter-spacing: 2px;
+                animation: titlePulse 1.5s ease-in-out infinite;
             }
 
-            .win-result .result-title { color: #10b981; }
-            .loss-result .result-title { color: #ef4444; }
+            .win-result .result-title {
+                color: #10b981;
+                text-shadow: 0 0 20px rgba(16, 185, 129, 0.8), 0 0 40px rgba(16, 185, 129, 0.5);
+            }
+            .loss-result .result-title {
+                color: #ef4444;
+                animation: none;
+            }
+
+            @keyframes titlePulse {
+                0%, 100% { transform: scale(1); }
+                50% { transform: scale(1.1); }
+            }
 
             .result-crypto-info {
                 display: flex;
@@ -5291,10 +5477,25 @@
 
             .stat-value.win-amount {
                 color: #10b981;
+                font-size: 2.5rem;
+                animation: winAmountPulse 1s ease-in-out infinite;
+                text-shadow: 0 0 15px rgba(16, 185, 129, 0.8);
             }
 
             .stat-value.loss-amount {
                 color: #ef4444;
+                font-size: 1.8rem;
+            }
+
+            @keyframes winAmountPulse {
+                0%, 100% {
+                    transform: scale(1);
+                    text-shadow: 0 0 15px rgba(16, 185, 129, 0.8);
+                }
+                50% {
+                    transform: scale(1.15);
+                    text-shadow: 0 0 25px rgba(16, 185, 129, 1), 0 0 40px rgba(16, 185, 129, 0.6);
+                }
             }
 
             .breakdown-section h3 {
@@ -5752,6 +5953,109 @@
             `;
             feedItems.appendChild(item);
         });
+    }
+
+    // Play win sound effect
+    playWinSound() {
+        try {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            // Victory fanfare sequence
+            const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+            let time = audioContext.currentTime;
+
+            notes.forEach((freq, i) => {
+                oscillator.frequency.setValueAtTime(freq, time + i * 0.15);
+            });
+
+            oscillator.type = 'sine';
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.8);
+
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.8);
+        } catch (e) {
+            console.log('Sound not available:', e);
+        }
+    }
+
+    // Play loss sound effect
+    playLossSound() {
+        try {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            // Descending sad sound
+            oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + 0.5);
+
+            oscillator.type = 'sine';
+            gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.5);
+        } catch (e) {
+            console.log('Sound not available:', e);
+        }
+    }
+
+    // Trigger confetti celebration effect
+    triggerConfetti() {
+        const colors = ['#FFD700', '#FFA500', '#FF6347', '#00FF00', '#1E90FF', '#FF69B4'];
+        const confettiCount = 100;
+
+        for (let i = 0; i < confettiCount; i++) {
+            setTimeout(() => {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti-piece';
+                confetti.style.cssText = `
+                    position: fixed;
+                    width: ${Math.random() * 10 + 5}px;
+                    height: ${Math.random() * 10 + 5}px;
+                    background-color: ${colors[Math.floor(Math.random() * colors.length)]};
+                    left: ${Math.random() * 100}vw;
+                    top: -20px;
+                    z-index: 100000;
+                    border-radius: ${Math.random() > 0.5 ? '50%' : '0'};
+                    opacity: ${Math.random() * 0.5 + 0.5};
+                    transform: rotate(${Math.random() * 360}deg);
+                    animation: confetti-fall ${Math.random() * 3 + 2}s linear forwards;
+                    pointer-events: none;
+                `;
+                document.body.appendChild(confetti);
+
+                setTimeout(() => confetti.remove(), 5000);
+            }, i * 30);
+        }
+
+        // Add confetti animation if not already present
+        if (!document.getElementById('confetti-animation-style')) {
+            const style = document.createElement('style');
+            style.id = 'confetti-animation-style';
+            style.textContent = `
+                @keyframes confetti-fall {
+                    0% {
+                        transform: translateY(0) rotate(0deg);
+                        opacity: 1;
+                    }
+                    100% {
+                        transform: translateY(100vh) rotate(720deg);
+                        opacity: 0;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        }
     }
 }
 

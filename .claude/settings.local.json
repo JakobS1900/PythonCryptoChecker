@@ -1,19 +1,31 @@
 {
   "permissions": {
     "allow": [
-      "Bash(find:*)",
-      "Bash(python:*)",
-      "Bash(sqlite3:*)",
-      "Bash(cat:*)",
-      "Bash(.venvScriptspython.exe database/migrations/add_profile_fields_postgres.py)",
-      "Bash(.venv/Scripts/python.exe database/migrations/add_profile_fields_postgres.py:*)",
-      "Bash(pip install:*)",
-      "Bash(.venv/Scripts/python.exe -m pip install:*)",
-      "Bash(\".venv/Scripts/python.exe\" main.py)",
+      "Bash(tasklist)",
+      "Bash(findstr python)",
+      "Bash(.venv/Scripts/python.exe:*)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI5ZTNhNTQyMi1lYjc1LTQ3MTQtOTE5MC0zODIwNDMzOGZkNzMiLCJleHAiOjE3NjA0OTA3NzN9.gCl8vj-hYqFBQJ0Fr4uKabBeObaLZtoLbdcKVE74WSs\")",
+      "Bash(findstr:*)",
+      "Read(//f//**)",
+      "Bash(node:*)",
+      "Bash(npm --version)",
+      "Bash(npm install:*)",
+      "Bash(timeout 10 bash -c 'until curl -s http://localhost:8000/ > /dev/null; do sleep 1; done')",
+      "Bash(timeout:*)",
+      "mcp__playwright__*",
+      "Bash(taskkill:*)",
+      "Bash(npx:*)",
+      "Bash(.venv/Scripts/pip.exe install:*)",
+      "Bash(netstat:*)",
       "Bash(curl:*)",
-      "Bash(taskkill:*)"
+      "Bash(python:*)",
+      "Bash(.venv/Scripts/pip.exe list:*)",
+      "Bash(.venv/Scripts/playwright.exe install:*)"
     ],
     "deny": [],
     "ask": []
-  }
+  },
+  "enabledMcpjsonServers": [
+    "playwright"
+  ]
 }

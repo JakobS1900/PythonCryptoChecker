@@ -41,6 +41,8 @@ from api.auth_api import router as auth_router
 from api.trading_api import router as trading_router
 from api.clicker_api import router as clicker_router
 from api.missions_api import router as missions_router
+from api.stocks_api import router as stocks_router
+from api.achievements_api import router as achievements_router
 
 # Import database and services
 from database.database import init_database, get_db
@@ -155,6 +157,15 @@ app.include_router(
     missions_router,
     tags=["Missions"]  # Prefix already in router definition
 )
+app.include_router(
+    stocks_router,
+    tags=["Stocks"]  # Prefix already in router definition (/api/stocks)
+)
+app.include_router(
+    achievements_router,
+    prefix="/api/achievements",
+    tags=["Achievements"]
+)
 
 # Authentication routes
 @app.get("/login")
@@ -214,6 +225,14 @@ async def clicker_page(request: Request):
         {"request": request}
     )
 
+@app.get("/stocks")
+async def stocks_page(request: Request):
+    """Stock market page."""
+    return templates.TemplateResponse(
+        "stocks.html",
+        {"request": request}
+    )
+
 @app.get("/gaming/roulette", response_class=HTMLResponse)
 async def gaming_roulette(request: Request):
     """Direct route to roulette gaming page."""
@@ -238,6 +257,11 @@ async def profile(request: Request):
 async def missions(request: Request):
     """Daily missions and weekly challenges page."""
     return templates.TemplateResponse("missions.html", {"request": request})
+
+@app.get("/achievements", response_class=HTMLResponse)
+async def achievements(request: Request):
+    """Achievements page - unlock and claim rewards."""
+    return templates.TemplateResponse("achievements.html", {"request": request})
 
 @app.exception_handler(404)
 async def not_found_handler(request: Request, exc: HTTPException):

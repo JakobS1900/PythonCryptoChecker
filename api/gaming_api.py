@@ -263,6 +263,7 @@ async def spin_roulette(
             if current_user and result.get("total_winnings", 0) > 0:
                 try:
                     from services.mission_tracker import mission_tracker
+                    from services.achievement_tracker import achievement_tracker
                     from database.database import get_db
 
                     # Count how many bets won
@@ -270,12 +271,31 @@ async def spin_roulette(
 
                     if winning_bets > 0:
                         async for db in get_db():
+                            # Track missions
                             await mission_tracker.track_event(
                                 user_id=current_user.id,
                                 event_name="roulette_bet_won",
                                 amount=winning_bets,
                                 db=db
                             )
+
+                            # Check achievements - first win
+                            await achievement_tracker.check_achievements(
+                                user_id=current_user.id,
+                                trigger="roulette_first_win",
+                                value=1,
+                                db=db
+                            )
+
+                            # Check big win achievement
+                            if result.get("total_winnings", 0) >= 10000:
+                                await achievement_tracker.check_achievements(
+                                    user_id=current_user.id,
+                                    trigger="roulette_big_win",
+                                    value=result.get("total_winnings", 0),
+                                    db=db
+                                )
+
                             break
                 except Exception as mission_error:
                     # Don't fail spin if mission tracking fails
@@ -1153,3 +1173,59 @@ async def round_event_stream(current_user: Optional[User] = Depends(get_current_
             "X-Accel-Buffering": "no"  # Disable nginx buffering
         }
     )
+
+
+@router.get("/roulette/round/{round_id}/results")
+async def get_round_results(
+    round_id: str,
+    current_user: Optional[User] = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Get detailed bet results for a specific round (for authenticated users only)"""
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+
+    try:
+        from sqlalchemy import select
+        from database.models import GameBet
+
+        # Query all bets for this round and user
+        query = select(GameBet).where(
+            GameBet.round_id == round_id,
+            GameBet.user_id == current_user.id
+        )
+
+        result = await db.execute(query)
+        bets = result.scalars().all()
+
+        if not bets:
+            return {
+                "success": True,
+                "bets": [],
+                "message": "No bets found for this round"
+            }
+
+        # Format bet results
+        bet_results = []
+        for bet in bets:
+            bet_results.append({
+                "bet_id": bet.id,
+                "bet_type": bet.bet_type,
+                "bet_value": bet.bet_value,
+                "amount": bet.amount,
+                "is_winner": bet.is_winner if bet.is_winner is not None else False,
+                "payout": bet.payout_amount if bet.payout_amount is not None else 0,
+                "multiplier": bet.payout_multiplier if bet.payout_multiplier is not None else 0
+            })
+
+        return {
+            "success": True,
+            "bets": bet_results,
+            "round_id": round_id
+        }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error fetching round results: {str(e)}"
+        )

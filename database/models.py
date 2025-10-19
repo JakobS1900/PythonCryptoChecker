@@ -9,7 +9,7 @@ import secrets
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Optional
-from sqlalchemy import Column, String, Float, Integer, Boolean, DateTime, Text, ForeignKey, JSON
+from sqlalchemy import Column, String, Float, Integer, BigInteger, Boolean, DateTime, Text, ForeignKey, JSON, Index
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from passlib.context import CryptContext
@@ -77,6 +77,8 @@ class TransactionType(Enum):
     ACHIEVEMENT = "ACHIEVEMENT"  # Achievement reward
     EMERGENCY_GEM = "EMERGENCY_GEM"  # Emergency GEM from tasks
     MINI_GAME = "MINI_GAME"      # Mini-game reward
+    STOCK_BUY = "STOCK_BUY"      # Buy stock shares with GEMs
+    STOCK_SELL = "STOCK_SELL"    # Sell stock shares for GEMs
 
 class BetType(Enum):
     """Types of roulette bets."""
@@ -139,6 +141,10 @@ class User(Base):
     transactions = relationship("Transaction", back_populates="user")
     game_sessions = relationship("GameSession", back_populates="user")
     portfolio_holdings = relationship("PortfolioHolding", back_populates="user")
+    stock_holdings = relationship("StockHolding", back_populates="user")
+    stock_transactions = relationship("StockTransaction", back_populates="user")
+    clicker_stats = relationship("ClickerStats", back_populates="user", uselist=False)
+    clicker_upgrades = relationship("ClickerUpgradePurchase", back_populates="user")
 
     def set_password(self, password: str):
         """Hash and set password."""
@@ -564,3 +570,295 @@ class UserEmergencyTask(Base):
     # Relationships
     user = relationship("User", backref="emergency_task_completions")
     task = relationship("EmergencyTask", back_populates="user_completions")
+
+# ==================== DAILY MISSIONS & CHALLENGES ====================
+
+class DailyMissionProgress(Base):
+    """Track user progress on daily missions."""
+    __tablename__ = "daily_missions_progress"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    mission_key = Column(String(50), nullable=False)  # e.g., "login_daily", "place_5_bets"
+    current_progress = Column(Integer, default=0)  # Current count towards target
+    target_value = Column(Integer, nullable=False)  # Target count to complete
+    reward_amount = Column(Float, nullable=False)  # GEM reward for completion
+    is_completed = Column(Boolean, default=False)
+    completed_at = Column(DateTime, nullable=True)
+    reward_claimed = Column(Boolean, default=False)
+    reward_claimed_at = Column(DateTime, nullable=True)
+    reset_at = Column(DateTime, nullable=False)  # When this mission expires (next 00:00 UTC)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    user = relationship("User", backref="daily_mission_progress")
+
+    # Composite unique constraint: one mission per user per day
+    __table_args__ = (
+        Index('idx_user_mission_daily', 'user_id', 'mission_key', 'reset_at'),
+    )
+
+class WeeklyChallengeProgress(Base):
+    """Track user progress on weekly challenges."""
+    __tablename__ = "weekly_challenges_progress"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    challenge_key = Column(String(50), nullable=False)  # e.g., "win_10_rounds", "wager_10000_gem"
+    current_progress = Column(Float, default=0.0)  # Current progress towards target
+    target_value = Column(Float, nullable=False)  # Target value to complete
+    reward_amount = Column(Float, nullable=False)  # GEM reward for completion
+    is_completed = Column(Boolean, default=False)
+    completed_at = Column(DateTime, nullable=True)
+    reward_claimed = Column(Boolean, default=False)
+    reward_claimed_at = Column(DateTime, nullable=True)
+    reset_at = Column(DateTime, nullable=False)  # When this challenge expires (next Monday 00:00 UTC)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    user = relationship("User", backref="weekly_challenge_progress")
+
+    # Composite unique constraint: one challenge per user per week
+    __table_args__ = (
+        Index('idx_user_challenge_weekly', 'user_id', 'challenge_key', 'reset_at'),
+    )
+
+class AchievementUnlocked(Base):
+    """Track unlocked achievements for users."""
+    __tablename__ = "achievements_unlocked"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    achievement_key = Column(String(100), nullable=False)
+    unlocked_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    reward_amount = Column(Float, nullable=False)
+    reward_claimed = Column(Boolean, default=False)
+    reward_claimed_at = Column(DateTime, nullable=True)
+    progress_value = Column(Float, nullable=True)  # For tracking achievement progress
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Indexes for performance
+    __table_args__ = (
+        Index('idx_user_achievement', 'user_id', 'achievement_key'),
+        Index('idx_unlocked_at', 'unlocked_at'),
+        Index('idx_reward_claimed', 'reward_claimed'),
+    )
+
+# ==================== STOCK MARKET MODELS ====================
+
+class StockMetadata(Base):
+    """Stock company metadata and information."""
+    __tablename__ = "stock_metadata"
+
+    ticker = Column(String(10), primary_key=True)
+    company_name = Column(String(255), nullable=False)
+    sector = Column(String(100))
+    industry = Column(String(100))
+    logo_url = Column(String(500))
+    description = Column(Text)
+    website = Column(String(255))
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        """Convert stock metadata to dictionary."""
+        return {
+            "ticker": self.ticker,
+            "company_name": self.company_name,
+            "sector": self.sector,
+            "industry": self.industry,
+            "logo_url": self.logo_url,
+            "description": self.description,
+            "website": self.website,
+            "is_active": self.is_active,
+            "created_at": self.created_at.isoformat() if self.created_at else None
+        }
+
+class StockPriceCache(Base):
+    """Cached stock price data from external APIs."""
+    __tablename__ = "stock_price_cache"
+
+    ticker = Column(String(10), primary_key=True)
+    current_price_usd = Column(Float, nullable=False)
+    price_change_pct = Column(Float)
+    volume = Column(BigInteger)
+    market_cap = Column(BigInteger)
+    day_high = Column(Float)
+    day_low = Column(Float)
+    open_price = Column(Float)
+    prev_close = Column(Float)
+    last_updated = Column(DateTime, default=datetime.utcnow)
+    data_source = Column(String(50))
+
+    def to_dict(self):
+        """Convert stock price cache to dictionary."""
+        return {
+            "ticker": self.ticker,
+            "current_price_usd": self.current_price_usd,
+            "price_change_pct": self.price_change_pct,
+            "volume": self.volume,
+            "market_cap": self.market_cap,
+            "day_high": self.day_high,
+            "day_low": self.day_low,
+            "open_price": self.open_price,
+            "prev_close": self.prev_close,
+            "last_updated": self.last_updated.isoformat() if self.last_updated else None,
+            "data_source": self.data_source
+        }
+
+class StockHolding(Base):
+    """User's stock holdings (owned shares)."""
+    __tablename__ = "stock_holdings"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    ticker = Column(String(10), nullable=False)
+    quantity = Column(Float, nullable=False)
+    average_buy_price_gem = Column(Float, nullable=False)
+    total_invested_gem = Column(Float, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    user = relationship("User", back_populates="stock_holdings")
+
+    # Ensure one holding per user per ticker
+    from sqlalchemy import UniqueConstraint
+    __table_args__ = (UniqueConstraint('user_id', 'ticker', name='uq_user_ticker'),)
+
+    def to_dict(self):
+        """Convert stock holding to dictionary."""
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "ticker": self.ticker,
+            "quantity": self.quantity,
+            "average_buy_price_gem": self.average_buy_price_gem,
+            "total_invested_gem": self.total_invested_gem,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None
+        }
+
+class StockTransaction(Base):
+    """Stock buy/sell transaction history."""
+    __tablename__ = "stock_transactions"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    ticker = Column(String(10), nullable=False)
+    transaction_type = Column(String(10), nullable=False)  # 'BUY' or 'SELL'
+    quantity = Column(Float, nullable=False)
+    price_per_share_gem = Column(Float, nullable=False)
+    total_amount_gem = Column(Float, nullable=False)
+    fee_gem = Column(Float, default=0.0)
+    profit_loss_gem = Column(Float, nullable=True)  # NULL for buys, calculated for sells
+    wallet_transaction_id = Column(String, ForeignKey("transactions.id"), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    user = relationship("User", back_populates="stock_transactions")
+    wallet_transaction = relationship("Transaction", foreign_keys=[wallet_transaction_id])
+
+    # Indexes for faster queries
+    from sqlalchemy import Index
+    __table_args__ = (
+        Index('idx_stock_tx_user_ticker', 'user_id', 'ticker'),
+        Index('idx_stock_tx_created', 'created_at'),
+    )
+
+    def to_dict(self):
+        """Convert stock transaction to dictionary."""
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "ticker": self.ticker,
+            "transaction_type": self.transaction_type,
+            "quantity": self.quantity,
+            "price_per_share_gem": self.price_per_share_gem,
+            "total_amount_gem": self.total_amount_gem,
+            "fee_gem": self.fee_gem,
+            "profit_loss_gem": self.profit_loss_gem,
+            "wallet_transaction_id": self.wallet_transaction_id,
+            "created_at": self.created_at.isoformat() if self.created_at else None
+        }
+
+
+# ==================== CLICKER UPGRADE SYSTEM ====================
+
+class ClickerStats(Base):
+    """User's clicker game statistics and progress."""
+    __tablename__ = "clicker_stats"
+
+    user_id = Column(String, ForeignKey("users.id"), primary_key=True)
+    total_clicks = Column(BigInteger, default=0, nullable=False)
+    total_gems_earned = Column(Float, default=0.0, nullable=False)
+    best_combo = Column(Integer, default=0, nullable=False)
+    mega_bonuses_hit = Column(Integer, default=0, nullable=False)
+
+    # Upgrade levels
+    click_power_level = Column(Integer, default=1, nullable=False)
+    auto_clicker_level = Column(Integer, default=0, nullable=False)
+    multiplier_level = Column(Integer, default=0, nullable=False)
+    energy_capacity_level = Column(Integer, default=0, nullable=False)
+    energy_regen_level = Column(Integer, default=0, nullable=False)
+
+    # Energy system
+    current_energy = Column(Integer, default=100, nullable=False)
+    max_energy = Column(Integer, default=100, nullable=False)
+    last_energy_update = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    # Passive income tracking
+    last_auto_click = Column(DateTime, nullable=True)
+    auto_click_accumulated = Column(Float, default=0.0, nullable=False)
+
+    # Streak tracking
+    daily_streak = Column(Integer, default=0, nullable=False)
+    last_click_date = Column(DateTime, nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationship
+    user = relationship("User", back_populates="clicker_stats")
+
+    def to_dict(self):
+        """Convert clicker stats to dictionary."""
+        return {
+            "user_id": self.user_id,
+            "total_clicks": self.total_clicks,
+            "total_gems_earned": self.total_gems_earned,
+            "best_combo": self.best_combo,
+            "mega_bonuses_hit": self.mega_bonuses_hit,
+            "click_power_level": self.click_power_level,
+            "auto_clicker_level": self.auto_clicker_level,
+            "multiplier_level": self.multiplier_level,
+            "energy_capacity_level": self.energy_capacity_level,
+            "energy_regen_level": self.energy_regen_level,
+            "current_energy": self.current_energy,
+            "max_energy": self.max_energy,
+            "last_energy_update": self.last_energy_update.isoformat() if self.last_energy_update else None,
+            "daily_streak": self.daily_streak,
+            "last_click_date": self.last_click_date.isoformat() if self.last_click_date else None
+        }
+
+
+class ClickerUpgradePurchase(Base):
+    """Track clicker upgrade purchases."""
+    __tablename__ = "clicker_upgrade_purchases"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    upgrade_type = Column(String(50), nullable=False)  # 'click_power', 'auto_clicker', 'multiplier', etc.
+    level_purchased = Column(Integer, nullable=False)
+    cost_gems = Column(Float, nullable=False)
+    purchased_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    # Relationship
+    user = relationship("User", back_populates="clicker_upgrades")
+
+    __table_args__ = (
+        Index('idx_clicker_upgrade_user', 'user_id'),
+        Index('idx_clicker_upgrade_type', 'upgrade_type'),
+    )
