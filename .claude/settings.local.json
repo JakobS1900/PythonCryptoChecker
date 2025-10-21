@@ -20,7 +20,8 @@
       "Bash(curl:*)",
       "Bash(python:*)",
       "Bash(.venv/Scripts/pip.exe list:*)",
-      "Bash(.venv/Scripts/playwright.exe install:*)"
+      "Bash(.venv/Scripts/playwright.exe install:*)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2ZmZjYTJkYy1hYzczLTQ5NzItYjljOC0yMjU1MjgwMjgzZGYiLCJleHAiOjE3NjA5OTA4OTB9.KU45niE1SRcSq97WvL5pSzTYz50YlSLRDtmkRiOYDYU\")"
     ],
     "deny": [],
     "ask": []

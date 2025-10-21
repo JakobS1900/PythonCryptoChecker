@@ -56,8 +56,12 @@ class RoundManager:
         await self.start_new_round()
 
         # Start background timer task for automatic round advancement
-        self._timer_task = asyncio.create_task(self.auto_advance_timer())
+        # Use get_running_loop() to ensure proper event loop attachment
+        loop = asyncio.get_running_loop()
+        self._timer_task = loop.create_task(self.auto_advance_timer())
         print("[Round Manager] Initialized - first round started, auto-advance timer enabled")
+        print(f"[Round Manager] Timer task created: {self._timer_task}")
+        print(f"[Round Manager] Event loop: {loop}")
 
     async def start_new_round(self, triggered_by: Optional[str] = None) -> RoundState:
         """Initialize a new betting round"""
@@ -146,7 +150,7 @@ class RoundManager:
             self.current_round.outcome_color = outcome_color
             self.current_round.outcome_crypto = outcome_crypto
 
-            # Update database
+            # Update database and process bets
             async with AsyncSessionLocal() as session:
                 await session.execute(
                     update(RouletteRound)
@@ -159,6 +163,17 @@ class RoundManager:
                         outcome_crypto=outcome_crypto
                     )
                 )
+
+                # CRITICAL: Process all bets for this round
+                print(f"[Round Manager] Processing bets for round {self.current_round.round_id}")
+                await self._process_round_bets(
+                    session=session,
+                    round_id=self.current_round.round_id,
+                    winning_number=outcome_number,
+                    winning_color=outcome_color,
+                    winning_crypto=outcome_crypto
+                )
+
                 await session.commit()
 
             # Broadcast phase change
@@ -250,33 +265,58 @@ class RoundManager:
         This runs indefinitely in the background.
         """
         print("[Round Manager] Background timer started")
+        print(f"[Round Manager] Timer running in event loop: {asyncio.get_running_loop()}")
+        tick_count = 0
 
-        while True:
-            try:
-                await asyncio.sleep(1)  # Check every second
+        try:
+            while True:
+                try:
+                    await asyncio.sleep(1)  # Check every second
+                    tick_count += 1
 
-                if not self.current_round:
-                    continue
+                    # Debug: Print every 5 seconds to confirm timer is running
+                    if tick_count % 5 == 0:
+                        if self.current_round:
+                            now = datetime.utcnow()
+                            ends_at = self.current_round.phase_ends_at
+                            remaining = (ends_at - now).total_seconds()
+                            print(f"[Round Manager] Timer tick {tick_count}s - Round: {self.current_round.round_number}, Phase: {self.current_round.phase.value}, Remaining: {remaining:.1f}s")
+                        else:
+                            print(f"[Round Manager] Timer tick {tick_count}s - No current round")
 
-                if self.current_round.phase != RoundPhase.BETTING:
-                    continue
+                    if not self.current_round:
+                        continue
 
-                # Check if betting time expired
-                if datetime.utcnow() >= self.current_round.phase_ends_at:
-                    print(f"[Round Manager] Timer expired - auto-spinning round {self.current_round.round_number}")
-                    # Auto-spin (no user triggered it, timer expired)
-                    try:
-                        await self.trigger_spin(
-                            user_id=None,  # Auto-spin, not user-triggered
-                            game_session_id="auto"
-                        )
-                    except ValueError as e:
-                        # Already spinning (race condition avoided by lock)
-                        print(f"[Round Manager] Auto-spin skipped: {e}")
+                    if self.current_round.phase != RoundPhase.BETTING:
+                        continue
 
-            except Exception as e:
-                print(f"[Round Manager] Timer error: {e}")
-                # Continue running despite errors
+                    # Check if betting time expired
+                    if datetime.utcnow() >= self.current_round.phase_ends_at:
+                        print(f"[Round Manager] Timer expired - auto-spinning round {self.current_round.round_number}")
+                        # Auto-spin (no user triggered it, timer expired)
+                        try:
+                            await self.trigger_spin(
+                                user_id=None,  # Auto-spin, not user-triggered
+                                game_session_id="auto"
+                            )
+                        except ValueError as e:
+                            # Already spinning (race condition avoided by lock)
+                            print(f"[Round Manager] Auto-spin skipped: {e}")
+
+                except asyncio.CancelledError:
+                    print("[Round Manager] Timer task cancelled")
+                    raise
+                except Exception as e:
+                    import traceback
+                    print(f"[Round Manager] Timer error: {e}")
+                    print(f"[Round Manager] Timer error traceback: {traceback.format_exc()}")
+                    # Continue running despite errors
+        except asyncio.CancelledError:
+            print("[Round Manager] Timer shutting down")
+        except Exception as e:
+            import traceback
+            print(f"[Round Manager] CRITICAL: Timer loop crashed: {e}")
+            print(f"[Round Manager] CRITICAL traceback: {traceback.format_exc()}")
 
     def get_current_round(self) -> Optional[Dict]:
         """Return current round state for API consumption"""
@@ -351,6 +391,76 @@ class RoundManager:
             self.sse_subscribers.pop(user_id)
             print(f"[Round Manager] SSE subscriber removed: {user_id} (remaining: {len(self.sse_subscribers)})")
 
+    async def _process_round_bets(
+        self,
+        session: AsyncSession,
+        round_id: str,
+        winning_number: int,
+        winning_color: str,
+        winning_crypto: str
+    ):
+        """Process all bets for a completed round and credit/debit winnings."""
+        from database.models import BetType, TransactionType
+        from crypto.portfolio import portfolio_manager
+
+        # Fetch all bets for this round
+        result = await session.execute(
+            select(GameBet).where(GameBet.round_id == round_id)
+        )
+        bets = result.scalars().all()
+
+        if not bets:
+            print(f"[Round Manager] No bets to process for round {round_id}")
+            return
+
+        print(f"[Round Manager] Processing {len(bets)} bets...")
+
+        winning_data = {
+            "color": winning_color,
+            "crypto": winning_crypto
+        }
+
+        total_winnings = 0
+        total_losses = 0
+
+        for bet in bets:
+            # Use roulette engine's calculation logic
+            is_winner, multiplier, payout = self.roulette_engine._calculate_bet_result(
+                bet=bet,
+                winning_number=winning_number,
+                winning_data=winning_data
+            )
+
+            # Update bet record
+            bet.is_winner = is_winner
+            bet.payout_multiplier = multiplier
+            bet.payout_amount = payout
+
+            if is_winner and payout > 0:
+                # Credit winnings to user
+                await portfolio_manager.process_win(
+                    user_id=bet.user_id,
+                    amount=payout,
+                    description=f"Roulette win: {bet.bet_type} on {bet.bet_value} (Round {round_id[:8]})",
+                    game_session_id=bet.game_session_id
+                )
+                total_winnings += payout
+                print(f"[Round Manager] ✓ WIN: User {bet.user_id[:8]} bet {bet.amount} on {bet.bet_value}, won {payout} GEM")
+            else:
+                # Record loss (bet was already deducted when placed)
+                await portfolio_manager.deduct_gems(
+                    user_id=bet.user_id,
+                    amount=0,  # Already deducted
+                    transaction_type=TransactionType.BET_LOST,
+                    description=f"Roulette loss: {bet.bet_type} on {bet.bet_value} (Round {round_id[:8]})",
+                    game_session_id=bet.game_session_id
+                )
+                total_losses += bet.amount
+                print(f"[Round Manager] ✗ LOSS: User {bet.user_id[:8]} bet {bet.amount} on {bet.bet_value}")
+
+        print(f"[Round Manager] Round complete: {total_winnings} GEM won, {total_losses} GEM lost")
+
 
 # Global singleton instance
 round_manager = RoundManager(betting_duration=15, results_display_duration=5)
+

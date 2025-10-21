@@ -2421,6 +2421,11 @@
         this.serverRoundState = data;
         this.roundId = data.round_number;
 
+        // Update round number display
+        if (this.elements.roundIndicator) {
+            this.elements.roundIndicator.textContent = `#${data.round_number}`;
+        }
+
         // Clear previous round's bets (server-driven)
         this.currentBets = [];
         this.updateBetSummary();
@@ -2492,6 +2497,11 @@
         if (data.round_number !== this.roundId) {
             console.log(`[Round Sync] New round detected: ${this.roundId} → ${data.round_number}`);
             this.roundId = data.round_number;
+
+            // Update round number display
+            if (this.elements.roundIndicator) {
+                this.elements.roundIndicator.textContent = `#${data.round_number}`;
+            }
         }
 
         // Update local phase to match server (server is single source of truth)

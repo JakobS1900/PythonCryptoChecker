@@ -15,108 +15,121 @@
 
 <div class="container position-relative" style="z-index: 10; padding-top: var(--space-8);">
     <div class="row">
-        <div class="col-md-10 offset-md-1">
-            <div class="card-modern clicker-card" style="background: rgba(30, 41, 59, 0.95); backdrop-filter: blur(20px);">
+        <!-- Main Clicker Section -->
+        <div class="col-lg-7 mb-4">
+            <div class="card-modern clicker-card">
                 <div style="text-align: center; padding: var(--space-8);">
-                    <!-- Title with animation -->
-                    <h2 class="clicker-title" style="font-size: var(--text-4xl); font-weight: var(--font-bold); color: var(--text-primary); margin-bottom: var(--space-6);">
+                    <h2 class="clicker-title">
                         <i class="bi bi-gem" style="color: var(--gem);"></i> GEM Clicker <i class="bi bi-gem" style="color: var(--gem);"></i>
                     </h2>
 
-                    <!-- Enhanced Gem Balance Display -->
+                    <!-- Balance Display -->
                     <div class="mb-4 balance-container">
-                        <h3 class="balance-display" style="font-size: var(--text-5xl); font-weight: var(--font-bold); color: var(--gem); text-shadow: 0 0 30px var(--gem-glow);">
-                            <span class="balance-icon">
-                                <i class="bi bi-gem"></i>
-                            </span>
+                        <h3 class="balance-display">
+                            <span class="balance-icon"><i class="bi bi-gem"></i></span>
                             <span id="gem-balance" class="balance-amount">0</span>
-                            <span class="balance-unit" style="font-size: var(--text-2xl); color: var(--text-secondary); margin-left: var(--space-2);">GEM</span>
+                            <span class="balance-unit">GEM</span>
                         </h3>
                     </div>
 
-                    <!-- Enhanced Click Button -->
+                    <!-- Energy Bar -->
+                    <div class="energy-container mb-4">
+                        <div class="energy-label">
+                            <i class="bi bi-lightning-charge-fill"></i>
+                            <span>Energy: <span id="energy-current">100</span>/<span id="energy-max">100</span></span>
+                        </div>
+                        <div class="energy-bar-bg">
+                            <div class="energy-bar-fill" id="energy-bar" style="width: 100%"></div>
+                        </div>
+                        <div class="energy-regen-text">Regenerates 1 every 10 seconds</div>
+                    </div>
+
+                    <!-- Combo Display -->
+                    <div class="combo-display" id="combo-display" style="display: none;">
+                        <div class="combo-text">COMBO</div>
+                        <div class="combo-value"><span id="combo-count">0</span>x</div>
+                        <div class="combo-multiplier">+<span id="combo-multiplier">0</span>% BONUS</div>
+                    </div>
+
+                    <!-- Click Button -->
                     <div class="mb-4 click-button-container">
                         <button id="click-btn" class="click-button">
                             <div class="button-inner">
-                                <div class="click-ripple"></div>
                                 <i class="fas fa-coins fa-4x mb-3 click-coin-icon" id="coin-icon"></i>
                                 <div class="click-text">
                                     <span class="main-text">CLICK ME!</span>
                                     <span class="sub-text" id="click-value">+10-100</span>
                                 </div>
-                                <div class="power-indicator">
-                                    <div class="power-bar" id="power-bar"></div>
-                                </div>
                             </div>
-                            <div class="click-glow"></div>
                         </button>
                     </div>
 
-                    <!-- Reward Message -->
-                    <div id="reward-message" class="alert alert-success" style="display: none;">
-                        +0 GEM
+                    <!-- Auto-Clicker Passive Income -->
+                    <div class="auto-clicker-display" id="auto-clicker-display" style="display: none;">
+                        <div class="auto-clicker-icon"><i class="bi bi-robot"></i></div>
+                        <div class="auto-clicker-info">
+                            <div class="auto-clicker-label">Auto-Clicker Active</div>
+                            <div class="auto-clicker-rate">+<span id="auto-rate">0</span> GEM every <span id="auto-interval">10</span>s</div>
+                            <div class="auto-clicker-earned">Accumulated: <span id="auto-accumulated">0</span> GEM</div>
+                        </div>
                     </div>
 
                     <!-- Stats -->
-                    <div class="row" style="margin-top: var(--space-8);">
+                    <div class="row mt-4">
                         <div class="col-md-4 mb-3">
                             <div class="stat-card-modern">
-                                <div class="stat-icon">
-                                    <i class="bi bi-mouse-fill" style="color: var(--primary);"></i>
-                                </div>
+                                <div class="stat-icon"><i class="bi bi-mouse-fill" style="color: var(--primary);"></i></div>
                                 <div class="stat-value" id="total-clicks">0</div>
                                 <div class="stat-label">Total Clicks</div>
                             </div>
                         </div>
                         <div class="col-md-4 mb-3">
                             <div class="stat-card-modern">
-                                <div class="stat-icon">
-                                    <i class="bi bi-gem" style="color: var(--gem);"></i>
-                                </div>
-                                <div class="stat-value" id="gems-per-click">10-100</div>
-                                <div class="stat-label">Gems per Click</div>
+                                <div class="stat-icon"><i class="bi bi-gem" style="color: var(--gem);"></i></div>
+                                <div class="stat-value" id="total-earned">0</div>
+                                <div class="stat-label">Total Earned</div>
                             </div>
                         </div>
                         <div class="col-md-4 mb-3">
                             <div class="stat-card-modern">
-                                <div class="stat-icon">
-                                    <i class="bi bi-lightning-charge-fill" style="color: var(--warning);"></i>
-                                </div>
-                                <div class="stat-value">15%</div>
-                                <div class="stat-label">Bonus Rate</div>
+                                <div class="stat-icon"><i class="bi bi-trophy-fill" style="color: var(--warning);"></i></div>
+                                <div class="stat-value" id="best-combo">0</div>
+                                <div class="stat-label">Best Combo</div>
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
 
-                    <!-- Bonus Chances -->
-                    <div style="margin-top: var(--space-8);">
-                        <h4 style="font-size: var(--text-2xl); font-weight: var(--font-semibold); color: var(--text-primary); margin-bottom: var(--space-4);">Bonus Chances</h4>
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <div class="alert-modern alert-modern-success" style="text-align: center;">
-                                    <div class="alert-modern-content">
-                                        <div class="alert-modern-title" style="font-size: var(--text-lg);">MEGA Bonus</div>
-                                        <div class="alert-modern-message">100 GEM · 1% Chance</div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <div class="alert-modern alert-modern-info" style="text-align: center;">
-                                    <div class="alert-modern-content">
-                                        <div class="alert-modern-title" style="font-size: var(--text-lg);">Big Bonus</div>
-                                        <div class="alert-modern-message">50 GEM · 4% Chance</div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <div class="alert-modern alert-modern-warning" style="text-align: center;">
-                                    <div class="alert-modern-content">
-                                        <div class="alert-modern-title" style="font-size: var(--text-lg);">Medium Bonus</div>
-                                        <div class="alert-modern-message">25 GEM · 10% Chance</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+        <!-- Upgrade Shop -->
+        <div class="col-lg-5 mb-4">
+            <div class="card-modern upgrade-shop-card">
+                <div class="upgrade-shop-header">
+                    <h3><i class="bi bi-shop"></i> Upgrade Shop</h3>
+                </div>
+                <div class="upgrade-shop-body" id="upgrade-shop">
+                    <div class="upgrade-tabs">
+                        <button class="upgrade-tab active" data-category="click_power">
+                            <i class="bi bi-cursor-fill"></i> Click Power
+                        </button>
+                        <button class="upgrade-tab" data-category="auto_clicker">
+                            <i class="bi bi-robot"></i> Auto-Clicker
+                        </button>
+                        <button class="upgrade-tab" data-category="multiplier">
+                            <i class="bi bi-graph-up-arrow"></i> Multiplier
+                        </button>
+                        <button class="upgrade-tab" data-category="energy_capacity">
+                            <i class="bi bi-battery-charging"></i> Energy
+                        </button>
+                        <button class="upgrade-tab" data-category="energy_regen">
+                            <i class="bi bi-lightning-charge"></i> Regen
+                        </button>
+                    </div>
+
+                    <!-- Upgrade Content -->
+                    <div class="upgrade-content" id="upgrade-content">
+                        <div class="upgrade-loading">Loading upgrades...</div>
                     </div>
                 </div>
             </div>
@@ -124,7 +137,6 @@
     </div>
 </div>
 
-<!-- Enhanced Clicker Game Styles -->
 <style>
 /* Background Animation */
 .clicker-background {
@@ -152,74 +164,35 @@
     pointer-events: none;
 }
 
-.orb-1 {
-    width: 60px;
-    height: 60px;
-    top: 10%;
-    left: 10%;
-    animation-duration: 18s;
-    animation-delay: 0s;
-}
-
-.orb-2 {
-    width: 40px;
-    height: 40px;
-    top: 20%;
-    right: 15%;
-    animation-duration: 25s;
-    animation-delay: 2s;
-}
-
-.orb-3 {
-    width: 80px;
-    height: 80px;
-    bottom: 15%;
-    left: 20%;
-    animation-duration: 22s;
-    animation-delay: 4s;
-}
-
-.orb-4 {
-    width: 50px;
-    height: 50px;
-    bottom: 25%;
-    right: 10%;
-    animation-duration: 30s;
-    animation-delay: 1s;
-}
+.orb-1 { width: 60px; height: 60px; top: 10%; left: 10%; animation-duration: 18s; }
+.orb-2 { width: 40px; height: 40px; top: 20%; right: 15%; animation-duration: 25s; animation-delay: 2s; }
+.orb-3 { width: 80px; height: 80px; bottom: 15%; left: 20%; animation-duration: 22s; animation-delay: 4s; }
+.orb-4 { width: 50px; height: 50px; bottom: 25%; right: 10%; animation-duration: 30s; animation-delay: 1s; }
 
 @keyframes floatOrb {
-    0% {
-        transform: translateY(0) translateX(0) rotate(0deg);
-        opacity: 0.3;
-    }
-    25% {
-        opacity: 0.7;
-    }
-    50% {
-        opacity: 0.3;
-    }
-    75% {
-        opacity: 0.7;
-    }
-    100% {
-        transform: translateY(-100vh) translateX(100px) rotate(360deg);
-        opacity: 0.3;
-    }
+    0% { transform: translateY(0) translateX(0) rotate(0deg); opacity: 0.3; }
+    25% { opacity: 0.7; }
+    50% { opacity: 0.3; }
+    75% { opacity: 0.7; }
+    100% { transform: translateY(-100vh) translateX(100px) rotate(360deg); opacity: 0.3; }
 }
 
 /* Card Styling */
-.clicker-card {
-    background: rgba(255, 255, 255, 0.95) !important;
-    backdrop-filter: blur(10px);
+.clicker-card, .upgrade-shop-card {
+    background: rgba(30, 41, 59, 0.95) !important;
+    backdrop-filter: blur(20px);
     border: none !important;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
     border-radius: 20px;
 }
 
 .clicker-title {
-    animation: titleGlow 3s ease-in-out infinite alternate;
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: white;
     text-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+    animation: titleGlow 3s ease-in-out infinite alternate;
+    margin-bottom: 2rem;
 }
 
 @keyframes titleGlow {
@@ -228,15 +201,9 @@
 }
 
 /* Balance Display */
-.balance-container {
-    position: relative;
-    margin: 20px 0;
-}
-
 .balance-display {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
     gap: 10px;
     padding: 15px 30px;
     background: linear-gradient(45deg, #fbbf24, #f59e0b);
@@ -244,28 +211,11 @@
     box-shadow: 0 10px 20px rgba(251, 191, 36, 0.3);
     animation: balanceGlow 2s ease-in-out infinite alternate;
     color: white !important;
-    font-weight: bold;
 }
 
 @keyframes balanceGlow {
-    from {
-        box-shadow: 0 10px 20px rgba(251, 191, 36, 0.3);
-        transform: translateY(0);
-    }
-    to {
-        box-shadow: 0 15px 30px rgba(251, 191, 36, 0.5);
-        transform: translateY(-2px);
-    }
-}
-
-.balance-icon {
-    font-size: 1.5em;
-    animation: gemRotate 4s linear infinite;
-}
-
-@keyframes gemRotate {
-    0% { transform: rotateY(0deg); }
-    100% { transform: rotateY(360deg); }
+    from { box-shadow: 0 10px 20px rgba(251, 191, 36, 0.3); transform: translateY(0); }
+    to { box-shadow: 0 15px 30px rgba(251, 191, 36, 0.5); transform: translateY(-2px); }
 }
 
 .balance-amount {
@@ -274,52 +224,118 @@
     text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
 }
 
-.balance-unit {
-    font-size: 1.1em;
+/* Energy Bar */
+.energy-container {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.energy-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: #60a5fa;
     font-weight: 600;
+    margin-bottom: 8px;
+    font-size: 1.1rem;
+}
+
+.energy-bar-bg {
+    height: 20px;
+    background: rgba(30, 58, 138, 0.3);
+    border-radius: 10px;
+    overflow: hidden;
+    border: 2px solid rgba(96, 165, 250, 0.3);
+}
+
+.energy-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6, #60a5fa);
+    border-radius: 8px;
+    transition: width 0.3s ease;
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+}
+
+.energy-regen-text {
+    text-align: center;
+    color: rgba(96, 165, 250, 0.7);
+    font-size: 0.85rem;
+    margin-top: 4px;
+}
+
+/* Combo Display */
+.combo-display {
+    background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+    border-radius: 15px;
+    padding: 15px 30px;
+    margin: 20px auto;
+    max-width: 300px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(139, 92, 246, 0.4);
+    animation: comboGlow 1s ease-in-out infinite alternate;
+}
+
+@keyframes comboGlow {
+    from { box-shadow: 0 10px 30px rgba(139, 92, 246, 0.4); transform: scale(1); }
+    to { box-shadow: 0 15px 40px rgba(139, 92, 246, 0.6); transform: scale(1.05); }
+}
+
+.combo-text {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.combo-value {
+    font-size: 3rem;
+    font-weight: 900;
+    color: white;
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+}
+
+.combo-multiplier {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #fbbf24;
+    text-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
 }
 
 /* Click Button */
-.click-button-container {
-    position: relative;
-    margin: 30px 0;
-}
-
 .click-button {
-    position: relative;
-    width: 250px;
-    height: 250px;
+    width: 220px;
+    height: 220px;
     border: none;
     border-radius: 50%;
     background: linear-gradient(135deg, #22d3ee, #3b82f6, #8b5cf6);
     cursor: pointer;
-    overflow: hidden;
     box-shadow: 0 15px 35px rgba(59, 130, 246, 0.4);
     transition: all 0.3s ease;
     animation: buttonIdle 3s ease-in-out infinite alternate;
+    position: relative;
+    overflow: visible;
 }
 
 .click-button:hover {
     transform: translateY(-5px);
     box-shadow: 0 20px 50px rgba(59, 130, 246, 0.6);
-    animation-play-state: paused;
 }
 
 .click-button:active {
-    transform: scale(0.98) translateY(-2px);
+    transform: scale(0.95) translateY(-2px);
+}
+
+.click-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 @keyframes buttonIdle {
-    0% {
-        box-shadow: 0 15px 35px rgba(59, 130, 246, 0.4);
-    }
-    100% {
-        box-shadow: 0 20px 45px rgba(59, 130, 246, 0.6);
-    }
+    0% { box-shadow: 0 15px 35px rgba(59, 130, 246, 0.4); }
+    100% { box-shadow: 0 20px 45px rgba(59, 130, 246, 0.6); }
 }
 
 .button-inner {
-    position: relative;
     width: 100%;
     height: 100%;
     display: flex;
@@ -327,30 +343,6 @@
     align-items: center;
     justify-content: center;
     color: white;
-    z-index: 3;
-}
-
-.click-glow {
-    position: absolute;
-    top: -10px;
-    left: -10px;
-    right: -10px;
-    bottom: -10px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(59, 130, 246, 0.3) 0%, transparent 70%);
-    animation: clickGlowPulse 2s ease-in-out infinite;
-    pointer-events: none;
-}
-
-@keyframes clickGlowPulse {
-    0%, 100% {
-        transform: scale(1);
-        opacity: 0.5;
-    }
-    50% {
-        transform: scale(1.1);
-        opacity: 0.8;
-    }
 }
 
 .click-coin-icon {
@@ -359,20 +351,14 @@
 }
 
 @keyframes coinBounce {
-    0%, 20%, 50%, 80%, 100% {
-        transform: translateY(0);
-    }
-    40% {
-        transform: translateY(-8px);
-    }
-    60% {
-        transform: translateY(-4px);
-    }
+    0%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-8px); }
+    60% { transform: translateY(-4px); }
 }
 
 .click-text {
     text-align: center;
-    margin: 10px 0;
+    margin-top: 10px;
 }
 
 .main-text {
@@ -386,824 +372,211 @@
     display: block;
     font-size: 0.9em;
     opacity: 0.9;
-    animation: pulseText 1.5s ease-in-out infinite;
 }
 
-@keyframes pulseText {
-    0%, 100% { opacity: 0.7; }
-    50% { opacity: 1; }
+/* Auto-Clicker Display */
+.auto-clicker-display {
+    background: linear-gradient(135deg, #10b981, #059669);
+    border-radius: 15px;
+    padding: 20px;
+    margin: 20px auto;
+    max-width: 400px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
 }
 
-.power-indicator {
-    position: absolute;
-    bottom: 15px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 60px;
-    height: 4px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 2px;
-    overflow: hidden;
+.auto-clicker-icon {
+    font-size: 3rem;
+    color: white;
 }
 
-.power-bar {
-    height: 100%;
-    background: linear-gradient(90deg, #ffffff, #fbbf24);
-    width: 100%;
-    animation: powerFlow 2s ease-in-out infinite;
-    box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+.auto-clicker-info {
+    flex: 1;
+    color: white;
 }
 
-@keyframes powerFlow {
-    0% { width: 30%; }
-    50% { width: 100%; }
-    100% { width: 30%; }
+.auto-clicker-label {
+    font-weight: 700;
+    font-size: 1.1rem;
+    margin-bottom: 5px;
 }
 
-/* Floating Reward Animations */
-.floating-reward {
-    position: absolute;
-    font-size: 2em;
-    font-weight: bold;
-    pointer-events: none;
-    z-index: 1000;
-    animation: floatUpFade 1.5s ease-out forwards;
+.auto-clicker-rate {
+    font-size: 0.95rem;
+    opacity: 0.9;
 }
 
-@keyframes floatUpFade {
-    0% {
-        transform: translateY(0) scale(1);
-        opacity: 1;
-    }
-    100% {
-        transform: translateY(-100px) scale(1.5);
-        opacity: 0;
-    }
-}
-
-/* Special Bonus Effects */
-.bonus-jackpot .floating-reward {
+.auto-clicker-earned {
+    font-size: 0.9rem;
     color: #fbbf24;
-    animation: jackpotFloat 2s ease-out forwards;
-    text-shadow: 0 0 15px #fbbf24;
+    font-weight: 600;
+    margin-top: 5px;
 }
 
-@keyframes jackpotFloat {
-    0% {
-        transform: translateY(0) scale(1) rotate(0deg);
-        opacity: 1;
-    }
-    50% {
-        transform: translateY(-50px) scale(1.8) rotate(10deg);
-    }
-    100% {
-        transform: translateY(-100px) scale(1.2) rotate(0deg);
-        opacity: 0;
-    }
+/* Upgrade Shop */
+.upgrade-shop-header {
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    padding: 20px;
+    border-radius: 20px 20px 0 0;
+    border-bottom: 2px solid rgba(59, 130, 246, 0.3);
 }
 
-.bonus-big .floating-reward {
-    color: #8b5cf6;
-    animation: bigBonusFloat 1.8s ease-out forwards;
+.upgrade-shop-header h3 {
+    color: white;
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
 }
 
-@keyframes bigBonusFloat {
-    0% {
-        transform: translateY(0) scale(1);
-        opacity: 1;
-    }
-    60% {
-        transform: translateY(-80px) scale(1.4);
-        opacity: 1;
-    }
-    100% {
-        transform: translateY(-120px) scale(1.1);
-        opacity: 0;
-    }
+.upgrade-shop-body {
+    padding: 20px;
 }
 
-/* Particle Effects */
-.particle {
-    position: absolute;
-    width: 4px;
-    height: 4px;
-    background: linear-gradient(45deg, #fbbf24, #f59e0b);
-    border-radius: 50%;
-    pointer-events: none;
-    animation: particleBurst 1s ease-out forwards;
+.upgrade-tabs {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
 }
 
-@keyframes particleBurst {
-    0% {
-        transform: scale(1) translateY(0);
-        opacity: 1;
-    }
-    100% {
-        transform: scale(0.2) translateY(-60px);
-        opacity: 0;
-    }
-}
-
-/* Legacy animations */
-.click-animation {
-    transform: scale(0.95);
-    transition: transform 0.1s;
-}
-
-.reward-popup {
-    animation: popup 0.5s ease-out;
-}
-
-@keyframes popup {
-    0% { transform: scale(0); opacity: 0; }
-    50% { transform: scale(1.2); opacity: 0.8; }
-    100% { transform: scale(1); opacity: 1; }
-}
-
-/* Enhanced Stats Cards */
-.card.bg-light {
-    transition: transform 0.3s ease;
-    border: 1px solid rgba(0,0,0,0.1);
-}
-
-.card.bg-light:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-}
-
-/* Bonus Chances Alert Enhancement */
-.alert-info {
-    background: linear-gradient(45deg, rgba(13, 110, 253, 0.1), rgba(13, 110, 253, 0.05));
-    border: 1px solid rgba(13, 110, 253, 0.2);
+.upgrade-tab {
+    flex: 1;
+    min-width: 80px;
+    padding: 10px 5px;
+    background: rgba(30, 41, 59, 0.5);
+    border: 2px solid rgba(59, 130, 246, 0.2);
     border-radius: 10px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
     transition: all 0.3s ease;
 }
 
-.alert-info:hover {
+.upgrade-tab:hover {
+    background: rgba(59, 130, 246, 0.2);
+    border-color: rgba(59, 130, 246, 0.4);
+}
+
+.upgrade-tab.active {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    border-color: #3b82f6;
+    color: white;
+}
+
+.upgrade-content {
+    min-height: 400px;
+}
+
+.upgrade-item {
+    background: rgba(15, 23, 42, 0.5);
+    border: 2px solid rgba(59, 130, 246, 0.2);
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 12px;
+    transition: all 0.3s ease;
+}
+
+.upgrade-item:hover {
+    border-color: rgba(59, 130, 246, 0.4);
+    transform: translateX(5px);
+}
+
+.upgrade-item.current {
+    border-color: #10b981;
+    background: rgba(16, 185, 129, 0.1);
+}
+
+.upgrade-item.max-level {
+    opacity: 0.6;
+}
+
+.upgrade-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.upgrade-name {
+    color: white;
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.upgrade-level {
+    background: rgba(59, 130, 246, 0.3);
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    color: #60a5fa;
+    font-weight: 600;
+}
+
+.upgrade-description {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+}
+
+.upgrade-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.upgrade-cost {
+    color: #fbbf24;
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.upgrade-buy-btn {
+    background: linear-gradient(135deg, #10b981, #059669);
+    border: none;
+    padding: 8px 20px;
+    border-radius: 8px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.upgrade-buy-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #059669, #047857);
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(13, 110, 253, 0.2);
+    box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
 }
 
-/* Click Ripple Effect */
-.click-ripple {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.4);
-    transform: translate(-50%, -50%);
-    pointer-events: none;
-    animation: rippleExpand 0.8s ease-out forwards;
-    display: none;
+.upgrade-buy-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
-@keyframes rippleExpand {
-    0% {
-        width: 0px;
-        height: 0px;
-        opacity: 1;
-    }
-    100% {
-        width: 200px;
-        height: 200px;
-        opacity: 0;
-    }
+.upgrade-loading {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.5);
+    padding: 40px;
 }
 
-.click-button.clicked .click-ripple {
-    display: block;
-}
-
-/* Balance update animations */
-.balance-update-flash {
-    animation: balanceFlash 0.6s ease-in-out;
-}
-
-@keyframes balanceFlash {
-    0% {
-        background: linear-gradient(45deg, #10b981, #059669);
-        text-shadow: 0 0 20px rgba(16, 185, 129, 0.8);
-    }
-    50% {
-        background: linear-gradient(45deg, #fbbf24, #f59e0b);
-        text-shadow: 0 0 30px rgba(251, 191, 36, 1);
-    }
-    100% {
-        background: linear-gradient(45deg, #fbbf24, #f59e0b);
-        text-shadow: normal;
-    }
-}
-
-/* Responsive adjustments */
+/* Responsive */
 @media (max-width: 768px) {
     .click-button {
-        width: 200px;
-        height: 200px;
+        width: 180px;
+        height: 180px;
     }
 
-    .click-coin-icon.fa-4x {
-        font-size: 3em;
+    .upgrade-tabs {
+        flex-direction: column;
     }
 
-    .balance-amount {
-        font-size: 1.8em;
+    .upgrade-tab {
+        min-width: 100%;
     }
 }
 </style>
 
-<!-- Enhanced Clicker Game JavaScript -->
-<script>
-class EnhancedClickerGame {
-    constructor() {
-        this.clickBtn = document.getElementById('click-btn');
-        this.gemBalance = document.getElementById('gem-balance');
-        this.rewardMessage = document.getElementById('reward-message');
-        this.totalClicksDisplay = document.getElementById('total-clicks');
-        this.clickValueDisplay = document.getElementById('click-value');
-        this.coinIcon = document.getElementById('coin-icon');
-        this.buttonContainer = document.querySelector('.click-button-container');
-
-        this.clicks = 0;
-        this.lastReward = 0;
-        this.particlesCreated = 0;
-
-        this.init();
-    }
-
-    init() {
-        this.setupEventListeners();
-        this.initializeDisplay();
-        this.updateBalance();
-
-        // Auto-update balance every 30 seconds
-        setInterval(() => this.updateBalance(), 30000);
-    }
-
-    setupEventListeners() {
-        // Enhanced click handler with visual effects
-        this.clickBtn.addEventListener('click', (event) => {
-            this.handleClick(event);
-        });
-
-        // Add hover effects
-        this.clickBtn.addEventListener('mouseenter', () => {
-            this.coinIcon.style.animationDuration = '1s';
-        });
-
-        this.clickBtn.addEventListener('mouseleave', () => {
-            this.coinIcon.style.animationDuration = '2s';
-        });
-
-        // Balance change listener
-        document.addEventListener('balanceUpdated', (event) => {
-            if (event.detail?.change > 0) {
-                this.animateBalanceGlow(event.detail.change);
-            }
-        });
-    }
-
-    initializeDisplay() {
-        this.clickValueDisplay.textContent = '+10-100';
-        if (this.coinIcon) {
-            this.coinIcon.style.color = '#fbbf24';
-        }
-    }
-
-    // Enhanced click handling with multiple visual effects
-    async handleClick(event) {
-        const rect = this.clickBtn.getBoundingClientRect();
-        const centerX = rect.left + rect.width / 2;
-        const centerY = rect.top + rect.height / 2;
-
-        // Immediate visual feedback
-        this.clickBtn.classList.add('clicked');
-        this.createClickRipple(centerX, centerY);
-
-        // Scale animation
-        this.clickBtn.style.transform = 'scale(0.98) translateY(-2px)';
-        setTimeout(() => {
-            this.clickBtn.style.transform = '';
-        }, 150);
-
-        // Remove clicked class after ripple animation
-        setTimeout(() => {
-            this.clickBtn.classList.remove('clicked');
-        }, 800);
-
-        try {
-            const authHeaders = this.getAuthHeadersSafe();
-            // Check authentication first
-            const authCheck = await fetch('/api/auth/check', {
-                method: 'GET',
-                headers: authHeaders,
-                credentials: 'include'
-            });
-
-            if (!authCheck.ok) {
-                this.showAuthRequired();
-                return;
-            }
-
-            console.log('🎯 Sending click request...');
-            const response = await fetch('/api/clicker/click', {
-                method: 'POST',
-                headers: authHeaders,
-                credentials: 'include'
-            });
-
-            const data = await response.json();
-            console.log('💎 Click response:', data);
-
-            if (data.status === 'success' && data.data) {
-                const reward = data.data.reward || 0;
-                const newBalance = data.data.new_balance;
-
-                // Enhanced reward visualization
-                this.createRewardParticles(centerX, centerY, reward);
-                this.createFloatingReward(centerX, centerY, reward, data.data.is_bonus || false);
-                this.animateClickValue(reward);
-
-                // Update balance with animation
-                this.updateBalanceDisplay(newBalance);
-
-                // Show enhanced reward message
-                this.showEnhancedRewardMessage(data.data.message, reward);
-
-                // Update stats
-                this.clicks++;
-                this.totalClicksDisplay.textContent = this.clicks;
-
-                // Trigger global balance updates
-                this.triggerBalanceUpdate(newBalance, reward);
-
-                // Special bonus sound/animation
-                if (data.data.is_bonus) {
-                    this.createBonusEffect(reward);
-                }
-
-                this.lastReward = reward;
-
-            } else {
-                console.error('❌ Click failed:', data.message);
-                this.showErrorMessage(data.message || 'Click failed');
-            }
-        } catch (error) {
-            console.error('❌ Click error:', error);
-            this.showErrorMessage('Network error occurred');
-        }
-    }
-
-    // Create ripple effect
-    createClickRipple(x, y) {
-        const ripple = document.createElement('div');
-        ripple.className = 'clicker-ripple';
-        ripple.style.cssText = `
-            position: fixed;
-            left: ${x - 50}px;
-            top: ${y - 50}px;
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(59, 130, 246, 0.6) 0%, transparent 70%);
-            pointer-events: none;
-            z-index: 999;
-            animation: clickerRipple 0.6s ease-out forwards;
-        `;
-
-        // Add CSS animation
-        if (!document.querySelector('#clicker-ripple-style')) {
-            const style = document.createElement('style');
-            style.id = 'clicker-ripple-style';
-            style.textContent = `
-                @keyframes clickerRipple {
-                    0% { transform: scale(0); opacity: 1; }
-                    100% { transform: scale(2); opacity: 0; }
-                }
-            `;
-            document.head.appendChild(style);
-        }
-
-        document.body.appendChild(ripple);
-        setTimeout(() => {
-            if (ripple.parentNode) {
-                ripple.parentNode.removeChild(ripple);
-            }
-        }, 600);
-    }
-
-    // Create particle effects around click
-    createRewardParticles(x, y, amount) {
-        const particleCount = Math.min(amount / 10, 12); // Max 12 particles
-
-        for (let i = 0; i < particleCount; i++) {
-            setTimeout(() => {
-                this.createParticle(x, y);
-            }, i * 30);
-        }
-    }
-
-    createParticle(x, y) {
-        const particle = document.createElement('div');
-        particle.className = 'reward-particle';
-        particle.innerHTML = '💎';
-
-        const angle = Math.random() * Math.PI * 2;
-        const distance = 50 + Math.random() * 50;
-        const delay = Math.random() * 0.2;
-
-        particle.style.cssText = `
-            position: fixed;
-            left: ${x}px;
-            top: ${y}px;
-            font-size: ${12 + Math.random() * 8}px;
-            pointer-events: none;
-            z-index: 1000;
-            animation: particleFly 1s ease-out ${delay}s forwards;
-            --target-x: ${Math.cos(angle) * distance}px;
-            --target-y: ${Math.sin(angle) * distance}px;
-        `;
-
-        // Add particle animation CSS
-        if (!document.querySelector('#particle-style')) {
-            const style = document.createElement('style');
-            style.id = 'particle-style';
-            style.textContent = `
-                @keyframes particleFly {
-                    0% { transform: translate(0, 0) scale(1); opacity: 1; }
-                    100% { transform: translate(var(--target-x), var(--target-y)) scale(0); opacity: 0; }
-                }
-            `;
-            document.head.appendChild(style);
-        }
-
-        document.body.appendChild(particle);
-        setTimeout(() => {
-            if (particle.parentNode) {
-                particle.parentNode.removeChild(particle);
-            }
-        }, 1200);
-    }
-
-    // Create floating reward text
-    createFloatingReward(x, y, amount, isBonus = false) {
-        const floatingReward = document.createElement('div');
-        floatingReward.className = `floating-reward ${isBonus ? 'bonus-effect' : ''}`;
-        floatingReward.textContent = `+${amount}`;
-
-        floatingReward.style.cssText = `
-            position: fixed;
-            left: ${x - 30}px;
-            top: ${y - 20}px;
-            font-size: 1.5em;
-            font-weight: bold;
-            color: ${isBonus ? '#fbbf24' : '#10b981'};
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-            pointer-events: none;
-            z-index: 1000;
-            animation: rewardFloat 2s ease-out forwards;
-        `;
-
-        // Enhanced animation for bonuses
-        if (isBonus && amount >= 50) {
-            floatingReward.style.fontSize = '2em';
-            floatingReward.style.animation = 'bonusFloat 2.5s ease-out forwards';
-        }
-
-        // Add bonus animation CSS
-        if (!document.querySelector('#reward-style')) {
-            const style = document.createElement('style');
-            style.id = 'reward-style';
-            style.textContent = `
-                @keyframes rewardFloat {
-                    0% { transform: translateY(0) scale(1); opacity: 1; }
-                    100% { transform: translateY(-80px) scale(1.3); opacity: 0; }
-                }
-                @keyframes bonusFloat {
-                    0% { transform: translateY(0) scale(1) rotate(0deg); opacity: 1; }
-                    25% { transform: translateY(-40px) scale(1.5) rotate(5deg); opacity: 1; }
-                    100% { transform: translateY(-120px) scale(0.8) rotate(-5deg); opacity: 0; }
-                }
-            `;
-            document.head.appendChild(style);
-        }
-
-        document.body.appendChild(floatingReward);
-        setTimeout(() => {
-            if (floatingReward.parentNode) {
-                floatingReward.parentNode.removeChild(floatingReward);
-            }
-        }, 2500);
-    }
-
-    // Special bonus visual effects
-    createBonusEffect(amount) {
-        // Screen flash for big bonuses
-        if (amount >= 100) {
-            const flash = document.createElement('div');
-            flash.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(251, 191, 36, 0.3);
-                pointer-events: none;
-                z-index: 9999;
-                animation: bonusFlash 0.5s ease-out forwards;
-            `;
-
-            if (!document.querySelector('#bonus-flash-style')) {
-                const style = document.createElement('style');
-                style.id = 'bonus-flash-style';
-                style.textContent = `
-                    @keyframes bonusFlash {
-                        0% { opacity: 1; }
-                        100% { opacity: 0; }
-                    }
-                `;
-                document.head.appendChild(style);
-            }
-
-            document.body.appendChild(flash);
-            setTimeout(() => {
-                if (flash.parentNode) {
-                    flash.parentNode.removeChild(flash);
-                }
-            }, 500);
-        }
-
-        // Add confetti effect for jackpot
-        if (amount >= 100) {
-            this.createConfetti();
-        }
-    }
-
-    createConfetti() {
-        for (let i = 0; i < 50; i++) {
-            setTimeout(() => {
-                const confetti = document.createElement('div');
-                confetti.className = 'confetti';
-                confetti.textContent = '✨';
-                confetti.style.cssText = `
-                    position: fixed;
-                    left: ${Math.random() * 100}%;
-                    top: -10px;
-                    font-size: ${16 + Math.random() * 8}px;
-                    color: ${['#fbbf24', '#10b981', '#8b5cf6', '#ef4444'][Math.floor(Math.random() * 4)]};
-                    pointer-events: none;
-                    z-index: 9999;
-                    animation: confettiFall 3s linear forwards;
-                    transform: rotate(${Math.random() * 360}deg);
-                `;
-
-                if (!document.querySelector('#confetti-style')) {
-                    const style = document.createElement('style');
-                    style.id = 'confetti-style';
-                    style.textContent = `
-                        @keyframes confettiFall {
-                            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-                            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
-                        }
-                    `;
-                    document.head.appendChild(style);
-                }
-
-                document.body.appendChild(confetti);
-                setTimeout(() => {
-                    if (confetti.parentNode) {
-                        confetti.parentNode.removeChild(confetti);
-                    }
-                }, 3000);
-            }, i * 50);
-        }
-    }
-
-    // Animate click value display
-    animateClickValue(amount) {
-        if (this.clickValueDisplay) {
-            this.clickValueDisplay.textContent = `+${amount}`;
-            this.clickValueDisplay.style.color = amount >= 50 ? '#fbbf24' : amount >= 25 ? '#8b5cf6' : '#10b981';
-            setTimeout(() => {
-                this.clickValueDisplay.textContent = '+10-100';
-                this.clickValueDisplay.style.color = '';
-            }, 1000);
-        }
-    }
-
-    // Enhanced balance animation
-    animateBalanceGlow(change) {
-        if (!this.gemBalance) return;
-
-        // Flash animation
-        this.gemBalance.style.animation = 'balancePulse 0.8s ease-in-out';
-        setTimeout(() => {
-            this.gemBalance.style.animation = '';
-        }, 800);
-
-        // Add CSS if not exists
-        if (!document.querySelector('#balance-pulse-style')) {
-            const style = document.createElement('style');
-            style.id = 'balance-pulse-style';
-            style.textContent = `
-                @keyframes balancePulse {
-                    0%, 100% {
-                        text-shadow: 0 0 5px rgba(16, 185, 129, 0.5);
-                        transform: scale(1);
-                    }
-                    50% {
-                        text-shadow: 0 0 20px rgba(16, 185, 129, 1);
-                        transform: scale(1.1);
-                    }
-                }
-            `;
-            document.head.appendChild(style);
-        }
-    }
-
-    // Enhanced reward message
-    showEnhancedRewardMessage(message, amount) {
-        if (this.rewardMessage) {
-            this.rewardMessage.textContent = message;
-            this.rewardMessage.className = amount >= 50 ? 'alert alert-warning' : 'alert alert-success';
-            this.rewardMessage.style.display = 'block';
-            this.rewardMessage.style.animation = 'messageSlideIn 0.5s ease-out';
-
-            // Add message animation CSS
-            if (!document.querySelector('#message-style')) {
-                const style = document.createElement('style');
-                style.id = 'message-style';
-                style.textContent = `
-                    @keyframes messageSlideIn {
-                        0% { transform: translateY(-20px); opacity: 0; }
-                        100% { transform: translateY(0); opacity: 1; }
-                    }
-                `;
-                document.head.appendChild(style);
-            }
-
-            setTimeout(() => {
-                if (this.rewardMessage) {
-                    this.rewardMessage.style.display = 'none';
-                    this.rewardMessage.style.animation = '';
-                }
-            }, 2000);
-        }
-    }
-
-    showAuthRequired() {
-        this.showEnhancedRewardMessage('Please log in or enter as guest to play', 0);
-
-        // Show auth modal
-        if (window.Auth?.authModal) {
-            setTimeout(() => window.Auth.authModal.show(), 500);
-        }
-    }
-
-    showErrorMessage(message) {
-        this.showEnhancedRewardMessage(message, 0);
-    }
-
-    // Update balance display with animation
-    updateBalanceDisplay(newBalance) {
-        if (this.gemBalance) {
-            // Smooth number transition animation
-            const startValue = parseInt(this.gemBalance.textContent) || 0;
-            const endValue = Math.floor(newBalance);
-            const duration = 500;
-            const startTime = performance.now();
-
-            const animate = (currentTime) => {
-                const elapsed = currentTime - startTime;
-                const progress = Math.min(elapsed / duration, 1);
-
-                // Easing function
-                const easeOut = 1 - Math.pow(1 - progress, 3);
-                const currentValue = Math.round(startValue + (endValue - startValue) * easeOut);
-
-                this.gemBalance.textContent = currentValue;
-
-                if (progress < 1) {
-                    requestAnimationFrame(animate);
-                }
-            };
-
-            requestAnimationFrame(animate);
-        }
-    }
-
-    // Trigger global balance updates
-    triggerBalanceUpdate(newBalance, reward) {
-        // Immediate navbar update with glow
-        if (typeof window.updateNavbarBalance === 'function') {
-            console.log('⚡ Direct navbar balance update with glow:', newBalance);
-            window.updateNavbarBalance(newBalance);
-        }
-
-        // Global refresh
-        if (window.Auth?.refreshBalanceGlobally) {
-            window.Auth.refreshBalanceGlobally().catch(error => {
-                console.error('❌ Global balance refresh failed:', error);
-            });
-        }
-
-        // Dispatch balance update event
-        document.dispatchEvent(new CustomEvent('clickerRewardEarned', {
-            detail: {
-                newBalance,
-                reward,
-                isBigReward: reward >= 50
-            }
-        }));
-    }
-
-    // Safe auth headers
-    getAuthHeadersSafe() {
-        const headers = { 'Content-Type': 'application/json' };
-
-        try {
-            if (window.Auth?.getStoredToken) {
-                const token = window.Auth.getStoredToken();
-                if (token) {
-                    headers['Authorization'] = `Bearer ${token}`;
-                    return headers;
-                }
-            }
-
-            const token = localStorage.getItem('auth_token');
-            if (token) {
-                headers['Authorization'] = `Bearer ${token}`;
-                return headers;
-            }
-        } catch (e) {
-            console.warn('Error getting auth headers:', e);
-        }
-
-        return headers;
-    }
-
-    // Update balance from server
-    async updateBalance() {
-        try {
-            const authHeaders = this.getAuthHeadersSafe();
-            const response = await fetch('/api/clicker/balance', {
-                method: 'GET',
-                headers: authHeaders,
-                credentials: 'include'
-            });
-            if (response.ok) {
-                const data = await response.json();
-                if (data.status === 'success') {
-                    const newBalance = Math.floor(data.data?.gem_coins || 0);
-                    this.updateBalanceDisplay(newBalance);
-                } else {
-                    console.error('Balance check failed:', data.message);
-                }
-            }
-        } catch (error) {
-            console.error('Error checking balance:', error);
-        }
-    }
-}
-
-// Initialize enhanced clicker game
-document.addEventListener('DOMContentLoaded', function() {
-    window.ClickerGame = new EnhancedClickerGame();
-    console.log('🎮 Enhanced Clicker Game initialized with visual effects!');
-});
-
-// Test function
-window.testClickerBalanceUpdate = async function() {
-    console.log('🧪 Testing enhanced clicker balance update...');
-
-    const methods = [
-        async () => {
-            if (window.Auth?.refreshBalanceGlobally) {
-                return await window.Auth.refreshBalanceGlobally();
-            }
-            throw new Error('Auth.refreshBalanceGlobally not available');
-        },
-        async () => {
-            if (window.updateBalanceGlobally) {
-                return await window.updateBalanceGlobally();
-            }
-            throw new Error('window.updateBalanceGlobally not available');
-        }
-    ];
-
-    for (const method of methods) {
-        try {
-            const result = await method();
-            console.log('✅ Enhanced balance update test successful:', result);
-            return result;
-        } catch (error) {
-            console.log('❌ Method failed:', error.message);
-        }
-    }
-
-    console.error('💥 All enhanced balance update methods failed');
-    return null;
-};
-</script>
+<script src="{{ url_for('static', path='/js/clicker-game.js') }}"></script>
 {% endblock %}

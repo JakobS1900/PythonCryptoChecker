@@ -206,11 +206,17 @@ class CryptoRouletteEngine:
                 # game_session.status = GameStatus.COMPLETED.value  # REMOVED - stay ACTIVE
                 # game_session.completed_at = datetime.utcnow()  # REMOVED
 
-                # Process all bets for this session
+                # CRITICAL FIX: Only process bets that haven't been resolved yet
+                # (is_winner is None means the bet hasn't been processed)
+                # This prevents re-processing old bets from previous rounds
                 bets_result = await session.execute(
-                    select(GameBet).where(GameBet.game_session_id == game_session_id)
+                    select(GameBet).where(
+                        GameBet.game_session_id == game_session_id,
+                        GameBet.is_winner == None  # Only unresolved bets
+                    )
                 )
                 bets = bets_result.scalars().all()
+                print(f"[ROULETTE DEBUG] Found {len(bets)} unresolved bets to process for this spin")
 
                 total_winnings = 0
                 bet_results = []
@@ -313,15 +319,21 @@ class CryptoRouletteEngine:
         is_winner = False
         multiplier = 0.0
 
+        print(f"[ROULETTE DEBUG] Checking bet: type={bet_type}, value='{bet_value}', amount={bet.amount}")
+        print(f"[ROULETTE DEBUG] Winning: number={winning_number}, color='{winning_data['color']}', crypto={winning_data['crypto']}")
+
         if bet_type == BetType.SINGLE_NUMBER:
             if int(bet.bet_value) == winning_number:
                 is_winner = True
                 multiplier = self.payouts[bet_type]
+                print(f"[ROULETTE DEBUG] ✓ SINGLE_NUMBER WIN! multiplier={multiplier}")
 
         elif bet_type == BetType.RED_BLACK:
+            print(f"[ROULETTE DEBUG] RED_BLACK bet - comparing '{bet_value}' vs '{winning_data['color'].lower()}'")
             if winning_number != 0 and bet_value == winning_data["color"].lower():
                 is_winner = True
                 multiplier = self.payouts[bet_type]
+                print(f"[ROULETTE DEBUG] ✓ RED_BLACK WIN! multiplier={multiplier}")
 
         elif bet_type == BetType.EVEN_ODD:
             if winning_number != 0:  # 0 is neither even nor odd for betting purposes

@@ -9,7 +9,7 @@ import secrets
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Optional
-from sqlalchemy import Column, String, Float, Integer, BigInteger, Boolean, DateTime, Text, ForeignKey, JSON, Index
+from sqlalchemy import Column, String, Float, Integer, BigInteger, Boolean, DateTime, Date, Text, ForeignKey, JSON, Index
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from passlib.context import CryptContext
@@ -145,6 +145,13 @@ class User(Base):
     stock_transactions = relationship("StockTransaction", back_populates="user")
     clicker_stats = relationship("ClickerStats", back_populates="user", uselist=False)
     clicker_upgrades = relationship("ClickerUpgradePurchase", back_populates="user")
+    # Phase 2 relationships
+    clicker_prestige = relationship("ClickerPrestige", back_populates="user", uselist=False)
+    clicker_powerups = relationship("ClickerPowerup", back_populates="user")
+    clicker_powerup_cooldowns = relationship("ClickerPowerupCooldown", back_populates="user")
+    clicker_challenges = relationship("ClickerChallenge", back_populates="user")
+    clicker_leaderboard = relationship("ClickerLeaderboard", back_populates="user", uselist=False)
+    clicker_theme = relationship("ClickerTheme", back_populates="user", uselist=False)
 
     def set_password(self, password: str):
         """Hash and set password."""
@@ -862,3 +869,159 @@ class ClickerUpgradePurchase(Base):
         Index('idx_clicker_upgrade_user', 'user_id'),
         Index('idx_clicker_upgrade_type', 'upgrade_type'),
     )
+
+
+# ============================================================================
+# CLICKER PHASE 2 MODELS - Prestige, Power-ups, Challenges, Leaderboards
+# ============================================================================
+
+class ClickerPrestige(Base):
+    """User's prestige progress and permanent bonuses."""
+    __tablename__ = "clicker_prestige"
+
+    user_id = Column(String, ForeignKey("users.id"), primary_key=True)
+    prestige_level = Column(Integer, default=0, nullable=False)
+    prestige_points = Column(Integer, default=0, nullable=False)
+    total_lifetime_gems = Column(Float, default=0.0, nullable=False)
+    last_prestige_at = Column(DateTime, nullable=True)
+
+    # Prestige shop purchases (permanent bonuses)
+    has_click_master = Column(Boolean, default=False, nullable=False)  # Start with Click Power Level 2
+    has_energy_expert = Column(Boolean, default=False, nullable=False)  # Start with 120 max energy
+    has_quick_start = Column(Boolean, default=False, nullable=False)  # Start with 5,000 GEM
+    has_auto_unlock = Column(Boolean, default=False, nullable=False)  # Start with Bronze Auto-Clicker
+    has_multiplier_boost = Column(Boolean, default=False, nullable=False)  # All multipliers +10%
+    has_prestige_master = Column(Boolean, default=False, nullable=False)  # Earn 50% more PP
+
+    # Relationship
+    user = relationship("User", back_populates="clicker_prestige")
+
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+
+class ClickerPowerup(Base):
+    """Active power-ups for users."""
+    __tablename__ = "clicker_powerups"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    powerup_type = Column(String(50), nullable=False)  # 'double_rewards', 'energy_refill', etc.
+    activated_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    expires_at = Column(DateTime, nullable=True)  # Null for instant power-ups
+    is_active = Column(Boolean, default=True, nullable=False)
+
+    # Relationship
+    user = relationship("User", back_populates="clicker_powerups")
+
+    __table_args__ = (
+        Index('idx_powerup_user', 'user_id'),
+        Index('idx_powerup_active', 'user_id', 'is_active'),
+    )
+
+
+class ClickerPowerupCooldown(Base):
+    """Power-up cooldowns for users."""
+    __tablename__ = "clicker_powerup_cooldowns"
+
+    user_id = Column(String, ForeignKey("users.id"), primary_key=True)
+    powerup_type = Column(String(50), primary_key=True)
+    cooldown_ends_at = Column(DateTime, nullable=False)
+
+    # Relationship
+    user = relationship("User", back_populates="clicker_powerup_cooldowns")
+
+    __table_args__ = (
+        Index('idx_powerup_cooldown_user', 'user_id'),
+    )
+
+
+class ClickerChallenge(Base):
+    """Daily and weekly challenges for users."""
+    __tablename__ = "clicker_challenges"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    challenge_type = Column(String(50), nullable=False)  # 'daily_clicks', 'weekly_combo', etc.
+    challenge_period = Column(String(20), nullable=False)  # 'daily' or 'weekly'
+    challenge_date = Column(Date, nullable=False)  # Start date of the challenge
+
+    progress = Column(Integer, default=0, nullable=False)
+    target = Column(Integer, nullable=False)
+
+    is_completed = Column(Boolean, default=False, nullable=False)
+    completed_at = Column(DateTime, nullable=True)
+    claimed = Column(Boolean, default=False, nullable=False)
+    claimed_at = Column(DateTime, nullable=True)
+
+    # Reward info
+    reward_gems = Column(Float, default=0.0, nullable=False)
+    reward_pp = Column(Integer, default=0, nullable=False)
+
+    # Relationship
+    user = relationship("User", back_populates="clicker_challenges")
+
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    __table_args__ = (
+        Index('idx_challenge_user', 'user_id'),
+        Index('idx_challenge_user_date', 'user_id', 'challenge_date'),
+        Index('idx_challenge_active', 'user_id', 'is_completed', 'claimed'),
+    )
+
+
+class ClickerLeaderboard(Base):
+    """Leaderboard statistics for users."""
+    __tablename__ = "clicker_leaderboards"
+
+    user_id = Column(String, ForeignKey("users.id"), primary_key=True)
+
+    # All-time stats
+    total_clicks = Column(BigInteger, default=0, nullable=False)
+    best_combo = Column(Integer, default=0, nullable=False)
+    total_gems_earned = Column(Float, default=0.0, nullable=False)
+    prestige_level = Column(Integer, default=0, nullable=False)
+
+    # Daily stats (resets at midnight)
+    daily_gems_earned = Column(Float, default=0.0, nullable=False)
+    daily_last_reset = Column(Date, nullable=True)
+
+    # Speed achievements
+    first_million_seconds = Column(Integer, nullable=True)  # Time to reach 1M GEM (seconds)
+    first_million_achieved_at = Column(DateTime, nullable=True)
+
+    # Relationship
+    user = relationship("User", back_populates="clicker_leaderboard")
+
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    __table_args__ = (
+        Index('idx_leaderboard_clicks', 'total_clicks'),
+        Index('idx_leaderboard_combo', 'best_combo'),
+        Index('idx_leaderboard_gems', 'total_gems_earned'),
+        Index('idx_leaderboard_prestige', 'prestige_level'),
+        Index('idx_leaderboard_daily', 'daily_gems_earned'),
+    )
+
+
+class ClickerTheme(Base):
+    """Visual customization preferences for users."""
+    __tablename__ = "clicker_themes"
+
+    user_id = Column(String, ForeignKey("users.id"), primary_key=True)
+
+    # Active themes
+    button_theme = Column(String(50), default='classic_blue', nullable=False)
+    particle_effect = Column(String(50), default='gem_burst', nullable=False)
+    background_theme = Column(String(50), default='gradient_purple', nullable=False)
+
+    # Unlocked themes (JSON arrays)
+    unlocked_button_themes = Column(Text, nullable=True)  # JSON: ['classic_blue', 'green_machine', ...]
+    unlocked_particle_effects = Column(Text, nullable=True)
+    unlocked_backgrounds = Column(Text, nullable=True)
+
+    # Relationship
+    user = relationship("User", back_populates="clicker_theme")
+
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
