@@ -24,52 +24,52 @@ class BotGamblingPersonality:
     def __init__(self, personality_type: BotPersonalityType):
         self.personality_type = personality_type
 
-        # Define betting parameters based on personality
+        # Define betting parameters based on personality (GEM amounts ~ USD equivalent)
         if personality_type == BotPersonalityType.CONSERVATIVE:
-            self.min_bet = 10
-            self.max_bet = 100
+            self.min_bet = 50
+            self.max_bet = 2000  # $50-$2,000
             self.bet_frequency = 0.6  # 60% chance to bet each round
             self.strategy_preference = ["red_black", "even_odd"]  # Safer bets
             self.risk_tolerance = 0.3
 
         elif personality_type == BotPersonalityType.AGGRESSIVE:
-            self.min_bet = 50
-            self.max_bet = 500
+            self.min_bet = 500
+            self.max_bet = 10000  # $500-$10,000
             self.bet_frequency = 0.8  # 80% chance to bet each round
             self.strategy_preference = ["single_number", "color", "category"]  # Riskier bets
             self.risk_tolerance = 0.8
 
         elif personality_type == BotPersonalityType.TREND_FOLLOWER:
-            self.min_bet = 25
-            self.max_bet = 200
+            self.min_bet = 200
+            self.max_bet = 5000  # $200-$5,000
             self.bet_frequency = 0.7
             self.strategy_preference = ["red_black", "even_odd", "high_low"]  # Follow trends
             self.risk_tolerance = 0.5
 
         elif personality_type == BotPersonalityType.OPPORTUNISTIC:
-            self.min_bet = 20
-            self.max_bet = 300
+            self.min_bet = 300
+            self.max_bet = 7500  # $300-$7,500
             self.bet_frequency = 0.5  # Bets less frequently, but larger when they do
             self.strategy_preference = ["single_number", "color"]  # Favorite-based
             self.risk_tolerance = 0.6
 
         elif personality_type == BotPersonalityType.PREDICTABLE_GAMBLER:
-            self.min_bet = 15
-            self.max_bet = 150
+            self.min_bet = 100
+            self.max_bet = 3000  # $100-$3,000
             self.bet_frequency = 0.9  # Bets most rounds
             self.strategy_preference = ["even_odd"]  # Pattern-based
             self.risk_tolerance = 0.4
 
         elif personality_type == BotPersonalityType.HIGHROLLER:
-            self.min_bet = 100
-            self.max_bet = 1000  # High roller bets
+            self.min_bet = 5000
+            self.max_bet = 50000  # $5,000-$50,000 - High roller bets
             self.bet_frequency = 0.3  # Bets less often but big when they do
             self.strategy_preference = ["single_number", "category"]  # High risk/high reward
             self.risk_tolerance = 0.9
 
         elif personality_type == BotPersonalityType.TIMID:
-            self.min_bet = 10
-            self.max_bet = 50
+            self.min_bet = 50
+            self.max_bet = 500  # $50-$500
             self.bet_frequency = 0.2  # Rarely bets
             self.strategy_preference = ["red_black", "high_low"]  # Very safe
             self.risk_tolerance = 0.1
@@ -244,15 +244,15 @@ class BotPopulationManager:
                     await session.commit()
                     await session.refresh(bot_user)
 
-                    # Create wallet with starting balance (2000 GEM for bots)
-                    await portfolio_manager.create_wallet(str(bot_user.id), initial_gems=2000.0)
+                    # Create wallet with starting balance (500,000 GEM for bots to support higher bets)
+                    await portfolio_manager.create_wallet(str(bot_user.id), initial_gems=500000.0)
 
                     # Verify wallet was created correctly
                     balance = await portfolio_manager.get_user_balance(str(bot_user.id))
-                    if balance < 2000.0:
+                    if balance < 500000.0:
                         print(f">> ERROR: Bot wallet for {username} created with insufficient balance: {balance} GEM")
                         # Try to correct the balance
-                        await portfolio_manager.add_gems(str(bot_user.id), 2000.0 - balance, "Bot balance correction")
+                        await portfolio_manager.add_gems(str(bot_user.id), 500000.0 - balance, "Bot balance correction")
                     else:
                         print(f">> SUCCESS: Bot {username} wallet created with {balance} GEM")
 
@@ -276,13 +276,13 @@ class BotPopulationManager:
                 balance = await portfolio_manager.get_user_balance(str(bot_user.id))
                 personality = BotPersonalityType(bot_user.bot_personality)
 
-                # CRITICAL: Repair corrupted bot balances during load
-                if balance < 2000.0:
-                    print(f">> CRITICAL: Bot {bot_user.username} has corrupted balance: {balance} GEM. Repairing...")
-                    balance_diff = 2000.0 - balance
-                    await portfolio_manager.add_gems(str(bot_user.id), balance_diff, "Bot balance repair")
-                    balance = 2000.0
-                    print(f">> SUCCESS: Repaired bot {bot_user.username} balance to {balance} GEM")
+                # CRITICAL: Repair corrupted bot balances during load (increase to 500k to support higher bets)
+                if balance < 500000.0:
+                    print(f">> CRITICAL: Bot {bot_user.username} has low balance: {balance} GEM. Upgrading to 500k...")
+                    balance_diff = 500000.0 - balance
+                    await portfolio_manager.add_gems(str(bot_user.id), balance_diff, "Bot balance upgrade for higher betting")
+                    balance = 500000.0
+                    print(f">> SUCCESS: Upgraded bot {bot_user.username} balance to {balance} GEM")
 
                 # Create BotGambler instance
                 bot = BotGambler(str(bot_user.id), personality, balance)

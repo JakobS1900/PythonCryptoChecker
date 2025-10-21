@@ -36,6 +36,11 @@ context_knowledge.log
 .claude/
 .claude-flow/
 
+# 🧪 TEST FILES (Ignore temporary test scripts)
+test_*.py
+*_test.py
+test_screenshots/
+
 # 💻 IDE & DEVELOPMENT
 .vscode/
 

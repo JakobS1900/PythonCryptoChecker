@@ -12,6 +12,8 @@ from database.models import User
 from services.clicker_service import ClickerService
 from services.prestige_service import PrestigeService
 from services.powerup_service import PowerupService
+from services.clicker_achievement_service import ClickerAchievementService
+from services.clicker_leaderboard_service import ClickerLeaderboardService
 
 router = APIRouter()
 
@@ -24,6 +26,8 @@ security = HTTPBearer(auto_error=False)
 clicker_service = ClickerService()
 prestige_service = PrestigeService()
 powerup_service = PowerupService()
+achievement_service = ClickerAchievementService()
+leaderboard_service = ClickerLeaderboardService()
 
 
 async def get_current_user_id(
@@ -66,6 +70,11 @@ async def handle_click(
 
         # Process click through service
         result = await clicker_service.handle_click(user_id, db)
+
+        # Check for newly unlocked achievements
+        newly_unlocked = await achievement_service.check_and_unlock_achievements(db, user_id)
+        if newly_unlocked:
+            result["achievements_unlocked"] = newly_unlocked
 
         return {
             "success": True,
@@ -173,6 +182,11 @@ async def purchase_upgrade(
 
         # Purchase upgrade
         result = await clicker_service.purchase_upgrade(user_id, category, db)
+
+        # Check for newly unlocked achievements (upgrade-related)
+        newly_unlocked = await achievement_service.check_and_unlock_achievements(db, user_id)
+        if newly_unlocked:
+            result["achievements_unlocked"] = newly_unlocked
 
         return {
             "success": True,
@@ -298,6 +312,13 @@ async def perform_prestige(
             return {"success": False, "error": "Not authenticated"}
 
         success, message, data = await prestige_service.perform_prestige(user_id, db)
+
+        # Check for newly unlocked achievements (prestige-related)
+        if success:
+            newly_unlocked = await achievement_service.check_and_unlock_achievements(db, user_id)
+            if newly_unlocked:
+                data["achievements_unlocked"] = newly_unlocked
+
         return {"success": success, "message": message, "data": data}
 
     except Exception as e:
@@ -427,3 +448,177 @@ async def get_active_powerups(
     except Exception as e:
         print(f">> Error in get_active_powerups: {e}")
         return {"success": False, "error": "Failed to retrieve active power-ups"}
+
+
+# ========================================
+# PHASE 3A: ACHIEVEMENTS ENDPOINTS
+# ========================================
+
+@router.get("/achievements")
+async def get_achievements(
+    request: Request,
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+    db: AsyncSession = Depends(get_db)
+):
+    """Get all achievements with unlock status for current user"""
+    try:
+        user_id = await get_current_user_id(request, credentials)
+        if not user_id:
+            return {"success": False, "error": "Not authenticated"}
+
+        achievement_data = await achievement_service.get_user_achievements(db, user_id)
+        return {"success": True, "data": achievement_data}
+
+    except Exception as e:
+        print(f">> Error in get_achievements: {e}")
+        return {"success": False, "error": "Failed to retrieve achievements"}
+
+
+@router.get("/achievements/unlocked")
+async def get_unlocked_achievements(
+    request: Request,
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+    db: AsyncSession = Depends(get_db)
+):
+    """Get recently unlocked achievements"""
+    try:
+        user_id = await get_current_user_id(request, credentials)
+        if not user_id:
+            return {"success": False, "error": "Not authenticated"}
+
+        recent_unlocks = await achievement_service.get_recent_unlocks(db, user_id, limit=10)
+        return {"success": True, "data": recent_unlocks}
+
+    except Exception as e:
+        print(f">> Error in get_unlocked_achievements: {e}")
+        return {"success": False, "error": "Failed to retrieve unlocked achievements"}
+
+
+@router.post("/achievements/{achievement_id}/claim")
+async def claim_achievement_reward(
+    achievement_id: str,
+    request: Request,
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+    db: AsyncSession = Depends(get_db)
+):
+    """Claim reward for an unlocked achievement"""
+    try:
+        user_id = await get_current_user_id(request, credentials)
+        if not user_id:
+            return {"success": False, "error": "Not authenticated"}
+
+        reward = await achievement_service.claim_achievement_reward(db, user_id, achievement_id)
+
+        if not reward:
+            return {"success": False, "error": "Achievement not unlocked or reward already claimed"}
+
+        return {"success": True, "data": reward}
+
+    except Exception as e:
+        print(f">> Error in claim_achievement_reward: {e}")
+        return {"success": False, "error": "Failed to claim achievement reward"}
+
+
+# ===============================================
+# PHASE 3B: LEADERBOARDS
+# ===============================================
+
+@router.get("/leaderboards/{category}")
+async def get_leaderboard(
+    category: str,
+    limit: int = 100,
+    offset: int = 0,
+    request: Request = None,
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get top players for a specific leaderboard category.
+
+    Categories:
+    - total_clicks: Most total clicks
+    - best_combo: Highest combo multiplier
+    - total_gems: Most GEM earned
+    - prestige: Highest prestige level
+    - daily_gems: Most GEM earned today
+    - speedrun: Fastest to reach 1 million GEM
+    """
+    try:
+        # Validate category
+        if category not in leaderboard_service.LEADERBOARD_CATEGORIES:
+            return {
+                "success": False,
+                "error": f"Invalid category. Valid categories: {', '.join(leaderboard_service.LEADERBOARD_CATEGORIES.keys())}"
+            }
+
+        # Get leaderboard data
+        leaderboard_data = await leaderboard_service.get_leaderboard(
+            db,
+            category=category,
+            limit=limit,
+            offset=offset
+        )
+
+        return {
+            "success": True,
+            "data": {
+                "category": category,
+                "category_name": leaderboard_service.LEADERBOARD_CATEGORIES[category]["name"],
+                "icon": leaderboard_service.LEADERBOARD_CATEGORIES[category]["icon"],
+                "players": leaderboard_data,
+                "total_shown": len(leaderboard_data)
+            }
+        }
+
+    except Exception as e:
+        print(f">> Error in get_leaderboard: {e}")
+        return {"success": False, "error": "Failed to retrieve leaderboard"}
+
+
+@router.get("/leaderboards/player/ranks")
+async def get_player_ranks(
+    request: Request,
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+    db: AsyncSession = Depends(get_db)
+):
+    """Get current user's rank across all leaderboard categories"""
+    try:
+        user_id = await get_current_user_id(request, credentials)
+        if not user_id:
+            return {"success": False, "error": "Not authenticated"}
+
+        ranks = await leaderboard_service.get_player_ranks(db, user_id)
+
+        return {
+            "success": True,
+            "data": {
+                "user_id": user_id,
+                "ranks": ranks
+            }
+        }
+
+    except Exception as e:
+        print(f">> Error in get_player_ranks: {e}")
+        return {"success": False, "error": "Failed to retrieve player ranks"}
+
+
+@router.get("/leaderboards/speedrun/top")
+async def get_top_speedrunners(
+    limit: int = 10,
+    db: AsyncSession = Depends(get_db)
+):
+    """Get top speedrunners (fastest to reach 1 million GEM)"""
+    try:
+        speedrunners = await leaderboard_service.get_top_speedrunners(db, limit=limit)
+
+        return {
+            "success": True,
+            "data": {
+                "speedrunners": speedrunners,
+                "total": len(speedrunners)
+            }
+        }
+
+    except Exception as e:
+        print(f">> Error in get_top_speedrunners: {e}")
+        return {"success": False, "error": "Failed to retrieve speedrunners"}

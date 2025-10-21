@@ -43,8 +43,12 @@ class EnhancedClickerGame {
         this.setupEventListeners();
         await this.loadStats();
         await this.loadUpgrades();
+        await this.loadPrestigeData();  // Phase 2
+        await this.loadPowerupsData();  // Phase 2
         this.startEnergyRegen();
         this.startAutoClickerTick();
+        this.startPrestigeRefresh();    // Phase 2
+        this.startPowerupsRefresh();    // Phase 2
 
         console.log('Enhanced Clicker Game initialized!');
     }
@@ -243,9 +247,14 @@ class EnhancedClickerGame {
                 // Reset combo timeout
                 this.resetComboTimeout();
 
+                // Phase 3A: Check for achievement unlocks
+                if (data.data.achievements_unlocked && window.achievementsManager) {
+                    window.achievementsManager.handleAchievementUnlocks(data.data.achievements_unlocked);
+                }
+
             } else {
-                console.error('Click failed:', data.message);
-                this.showMessage(data.message || 'Click failed', 'error');
+                console.error('Click failed:', data.error);
+                this.showMessage(data.error || 'Click failed', 'error');
             }
         } catch (error) {
             console.error('Click error:', error);

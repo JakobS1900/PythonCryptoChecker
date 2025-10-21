@@ -24,6 +24,7 @@ from config.clicker_upgrades import (
 )
 from services.prestige_service import PrestigeService
 from services.powerup_service import PowerupService
+from services.clicker_leaderboard_service import ClickerLeaderboardService
 
 
 class ClickerService:
@@ -33,6 +34,7 @@ class ClickerService:
         self.active_combos = {}  # user_id -> {"count": int, "last_click": datetime}
         self.prestige_service = PrestigeService()
         self.powerup_service = PowerupService()
+        self.leaderboard_service = ClickerLeaderboardService()
 
     async def get_or_create_stats(self, user_id: str, db: AsyncSession) -> ClickerStats:
         """Get or create clicker stats for a user."""
@@ -332,6 +334,17 @@ class ClickerService:
         await db.commit()
         await db.refresh(wallet)
         await db.refresh(stats)
+
+        # Update leaderboard stats (Phase 3B)
+        await self.leaderboard_service.update_leaderboard_stats(
+            db,
+            user_id=user_id,
+            total_clicks=stats.total_clicks,
+            best_combo=stats.best_combo,
+            total_gems_earned=stats.total_gems_earned,
+            prestige_level=prestige.prestige_level,
+            daily_gems_earned=stats.total_gems_earned  # Will handle daily reset separately
+        )
 
         return {
             "success": True,

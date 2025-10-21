@@ -179,6 +179,19 @@ class PrestigeService:
         await db.refresh(prestige)
         await db.refresh(stats)
 
+        # Update leaderboard (Phase 3B) - reset most stats but update prestige level
+        from services.clicker_leaderboard_service import ClickerLeaderboardService
+        leaderboard_service = ClickerLeaderboardService()
+        await leaderboard_service.update_leaderboard_stats(
+            db,
+            user_id=user_id,
+            total_clicks=0,  # Reset
+            best_combo=0,  # Reset
+            total_gems_earned=0.0,  # Reset
+            prestige_level=prestige.prestige_level,  # Updated
+            daily_gems_earned=0.0  # Reset
+        )
+
         # Calculate new bonuses
         new_bonuses = calculate_prestige_bonuses(prestige.prestige_points)
 

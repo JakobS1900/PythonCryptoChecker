@@ -135,6 +135,201 @@
             </div>
         </div>
     </div>
+
+    <!-- Phase 2: Prestige & Power-ups Row -->
+    <div class="row mt-4">
+        <!-- Prestige Panel -->
+        <div class="col-lg-6 mb-4">
+            <div class="card-modern prestige-card">
+                <div class="prestige-header">
+                    <h3><i class="bi bi-arrow-repeat" style="color: var(--warning);"></i> Prestige System</h3>
+                </div>
+                <div class="prestige-body">
+                    <!-- Current PP Display -->
+                    <div class="prestige-stats">
+                        <div class="prestige-stat-item">
+                            <div class="prestige-stat-label">Prestige Points</div>
+                            <div class="prestige-stat-value" id="prestige-points">0</div>
+                        </div>
+                        <div class="prestige-stat-item">
+                            <div class="prestige-stat-label">Prestige Level</div>
+                            <div class="prestige-stat-value" id="prestige-level">0</div>
+                        </div>
+                    </div>
+
+                    <!-- Prestige Preview -->
+                    <div class="prestige-preview" id="prestige-preview">
+                        <div class="prestige-preview-title">Prestige Preview</div>
+                        <div class="prestige-preview-content">
+                            <div class="prestige-preview-item">
+                                <span>PP if you prestige now:</span>
+                                <span class="prestige-preview-value" id="preview-pp">0</span>
+                            </div>
+                            <div class="prestige-preview-bonuses" id="preview-bonuses">
+                                <div class="bonus-item">+<span id="preview-click-bonus">0</span>% Click Bonus</div>
+                                <div class="bonus-item">+<span id="preview-energy-bonus">0</span>% Energy Regen</div>
+                                <div class="bonus-item">+<span id="preview-chance-bonus">0</span>% Bonus Chance</div>
+                            </div>
+                        </div>
+                        <button class="btn-prestige" id="prestige-btn" disabled>
+                            <i class="bi bi-arrow-repeat"></i> PRESTIGE NOW
+                        </button>
+                        <div class="prestige-warning" id="prestige-warning">
+                            Requires 100,000 total GEM earned
+                        </div>
+                    </div>
+
+                    <!-- Prestige Shop -->
+                    <div class="prestige-shop" id="prestige-shop">
+                        <div class="prestige-shop-title">Prestige Shop (Spend PP)</div>
+                        <div class="prestige-shop-items" id="prestige-shop-items">
+                            <!-- Dynamically populated -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Power-ups Panel -->
+        <div class="col-lg-6 mb-4">
+            <div class="card-modern powerups-card">
+                <div class="powerups-header">
+                    <h3><i class="bi bi-lightning-charge-fill" style="color: var(--success);"></i> Power-ups</h3>
+                </div>
+                <div class="powerups-body">
+                    <!-- Active Power-ups Display -->
+                    <div class="active-powerups" id="active-powerups">
+                        <div class="active-powerups-title">Active Power-ups</div>
+                        <div class="active-powerups-list" id="active-powerups-list">
+                            <div class="no-active-powerups">No active power-ups</div>
+                        </div>
+                    </div>
+
+                    <!-- Power-ups Shop -->
+                    <div class="powerups-shop" id="powerups-shop">
+                        <div class="powerups-shop-title">Available Power-ups</div>
+                        <div class="powerups-shop-items" id="powerups-shop-items">
+                            <!-- Dynamically populated -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Phase 3A: Achievements Panel -->
+    <div class="row mt-4">
+        <div class="col-12 mb-4">
+            <div class="card-modern achievements-card">
+                <div class="achievements-header">
+                    <h3><i class="bi bi-trophy-fill" style="color: var(--warning);"></i> Achievements</h3>
+                    <div class="achievements-progress">
+                        <span id="achievements-unlocked">0</span>/<span id="achievements-total">23</span> Unlocked
+                        (<span id="achievements-percentage">0</span>%)
+                    </div>
+                </div>
+                <div class="achievements-body">
+                    <!-- Category Tabs -->
+                    <div class="achievements-tabs" id="achievements-tabs">
+                        <button class="achievement-tab active" data-category="all">
+                            <i class="bi bi-trophy"></i> All
+                        </button>
+                        <button class="achievement-tab" data-category="clicks">
+                            <i class="bi bi-mouse-fill"></i> Clicks
+                        </button>
+                        <button class="achievement-tab" data-category="earning">
+                            <i class="bi bi-gem"></i> Earning
+                        </button>
+                        <button class="achievement-tab" data-category="combos">
+                            <i class="bi bi-lightning-charge-fill"></i> Combos
+                        </button>
+                        <button class="achievement-tab" data-category="prestige">
+                            <i class="bi bi-arrow-repeat"></i> Prestige
+                        </button>
+                        <button class="achievement-tab" data-category="special">
+                            <i class="bi bi-star-fill"></i> Special
+                        </button>
+                        <button class="achievement-tab" data-category="upgrades">
+                            <i class="bi bi-shop"></i> Upgrades
+                        </button>
+                    </div>
+
+                    <!-- Achievements Grid -->
+                    <div class="achievements-grid" id="achievements-grid">
+                        <div class="achievements-loading">Loading achievements...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Achievement Unlock Notification -->
+<div class="achievement-notification" id="achievement-notification" style="display: none;">
+    <div class="achievement-notification-inner">
+        <div class="achievement-notification-icon">
+            <i class="bi bi-trophy-fill"></i>
+        </div>
+        <div class="achievement-notification-content">
+            <div class="achievement-notification-title">Achievement Unlocked!</div>
+            <div class="achievement-notification-name" id="notification-achievement-name"></div>
+            <div class="achievement-notification-reward">
+                +<span id="notification-reward-gems"></span> GEM
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Phase 3B: Leaderboards Panel -->
+<div class="row mt-4">
+    <div class="col-12 mb-4">
+        <div class="card-modern leaderboards-card">
+            <div class="leaderboards-header">
+                <h3><i class="bi bi-trophy"></i> Leaderboards</h3>
+                <div class="player-ranks-summary" id="player-ranks-summary">
+                    <!-- Player's best rank displayed here -->
+                </div>
+            </div>
+            <div class="leaderboards-body">
+                <!-- Category Tabs -->
+                <div class="leaderboard-tabs" id="leaderboard-tabs">
+                    <button class="leaderboard-tab active" data-category="total_clicks">
+                        <i class="bi bi-mouse"></i>
+                        <span>Total Clicks</span>
+                    </button>
+                    <button class="leaderboard-tab" data-category="best_combo">
+                        <i class="bi bi-lightning-charge"></i>
+                        <span>Best Combo</span>
+                    </button>
+                    <button class="leaderboard-tab" data-category="total_gems">
+                        <i class="bi bi-gem"></i>
+                        <span>Total GEM</span>
+                    </button>
+                    <button class="leaderboard-tab" data-category="prestige">
+                        <i class="bi bi-star"></i>
+                        <span>Prestige</span>
+                    </button>
+                    <button class="leaderboard-tab" data-category="daily_gems">
+                        <i class="bi bi-calendar-day"></i>
+                        <span>Daily GEM</span>
+                    </button>
+                    <button class="leaderboard-tab" data-category="speedrun">
+                        <i class="bi bi-stopwatch"></i>
+                        <span>Race to 1M</span>
+                    </button>
+                </div>
+
+                <!-- Leaderboard Content -->
+                <div class="leaderboard-content" id="leaderboard-content">
+                    <div class="leaderboard-loading">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <style>
@@ -576,7 +771,865 @@
         min-width: 100%;
     }
 }
+
+/* ============================================
+   PHASE 2: PRESTIGE & POWER-UPS STYLES
+   ============================================ */
+
+/* Prestige Panel */
+.prestige-card {
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(245, 158, 11, 0.05));
+    border: 2px solid rgba(251, 191, 36, 0.3);
+}
+
+.prestige-header {
+    padding: var(--space-4);
+    border-bottom: 2px solid rgba(251, 191, 36, 0.2);
+    text-align: center;
+}
+
+.prestige-header h3 {
+    margin: 0;
+    color: var(--warning);
+    font-size: 1.5rem;
+}
+
+.prestige-body {
+    padding: var(--space-4);
+}
+
+.prestige-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+    margin-bottom: var(--space-4);
+}
+
+.prestige-stat-item {
+    background: rgba(15, 23, 42, 0.6);
+    padding: var(--space-4);
+    border-radius: 12px;
+    text-align: center;
+    border: 2px solid rgba(251, 191, 36, 0.3);
+}
+
+.prestige-stat-label {
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: var(--space-2);
+}
+
+.prestige-stat-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--warning);
+}
+
+.prestige-preview {
+    background: rgba(15, 23, 42, 0.6);
+    padding: var(--space-4);
+    border-radius: 12px;
+    margin-bottom: var(--space-4);
+    border: 2px solid rgba(251, 191, 36, 0.2);
+}
+
+.prestige-preview-title {
+    font-size: 1.125rem;
+    font-weight: bold;
+    color: var(--warning);
+    margin-bottom: var(--space-3);
+    text-align: center;
+}
+
+.prestige-preview-content {
+    margin-bottom: var(--space-3);
+}
+
+.prestige-preview-item {
+    display: flex;
+    justify-content: space-between;
+    padding: var(--space-2) 0;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.prestige-preview-value {
+    font-weight: bold;
+    color: var(--warning);
+    font-size: 1.25rem;
+}
+
+.prestige-preview-bonuses {
+    margin-top: var(--space-3);
+    padding-top: var(--space-3);
+    border-top: 1px solid rgba(251, 191, 36, 0.2);
+}
+
+.bonus-item {
+    padding: var(--space-2);
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.875rem;
+}
+
+.bonus-item span {
+    color: var(--success);
+    font-weight: bold;
+}
+
+.btn-prestige {
+    width: 100%;
+    padding: var(--space-4);
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-size: 1.25rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+}
+
+.btn-prestige:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(251, 191, 36, 0.4);
+}
+
+.btn-prestige:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.prestige-warning {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.875rem;
+    margin-top: var(--space-2);
+}
+
+.prestige-shop {
+    margin-top: var(--space-4);
+}
+
+.prestige-shop-title {
+    font-size: 1.125rem;
+    font-weight: bold;
+    color: var(--warning);
+    margin-bottom: var(--space-3);
+    text-align: center;
+}
+
+.prestige-shop-items {
+    display: grid;
+    gap: var(--space-3);
+}
+
+.prestige-shop-item {
+    background: rgba(15, 23, 42, 0.5);
+    border: 2px solid rgba(251, 191, 36, 0.2);
+    border-radius: 12px;
+    padding: var(--space-3);
+    transition: all 0.3s ease;
+}
+
+.prestige-shop-item:hover {
+    border-color: rgba(251, 191, 36, 0.4);
+    transform: translateX(3px);
+}
+
+.prestige-shop-item.owned {
+    opacity: 0.6;
+    border-color: var(--success);
+}
+
+.prestige-shop-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-2);
+}
+
+.prestige-shop-item-name {
+    font-weight: bold;
+    color: var(--warning);
+}
+
+.prestige-shop-item-cost {
+    color: var(--warning);
+    font-weight: bold;
+}
+
+.prestige-shop-item-desc {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.875rem;
+    margin-bottom: var(--space-2);
+}
+
+.prestige-shop-item-btn {
+    width: 100%;
+    padding: var(--space-2);
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.prestige-shop-item-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+}
+
+.prestige-shop-item-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Power-ups Panel */
+.powerups-card {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.05));
+    border: 2px solid rgba(16, 185, 129, 0.3);
+}
+
+.powerups-header {
+    padding: var(--space-4);
+    border-bottom: 2px solid rgba(16, 185, 129, 0.2);
+    text-align: center;
+}
+
+.powerups-header h3 {
+    margin: 0;
+    color: var(--success);
+    font-size: 1.5rem;
+}
+
+.powerups-body {
+    padding: var(--space-4);
+}
+
+.active-powerups {
+    background: rgba(15, 23, 42, 0.6);
+    padding: var(--space-4);
+    border-radius: 12px;
+    margin-bottom: var(--space-4);
+    border: 2px solid rgba(16, 185, 129, 0.2);
+}
+
+.active-powerups-title {
+    font-size: 1.125rem;
+    font-weight: bold;
+    color: var(--success);
+    margin-bottom: var(--space-3);
+    text-align: center;
+}
+
+.active-powerups-list {
+    display: grid;
+    gap: var(--space-2);
+}
+
+.no-active-powerups {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.5);
+    padding: var(--space-3);
+    font-style: italic;
+}
+
+.active-powerup-item {
+    background: rgba(16, 185, 129, 0.2);
+    padding: var(--space-3);
+    border-radius: 8px;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    animation: powerupPulse 2s infinite;
+}
+
+@keyframes powerupPulse {
+    0%, 100% { box-shadow: 0 0 10px rgba(16, 185, 129, 0.3); }
+    50% { box-shadow: 0 0 20px rgba(16, 185, 129, 0.6); }
+}
+
+.active-powerup-name {
+    font-weight: bold;
+    color: var(--success);
+}
+
+.active-powerup-time {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.875rem;
+}
+
+.powerups-shop {
+    margin-top: var(--space-4);
+}
+
+.powerups-shop-title {
+    font-size: 1.125rem;
+    font-weight: bold;
+    color: var(--success);
+    margin-bottom: var(--space-3);
+    text-align: center;
+}
+
+.powerups-shop-items {
+    display: grid;
+    gap: var(--space-3);
+}
+
+.powerup-item {
+    background: rgba(15, 23, 42, 0.5);
+    border: 2px solid rgba(16, 185, 129, 0.2);
+    border-radius: 12px;
+    padding: var(--space-3);
+    transition: all 0.3s ease;
+}
+
+.powerup-item:hover {
+    border-color: rgba(16, 185, 129, 0.4);
+    transform: translateX(3px);
+}
+
+.powerup-item.on-cooldown {
+    opacity: 0.6;
+}
+
+.powerup-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-2);
+}
+
+.powerup-item-name {
+    font-weight: bold;
+    color: var(--success);
+}
+
+.powerup-item-cost {
+    color: var(--gem);
+    font-weight: bold;
+}
+
+.powerup-item-desc {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.875rem;
+    margin-bottom: var(--space-2);
+}
+
+.powerup-item-duration {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.75rem;
+    margin-bottom: var(--space-2);
+}
+
+.powerup-item-cooldown {
+    color: var(--danger);
+    font-size: 0.875rem;
+    font-weight: bold;
+    margin-bottom: var(--space-2);
+}
+
+.powerup-item-btn {
+    width: 100%;
+    padding: var(--space-2);
+    background: linear-gradient(135deg, #10b981, #059669);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.powerup-item-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+}
+
+.powerup-item-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Phase 3A: Achievements Panel */
+.achievements-card {
+    background: rgba(30, 41, 59, 0.95) !important;
+    backdrop-filter: blur(20px);
+    border: none !important;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    border-radius: 20px;
+}
+
+.achievements-header {
+    padding: var(--space-6);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.achievements-header h3 {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: bold;
+    color: var(--text-primary);
+}
+
+.achievements-progress {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.achievements-body {
+    padding: var(--space-6);
+}
+
+.achievements-tabs {
+    display: flex;
+    gap: var(--space-2);
+    margin-bottom: var(--space-6);
+    flex-wrap: wrap;
+}
+
+.achievement-tab {
+    padding: var(--space-3) var(--space-4);
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.achievement-tab:hover {
+    background: rgba(255,255,255,0.1);
+    transform: translateY(-2px);
+}
+
+.achievement-tab.active {
+    background: linear-gradient(135deg, var(--primary), var(--purple));
+    border-color: var(--primary);
+    color: white;
+}
+
+.achievements-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--space-4);
+}
+
+.achievements-loading {
+    text-align: center;
+    padding: var(--space-8);
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+}
+
+.achievement-item {
+    background: rgba(255,255,255,0.05);
+    border: 2px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: var(--space-4);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.achievement-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+}
+
+.achievement-item.unlocked {
+    border-color: var(--warning);
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(251, 146, 60, 0.05));
+}
+
+.achievement-item.locked {
+    opacity: 0.6;
+    filter: grayscale(0.5);
+}
+
+.achievement-rarity-glow {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    opacity: 0.15;
+    pointer-events: none;
+}
+
+.achievement-item-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-bottom: var(--space-3);
+}
+
+.achievement-icon {
+    font-size: 2rem;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.1);
+    border-radius: 10px;
+}
+
+.achievement-item.unlocked .achievement-icon {
+    background: linear-gradient(135deg, var(--warning), rgba(251, 146, 60, 0.8));
+}
+
+.achievement-info {
+    flex: 1;
+}
+
+.achievement-name {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.achievement-rarity {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.achievement-description {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-3);
+    line-height: 1.4;
+}
+
+.achievement-requirement {
+    font-size: 0.85rem;
+    color: var(--text-tertiary);
+    font-style: italic;
+    margin-bottom: var(--space-3);
+}
+
+.achievement-reward {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: var(--space-3);
+    border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+.achievement-reward-gems {
+    font-size: 1rem;
+    font-weight: bold;
+    color: var(--gem);
+}
+
+.achievement-reward-points {
+    font-size: 0.9rem;
+    color: var(--warning);
+    font-weight: 600;
+}
+
+.achievement-claim-btn {
+    width: 100%;
+    padding: var(--space-2) var(--space-3);
+    background: linear-gradient(135deg, var(--success), #16a34a);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: var(--space-3);
+}
+
+.achievement-claim-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4);
+}
+
+.achievement-claimed-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    background: rgba(34, 197, 94, 0.2);
+    border: 1px solid var(--success);
+    border-radius: 6px;
+    color: var(--success);
+    font-size: 0.8rem;
+    font-weight: bold;
+    margin-top: var(--space-3);
+}
+
+/* Achievement Unlock Notification */
+.achievement-notification {
+    position: fixed;
+    top: 100px;
+    right: 20px;
+    z-index: 10000;
+    animation: slideInRight 0.5s ease-out;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.achievement-notification-inner {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.95), rgba(251, 146, 60, 0.95));
+    backdrop-filter: blur(10px);
+    border: 2px solid var(--warning);
+    border-radius: 15px;
+    padding: var(--space-4);
+    box-shadow: 0 10px 30px rgba(245, 158, 11, 0.5);
+    display: flex;
+    gap: var(--space-4);
+    min-width: 300px;
+    animation: pulse 0.5s ease-in-out;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.achievement-notification-icon {
+    font-size: 3rem;
+    color: white;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+
+.achievement-notification-content {
+    flex: 1;
+}
+
+.achievement-notification-title {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: white;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.achievement-notification-name {
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: white;
+    margin-bottom: 8px;
+}
+
+.achievement-notification-reward {
+    font-size: 1rem;
+    font-weight: bold;
+    color: rgba(255,255,255,0.9);
+}
+
+/* ===============================================
+   PHASE 3B: LEADERBOARDS STYLES
+   =============================================== */
+
+.leaderboards-card {
+    background: linear-gradient(145deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.95));
+    border: 2px solid rgba(59, 130, 246, 0.3);
+    border-radius: 20px;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+}
+
+.leaderboards-header {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(139, 92, 246, 0.3));
+    padding: var(--space-5);
+    border-bottom: 2px solid rgba(59, 130, 246, 0.5);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.leaderboards-header h3 {
+    margin: 0;
+    color: white;
+    font-size: 1.8rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.player-ranks-summary {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.95rem;
+    text-align: right;
+}
+
+.leaderboards-body {
+    padding: var(--space-4);
+}
+
+.leaderboard-tabs {
+    display: flex;
+    gap: var(--space-2);
+    margin-bottom: var(--space-4);
+    overflow-x: auto;
+    padding-bottom: var(--space-2);
+}
+
+.leaderboard-tab {
+    background: rgba(30, 41, 59, 0.8);
+    border: 2px solid rgba(59, 130, 246, 0.3);
+    border-radius: 12px;
+    padding: var(--space-3) var(--space-4);
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    white-space: nowrap;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.leaderboard-tab:hover {
+    background: rgba(59, 130, 246, 0.2);
+    border-color: rgba(59, 130, 246, 0.5);
+    color: white;
+    transform: translateY(-2px);
+}
+
+.leaderboard-tab.active {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.4), rgba(139, 92, 246, 0.4));
+    border-color: var(--primary);
+    color: white;
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+}
+
+.leaderboard-tab i {
+    font-size: 1.1rem;
+}
+
+.leaderboard-content {
+    min-height: 400px;
+    position: relative;
+}
+
+.leaderboard-loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.leaderboard-table {
+    width: 100%;
+}
+
+.leaderboard-row {
+    display: grid;
+    grid-template-columns: 60px 1fr 120px;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    background: rgba(30, 41, 59, 0.5);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 10px;
+    margin-bottom: var(--space-2);
+    transition: all 0.3s ease;
+    align-items: center;
+}
+
+.leaderboard-row:hover {
+    background: rgba(30, 41, 59, 0.8);
+    border-color: rgba(59, 130, 246, 0.4);
+    transform: translateX(5px);
+}
+
+.leaderboard-row.current-player {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(251, 146, 60, 0.2));
+    border: 2px solid var(--warning);
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+}
+
+.leaderboard-rank {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: white;
+    text-align: center;
+}
+
+.leaderboard-rank.rank-1 {
+    color: #FFD700;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.leaderboard-rank.rank-2 {
+    color: #C0C0C0;
+    text-shadow: 0 0 10px rgba(192, 192, 192, 0.5);
+}
+
+.leaderboard-rank.rank-3 {
+    color: #CD7F32;
+    text-shadow: 0 0 10px rgba(205, 127, 50, 0.5);
+}
+
+.leaderboard-player {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.leaderboard-player-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid rgba(59, 130, 246, 0.5);
+    object-fit: cover;
+}
+
+.leaderboard-player-name {
+    color: white;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.leaderboard-value {
+    text-align: right;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--primary);
+}
+
+.leaderboard-empty {
+    text-align: center;
+    padding: var(--space-6);
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 1.1rem;
+}
+
+.leaderboard-empty i {
+    font-size: 3rem;
+    margin-bottom: var(--space-3);
+    display: block;
+}
 </style>
 
 <script src="{{ url_for('static', path='/js/clicker-game.js') }}"></script>
+<script src="{{ url_for('static', path='/js/clicker-phase2.js') }}"></script>
+<script src="{{ url_for('static', path='/js/clicker-phase3a.js') }}"></script>
+<script src="{{ url_for('static', path='/js/clicker-phase3b.js') }}"></script>
 {% endblock %}

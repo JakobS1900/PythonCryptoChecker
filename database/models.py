@@ -6,10 +6,10 @@ Focused, clean models for crypto tracking and gaming.
 import uuid
 import hashlib
 import secrets
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Optional
-from sqlalchemy import Column, String, Float, Integer, BigInteger, Boolean, DateTime, Date, Text, ForeignKey, JSON, Index
+from sqlalchemy import Column, String, Float, Integer, BigInteger, Boolean, DateTime, Date, Text, ForeignKey, JSON, Index, UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from passlib.context import CryptContext
@@ -1001,6 +1001,31 @@ class ClickerLeaderboard(Base):
         Index('idx_leaderboard_gems', 'total_gems_earned'),
         Index('idx_leaderboard_prestige', 'prestige_level'),
         Index('idx_leaderboard_daily', 'daily_gems_earned'),
+    )
+
+
+# ========================================
+# Phase 3A: ACHIEVEMENTS
+# ========================================
+
+class ClickerAchievement(Base):
+    """User achievement unlocks and progress."""
+    __tablename__ = "clicker_achievements"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    achievement_id = Column(String(100), nullable=False)  # From config
+
+    unlocked_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    reward_claimed = Column(Boolean, default=False, nullable=False)
+
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint('user_id', 'achievement_id', name='uq_user_achievement'),
+        Index('idx_achievement_user', 'user_id'),
+        Index('idx_achievement_id', 'achievement_id'),
+        Index('idx_achievement_unlocked', 'unlocked_at'),
     )
 
 
