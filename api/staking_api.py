@@ -12,7 +12,7 @@ from datetime import datetime
 
 from database.database import get_db
 from database.models import User
-from auth.dependencies import require_authentication
+from api.auth_api import require_authentication
 from services.staking_service import StakingService
 from config.staking_plans import get_all_plans, get_plan
 

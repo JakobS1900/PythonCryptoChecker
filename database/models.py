@@ -83,6 +83,13 @@ class TransactionType(Enum):
     STAKE = "STAKE"              # Stake GEM for passive income
     UNSTAKE = "UNSTAKE"          # Unstake GEM (return principal)
     STAKE_REWARD = "STAKE_REWARD"  # Staking reward claim
+    TRADE_BUY = "TRADE_BUY"      # Buy GEM from P2P market
+    TRADE_SELL = "TRADE_SELL"    # Sell GEM on P2P market
+    TRADE_FEE = "TRADE_FEE"      # Trading fee (market maker fee)
+    MINIGAME_BET = "MINIGAME_BET"  # Mini-game bet placed
+    MINIGAME_WIN = "MINIGAME_WIN"  # Mini-game win payout
+    CRASH_BET = "CRASH_BET"      # Crash game bet placed
+    CRASH_WIN = "CRASH_WIN"      # Crash game cashout payout
 
 class BetType(Enum):
     """Types of roulette bets."""
@@ -159,6 +166,26 @@ class User(Base):
     # GEM Marketplace relationships
     gem_purchases = relationship("GemPurchase", back_populates="user")
     gem_stakes = relationship("GemStake", back_populates="user")
+    trade_orders = relationship("GemTradeOrder", back_populates="user")
+    trades_bought = relationship("GemTrade", foreign_keys="GemTrade.buyer_id", back_populates="buyer")
+    trades_sold = relationship("GemTrade", foreign_keys="GemTrade.seller_id", back_populates="seller")
+    # Mini-games relationships
+    mini_games = relationship("MiniGame", back_populates="user")
+    mini_game_stats = relationship("MiniGameStats", back_populates="user", uselist=False)
+    # Leaderboard & challenges relationships
+    leaderboard_entries = relationship("LeaderboardEntry", back_populates="user")
+    user_challenges = relationship("UserChallenge", back_populates="user")
+    login_streak = relationship("LoginStreak", back_populates="user", uselist=False)
+    # Crash game relationships
+    crash_bets = relationship("CrashBet", back_populates="user")
+    # Social relationships
+    friendships = relationship("Friendship", foreign_keys="Friendship.user_id", back_populates="user")
+    sent_friend_requests = relationship("FriendRequest", foreign_keys="FriendRequest.sender_id", back_populates="sender")
+    received_friend_requests = relationship("FriendRequest", foreign_keys="FriendRequest.receiver_id", back_populates="receiver")
+    sent_messages = relationship("PrivateMessage", foreign_keys="PrivateMessage.sender_id", back_populates="sender")
+    received_messages = relationship("PrivateMessage", foreign_keys="PrivateMessage.receiver_id", back_populates="receiver")
+    activity_feed = relationship("ActivityFeed", back_populates="user")
+    profile = relationship("UserProfile", back_populates="user", uselist=False)
 
     def set_password(self, password: str):
         """Hash and set password."""
@@ -1122,4 +1149,491 @@ class GemStake(Base):
         Index('idx_gem_stakes_user', 'user_id'),
         Index('idx_gem_stakes_status', 'status'),
         Index('idx_gem_stakes_unlock', 'unlock_at'),
+    )
+
+
+class GemTradeOrder(Base):
+    """P2P GEM trading orders (buy/sell limit orders)."""
+    __tablename__ = "gem_trade_orders"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+
+    # Order details
+    order_type = Column(String(10), nullable=False)  # 'buy' or 'sell'
+    price = Column(Integer, nullable=False)  # Price per GEM in virtual currency
+    amount = Column(Integer, nullable=False)  # Amount of GEM to buy/sell
+    filled_amount = Column(Integer, default=0, nullable=False)  # Amount filled so far
+
+    # Status and timestamps
+    status = Column(String(20), default='active', nullable=False)  # active, partial, filled, cancelled
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    filled_at = Column(DateTime, nullable=True)
+    cancelled_at = Column(DateTime, nullable=True)
+
+    # Relationships
+    user = relationship("User", back_populates="trade_orders")
+    trades = relationship("GemTrade", back_populates="order", foreign_keys="GemTrade.order_id")
+
+    __table_args__ = (
+        Index('idx_trade_orders_user', 'user_id'),
+        Index('idx_trade_orders_status', 'status'),
+        Index('idx_trade_orders_type', 'order_type'),
+        Index('idx_trade_orders_price', 'price'),
+    )
+
+
+class GemTrade(Base):
+    """Completed P2P GEM trades."""
+    __tablename__ = "gem_trades"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    # Trade participants
+    buyer_id = Column(String, ForeignKey("users.id"), nullable=False)
+    seller_id = Column(String, ForeignKey("users.id"), nullable=False)
+
+    # Trade details
+    order_id = Column(Integer, ForeignKey("gem_trade_orders.id"), nullable=False)
+    price = Column(Integer, nullable=False)  # Price per GEM
+    amount = Column(Integer, nullable=False)  # Amount of GEM traded
+    total_value = Column(Integer, nullable=False)  # Total value (price * amount)
+    fee = Column(Integer, default=0, nullable=False)  # Trading fee (2%)
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    # Relationships
+    buyer = relationship("User", foreign_keys=[buyer_id], back_populates="trades_bought")
+    seller = relationship("User", foreign_keys=[seller_id], back_populates="trades_sold")
+    order = relationship("GemTradeOrder", back_populates="trades", foreign_keys=[order_id])
+
+    __table_args__ = (
+        Index('idx_trades_buyer', 'buyer_id'),
+        Index('idx_trades_seller', 'seller_id'),
+        Index('idx_trades_order', 'order_id'),
+        Index('idx_trades_created', 'created_at'),
+    )
+
+
+# ============================================================================
+# MINI-GAMES SYSTEM
+# ============================================================================
+
+class MiniGame(Base):
+    """Mini-games played by users (Coin Flip, Dice, Higher/Lower, etc.)."""
+    __tablename__ = "mini_games"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+
+    # Game details
+    game_type = Column(String(50), nullable=False)  # 'coinflip', 'dice', 'higherlower'
+    bet_amount = Column(Integer, nullable=False)  # Amount wagered
+    payout = Column(Integer, default=0, nullable=False)  # Amount won (0 if lost)
+    profit = Column(Integer, default=0, nullable=False)  # Net profit/loss (payout - bet_amount)
+
+    # Game-specific data (stored as JSON)
+    game_data = Column(Text, nullable=True)  # JSON: choice, result, multiplier, etc.
+
+    # Result
+    won = Column(Boolean, nullable=False)  # True if won, False if lost
+
+    # Timestamps
+    played_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    # Relationships
+    user = relationship("User", back_populates="mini_games")
+
+    __table_args__ = (
+        Index('idx_minigames_user', 'user_id'),
+        Index('idx_minigames_type', 'game_type'),
+        Index('idx_minigames_played', 'played_at'),
+    )
+
+
+class MiniGameStats(Base):
+    """Aggregated statistics for each user's mini-game performance."""
+    __tablename__ = "mini_game_stats"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False, unique=True)
+
+    # Overall stats
+    total_games_played = Column(Integer, default=0, nullable=False)
+    total_games_won = Column(Integer, default=0, nullable=False)
+    total_games_lost = Column(Integer, default=0, nullable=False)
+    total_wagered = Column(Integer, default=0, nullable=False)
+    total_won = Column(Integer, default=0, nullable=False)
+    net_profit = Column(Integer, default=0, nullable=False)
+
+    # Per-game stats (stored as JSON)
+    coinflip_stats = Column(Text, nullable=True)  # JSON: games, wins, profit
+    dice_stats = Column(Text, nullable=True)
+    higherlower_stats = Column(Text, nullable=True)
+
+    # Streaks
+    current_win_streak = Column(Integer, default=0, nullable=False)
+    longest_win_streak = Column(Integer, default=0, nullable=False)
+    current_loss_streak = Column(Integer, default=0, nullable=False)
+    longest_loss_streak = Column(Integer, default=0, nullable=False)
+
+    # Biggest wins/losses
+    biggest_win = Column(Integer, default=0, nullable=False)
+    biggest_loss = Column(Integer, default=0, nullable=False)
+
+    # Timestamps
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    user = relationship("User", back_populates="mini_game_stats")
+
+    __table_args__ = (
+        Index('idx_minigamestats_user', 'user_id'),
+        Index('idx_minigamestats_profit', 'net_profit'),
+    )
+
+
+# ============================================================================
+# LEADERBOARDS & RANKINGS
+# ============================================================================
+
+class LeaderboardEntry(Base):
+    """Leaderboard rankings for various categories."""
+    __tablename__ = "leaderboard_entries"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+
+    # Category and timeframe
+    category = Column(String(50), nullable=False)  # 'wealth', 'minigames', 'trading', 'roulette'
+    timeframe = Column(String(20), nullable=False)  # 'all_time', 'weekly', 'monthly'
+
+    # Ranking details
+    rank = Column(Integer, nullable=False)
+    score = Column(Integer, nullable=False)  # The value used for ranking
+
+    # Additional stats (JSON)
+    stats_data = Column(Text, nullable=True)  # Category-specific stats
+
+    # Timestamps
+    period_start = Column(DateTime, nullable=False)
+    period_end = Column(DateTime, nullable=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    user = relationship("User", back_populates="leaderboard_entries")
+
+    __table_args__ = (
+        Index('idx_leaderboard_category_timeframe', 'category', 'timeframe'),
+        Index('idx_leaderboard_rank', 'rank'),
+        Index('idx_leaderboard_user', 'user_id'),
+        Index('idx_leaderboard_updated', 'updated_at'),
+    )
+
+
+# ============================================================================
+# DAILY CHALLENGES & QUESTS
+# ============================================================================
+
+class DailyChallenge(Base):
+    """Daily challenges and quests for users."""
+    __tablename__ = "daily_challenges"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    # Challenge details
+    challenge_type = Column(String(50), nullable=False)  # 'login', 'minigame_wins', 'trade_volume', etc.
+    title = Column(String(200), nullable=False)
+    description = Column(Text, nullable=False)
+
+    # Requirements
+    requirement_value = Column(Integer, nullable=False)  # Target to reach
+
+    # Rewards
+    gem_reward = Column(Integer, nullable=False)
+
+    # Challenge period
+    starts_at = Column(DateTime, nullable=False)
+    ends_at = Column(DateTime, nullable=False)
+
+    # Difficulty tier
+    difficulty = Column(String(20), default='normal', nullable=False)  # 'easy', 'normal', 'hard'
+
+    __table_args__ = (
+        Index('idx_challenges_active', 'starts_at', 'ends_at'),
+        Index('idx_challenges_type', 'challenge_type'),
+    )
+
+
+class UserChallenge(Base):
+    """User progress on daily challenges."""
+    __tablename__ = "user_challenges"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    challenge_id = Column(Integer, ForeignKey("daily_challenges.id"), nullable=False)
+
+    # Progress tracking
+    current_progress = Column(Integer, default=0, nullable=False)
+    completed = Column(Boolean, default=False, nullable=False)
+    claimed = Column(Boolean, default=False, nullable=False)
+
+    # Timestamps
+    started_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    completed_at = Column(DateTime, nullable=True)
+    claimed_at = Column(DateTime, nullable=True)
+
+    # Relationships
+    user = relationship("User", back_populates="user_challenges")
+    challenge = relationship("DailyChallenge")
+
+    __table_args__ = (
+        Index('idx_userchallenge_user', 'user_id'),
+        Index('idx_userchallenge_challenge', 'challenge_id'),
+        Index('idx_userchallenge_completed', 'completed'),
+    )
+
+
+class LoginStreak(Base):
+    """Track user login streaks for daily bonuses."""
+    __tablename__ = "login_streaks"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False, unique=True)
+
+    # Streak tracking
+    current_streak = Column(Integer, default=0, nullable=False)
+    longest_streak = Column(Integer, default=0, nullable=False)
+    last_login_date = Column(DateTime, nullable=True)
+
+    # Total logins
+    total_logins = Column(Integer, default=0, nullable=False)
+
+    # Relationships
+    user = relationship("User", back_populates="login_streak")
+
+    __table_args__ = (
+        Index('idx_loginstreak_user', 'user_id'),
+    )
+
+
+# ============================================================================
+# CRASH GAME - MULTIPLAYER BETTING
+# ============================================================================
+
+class CrashGame(Base):
+    """Crash game rounds - multiplayer betting game."""
+    __tablename__ = "crash_games"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    # Game state
+    status = Column(String(20), nullable=False, default='waiting')  # 'waiting', 'starting', 'playing', 'crashed', 'completed'
+
+    # Crash point (provably fair)
+    crash_point = Column(Float, nullable=True)  # Multiplier where game crashes (e.g., 2.45)
+    server_seed = Column(String(64), nullable=False)  # For provable fairness
+    server_seed_hash = Column(String(64), nullable=False)  # SHA256 hash shown before round
+
+    # Game timing
+    started_at = Column(DateTime, nullable=True)
+    crashed_at = Column(DateTime, nullable=True)
+    completed_at = Column(DateTime, nullable=True)
+
+    # Statistics
+    total_bets = Column(Integer, default=0, nullable=False)
+    total_wagered = Column(Integer, default=0, nullable=False)
+    total_paid_out = Column(Integer, default=0, nullable=False)
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    # Relationships
+    bets = relationship("CrashBet", back_populates="game")
+
+    __table_args__ = (
+        Index('idx_crash_game_status', 'status'),
+        Index('idx_crash_game_created', 'created_at'),
+    )
+
+
+class CrashBet(Base):
+    """Individual bets placed in crash game rounds."""
+    __tablename__ = "crash_bets"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    game_id = Column(Integer, ForeignKey("crash_games.id"), nullable=False)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+
+    # Bet details
+    bet_amount = Column(Integer, nullable=False)
+    cashout_at = Column(Float, nullable=True)  # Multiplier when user cashed out
+    profit = Column(Integer, default=0, nullable=False)  # Net profit/loss
+
+    # Status
+    status = Column(String(20), nullable=False, default='active')  # 'active', 'cashed_out', 'lost'
+
+    # Timestamps
+    placed_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    cashed_out_at = Column(DateTime, nullable=True)
+
+    # Relationships
+    game = relationship("CrashGame", back_populates="bets")
+    user = relationship("User", back_populates="crash_bets")
+
+    __table_args__ = (
+        Index('idx_crash_bet_game', 'game_id'),
+        Index('idx_crash_bet_user', 'user_id'),
+        Index('idx_crash_bet_status', 'status'),
+    )
+
+
+# ============================================================================
+# SOCIAL FEATURES - FRIENDS & MESSAGING
+# ============================================================================
+
+class Friendship(Base):
+    """Friendships between users."""
+    __tablename__ = "friendships"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    friend_id = Column(String, ForeignKey("users.id"), nullable=False)
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    # Relationships
+    user = relationship("User", foreign_keys=[user_id], back_populates="friendships")
+    friend = relationship("User", foreign_keys=[friend_id])
+
+    __table_args__ = (
+        Index('idx_friendship_user', 'user_id'),
+        Index('idx_friendship_friend', 'friend_id'),
+        # Ensure unique friendship (no duplicates)
+        Index('idx_friendship_unique', 'user_id', 'friend_id', unique=True),
+    )
+
+
+class FriendRequest(Base):
+    """Pending friend requests."""
+    __tablename__ = "friend_requests"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    sender_id = Column(String, ForeignKey("users.id"), nullable=False)
+    receiver_id = Column(String, ForeignKey("users.id"), nullable=False)
+
+    # Status
+    status = Column(String(20), nullable=False, default='pending')  # 'pending', 'accepted', 'rejected'
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    responded_at = Column(DateTime, nullable=True)
+
+    # Relationships
+    sender = relationship("User", foreign_keys=[sender_id], back_populates="sent_friend_requests")
+    receiver = relationship("User", foreign_keys=[receiver_id], back_populates="received_friend_requests")
+
+    __table_args__ = (
+        Index('idx_friend_request_sender', 'sender_id'),
+        Index('idx_friend_request_receiver', 'receiver_id'),
+        Index('idx_friend_request_status', 'status'),
+    )
+
+
+class PrivateMessage(Base):
+    """Private messages between users."""
+    __tablename__ = "private_messages"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    sender_id = Column(String, ForeignKey("users.id"), nullable=False)
+    receiver_id = Column(String, ForeignKey("users.id"), nullable=False)
+
+    # Message content
+    message = Column(Text, nullable=False)
+
+    # Status
+    read = Column(Boolean, default=False, nullable=False)
+    read_at = Column(DateTime, nullable=True)
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    # Relationships
+    sender = relationship("User", foreign_keys=[sender_id], back_populates="sent_messages")
+    receiver = relationship("User", foreign_keys=[receiver_id], back_populates="received_messages")
+
+    __table_args__ = (
+        Index('idx_private_message_sender', 'sender_id'),
+        Index('idx_private_message_receiver', 'receiver_id'),
+        Index('idx_private_message_read', 'read'),
+        Index('idx_private_message_created', 'created_at'),
+    )
+
+
+class ActivityFeed(Base):
+    """User activity feed events."""
+    __tablename__ = "activity_feed"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+
+    # Activity details
+    activity_type = Column(String(50), nullable=False)  # 'big_win', 'achievement', 'level_up', 'cashout', etc.
+    title = Column(String(200), nullable=False)
+    description = Column(Text, nullable=True)
+    data = Column(Text, nullable=True)  # JSON data
+
+    # Visibility
+    is_public = Column(Boolean, default=True, nullable=False)
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    # Relationships
+    user = relationship("User", back_populates="activity_feed")
+
+    __table_args__ = (
+        Index('idx_activity_feed_user', 'user_id'),
+        Index('idx_activity_feed_type', 'activity_type'),
+        Index('idx_activity_feed_created', 'created_at'),
+        Index('idx_activity_feed_public', 'is_public'),
+    )
+
+
+class UserProfile(Base):
+    """Extended user profile information."""
+    __tablename__ = "user_profiles"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False, unique=True)
+
+    # Profile info
+    bio = Column(Text, nullable=True)
+    avatar_url = Column(String(500), nullable=True)
+    banner_url = Column(String(500), nullable=True)
+    location = Column(String(100), nullable=True)
+    website = Column(String(200), nullable=True)
+
+    # Privacy settings
+    profile_public = Column(Boolean, default=True, nullable=False)
+    show_stats = Column(Boolean, default=True, nullable=False)
+    show_activity = Column(Boolean, default=True, nullable=False)
+
+    # Online status
+    is_online = Column(Boolean, default=False, nullable=False)
+    last_seen = Column(DateTime, nullable=True)
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    user = relationship("User", back_populates="profile")
+
+    __table_args__ = (
+        Index('idx_user_profile_user', 'user_id'),
+        Index('idx_user_profile_online', 'is_online'),
     )

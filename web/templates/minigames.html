@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+
+{% block title %}Mini-Games - Quick Fun Games{% endblock %}
+
+{% block extra_css %}
+<style>
+    .game-card {
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+        cursor: pointer;
+    }
+
+    .game-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(139, 92, 246, 0.3);
+        border-color: var(--primary);
+    }
+
+    .game-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+    }
+
+    .payout-badge {
+        padding: 0.5rem 1rem;
+        background: linear-gradient(135deg, var(--success), var(--gem));
+        color: white;
+        border-radius: var(--radius-full);
+        font-weight: 700;
+    }
+
+    .choice-btn {
+        flex: 1;
+        padding: 1.5rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+        transition: all 0.2s ease;
+    }
+
+    .choice-btn:hover {
+        transform: scale(1.05);
+    }
+
+    .dice-option {
+        padding: 1rem;
+        border: 2px solid var(--border);
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .dice-option:hover {
+        border-color: var(--primary);
+        background: rgba(99, 102, 241, 0.1);
+    }
+
+    .dice-option.selected {
+        border-color: var(--primary);
+        background: rgba(99, 102, 241, 0.2);
+    }
+
+    .card-display {
+        width: 100px;
+        height: 140px;
+        border-radius: var(--radius-md);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        font-weight: 700;
+        background: white;
+        color: #000;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .result-display {
+        padding: 2rem;
+        border-radius: var(--radius-lg);
+        text-align: center;
+        margin-top: 1rem;
+    }
+
+    .result-win {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(139, 92, 246, 0.2));
+        border: 2px solid var(--success);
+    }
+
+    .result-lose {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(100, 116, 139, 0.2));
+        border: 2px solid var(--error);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-modern">
+    <!-- Page Header -->
+    <div class="card-modern" style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(124, 58, 237, 0.05) 100%);">
+        <h1 class="mb-3">
+            <i class="bi bi-dice-5" style="color: var(--gem);"></i>
+            Mini-Games
+        </h1>
+        <p class="lead mb-0">Quick, fun games to win GEM! Choose your game and good luck!</p>
+    </div>
+
+    <!-- User Stats -->
+    <div class="row mb-4" id="user-stats">
+        <div class="col-md-3">
+            <div class="stat-card-modern">
+                <div class="stat-label">Games Played</div>
+                <div class="stat-value" id="stat-games">0</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card-modern">
+                <div class="stat-label">Win Rate</div>
+                <div class="stat-value" style="color: var(--success);" id="stat-winrate">0%</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card-modern">
+                <div class="stat-label">Net Profit</div>
+                <div class="stat-value" style="color: var(--gem);">
+                    <i class="bi bi-gem"></i> <span id="stat-profit">0</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card-modern">
+                <div class="stat-label">Current Streak</div>
+                <div class="stat-value" id="stat-streak">0 🔥</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Selection -->
+    <div class="row mb-4">
+        <!-- Coin Flip -->
+        <div class="col-lg-4 mb-4">
+            <div class="card-modern game-card" onclick="MiniGames.showGame('coinflip')">
+                <div class="text-center">
+                    <div class="game-icon">🪙</div>
+                    <h4>Coin Flip</h4>
+                    <p style="color: var(--text-secondary);">Guess heads or tails</p>
+                    <div class="payout-badge mb-3">2x Payout</div>
+                    <button class="btn-modern btn-modern-primary w-100">
+                        <i class="bi bi-play-fill"></i> Play Now
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dice Roll -->
+        <div class="col-lg-4 mb-4">
+            <div class="card-modern game-card" onclick="MiniGames.showGame('dice')">
+                <div class="text-center">
+                    <div class="game-icon">🎲</div>
+                    <h4>Dice Roll</h4>
+                    <p style="color: var(--text-secondary);">Bet on dice outcomes</p>
+                    <div class="payout-badge mb-3">Up to 6x</div>
+                    <button class="btn-modern btn-modern-primary w-100">
+                        <i class="bi bi-play-fill"></i> Play Now
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Higher/Lower -->
+        <div class="col-lg-4 mb-4">
+            <div class="card-modern game-card" onclick="MiniGames.showGame('higherlower')">
+                <div class="text-center">
+                    <div class="game-icon">🃏</div>
+                    <h4>Higher or Lower</h4>
+                    <p style="color: var(--text-secondary);">Guess the next card</p>
+                    <div class="payout-badge mb-3">Up to 5x</div>
+                    <button class="btn-modern btn-modern-primary w-100">
+                        <i class="bi bi-play-fill"></i> Play Now
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Area -->
+    <div id="game-area" style="display: none;">
+        <div class="card-modern">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="mb-0" id="game-title">Game</h4>
+                <button class="btn-modern btn-modern-secondary" onclick="MiniGames.closeGame()">
+                    <i class="bi bi-x-lg"></i> Close
+                </button>
+            </div>
+
+            <!-- Bet Amount Input -->
+            <div class="form-group-modern mb-4">
+                <label class="form-label-modern">
+                    <i class="bi bi-gem"></i> Bet Amount (100 - 100,000 GEM)
+                </label>
+                <input type="number" id="bet-amount" class="form-control-modern" value="1000" min="100" max="100000" step="100">
+                <small class="form-text">Balance: <strong id="user-balance-display">0</strong> GEM</small>
+            </div>
+
+            <!-- Game-Specific Content -->
+            <div id="game-content"></div>
+
+            <!-- Result Display -->
+            <div id="result-area" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- Recent Games History -->
+    <div class="card-modern">
+        <h4 class="mb-4">
+            <i class="bi bi-clock-history"></i>
+            Recent Games
+        </h4>
+        <div id="history-list">
+            <!-- Populated by JavaScript -->
+        </div>
+    </div>
+</div>
+
+<script src="/static/js/minigames.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        MiniGames.init();
+    });
+</script>
+{% endblock %}

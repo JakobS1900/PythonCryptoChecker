@@ -1,0 +1,342 @@
+{% extends "base.html" %}
+
+{% block title %}Daily Challenges - CryptoChecker{% endblock %}
+
+{% block extra_css %}
+<style>
+    .challenges-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .challenges-header {
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+
+    .challenges-header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--primary), var(--gem));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0.5rem;
+    }
+
+    .challenges-header p {
+        color: var(--text-secondary);
+        font-size: 1.1rem;
+    }
+
+    /* Login Streak Card */
+    .streak-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 3rem;
+        color: white;
+        box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+    }
+
+    .streak-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .streak-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .streak-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .streak-stat {
+        text-align: center;
+    }
+
+    .streak-stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        display: block;
+    }
+
+    .streak-stat-label {
+        font-size: 0.875rem;
+        opacity: 0.9;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .streak-claim-btn {
+        width: 100%;
+        padding: 1rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+        border: none;
+        border-radius: 8px;
+        background: white;
+        color: #667eea;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .streak-claim-btn:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .streak-claim-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    /* Challenges Grid */
+    .challenges-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .challenge-card {
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        transition: all 0.3s;
+    }
+
+    .challenge-card:hover {
+        border-color: var(--primary);
+        box-shadow: 0 4px 16px rgba(59, 130, 246, 0.2);
+        transform: translateY(-2px);
+    }
+
+    .challenge-card.completed {
+        border-color: var(--success);
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, transparent 100%);
+    }
+
+    .challenge-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 1rem;
+    }
+
+    .challenge-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .challenge-type {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .challenge-type.easy { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+    .challenge-type.normal { background: rgba(59, 130, 246, 0.2); color: var(--primary); }
+    .challenge-type.hard { background: rgba(239, 68, 68, 0.2); color: var(--error); }
+
+    .challenge-description {
+        color: var(--text-secondary);
+        margin-bottom: 1rem;
+        font-size: 0.95rem;
+    }
+
+    .challenge-progress {
+        margin-bottom: 1rem;
+    }
+
+    .progress-bar-container {
+        height: 8px;
+        background: var(--surface);
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 0.5rem;
+    }
+
+    .progress-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary), var(--gem));
+        transition: width 0.3s;
+        border-radius: 4px;
+    }
+
+    .progress-bar-fill.completed {
+        background: linear-gradient(90deg, var(--success), #34d399);
+    }
+
+    .progress-text {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.875rem;
+    }
+
+    .progress-current {
+        color: var(--text-secondary);
+    }
+
+    .progress-requirement {
+        font-weight: 600;
+    }
+
+    .challenge-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 1rem;
+        border-top: 1px solid var(--card-border);
+    }
+
+    .challenge-reward {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--gem);
+    }
+
+    .claim-challenge-btn {
+        padding: 0.5rem 1.5rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        border: none;
+        border-radius: 6px;
+        background: var(--success);
+        color: white;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .claim-challenge-btn:hover:not(:disabled) {
+        background: #059669;
+        transform: translateY(-1px);
+    }
+
+    .claim-challenge-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .challenge-timer {
+        text-align: center;
+        padding: 1rem;
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 8px;
+        margin-bottom: 2rem;
+    }
+
+    .timer-label {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .timer-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--primary);
+    }
+
+    @media (max-width: 768px) {
+        .challenges-container {
+            padding: 1rem;
+        }
+
+        .challenges-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .streak-stats {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="challenges-container">
+    <!-- Header -->
+    <div class="challenges-header">
+        <h1>Daily Challenges</h1>
+        <p>Complete challenges to earn bonus GEM rewards!</p>
+    </div>
+
+    <!-- Login Streak Card -->
+    <div class="streak-card" id="streak-card">
+        <div class="streak-header">
+            <div class="streak-title">
+                <i class="bi bi-fire"></i>
+                Login Streak
+            </div>
+        </div>
+
+        <div class="streak-stats">
+            <div class="streak-stat">
+                <span class="streak-stat-value" id="current-streak">0</span>
+                <span class="streak-stat-label">Current Streak</span>
+            </div>
+            <div class="streak-stat">
+                <span class="streak-stat-value" id="longest-streak">0</span>
+                <span class="streak-stat-label">Longest Streak</span>
+            </div>
+            <div class="streak-stat">
+                <span class="streak-stat-value" id="total-logins">0</span>
+                <span class="streak-stat-label">Total Logins</span>
+            </div>
+            <div class="streak-stat">
+                <span class="streak-stat-value" id="today-bonus">0</span>
+                <span class="streak-stat-label">Today's Bonus</span>
+            </div>
+        </div>
+
+        <button class="streak-claim-btn" id="claim-login-btn" onclick="Challenges.claimDailyLogin()">
+            <i class="bi bi-gift"></i> Claim Daily Login Bonus
+        </button>
+    </div>
+
+    <!-- Challenge Timer -->
+    <div class="challenge-timer">
+        <div class="timer-label">Challenges reset in:</div>
+        <div class="timer-value" id="reset-timer">--:--:--</div>
+    </div>
+
+    <!-- Challenges Grid -->
+    <div class="challenges-grid" id="challenges-grid">
+        <!-- Challenges will be loaded here -->
+    </div>
+
+    <!-- Loading State -->
+    <div class="text-center py-5" id="loading-state">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+</div>
+
+<script src="/static/js/challenges.js"></script>
+<script>
+    // Initialize when page loads
+    document.addEventListener('DOMContentLoaded', () => {
+        Challenges.init();
+    });
+</script>
+{% endblock %}

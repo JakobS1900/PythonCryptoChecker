@@ -1,0 +1,370 @@
+{% extends "base.html" %}
+
+{% block title %}GEM P2P Trading - Buy & Sell GEM{% endblock %}
+
+{% block extra_css %}
+<style>
+    .order-book-section {
+        max-height: 500px;
+        overflow-y: auto;
+    }
+
+    .order-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 1rem;
+        border-radius: var(--radius-md);
+        transition: all var(--transition-fast);
+        cursor: pointer;
+    }
+
+    .order-row:hover {
+        background: var(--bg-tertiary);
+    }
+
+    .buy-order {
+        border-left: 3px solid var(--success);
+    }
+
+    .sell-order {
+        border-left: 3px solid var(--error);
+    }
+
+    .order-price {
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+
+    .price-buy {
+        color: var(--success);
+    }
+
+    .price-sell {
+        color: var(--error);
+    }
+
+    .trade-form-card {
+        border: 2px solid var(--border-subtle);
+        transition: all var(--transition-base);
+    }
+
+    .trade-form-card.active {
+        border-color: var(--primary);
+        box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+    }
+
+    .trade-tabs {
+        display: flex;
+        gap: var(--space-2);
+        margin-bottom: var(--space-4);
+    }
+
+    .trade-tab {
+        flex: 1;
+        padding: var(--space-3) var(--space-4);
+        background: var(--bg-tertiary);
+        border: 2px solid transparent;
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        transition: all var(--transition-base);
+        text-align: center;
+        font-weight: 600;
+    }
+
+    .trade-tab.buy:hover {
+        border-color: var(--success);
+        background: rgba(16, 185, 129, 0.1);
+    }
+
+    .trade-tab.sell:hover {
+        border-color: var(--error);
+        background: rgba(239, 68, 68, 0.1);
+    }
+
+    .trade-tab.active.buy {
+        background: rgba(16, 185, 129, 0.2);
+        border-color: var(--success);
+        color: var(--success);
+    }
+
+    .trade-tab.active.sell {
+        background: rgba(239, 68, 68, 0.2);
+        border-color: var(--error);
+        color: var(--error);
+    }
+
+    .market-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: var(--space-4);
+    }
+
+    .spread-indicator {
+        padding: var(--space-3);
+        background: rgba(99, 102, 241, 0.1);
+        border-radius: var(--radius-md);
+        text-align: center;
+    }
+
+    .my-orders-table {
+        width: 100%;
+    }
+
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: var(--radius-full);
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .status-active {
+        background: rgba(16, 185, 129, 0.2);
+        color: var(--success);
+    }
+
+    .status-partial {
+        background: rgba(245, 158, 11, 0.2);
+        color: var(--warning);
+    }
+
+    .status-filled {
+        background: rgba(59, 130, 246, 0.2);
+        color: var(--info);
+    }
+
+    .status-cancelled {
+        background: rgba(100, 116, 139, 0.2);
+        color: var(--text-muted);
+    }
+
+    .total-cost-display {
+        padding: var(--space-4);
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, transparent 100%);
+        border-radius: var(--radius-md);
+        margin-top: var(--space-4);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-modern">
+    <!-- Page Header -->
+    <div class="card-modern" style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(124, 58, 237, 0.05) 100%);">
+        <h1 class="mb-3">
+            <i class="bi bi-shop" style="color: var(--gem);"></i>
+            GEM Trading Market
+        </h1>
+        <p class="lead mb-0">Buy and sell GEM with other users in our P2P marketplace</p>
+    </div>
+
+    <!-- Market Statistics -->
+    <div class="card-modern">
+        <h4 class="mb-4">
+            <i class="bi bi-graph-up"></i>
+            Market Statistics
+        </h4>
+        <div class="market-stats" id="market-stats">
+            <div class="stat-card-modern">
+                <div class="stat-label">24h Volume</div>
+                <div class="stat-value">
+                    <i class="bi bi-gem"></i> <span id="stat-volume">0</span>
+                </div>
+            </div>
+            <div class="stat-card-modern">
+                <div class="stat-label">Total Trades</div>
+                <div class="stat-value" id="stat-trades">0</div>
+            </div>
+            <div class="stat-card-modern">
+                <div class="stat-label">Active Orders</div>
+                <div class="stat-value" id="stat-orders">0</div>
+            </div>
+            <div class="stat-card-modern">
+                <div class="stat-label">Spread</div>
+                <div class="stat-value" style="font-size: 1.25rem;">
+                    <span id="stat-spread">-</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Trading Interface -->
+    <div class="row">
+        <!-- Order Book -->
+        <div class="col-lg-4 mb-4">
+            <div class="card-modern">
+                <h5 class="mb-4">
+                    <i class="bi bi-book"></i>
+                    Order Book
+                </h5>
+
+                <!-- Sell Orders (Asks) -->
+                <div class="mb-4">
+                    <h6 class="text-muted mb-3">
+                        <i class="bi bi-arrow-down-circle"></i>
+                        Sell Orders
+                    </h6>
+                    <div class="order-book-section" id="sell-orders">
+                        <div class="text-center text-muted py-3">
+                            <i class="bi bi-inbox"></i>
+                            <p class="mt-2 mb-0">No sell orders</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Current Spread -->
+                <div class="spread-indicator mb-4">
+                    <small class="text-muted">Spread</small>
+                    <div id="spread-display" style="font-weight: 600; color: var(--primary);">-</div>
+                </div>
+
+                <!-- Buy Orders (Bids) -->
+                <div>
+                    <h6 class="text-muted mb-3">
+                        <i class="bi bi-arrow-up-circle"></i>
+                        Buy Orders
+                    </h6>
+                    <div class="order-book-section" id="buy-orders">
+                        <div class="text-center text-muted py-3">
+                            <i class="bi bi-inbox"></i>
+                            <p class="mt-2 mb-0">No buy orders</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Trading Form -->
+        <div class="col-lg-8 mb-4">
+            <div class="card-modern trade-form-card">
+                <h5 class="mb-4">
+                    <i class="bi bi-currency-exchange"></i>
+                    Place Order
+                </h5>
+
+                <!-- Buy/Sell Tabs -->
+                <div class="trade-tabs">
+                    <div class="trade-tab buy active" onclick="TradingManager.switchOrderType('buy')">
+                        <i class="bi bi-arrow-up-circle"></i>
+                        BUY GEM
+                    </div>
+                    <div class="trade-tab sell" onclick="TradingManager.switchOrderType('sell')">
+                        <i class="bi bi-arrow-down-circle"></i>
+                        SELL GEM
+                    </div>
+                </div>
+
+                <!-- Order Form -->
+                <form id="trade-form" onsubmit="TradingManager.placeOrder(event)">
+                    <div class="form-group-modern mb-4">
+                        <label class="form-label-modern">
+                            <i class="bi bi-tag"></i>
+                            Price per GEM
+                        </label>
+                        <div class="input-group">
+                            <input type="number"
+                                   class="form-control-modern"
+                                   id="order-price"
+                                   placeholder="Enter price"
+                                   min="1"
+                                   step="1"
+                                   required
+                                   oninput="TradingManager.updateTotalCost()">
+                            <span class="input-group-text">GEM</span>
+                        </div>
+                        <small class="form-text text-muted">
+                            Best <span id="price-type-label">buy</span> price: <strong id="best-price">-</strong>
+                        </small>
+                    </div>
+
+                    <div class="form-group-modern mb-4">
+                        <label class="form-label-modern">
+                            <i class="bi bi-gem"></i>
+                            Amount
+                        </label>
+                        <div class="input-group">
+                            <input type="number"
+                                   class="form-control-modern"
+                                   id="order-amount"
+                                   placeholder="Enter amount"
+                                   min="1"
+                                   step="1"
+                                   required
+                                   oninput="TradingManager.updateTotalCost()">
+                            <span class="input-group-text">GEM</span>
+                        </div>
+                        <small class="form-text">
+                            Your balance: <strong><span id="user-balance">0</span> GEM</strong>
+                        </small>
+                    </div>
+
+                    <!-- Total Cost Display -->
+                    <div class="total-cost-display">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Order Value:</span>
+                            <strong><span id="order-value">0</span> GEM</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Trading Fee (2%):</span>
+                            <strong><span id="order-fee">0</span> GEM</strong>
+                        </div>
+                        <div class="divider-modern my-2"></div>
+                        <div class="d-flex justify-content-between">
+                            <strong>Total <span id="total-label">Cost</span>:</strong>
+                            <strong style="font-size: 1.25rem; color: var(--gem);">
+                                <span id="order-total">0</span> GEM
+                            </strong>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-modern btn-modern-primary btn-modern-lg w-100 mt-4" id="submit-order-btn">
+                        <i class="bi bi-arrow-up-circle"></i>
+                        <span id="submit-btn-text">Place Buy Order</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- My Orders -->
+    <div class="card-modern mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="mb-0">
+                <i class="bi bi-list-check"></i>
+                My Orders
+            </h4>
+            <div class="btn-group" role="group">
+                <button type="button" class="btn-modern btn-modern-sm btn-modern-primary active" onclick="TradingManager.filterOrders('active')">
+                    Active
+                </button>
+                <button type="button" class="btn-modern btn-modern-sm btn-modern-secondary" onclick="TradingManager.filterOrders('all')">
+                    All Orders
+                </button>
+            </div>
+        </div>
+        <div id="my-orders-list">
+            <!-- Populated by JavaScript -->
+        </div>
+    </div>
+
+    <!-- Recent Trades -->
+    <div class="card-modern">
+        <h4 class="mb-4">
+            <i class="bi bi-clock-history"></i>
+            Recent Market Trades
+        </h4>
+        <div id="recent-trades-list">
+            <!-- Populated by JavaScript -->
+        </div>
+    </div>
+</div>
+
+<script src="/static/js/trading.js"></script>
+<script>
+    // Initialize when page loads
+    document.addEventListener('DOMContentLoaded', () => {
+        TradingManager.init();
+    });
+</script>
+{% endblock %}

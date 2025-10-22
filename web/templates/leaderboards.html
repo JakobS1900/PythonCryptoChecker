@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block title %}Leaderboards - Top Players{% endblock %}
+
+{% block extra_css %}
+<style>
+    .category-tab {
+        padding: 1rem 1.5rem;
+        background: var(--bg-tertiary);
+        border: 2px solid transparent;
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: center;
+    }
+
+    .category-tab:hover {
+        border-color: var(--primary);
+        background: rgba(99, 102, 241, 0.1);
+    }
+
+    .category-tab.active {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+    }
+
+    .timeframe-btn {
+        padding: 0.5rem 1.5rem;
+        border: 2px solid var(--border);
+        background: var(--bg-secondary);
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .timeframe-btn.active {
+        background: var(--gem);
+        border-color: var(--gem);
+        color: white;
+    }
+
+    .rank-badge {
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        font-weight: 700;
+        font-size: 1.25rem;
+    }
+
+    .rank-1 { background: linear-gradient(135deg, #FFD700, #FFA500); }
+    .rank-2 { background: linear-gradient(135deg, #C0C0C0, #A8A8A8); }
+    .rank-3 { background: linear-gradient(135deg, #CD7F32, #B8733E); }
+    .rank-other { background: var(--bg-tertiary); color: var(--text-secondary); }
+
+    .user-row {
+        transition: all 0.2s ease;
+    }
+
+    .user-row:hover {
+        background: var(--bg-tertiary);
+    }
+
+    .my-rank {
+        background: rgba(139, 92, 246, 0.2);
+        border-left: 4px solid var(--gem);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-modern">
+    <!-- Page Header -->
+    <div class="card-modern" style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(124, 58, 237, 0.05) 100%);">
+        <h1 class="mb-3">
+            <i class="bi bi-trophy" style="color: var(--gem);"></i>
+            Leaderboards
+        </h1>
+        <p class="lead mb-0">Compete with other players and climb the ranks!</p>
+    </div>
+
+    <!-- Category Selection -->
+    <div class="row mb-4 g-3">
+        <div class="col-md-3">
+            <div class="category-tab active" onclick="Leaderboards.switchCategory('wealth')">
+                <i class="bi bi-gem" style="font-size: 2rem;"></i>
+                <div class="mt-2"><strong>Wealth</strong></div>
+                <small>Richest Players</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="category-tab" onclick="Leaderboards.switchCategory('minigames')">
+                <i class="bi bi-dice-5" style="font-size: 2rem;"></i>
+                <div class="mt-2"><strong>Mini-Games</strong></div>
+                <small>Highest Profit</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="category-tab" onclick="Leaderboards.switchCategory('trading')">
+                <i class="bi bi-shop" style="font-size: 2rem;"></i>
+                <div class="mt-2"><strong>Trading</strong></div>
+                <small>Highest Volume</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="category-tab" onclick="Leaderboards.switchCategory('roulette')">
+                <i class="bi bi-circle" style="font-size: 2rem;"></i>
+                <div class="mt-2"><strong>Roulette</strong></div>
+                <small>Most Wagered</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Timeframe Selection -->
+    <div class="card-modern mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0" id="leaderboard-title">Wealth Leaderboard</h5>
+            <div class="btn-group">
+                <button class="timeframe-btn active" onclick="Leaderboards.switchTimeframe('all_time')">
+                    All Time
+                </button>
+                <button class="timeframe-btn" onclick="Leaderboards.switchTimeframe('monthly')">
+                    Monthly
+                </button>
+                <button class="timeframe-btn" onclick="Leaderboards.switchTimeframe('weekly')">
+                    Weekly
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- My Rank Card -->
+    <div class="card-modern mb-4" id="my-rank-card" style="display: none;">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h6 class="text-muted mb-2">Your Rank</h6>
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rank-badge rank-other" id="my-rank-badge">#0</div>
+                    <div>
+                        <div style="font-size: 1.5rem; font-weight: 700;" id="my-rank-score">0</div>
+                        <small class="text-muted" id="my-rank-label">GEM</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaderboard Table -->
+    <div class="card-modern">
+        <div id="leaderboard-content">
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-3">Loading leaderboard...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/static/js/leaderboards.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        Leaderboards.init();
+    });
+</script>
+{% endblock %}

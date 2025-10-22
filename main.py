@@ -38,17 +38,23 @@ print(f">> CryptoChecker Version3 starting from: {current_dir}")
 from api.crypto_api import router as crypto_router
 from api.gaming_api import router as gaming_router
 from api.auth_api import router as auth_router
-from api.trading_api import router as trading_router
 from api.clicker_api import router as clicker_router
 from api.missions_api import router as missions_router
 from api.stocks_api import router as stocks_router
 from api.achievements_api import router as achievements_router
 from api.gem_store_api import router as gem_store_router
 from api.staking_api import router as staking_router
+from api.trading_api import router as trading_router
+from api.minigames_api import router as minigames_router
+from api.leaderboard_api import router as leaderboard_router
+from api.challenge_api import router as challenge_router
+from api.crash_api import router as crash_router
+from api.social_api import router as social_router
 
 # Import database and services
 from database.database import init_database, get_db
 from crypto.price_service import price_service
+from services.crash_game_manager import crash_manager
 from api.bot_system import initialize_bot_population
 from gaming.round_manager import round_manager
 
@@ -178,6 +184,36 @@ app.include_router(
     prefix="/api/staking",
     tags=["Staking"]
 )
+app.include_router(
+    trading_router,
+    prefix="/api/trading",
+    tags=["Trading"]
+)
+app.include_router(
+    minigames_router,
+    prefix="/api/minigames",
+    tags=["Mini-Games"]
+)
+app.include_router(
+    leaderboard_router,
+    prefix="/api/leaderboards",
+    tags=["Leaderboards"]
+)
+app.include_router(
+    challenge_router,
+    prefix="/api/challenges",
+    tags=["Challenges"]
+)
+app.include_router(
+    crash_router,
+    prefix="/api/crash",
+    tags=["Crash Game"]
+)
+app.include_router(
+    social_router,
+    prefix="/api/social",
+    tags=["Social"]
+)
 
 # Authentication routes
 @app.get("/login")
@@ -284,6 +320,59 @@ async def gem_store(request: Request):
 async def staking(request: Request):
     """GEM Staking page - earn passive income."""
     return templates.TemplateResponse("staking.html", {"request": request})
+
+@app.get("/trading", response_class=HTMLResponse)
+async def trading(request: Request):
+    """GEM P2P Trading page - buy and sell GEM."""
+    return templates.TemplateResponse("trading.html", {"request": request})
+
+@app.get("/minigames", response_class=HTMLResponse)
+async def minigames(request: Request):
+    """Mini-Games page - quick fun games to win GEM."""
+    return templates.TemplateResponse("minigames.html", {"request": request})
+
+@app.get("/leaderboards", response_class=HTMLResponse)
+async def leaderboards(request: Request):
+    """Leaderboards page - top players and rankings."""
+    return templates.TemplateResponse("leaderboards.html", {"request": request})
+
+@app.get("/challenges", response_class=HTMLResponse)
+async def challenges(request: Request):
+    """Daily Challenges page - complete quests for rewards."""
+    return templates.TemplateResponse("challenges.html", {"request": request})
+
+@app.get("/crash", response_class=HTMLResponse)
+async def crash_game(request: Request):
+    """Crash Game page - multiplayer betting game."""
+    return templates.TemplateResponse("crash.html", {"request": request})
+
+@app.get("/social", response_class=HTMLResponse)
+async def social(request: Request):
+    """Social page - friends, messages, and activity."""
+    return templates.TemplateResponse("social.html", {"request": request})
+
+@app.get("/profile/{username}", response_class=HTMLResponse)
+async def profile(request: Request, username: str):
+    """User profile page."""
+    return templates.TemplateResponse("profile.html", {"request": request, "username": username})
+
+# ============================================================================
+# STARTUP/SHUTDOWN EVENTS
+# ============================================================================
+
+@app.on_event("startup")
+async def startup_event():
+    """Start background services."""
+    # Start crash game manager
+    await crash_manager.start()
+    print("[Startup] Crash game manager started")
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Stop background services."""
+    # Stop crash game manager
+    await crash_manager.stop()
+    print("[Shutdown] Crash game manager stopped")
 
 @app.exception_handler(404)
 async def not_found_handler(request: Request, exc: HTTPException):

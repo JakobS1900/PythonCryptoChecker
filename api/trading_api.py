@@ -1,324 +1,290 @@
 """
-Trading API for buying and selling cryptocurrencies with GEM currency.
-Handles portfolio management and crypto trading with fees.
+GEM P2P Trading API
+
+REST API endpoints for the P2P trading system.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
-from typing import Optional, List, Dict, Any
+from typing import List, Optional
+from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_
-from sqlalchemy.orm import selectinload
 
 from database.database import get_db
-from database.models import User, CryptoCurrency, PortfolioHolding, TransactionType
-from crypto.portfolio import portfolio_manager
-from crypto.price_service import price_service
-from api.auth_api import get_current_user as get_current_user_optional
+from database.models import User
+from api.auth_api import require_authentication
+from services.trading_service import TradingService
 
-# Trading fee percentage (1% per trade)
-TRADING_FEE_PERCENTAGE = 0.01
 
-router = APIRouter(prefix="/api/trading", tags=["trading"])
+router = APIRouter()
 
-# Request models
-class BuyCryptoRequest(BaseModel):
-    crypto_id: str = Field(..., description="Cryptocurrency ID to buy")
-    gem_amount: float = Field(..., gt=0, description="Amount of GEMs to spend")
 
-class SellCryptoRequest(BaseModel):
-    holding_id: str = Field(..., description="Portfolio holding ID to sell")
-    quantity_to_sell: float = Field(..., gt=0, description="Quantity of crypto to sell")
+# Request/Response Models
 
-class PortfolioResponse(BaseModel):
-    total_value_gem: float
-    total_invested_gem: float
-    total_profit_loss_gem: float
-    total_profit_loss_percentage: float
-    holdings: List[Dict[str, Any]]
+class CreateOrderRequest(BaseModel):
+    order_type: str = Field(..., description="Order type: buy or sell")
+    price: int = Field(..., gt=0, description="Price per GEM")
+    amount: int = Field(..., gt=0, description="Amount of GEM")
 
-@router.post("/buy", response_model=Dict[str, Any])
-async def buy_cryptocurrency(
-    request: BuyCryptoRequest,
-    current_user: Optional[User] = Depends(get_current_user_optional),
+
+class OrderInfo(BaseModel):
+    id: int
+    user_id: str
+    order_type: str
+    price: int
+    amount: int
+    filled_amount: int
+    status: str
+    created_at: datetime
+    updated_at: datetime
+    filled_at: Optional[datetime] = None
+    cancelled_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class CreateOrderResponse(BaseModel):
+    success: bool
+    message: str
+    order: Optional[OrderInfo] = None
+
+
+class OrderBookEntry(BaseModel):
+    price: int
+    amount: int
+    filled_amount: int
+    remaining: int
+    created_at: datetime
+
+
+class OrderBookResponse(BaseModel):
+    buy_orders: List[OrderBookEntry]
+    sell_orders: List[OrderBookEntry]
+    spread: Optional[int] = None
+
+
+class TradeInfo(BaseModel):
+    id: int
+    buyer_id: str
+    seller_id: str
+    order_id: int
+    price: int
+    amount: int
+    total_value: int
+    fee: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class CancelOrderResponse(BaseModel):
+    success: bool
+    message: str
+
+
+class MarketStatsResponse(BaseModel):
+    total_orders: int
+    active_buy_orders: int
+    active_sell_orders: int
+    total_trades_24h: int
+    volume_24h: int
+    best_bid: Optional[int] = None
+    best_ask: Optional[int] = None
+
+
+# API Endpoints
+
+@router.post("/order", response_model=CreateOrderResponse)
+async def create_order(
+    request: CreateOrderRequest,
+    current_user: User = Depends(require_authentication),
     db: AsyncSession = Depends(get_db)
 ):
-    """Buy cryptocurrency with GEMs."""
+    success, message, order = await TradingService.create_order(
+        user_id=current_user.id,
+        order_type=request.order_type,
+        price=request.price,
+        amount=request.amount,
+        db=db
+    )
 
-    if not current_user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authentication required for trading"
-        )
+    if not success:
+        raise HTTPException(status_code=400, detail=message)
 
-    try:
-        # Get cryptocurrency
-        crypto = await db.get(CryptoCurrency, request.crypto_id)
-        if not crypto or not crypto.is_active:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Cryptocurrency not found or inactive"
-            )
+    return CreateOrderResponse(
+        success=success,
+        message=message,
+        order=OrderInfo.from_orm(order) if order else None
+    )
 
-        if not crypto.current_price_usd:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Cryptocurrency price not available"
-            )
 
-        # Calculate trading fee
-        trading_fee = request.gem_amount * TRADING_FEE_PERCENTAGE
-        total_cost = request.gem_amount + trading_fee
-
-        # Check user balance
-        user_balance = await portfolio_manager.get_user_balance(current_user.id)
-        if user_balance < total_cost:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Insufficient balance. Required: {total_cost:.2f} GEM (including {trading_fee:.2f} GEM fee), Available: {user_balance:.2f} GEM"
-            )
-
-        # Calculate crypto quantity to buy
-        # Convert USD price to GEM price
-        crypto_price_gem = crypto.current_price_usd / portfolio_manager.gem_to_usd_rate
-        crypto_quantity = request.gem_amount / crypto_price_gem
-
-        # Deduct GEMs for purchase
-        success = await portfolio_manager.deduct_gems(
-            user_id=current_user.id,
-            amount=total_cost,
-            transaction_type=TransactionType.CRYPTO_BUY,
-            description=f"Buy {crypto_quantity:.8f} {crypto.symbol.upper()} for {request.gem_amount:.2f} GEM (fee: {trading_fee:.2f} GEM)"
-        )
-
-        if not success:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Failed to process payment"
-            )
-
-        # Get or create portfolio holding
-        holding_result = await db.execute(
-            select(PortfolioHolding).where(
-                and_(
-                    PortfolioHolding.user_id == current_user.id,
-                    PortfolioHolding.crypto_id == crypto.id
-                )
-            )
-        )
-        holding = holding_result.scalar_one_or_none()
-
-        if holding:
-            # Update existing holding with average price calculation
-            total_quantity = holding.quantity + crypto_quantity
-            total_invested = holding.total_invested_gem + request.gem_amount
-
-            holding.quantity = total_quantity
-            holding.average_buy_price_gem = total_invested / total_quantity if total_quantity > 0 else 0
-            holding.total_invested_gem = total_invested
-        else:
-            # Create new holding
-            holding = PortfolioHolding(
-                user_id=current_user.id,
-                crypto_id=crypto.id,
-                quantity=crypto_quantity,
-                average_buy_price_gem=crypto_price_gem,
-                total_invested_gem=request.gem_amount
-            )
-            db.add(holding)
-
-        await db.commit()
-        await db.refresh(holding)
-
-        return {
-            "success": True,
-            "message": f"Successfully bought {crypto_quantity:.8f} {crypto.symbol.upper()}",
-            "transaction": {
-                "crypto_quantity": crypto_quantity,
-                "gem_spent": request.gem_amount,
-                "trading_fee": trading_fee,
-                "total_cost": total_cost,
-                "crypto_price_gem": crypto_price_gem,
-                "crypto_symbol": crypto.symbol.upper()
-            },
-            "holding": holding.to_dict(current_price_usd=crypto.current_price_usd)
-        }
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Trading error: {str(e)}"
-        )
-
-@router.post("/sell", response_model=Dict[str, Any])
-async def sell_cryptocurrency(
-    request: SellCryptoRequest,
-    current_user: Optional[User] = Depends(get_current_user_optional),
+@router.get("/order-book", response_model=OrderBookResponse)
+async def get_order_book(
+    limit: int = 20,
     db: AsyncSession = Depends(get_db)
 ):
-    """Sell cryptocurrency for GEMs."""
+    order_book = await TradingService.get_order_book(db, limit=limit)
 
-    if not current_user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authentication required for trading"
+    buy_orders = [
+        OrderBookEntry(
+            price=order.price,
+            amount=order.amount,
+            filled_amount=order.filled_amount,
+            remaining=order.amount - order.filled_amount,
+            created_at=order.created_at
         )
+        for order in order_book["buy_orders"]
+    ]
 
-    try:
-        # Get holding with crypto data
-        holding_result = await db.execute(
-            select(PortfolioHolding)
-            .options(selectinload(PortfolioHolding.cryptocurrency))
-            .where(
-                and_(
-                    PortfolioHolding.id == request.holding_id,
-                    PortfolioHolding.user_id == current_user.id
-                )
-            )
+    sell_orders = [
+        OrderBookEntry(
+            price=order.price,
+            amount=order.amount,
+            filled_amount=order.filled_amount,
+            remaining=order.amount - order.filled_amount,
+            created_at=order.created_at
         )
-        holding = holding_result.scalar_one_or_none()
+        for order in order_book["sell_orders"]
+    ]
 
-        if not holding:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Portfolio holding not found"
-            )
+    spread = None
+    if buy_orders and sell_orders:
+        best_bid = buy_orders[0].price
+        best_ask = sell_orders[0].price
+        spread = best_ask - best_bid
 
-        if holding.quantity < request.quantity_to_sell:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Insufficient quantity. Available: {holding.quantity:.8f}, Requested: {request.quantity_to_sell:.8f}"
-            )
+    return OrderBookResponse(
+        buy_orders=buy_orders,
+        sell_orders=sell_orders,
+        spread=spread
+    )
 
-        crypto = holding.cryptocurrency
-        if not crypto.current_price_usd:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Cryptocurrency price not available"
-            )
 
-        # Calculate sale proceeds
-        crypto_price_gem = crypto.current_price_usd / portfolio_manager.gem_to_usd_rate
-        gross_proceeds = request.quantity_to_sell * crypto_price_gem
-
-        # Calculate trading fee
-        trading_fee = gross_proceeds * TRADING_FEE_PERCENTAGE
-        net_proceeds = gross_proceeds - trading_fee
-
-        # Update holding
-        if holding.quantity == request.quantity_to_sell:
-            # Selling entire holding
-            await db.delete(holding)
-        else:
-            # Partial sale
-            remaining_quantity = holding.quantity - request.quantity_to_sell
-            proportion_sold = request.quantity_to_sell / holding.quantity
-
-            holding.quantity = remaining_quantity
-            holding.total_invested_gem -= (holding.total_invested_gem * proportion_sold)
-
-        # Add GEMs to user wallet
-        success = await portfolio_manager.add_gems(
-            user_id=current_user.id,
-            amount=net_proceeds,
-            description=f"Sell {request.quantity_to_sell:.8f} {crypto.symbol.upper()} for {gross_proceeds:.2f} GEM (fee: {trading_fee:.2f} GEM)"
-        )
-
-        if not success:
-            await db.rollback()
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to process sale proceeds"
-            )
-
-        await db.commit()
-
-        return {
-            "success": True,
-            "message": f"Successfully sold {request.quantity_to_sell:.8f} {crypto.symbol.upper()}",
-            "transaction": {
-                "crypto_quantity_sold": request.quantity_to_sell,
-                "gross_proceeds_gem": gross_proceeds,
-                "trading_fee": trading_fee,
-                "net_proceeds_gem": net_proceeds,
-                "crypto_price_gem": crypto_price_gem,
-                "crypto_symbol": crypto.symbol.upper()
-            }
-        }
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Trading error: {str(e)}"
-        )
-@router.get("/portfolio", response_model=PortfolioResponse)
-async def get_user_portfolio(
-    current_user: Optional[User] = Depends(get_current_user_optional),
+@router.get("/my-orders", response_model=List[OrderInfo])
+async def get_my_orders(
+    status: Optional[str] = None,
+    current_user: User = Depends(require_authentication),
     db: AsyncSession = Depends(get_db)
 ):
-    """Get user's cryptocurrency portfolio."""
+    orders = await TradingService.get_user_orders(
+        user_id=current_user.id,
+        db=db,
+        status=status
+    )
 
-    if not current_user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authentication required to view portfolio"
-        )
+    return [OrderInfo.from_orm(order) for order in orders]
 
-    try:
-        # Get all holdings with crypto data
-        holdings_result = await db.execute(
-            select(PortfolioHolding)
-            .options(selectinload(PortfolioHolding.cryptocurrency))
-            .where(PortfolioHolding.user_id == current_user.id)
-            .order_by(PortfolioHolding.created_at.desc())
-        )
-        holdings = holdings_result.scalars().all()
 
-        total_value_gem = 0.0
-        total_invested_gem = 0.0
-        holdings_data = []
+@router.post("/cancel-order/{order_id}", response_model=CancelOrderResponse)
+async def cancel_order(
+    order_id: int,
+    current_user: User = Depends(require_authentication),
+    db: AsyncSession = Depends(get_db)
+):
+    success, message = await TradingService.cancel_order(
+        order_id=order_id,
+        user_id=current_user.id,
+        db=db
+    )
 
-        for holding in holdings:
-            crypto = holding.cryptocurrency
-            current_price_usd = crypto.current_price_usd if crypto else 0.0
+    if not success:
+        raise HTTPException(status_code=400, detail=message)
 
-            holding_data = holding.to_dict(
-                include_crypto_data=True,
-                current_price_usd=current_price_usd
+    return CancelOrderResponse(success=success, message=message)
+
+
+@router.get("/trades/recent", response_model=List[TradeInfo])
+async def get_recent_trades(
+    limit: int = 50,
+    db: AsyncSession = Depends(get_db)
+):
+    trades = await TradingService.get_recent_trades(db, limit=limit)
+    return [TradeInfo.from_orm(trade) for trade in trades]
+
+
+@router.get("/trades/my-history", response_model=List[TradeInfo])
+async def get_my_trade_history(
+    limit: int = 50,
+    current_user: User = Depends(require_authentication),
+    db: AsyncSession = Depends(get_db)
+):
+    trades = await TradingService.get_user_trade_history(
+        user_id=current_user.id,
+        db=db,
+        limit=limit
+    )
+
+    return [TradeInfo.from_orm(trade) for trade in trades]
+
+
+@router.get("/stats", response_model=MarketStatsResponse)
+async def get_market_stats(
+    db: AsyncSession = Depends(get_db)
+):
+    from sqlalchemy import select, func, and_
+    from database.models import GemTradeOrder, GemTrade
+    from datetime import datetime, timedelta
+
+    order_book = await TradingService.get_order_book(db, limit=1)
+
+    best_bid = None
+    if order_book["buy_orders"]:
+        best_bid = order_book["buy_orders"][0].price
+
+    best_ask = None
+    if order_book["sell_orders"]:
+        best_ask = order_book["sell_orders"][0].price
+
+    result = await db.execute(
+        select(func.count(GemTradeOrder.id))
+        .where(GemTradeOrder.status.in_(["active", "partial"]))
+    )
+    total_orders = result.scalar() or 0
+
+    result = await db.execute(
+        select(func.count(GemTradeOrder.id))
+        .where(
+            and_(
+                GemTradeOrder.order_type == "buy",
+                GemTradeOrder.status.in_(["active", "partial"])
             )
-            holdings_data.append(holding_data)
-
-            # Add to totals
-            total_invested_gem += holding.total_invested_gem
-            if current_price_usd:
-                total_value_gem += holding.calculate_current_value_gem(current_price_usd)
-
-        total_profit_loss_gem = total_value_gem - total_invested_gem
-        total_profit_loss_percentage = (total_profit_loss_gem / total_invested_gem * 100) if total_invested_gem > 0 else 0.0
-
-        return PortfolioResponse(
-            total_value_gem=round(total_value_gem, 2),
-            total_invested_gem=round(total_invested_gem, 2),
-            total_profit_loss_gem=round(total_profit_loss_gem, 2),
-            total_profit_loss_percentage=round(total_profit_loss_percentage, 2),
-            holdings=holdings_data
         )
+    )
+    active_buy_orders = result.scalar() or 0
 
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Portfolio error: {str(e)}"
+    result = await db.execute(
+        select(func.count(GemTradeOrder.id))
+        .where(
+            and_(
+                GemTradeOrder.order_type == "sell",
+                GemTradeOrder.status.in_(["active", "partial"])
+            )
         )
+    )
+    active_sell_orders = result.scalar() or 0
 
-@router.get("/fees", response_model=Dict[str, Any])
-async def get_trading_fees():
-    """Get current trading fees."""
-    return {
-        "trading_fee_percentage": TRADING_FEE_PERCENTAGE * 100,  # Convert to percentage
-        "description": f"Trading fee: {TRADING_FEE_PERCENTAGE * 100}% per transaction"
-    }
+    yesterday = datetime.utcnow() - timedelta(hours=24)
+
+    result = await db.execute(
+        select(func.count(GemTrade.id))
+        .where(GemTrade.created_at >= yesterday)
+    )
+    total_trades_24h = result.scalar() or 0
+
+    result = await db.execute(
+        select(func.sum(GemTrade.total_value))
+        .where(GemTrade.created_at >= yesterday)
+    )
+    volume_24h = result.scalar() or 0
+
+    return MarketStatsResponse(
+        total_orders=total_orders,
+        active_buy_orders=active_buy_orders,
+        active_sell_orders=active_sell_orders,
+        total_trades_24h=total_trades_24h,
+        volume_24h=volume_24h,
+        best_bid=best_bid,
+        best_ask=best_ask
+    )
