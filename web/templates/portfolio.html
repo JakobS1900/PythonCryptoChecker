@@ -109,33 +109,40 @@
                     <div style="padding: var(--space-6);">
                         <div class="row">
                             <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label class="form-label">Current GEM Balance</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="bi bi-gem"></i></span>
-                                        <input type="text" class="form-control" id="balance-display" readonly>
-                                        <span class="input-group-text">GEM</span>
+                                <div class="form-group-modern">
+                                    <label class="form-label-modern">Current GEM Balance</label>
+                                    <div class="input-group" style="display: flex; gap: 0;">
+                                        <span class="input-group-text" style="background: var(--bg-tertiary); border: 1px solid var(--border-subtle); border-right: none; border-radius: var(--radius-md) 0 0 var(--radius-md); color: var(--text-secondary); padding: var(--space-3) var(--space-4);"><i class="bi bi-gem"></i></span>
+                                        <input type="text" class="form-control-modern" id="balance-display" readonly style="border-radius: 0; border-left: none; border-right: none;">
+                                        <span class="input-group-text" style="background: var(--bg-tertiary); border: 1px solid var(--border-subtle); border-left: none; border-radius: 0 var(--radius-md) var(--radius-md) 0; color: var(--text-secondary); padding: var(--space-3) var(--space-4);">GEM</span>
                                     </div>
                                 </div>
-                                <div class="mb-3">
-                                    <label class="form-label">USD Equivalent</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text">$</span>
-                                        <input type="text" class="form-control" id="balance-usd-display" readonly>
-                                        <span class="input-group-text">USD</span>
+                                <div class="form-group-modern">
+                                    <label class="form-label-modern">USD Equivalent</label>
+                                    <div class="input-group" style="display: flex; gap: 0;">
+                                        <span class="input-group-text" style="background: var(--bg-tertiary); border: 1px solid var(--border-subtle); border-right: none; border-radius: var(--radius-md) 0 0 var(--radius-md); color: var(--text-secondary); padding: var(--space-3) var(--space-4);">$</span>
+                                        <input type="text" class="form-control-modern" id="balance-usd-display" readonly style="border-radius: 0; border-left: none; border-right: none;">
+                                        <span class="input-group-text" style="background: var(--bg-tertiary); border: 1px solid var(--border-subtle); border-left: none; border-radius: 0 var(--radius-md) var(--radius-md) 0; color: var(--text-secondary); padding: var(--space-3) var(--space-4);">USD</span>
                                     </div>
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="alert alert-info">
-                                    <h6><i class="bi bi-info-circle"></i> About GEM Coins</h6>
-                                    <p class="mb-2">GEM is the virtual currency used throughout CryptoChecker:</p>
-                                    <ul class="mb-0">
-                                        <li>1,000 GEM ≈ $10 USD (reference value)</li>
-                                        <li>Use GEM for crypto roulette gaming</li>
-                                        <li>Earn GEM through successful bets</li>
-                                        <li>Track your balance in real-time</li>
-                                    </ul>
+                                <div class="alert-modern alert-modern-info">
+                                    <div class="alert-modern-icon">
+                                        <i class="bi bi-info-circle"></i>
+                                    </div>
+                                    <div class="alert-modern-content">
+                                        <div class="alert-modern-title">About GEM Coins</div>
+                                        <div class="alert-modern-message">
+                                            <p style="margin-bottom: var(--space-2);">GEM is the virtual currency used throughout CryptoChecker:</p>
+                                            <ul style="margin: 0; padding-left: var(--space-5);">
+                                                <li>1,000 GEM ≈ $10 USD (reference value)</li>
+                                                <li>Use GEM for crypto roulette gaming</li>
+                                                <li>Earn GEM through successful bets</li>
+                                                <li>Track your balance in real-time</li>
+                                            </ul>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -143,15 +150,15 @@
                         <!-- Quick Actions -->
                         <div class="row mt-4">
                             <div class="col-12">
-                                <h6>Quick Actions</h6>
+                                <h6 style="margin-bottom: var(--space-3); color: var(--text-secondary); font-weight: var(--font-semibold);">Quick Actions</h6>
                                 <div class="d-flex gap-2 flex-wrap">
-                                    <a href="/gaming" class="btn btn-primary">
+                                    <a href="/gaming" class="btn-modern btn-modern-primary">
                                         <i class="bi bi-dice-5"></i> Play Roulette
                                     </a>
-                                    <a href="/converter" class="btn btn-outline-secondary">
+                                    <a href="/converter" class="btn-modern btn-modern-secondary">
                                         <i class="bi bi-arrow-left-right"></i> Convert Crypto
                                     </a>
-                                    <button class="btn btn-outline-success" onclick="Portfolio.refreshBalance()">
+                                    <button class="btn-modern btn-modern-outline" onclick="Portfolio.refreshBalance()">
                                         <i class="bi bi-arrow-clockwise"></i> Refresh Balance
                                     </button>
                                 </div>
@@ -163,54 +170,51 @@
 
             <!-- Transaction History Tab -->
             <div class="tab-pane fade" id="transactions" role="tabpanel">
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">
-                            <i class="bi bi-list-ul"></i> Transaction History
-                        </h5>
-                        <button class="btn btn-outline-primary btn-sm" onclick="Portfolio.refreshTransactions()">
-                            <i class="bi bi-arrow-clockwise"></i> Refresh
-                        </button>
-                    </div>
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-hover mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Date</th>
-                                        <th>Type</th>
-                                        <th>Description</th>
-                                        <th class="text-end">Amount</th>
-                                        <th class="text-end">Balance</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="transactions-table-body">
-                                    <tr>
-                                        <td colspan="6" class="text-center py-4">
-                                            <div class="spinner-border spinner-border-sm" role="status"></div>
-                                            Loading transactions...
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
+                <div class="card-modern-header" style="padding: var(--space-6); display: flex; justify-content: space-between; align-items: center;">
+                    <h5 class="card-modern-title" style="margin: 0;">
+                        <i class="bi bi-list-ul"></i> Transaction History
+                    </h5>
+                    <button class="btn-modern btn-modern-outline btn-modern-sm" onclick="Portfolio.refreshTransactions()">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                    </button>
+                </div>
+                <div style="padding: 0;">
+                    <div class="table-responsive">
+                        <table class="table-modern">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Description</th>
+                                    <th class="text-end">Amount</th>
+                                    <th class="text-end">Balance</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transactions-table-body">
+                                <tr>
+                                    <td colspan="6" class="text-center py-4">
+                                        <div class="spinner-border spinner-border-sm" role="status"></div>
+                                        <span style="color: var(--text-muted); margin-left: var(--space-2);">Loading transactions...</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
 
             <!-- Gaming Stats Tab -->
             <div class="tab-pane fade" id="gaming" role="tabpanel">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">
-                            <i class="bi bi-dice-5"></i> Gaming Statistics
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <h6>Roulette Performance</h6>
+                <div class="card-modern-header" style="padding: var(--space-6);">
+                    <h5 class="card-modern-title" style="margin: 0;">
+                        <i class="bi bi-dice-5"></i> Gaming Statistics
+                    </h5>
+                </div>
+                <div style="padding: var(--space-6);">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 style="margin-bottom: var(--space-4); color: var(--text-secondary); font-weight: var(--font-semibold);">Roulette Performance</h6>
                                 <div class="mb-3">
                                     <div class="d-flex justify-content-between">
                                         <span>Games Won</span>
@@ -237,7 +241,7 @@
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <h6>Financial Summary</h6>
+                                <h6 style="margin-bottom: var(--space-4); color: var(--text-secondary); font-weight: var(--font-semibold);">Financial Summary</h6>
                                 <div class="mb-3">
                                     <div class="d-flex justify-content-between">
                                         <span>Total Wagered</span>
@@ -261,14 +265,21 @@
 
                         <!-- Gaming Tips -->
                         <div class="mt-4">
-                            <div class="alert alert-light">
-                                <h6><i class="bi bi-lightbulb"></i> Gaming Tips</h6>
-                                <ul class="mb-0">
-                                    <li>Start with smaller bets to learn the game mechanics</li>
-                                    <li>Set a budget and stick to it for responsible gaming</li>
-                                    <li>Remember that all games are provably fair and based on chance</li>
-                                    <li>Track your performance to understand your gaming patterns</li>
-                                </ul>
+                            <div class="alert-modern alert-modern-info">
+                                <div class="alert-modern-icon">
+                                    <i class="bi bi-lightbulb"></i>
+                                </div>
+                                <div class="alert-modern-content">
+                                    <div class="alert-modern-title">Gaming Tips</div>
+                                    <div class="alert-modern-message">
+                                        <ul style="margin: 0; padding-left: var(--space-5);">
+                                            <li>Start with smaller bets to learn the game mechanics</li>
+                                            <li>Set a budget and stick to it for responsible gaming</li>
+                                            <li>Remember that all games are provably fair and based on chance</li>
+                                            <li>Track your performance to understand your gaming patterns</li>
+                                        </ul>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -279,17 +290,24 @@
 </div>
 
 <!-- Guest Mode Notice -->
-<div id="guest-portfolio-notice" class="alert alert-warning mt-4" style="display: none;">
-    <h6><i class="bi bi-exclamation-triangle"></i> Guest Mode Limitations</h6>
-    <p class="mb-2">You're currently using CryptoChecker in guest mode. Some portfolio features are limited:</p>
-    <ul class="mb-2">
-        <li>Balance and transactions are temporary and not saved</li>
-        <li>No persistent transaction history</li>
-        <li>Portfolio data resets on page refresh</li>
-    </ul>
-    <button class="btn btn-primary btn-sm" onclick="Auth.showLoginModal()">
-        <i class="bi bi-person-plus"></i> Sign Up / Login for Full Features
-    </button>
+<div id="guest-portfolio-notice" class="alert-modern alert-modern-warning mt-4" style="display: none;">
+    <div class="alert-modern-icon">
+        <i class="bi bi-exclamation-triangle"></i>
+    </div>
+    <div class="alert-modern-content">
+        <div class="alert-modern-title">Guest Mode Limitations</div>
+        <div class="alert-modern-message">
+            <p style="margin-bottom: var(--space-2);">You're currently using CryptoChecker in guest mode. Some portfolio features are limited:</p>
+            <ul style="margin-bottom: var(--space-3); padding-left: var(--space-5);">
+                <li>Balance and transactions are temporary and not saved</li>
+                <li>No persistent transaction history</li>
+                <li>Portfolio data resets on page refresh</li>
+            </ul>
+            <button class="btn-modern btn-modern-primary btn-modern-sm" onclick="Auth.showLoginModal()">
+                <i class="bi bi-person-plus"></i> Sign Up / Login for Full Features
+            </button>
+        </div>
+    </div>
 </div>
 {% endblock %}
 

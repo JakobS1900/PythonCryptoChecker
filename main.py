@@ -43,6 +43,8 @@ from api.clicker_api import router as clicker_router
 from api.missions_api import router as missions_router
 from api.stocks_api import router as stocks_router
 from api.achievements_api import router as achievements_router
+from api.gem_store_api import router as gem_store_router
+from api.staking_api import router as staking_router
 
 # Import database and services
 from database.database import init_database, get_db
@@ -166,6 +168,16 @@ app.include_router(
     prefix="/api/achievements",
     tags=["Achievements"]
 )
+app.include_router(
+    gem_store_router,
+    prefix="/api/gem-store",
+    tags=["GEM Store"]
+)
+app.include_router(
+    staking_router,
+    prefix="/api/staking",
+    tags=["Staking"]
+)
 
 # Authentication routes
 @app.get("/login")
@@ -262,6 +274,16 @@ async def missions(request: Request):
 async def achievements(request: Request):
     """Achievements page - unlock and claim rewards."""
     return templates.TemplateResponse("achievements.html", {"request": request})
+
+@app.get("/gem-store", response_class=HTMLResponse)
+async def gem_store(request: Request):
+    """GEM Store page - purchase GEM packages."""
+    return templates.TemplateResponse("gem_store.html", {"request": request})
+
+@app.get("/staking", response_class=HTMLResponse)
+async def staking(request: Request):
+    """GEM Staking page - earn passive income."""
+    return templates.TemplateResponse("staking.html", {"request": request})
 
 @app.exception_handler(404)
 async def not_found_handler(request: Request, exc: HTTPException):

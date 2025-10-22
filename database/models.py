@@ -79,6 +79,10 @@ class TransactionType(Enum):
     MINI_GAME = "MINI_GAME"      # Mini-game reward
     STOCK_BUY = "STOCK_BUY"      # Buy stock shares with GEMs
     STOCK_SELL = "STOCK_SELL"    # Sell stock shares for GEMs
+    GEM_PURCHASE = "GEM_PURCHASE"  # GEM package purchase
+    STAKE = "STAKE"              # Stake GEM for passive income
+    UNSTAKE = "UNSTAKE"          # Unstake GEM (return principal)
+    STAKE_REWARD = "STAKE_REWARD"  # Staking reward claim
 
 class BetType(Enum):
     """Types of roulette bets."""
@@ -152,6 +156,9 @@ class User(Base):
     clicker_challenges = relationship("ClickerChallenge", back_populates="user")
     clicker_leaderboard = relationship("ClickerLeaderboard", back_populates="user", uselist=False)
     clicker_theme = relationship("ClickerTheme", back_populates="user", uselist=False)
+    # GEM Marketplace relationships
+    gem_purchases = relationship("GemPurchase", back_populates="user")
+    gem_stakes = relationship("GemStake", back_populates="user")
 
     def set_password(self, password: str):
         """Hash and set password."""
@@ -1050,3 +1057,69 @@ class ClickerTheme(Base):
 
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+
+class GemPurchase(Base):
+    """GEM package purchases (simulated/educational only)."""
+    __tablename__ = "gem_purchases"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+
+    # Package details
+    package_id = Column(String(50), nullable=False)  # 'starter', 'bronze', 'silver', 'gold', 'platinum'
+    gems_amount = Column(Integer, nullable=False)  # Base GEM amount
+    bonus_gems = Column(Integer, default=0, nullable=False)  # Bonus GEM
+    total_gems = Column(Integer, nullable=False)  # gems_amount + bonus_gems
+
+    # Payment details (simulated)
+    price_usd = Column(Float, nullable=False)
+    payment_method = Column(String(50), nullable=True)  # 'demo_card', 'demo_crypto', 'demo_paypal'
+    transaction_id = Column(String(100), unique=True, nullable=False)
+    status = Column(String(20), default='completed', nullable=False)  # 'completed', 'pending', 'failed'
+
+    # Relationship
+    user = relationship("User", back_populates="gem_purchases")
+
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    __table_args__ = (
+        Index('idx_gem_purchases_user', 'user_id'),
+        Index('idx_gem_purchases_date', 'created_at'),
+    )
+
+
+class GemStake(Base):
+    """GEM staking for passive income rewards."""
+    __tablename__ = "gem_stakes"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+
+    # Stake details
+    amount = Column(Integer, nullable=False)  # GEM amount staked
+    lock_period_days = Column(Integer, nullable=False)  # 7, 30, or 90 days
+    apr_rate = Column(Float, nullable=False)  # Annual Percentage Rate (5%, 10%, 15%)
+
+    # Rewards tracking
+    total_rewards_earned = Column(Integer, default=0, nullable=False)  # Total rewards claimed
+    unclaimed_rewards = Column(Integer, default=0, nullable=False)  # Pending rewards
+    last_reward_calculation = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    # Status and dates
+    status = Column(String(20), default='active', nullable=False)  # 'active', 'completed', 'cancelled'
+    staked_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    unlock_at = Column(DateTime, nullable=False)  # When stake can be withdrawn
+    unstaked_at = Column(DateTime, nullable=True)  # When actually unstaked
+
+    # Relationship
+    user = relationship("User", back_populates="gem_stakes")
+
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    __table_args__ = (
+        Index('idx_gem_stakes_user', 'user_id'),
+        Index('idx_gem_stakes_status', 'status'),
+        Index('idx_gem_stakes_unlock', 'unlock_at'),
+    )

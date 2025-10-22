@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block title %}GEM Store - CryptoChecker v3{% endblock %}
+
+{% block content %}
+<!-- Educational Notice -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="alert-modern alert-modern-info">
+            <div class="alert-modern-icon">
+                <i class="bi bi-info-circle-fill"></i>
+            </div>
+            <div class="alert-modern-content">
+                <div class="alert-modern-title">Educational Demo Only</div>
+                <div class="alert-modern-message">
+                    This is a simulated purchase system for educational purposes. No real money is processed.
+                    All transactions are virtual and for demonstration of e-commerce concepts.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Store Header -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card-modern" style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(124, 58, 237, 0.05) 100%); border-color: var(--gem); padding: var(--space-8);">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 style="font-size: var(--text-4xl); font-weight: var(--font-bold); color: var(--text-primary); margin-bottom: var(--space-3);">
+                        <i class="bi bi-shop" style="color: var(--gem);"></i>
+                        GEM Store
+                    </h1>
+                    <p style="font-size: var(--text-lg); color: var(--text-secondary); margin: 0;">
+                        Purchase GEM packages to enhance your gaming experience
+                    </p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <div class="stat-card-modern" style="display: inline-block;">
+                        <small style="color: var(--text-muted); font-size: var(--text-xs);">Current Balance</small>
+                        <h3 id="current-balance" style="margin: 0; color: var(--gem);">
+                            <i class="bi bi-gem"></i> <span>Loading...</span> GEM
+                        </h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- GEM Packages Grid -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h4 style="margin-bottom: var(--space-6); color: var(--text-primary); font-weight: var(--font-semibold);">
+            <i class="bi bi-bag-fill"></i> Choose Your Package
+        </h4>
+    </div>
+</div>
+
+<div class="row" id="packages-grid">
+    <!-- Loading state -->
+    <div class="col-12 text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading packages...</span>
+        </div>
+        <p style="color: var(--text-muted); margin-top: var(--space-3);">Loading GEM packages...</p>
+    </div>
+</div>
+
+<!-- Purchase History -->
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card-modern" style="padding: 0; overflow: hidden;">
+            <div style="background: var(--bg-tertiary); padding: var(--space-5); border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center;">
+                <h5 style="margin: 0; font-size: var(--text-lg); font-weight: var(--font-semibold); color: var(--text-primary);">
+                    <i class="bi bi-clock-history"></i> Purchase History
+                </h5>
+                <button class="btn-modern btn-modern-secondary btn-modern-sm" onclick="GemStore.refreshHistory()">
+                    <i class="bi bi-arrow-clockwise"></i> Refresh
+                </button>
+            </div>
+            <div style="padding: var(--space-6);">
+                <div id="purchase-history">
+                    <p style="color: var(--text-muted); text-align: center; margin: 0;">Loading purchase history...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Purchase Confirmation Modal -->
+<div class="modal fade" id="purchaseModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background: var(--bg-secondary); border: 1px solid var(--border-subtle);">
+            <div class="modal-header" style="border-bottom: 1px solid var(--border-subtle);">
+                <h5 class="modal-title" style="color: var(--text-primary); font-weight: var(--font-semibold);">
+                    <i class="bi bi-cart-check" style="color: var(--gem);"></i>
+                    Confirm Purchase
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" style="filter: invert(1);"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Package Details -->
+                <div class="card-modern" style="background: var(--bg-tertiary); margin-bottom: var(--space-4);">
+                    <div style="padding: var(--space-4);">
+                        <h6 id="modal-package-name" style="color: var(--text-primary); margin-bottom: var(--space-2);"></h6>
+                        <p id="modal-package-description" style="color: var(--text-secondary); font-size: var(--text-sm); margin: 0;"></p>
+                    </div>
+                </div>
+
+                <!-- Purchase Breakdown -->
+                <div style="margin-bottom: var(--space-4);">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span style="color: var(--text-secondary);">Base GEM:</span>
+                        <strong id="modal-base-gems" style="color: var(--text-primary);"></strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span style="color: var(--text-secondary);">Bonus GEM:</span>
+                        <strong id="modal-bonus-gems" style="color: var(--gem);"></strong>
+                    </div>
+                    <hr style="border-color: var(--border-subtle);">
+                    <div class="d-flex justify-content-between mb-3">
+                        <span style="font-weight: var(--font-bold); color: var(--text-primary);">Total GEM:</span>
+                        <strong id="modal-total-gems" style="color: var(--gem); font-size: var(--text-xl);"></strong>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span style="font-weight: var(--font-bold); color: var(--text-primary);">Price:</span>
+                        <strong id="modal-price" style="color: var(--success); font-size: var(--text-xl);"></strong>
+                    </div>
+                </div>
+
+                <!-- Payment Method Selection -->
+                <div class="form-group-modern">
+                    <label class="form-label-modern">Payment Method (Demo)</label>
+                    <select class="form-control-modern" id="payment-method">
+                        <option value="demo_card">💳 Demo Credit Card</option>
+                        <option value="demo_crypto">₿ Demo Crypto Payment</option>
+                        <option value="demo_paypal">💰 Demo PayPal</option>
+                    </select>
+                    <small style="color: var(--text-muted); font-size: var(--text-xs); display: block; margin-top: var(--space-2);">
+                        No real payment processing - educational demo only
+                    </small>
+                </div>
+            </div>
+            <div class="modal-footer" style="border-top: 1px solid var(--border-subtle);">
+                <button type="button" class="btn-modern btn-modern-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn-modern btn-modern-success" id="confirm-purchase-btn">
+                    <i class="bi bi-check-circle"></i>
+                    Complete Purchase
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success Modal -->
+<div class="modal fade" id="successModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background: var(--bg-secondary); border: 1px solid var(--border-subtle);">
+            <div class="modal-header" style="border-bottom: 1px solid var(--border-subtle);">
+                <h5 class="modal-title" style="color: var(--text-primary); font-weight: var(--font-semibold);">
+                    <i class="bi bi-check-circle-fill" style="color: var(--success);"></i>
+                    Purchase Successful!
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" style="filter: invert(1);"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div style="font-size: 4rem; color: var(--success); margin-bottom: var(--space-4);">
+                    <i class="bi bi-gem"></i>
+                </div>
+                <h4 style="color: var(--text-primary); margin-bottom: var(--space-3);">
+                    <span id="success-gems">0</span> GEM Added!
+                </h4>
+                <p style="color: var(--text-secondary); margin-bottom: var(--space-4);">
+                    Transaction ID: <code id="success-transaction-id" style="color: var(--primary);"></code>
+                </p>
+                <div class="card-modern" style="background: var(--bg-tertiary); padding: var(--space-4);">
+                    <div class="d-flex justify-content-between">
+                        <span style="color: var(--text-secondary);">New Balance:</span>
+                        <strong id="success-new-balance" style="color: var(--gem); font-size: var(--text-xl);"></strong>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="border-top: 1px solid var(--border-subtle);">
+                <button type="button" class="btn-modern btn-modern-primary w-100" data-bs-dismiss="modal">
+                    <i class="bi bi-arrow-right"></i> Continue
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', path='/js/gem_store.js') }}"></script>
+{% endblock %}

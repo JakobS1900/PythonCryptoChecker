@@ -23,6 +23,12 @@ crypto_tracker_v3.db
 *secret*
 *password*
 
+# 🔐 CLAUDE CODE SETTINGS (NEVER COMMIT - Contains API keys)
+.claude/
+.claude/*
+.claude/settings.local.json
+settings.local.json
+
 # 📁 VIRTUAL ENVIRONMENTS (NEVER COMMIT)
 .venv/
 venv/
@@ -39,7 +45,14 @@ context_knowledge.log
 # 🧪 TEST FILES (Ignore temporary test scripts)
 test_*.py
 *_test.py
+*_test_*.py
 test_screenshots/
+fix_*.py
+add_test_*.py
+comprehensive_test.py
+simple_test.py
+phase*_validation_test.py
+api_smoke_tests.py
 
 # 💻 IDE & DEVELOPMENT
 .vscode/
@@ -81,6 +94,19 @@ Ignoreme/
 ClaudeTemp_*
 .prohibited_words.txt  # ← Keep if needed for setup
 
+# 📚 SESSION DOCUMENTATION (Temporary session reports - keep in docs/session-reports/)
+CLICKER_*.md
+PHASE*.md
+SESSION_SUMMARY.md
+ROUND_*.md
+ROULETTE_BUG*.md
+GEM_MARKETPLACE_*.md
+STOCK_TRADING_*.md
+*_COMPLETE.md
+*_PROGRESS.md
+*_FIXED.md
+*_ANALYSIS.md
+
 # 🚧 CONSTRUCTION DOCUMENTATION (Comment out if needed)
 ## .allowed_markdown.txt
 ## *[INSERT_DATE]*.md
@@ -103,6 +129,4 @@ POSTGRESQL_UPGRADE.md
 scripts/migrate_to_postgresql.py
 TESTING_GUIDE.md
 install_postgresql_windows.ps1
-CHANGELOG.md
-Error.txt
 .claude/settings.local.json

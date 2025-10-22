@@ -1,0 +1,310 @@
+{% extends "base.html" %}
+
+{% block title %}GEM Staking - Earn Passive Income{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stake-plan-card {
+        position: relative;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+
+    .stake-plan-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(139, 92, 246, 0.3);
+    }
+
+    .plan-badge {
+        position: absolute;
+        top: -12px;
+        right: 20px;
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .plan-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+
+    .apr-display {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--gem);
+        line-height: 1;
+        margin: 1rem 0;
+    }
+
+    .stake-card {
+        border-left: 4px solid var(--gem);
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.05) 0%, transparent 100%);
+    }
+
+    .progress-bar-rewards {
+        height: 8px;
+        border-radius: 4px;
+        background: var(--bg-tertiary);
+        overflow: hidden;
+    }
+
+    .progress-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--gem), var(--primary));
+        transition: width 0.5s ease;
+    }
+
+    .countdown-timer {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: rgba(139, 92, 246, 0.1);
+        border-radius: 8px;
+        font-weight: 600;
+    }
+
+    .lock-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--warning);
+    }
+
+    .unlock-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--success);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-modern">
+    <!-- Page Header -->
+    <div class="card-modern" style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(124, 58, 237, 0.05) 100%);">
+        <h1 class="mb-3">
+            <i class="bi bi-piggy-bank" style="color: var(--gem);"></i>
+            GEM Staking
+        </h1>
+        <p class="lead mb-4">Lock your GEM to earn passive income rewards. Higher lock periods = Higher APR!</p>
+
+        <!-- Current Balance -->
+        <div class="stat-card-modern">
+            <small>Available to Stake</small>
+            <h3 id="available-balance">
+                <i class="bi bi-gem"></i> <span>Loading...</span> GEM
+            </h3>
+        </div>
+    </div>
+
+    <!-- Staking Statistics -->
+    <div class="row mb-4" id="staking-stats">
+        <div class="col-md-3">
+            <div class="stat-card-modern">
+                <div class="stat-label">Active Stakes</div>
+                <div class="stat-value" id="active-stakes-count">0</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card-modern">
+                <div class="stat-label">Total Staked</div>
+                <div class="stat-value">
+                    <i class="bi bi-gem"></i> <span id="total-staked">0</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card-modern">
+                <div class="stat-label">Unclaimed Rewards</div>
+                <div class="stat-value" style="color: var(--success);">
+                    <i class="bi bi-gift"></i> <span id="unclaimed-rewards">0</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card-modern">
+                <div class="stat-label">Total Earned</div>
+                <div class="stat-value" style="color: var(--gem);">
+                    <i class="bi bi-trophy"></i> <span id="total-earned">0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Staking Plans -->
+    <div class="card-modern mb-4">
+        <h4 class="mb-4">
+            <i class="bi bi-card-list"></i>
+            Available Staking Plans
+        </h4>
+        <div class="row" id="staking-plans">
+            <!-- Loading state -->
+            <div class="col-12 text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading plans...</span>
+                </div>
+                <p class="mt-3">Loading staking plans...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Stakes -->
+    <div class="card-modern" id="active-stakes-section">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="mb-0">
+                <i class="bi bi-clock-history"></i>
+                My Active Stakes
+            </h4>
+            <div class="btn-group btn-group-modern" role="group">
+                <button type="button" class="btn-modern btn-modern-sm btn-modern-primary active" onclick="StakingManager.filterStakes('active')">
+                    Active
+                </button>
+                <button type="button" class="btn-modern btn-modern-sm btn-modern-secondary" onclick="StakingManager.filterStakes('completed')">
+                    Completed
+                </button>
+            </div>
+        </div>
+        <div id="active-stakes-list">
+            <!-- Populated by JavaScript -->
+        </div>
+    </div>
+</div>
+
+<!-- Stake Modal -->
+<div class="modal fade" id="stakeModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background: var(--bg-secondary); border: 1px solid rgba(139, 92, 246, 0.3);">
+            <div class="modal-header" style="border-bottom: 1px solid rgba(139, 92, 246, 0.2);">
+                <h5 class="modal-title">
+                    <i class="bi bi-lock-fill"></i>
+                    Stake GEM
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Plan Info -->
+                <div class="alert-modern alert-modern-info mb-4">
+                    <div class="alert-modern-content">
+                        <div class="alert-modern-title" id="modal-plan-name">Loading...</div>
+                        <div class="alert-modern-message" id="modal-plan-details">
+                            <div><strong>Lock Period:</strong> <span id="modal-lock-period">-</span></div>
+                            <div><strong>APR Rate:</strong> <span id="modal-apr-rate">-</span></div>
+                            <div><strong>Min Stake:</strong> <span id="modal-min-stake">-</span> GEM</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Amount Input -->
+                <div class="form-group-modern mb-4">
+                    <label>Amount to Stake</label>
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="bi bi-gem"></i>
+                        </span>
+                        <input type="number"
+                               class="form-control-modern"
+                               id="stake-amount"
+                               placeholder="Enter amount"
+                               min="1000"
+                               step="100">
+                        <span class="input-group-text">GEM</span>
+                    </div>
+                    <small class="form-text">
+                        Available: <strong><span id="modal-available-balance">0</span> GEM</strong>
+                    </small>
+                </div>
+
+                <!-- Rewards Preview -->
+                <div class="card-modern" style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, transparent 100%);">
+                    <h6 class="mb-3">Estimated Rewards</h6>
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="stat-label">Daily Reward</div>
+                            <div class="stat-value" style="font-size: 1.25rem;">
+                                <span id="estimated-daily">0</span> GEM
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-label">Total (End of Period)</div>
+                            <div class="stat-value" style="font-size: 1.25rem; color: var(--success);">
+                                <span id="estimated-total">0</span> GEM
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert-modern alert-modern-warning mt-3">
+                    <div class="alert-modern-icon">
+                        <i class="bi bi-info-circle-fill"></i>
+                    </div>
+                    <div class="alert-modern-content">
+                        <div class="alert-modern-message">
+                            Your GEM will be locked for the specified period. You can claim rewards anytime, but cannot unstake until the lock period ends.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="border-top: 1px solid rgba(139, 92, 246, 0.2);">
+                <button type="button" class="btn-modern btn-modern-secondary" data-bs-dismiss="modal">
+                    Cancel
+                </button>
+                <button type="button" class="btn-modern btn-modern-primary" onclick="StakingManager.confirmStake()">
+                    <i class="bi bi-lock-fill"></i>
+                    Stake Now
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success Modal -->
+<div class="modal fade" id="successModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background: var(--bg-secondary); border: 1px solid rgba(34, 197, 94, 0.3);">
+            <div class="modal-header" style="border-bottom: 1px solid rgba(34, 197, 94, 0.2);">
+                <h5 class="modal-title" style="color: var(--success);">
+                    <i class="bi bi-check-circle-fill"></i>
+                    Stake Successful!
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <div style="font-size: 4rem; color: var(--success);">
+                    <i class="bi bi-lock-fill"></i>
+                </div>
+                <h4 class="mt-3 mb-2">Successfully Staked!</h4>
+                <p class="mb-4">
+                    <strong style="font-size: 1.5rem; color: var(--gem);">
+                        <i class="bi bi-gem"></i> <span id="success-amount">0</span> GEM
+                    </strong>
+                </p>
+                <div class="alert-modern alert-modern-success">
+                    <div class="alert-modern-content">
+                        <div><strong>Daily Reward:</strong> <span id="success-daily-reward">0</span> GEM</div>
+                        <div><strong>Unlock Date:</strong> <span id="success-unlock-date">-</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="border-top: 1px solid rgba(34, 197, 94, 0.2);">
+                <button type="button" class="btn-modern btn-modern-success" data-bs-dismiss="modal">
+                    <i class="bi bi-check-lg"></i>
+                    Great!
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/js/staking.js"></script>
+<script>
+    // Initialize when page loads
+    document.addEventListener('DOMContentLoaded', () => {
+        StakingManager.init();
+    });
+</script>
+{% endblock %}

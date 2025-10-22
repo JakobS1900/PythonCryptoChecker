@@ -204,8 +204,8 @@
                     <!-- Portfolio Tab -->
                     <div class="tab-pane fade show active" id="portfolio-pane" role="tabpanel">
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h5 class="mb-0">Your Cryptocurrency Holdings</h5>
-                            <button class="btn btn-success btn-sm" onclick="Profile.refreshPortfolio()">
+                            <h5 style="margin: 0; color: var(--text-primary); font-weight: var(--font-semibold);">Your Cryptocurrency Holdings</h5>
+                            <button class="btn-modern btn-modern-success btn-modern-sm" onclick="Profile.refreshPortfolio()">
                                 <i class="bi bi-arrow-clockwise"></i> Refresh
                             </button>
                         </div>
@@ -221,8 +221,8 @@
                     <!-- Transactions Tab -->
                     <div class="tab-pane fade" id="transactions-pane" role="tabpanel">
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h5 class="mb-0">Recent Transactions</h5>
-                            <button class="btn btn-primary btn-sm" onclick="Profile.refreshTransactions()">
+                            <h5 style="margin: 0; color: var(--text-primary); font-weight: var(--font-semibold);">Recent Transactions</h5>
+                            <button class="btn-modern btn-modern-primary btn-modern-sm" onclick="Profile.refreshTransactions()">
                                 <i class="bi bi-arrow-clockwise"></i> Refresh
                             </button>
                         </div>
@@ -237,16 +237,16 @@
 
                     <!-- Settings Tab -->
                     <div class="tab-pane fade" id="settings-pane" role="tabpanel">
-                        <h5>Account Settings</h5>
+                        <h5 style="margin-bottom: var(--space-4); color: var(--text-primary); font-weight: var(--font-semibold);">Account Settings</h5>
                         <div class="row">
                             <div class="col-md-6">
-                                <div class="card">
-                                    <div class="card-header">
-                                        <h6 class="mb-0">Balance Persistence Test</h6>
+                                <div class="card-modern">
+                                    <div class="card-modern-header">
+                                        <h6 class="card-modern-title">Balance Persistence Test</h6>
                                     </div>
-                                    <div class="card-body">
-                                        <p class="text-muted">Test if your GEM balance persists across sessions.</p>
-                                        <button class="btn btn-primary" onclick="Profile.testBalancePersistence()">
+                                    <div style="padding: var(--space-6); padding-top: 0;">
+                                        <p style="color: var(--text-muted); margin-bottom: var(--space-4);">Test if your GEM balance persists across sessions.</p>
+                                        <button class="btn-modern btn-modern-primary" onclick="Profile.testBalancePersistence()">
                                             <i class="bi bi-check-circle"></i> Test Balance Persistence
                                         </button>
                                         <div id="persistence-result" class="mt-3"></div>
@@ -254,14 +254,14 @@
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="card">
-                                    <div class="card-header">
-                                        <h6 class="mb-0">Account Information</h6>
+                                <div class="card-modern">
+                                    <div class="card-modern-header">
+                                        <h6 class="card-modern-title">Account Information</h6>
                                     </div>
-                                    <div class="card-body">
-                                        <p><strong>GEM Rate:</strong> 1,000 GEM = $10.00 USD</p>
-                                        <p><strong>Trading Fee:</strong> 1% per transaction</p>
-                                        <p><strong>Supported Cryptos:</strong> 57+ cryptocurrencies</p>
+                                    <div style="padding: var(--space-6); padding-top: 0;">
+                                        <p style="margin-bottom: var(--space-3);"><strong style="color: var(--text-primary);">GEM Rate:</strong> <span style="color: var(--text-secondary);">1,000 GEM = $10.00 USD</span></p>
+                                        <p style="margin-bottom: var(--space-3);"><strong style="color: var(--text-primary);">Trading Fee:</strong> <span style="color: var(--text-secondary);">1% per transaction</span></p>
+                                        <p style="margin: 0;"><strong style="color: var(--text-primary);">Supported Cryptos:</strong> <span style="color: var(--text-secondary);">57+ cryptocurrencies</span></p>
                                     </div>
                                 </div>
                             </div>
@@ -276,34 +276,34 @@
 <!-- Edit Profile Modal -->
 <div class="modal fade" id="editProfileModal" tabindex="-1">
     <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Edit Profile</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <div class="modal-content" style="background: var(--bg-secondary); border: 1px solid var(--border-subtle);">
+            <div class="modal-header" style="border-bottom: 1px solid var(--border-subtle);">
+                <h5 class="modal-title" style="color: var(--text-primary); font-weight: var(--font-semibold);">Edit Profile</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" style="filter: invert(1);"></button>
             </div>
             <div class="modal-body">
                 <form id="editProfileForm">
-                    <div class="mb-3">
-                        <label for="edit-username" class="form-label">Username</label>
-                        <input type="text" class="form-control" id="edit-username" required minlength="3" maxlength="50">
+                    <div class="form-group-modern">
+                        <label for="edit-username" class="form-label-modern">Username</label>
+                        <input type="text" class="form-control-modern" id="edit-username" required minlength="3" maxlength="50">
                     </div>
-                    <div class="mb-3">
-                        <label for="edit-email" class="form-label">Email</label>
-                        <input type="email" class="form-control" id="edit-email" required>
+                    <div class="form-group-modern">
+                        <label for="edit-email" class="form-label-modern">Email</label>
+                        <input type="email" class="form-control-modern" id="edit-email" required>
                     </div>
-                    <div class="mb-3">
-                        <label for="edit-bio" class="form-label">Bio</label>
-                        <textarea class="form-control" id="edit-bio" rows="3" maxlength="500"></textarea>
-                        <small class="text-muted">Tell us about yourself (max 500 characters)</small>
+                    <div class="form-group-modern">
+                        <label for="edit-bio" class="form-label-modern">Bio</label>
+                        <textarea class="form-control-modern" id="edit-bio" rows="3" maxlength="500"></textarea>
+                        <small style="color: var(--text-muted); font-size: var(--text-xs);">Tell us about yourself (max 500 characters)</small>
                     </div>
-                    <div class="mb-3">
-                        <label for="edit-avatar-url" class="form-label">Avatar URL</label>
-                        <input type="url" class="form-control" id="edit-avatar-url" placeholder="https://...">
-                        <small class="text-muted">Or use the camera button above to upload an image</small>
+                    <div class="form-group-modern">
+                        <label for="edit-avatar-url" class="form-label-modern">Avatar URL</label>
+                        <input type="url" class="form-control-modern" id="edit-avatar-url" placeholder="https://...">
+                        <small style="color: var(--text-muted); font-size: var(--text-xs);">Or use the camera button above to upload an image</small>
                     </div>
-                    <div class="mb-3">
-                        <label for="edit-theme" class="form-label">Profile Theme</label>
-                        <select class="form-select" id="edit-theme">
+                    <div class="form-group-modern" style="margin-bottom: 0;">
+                        <label for="edit-theme" class="form-label-modern">Profile Theme</label>
+                        <select class="form-control-modern" id="edit-theme">
                             <option value="purple">Purple Haze</option>
                             <option value="blue">Ocean Blue</option>
                             <option value="green">Emerald Green</option>
@@ -313,13 +313,13 @@
                             <option value="dark">Dark Knight</option>
                             <option value="ocean">Deep Ocean</option>
                         </select>
-                        <small class="text-muted">Choose your profile card color theme</small>
+                        <small style="color: var(--text-muted); font-size: var(--text-xs);">Choose your profile card color theme</small>
                     </div>
                 </form>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="Profile.saveProfile()">Save Changes</button>
+            <div class="modal-footer" style="border-top: 1px solid var(--border-subtle);">
+                <button type="button" class="btn-modern btn-modern-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn-modern btn-modern-primary" onclick="Profile.saveProfile()">Save Changes</button>
             </div>
         </div>
     </div>
@@ -562,9 +562,13 @@ window.Profile = {
 
     showPortfolioError() {
         document.getElementById('portfolio-content').innerHTML = `
-            <div class="alert alert-warning">
-                <i class="bi bi-exclamation-triangle"></i>
-                No portfolio data available. Start trading to build your crypto portfolio!
+            <div class="alert-modern alert-modern-warning">
+                <div class="alert-modern-icon">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+                <div class="alert-modern-content">
+                    <div class="alert-modern-message">No portfolio data available. Start trading to build your crypto portfolio!</div>
+                </div>
             </div>
         `;
     },
@@ -578,7 +582,7 @@ window.Profile = {
                     <i class="bi bi-wallet text-muted" style="font-size: 3rem;"></i>
                     <h5 class="text-muted mt-3">No crypto holdings yet</h5>
                     <p class="text-muted">Start trading to build your portfolio!</p>
-                    <a href="/portfolio" class="btn btn-primary">
+                    <a href="/portfolio" class="btn-modern btn-modern-primary">
                         <i class="bi bi-plus-circle"></i> Start Trading
                     </a>
                 </div>
@@ -689,9 +693,13 @@ window.Profile = {
 
     showTransactionsError() {
         document.getElementById('transactions-content').innerHTML = `
-            <div class="alert alert-warning">
-                <i class="bi bi-exclamation-triangle"></i>
-                Unable to load transaction history.
+            <div class="alert-modern alert-modern-warning">
+                <div class="alert-modern-icon">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+                <div class="alert-modern-content">
+                    <div class="alert-modern-message">Unable to load transaction history.</div>
+                </div>
             </div>
         `;
     },
@@ -803,11 +811,17 @@ window.Profile = {
                     const balance = data.data.wallet.gem_balance;
 
                     resultDiv.innerHTML = `
-                        <div class="alert alert-success">
-                            <i class="bi bi-check-circle"></i>
-                            <strong>Balance Persistence: WORKING</strong><br>
-                            Current balance: ${balance.toFixed(2)} GEM<br>
-                            <small>Your balance is properly stored in the database and persists across sessions.</small>
+                        <div class="alert-modern alert-modern-success">
+                            <div class="alert-modern-icon">
+                                <i class="bi bi-check-circle"></i>
+                            </div>
+                            <div class="alert-modern-content">
+                                <div class="alert-modern-title">Balance Persistence: WORKING</div>
+                                <div class="alert-modern-message">
+                                    Current balance: ${balance.toFixed(2)} GEM<br>
+                                    <small>Your balance is properly stored in the database and persists across sessions.</small>
+                                </div>
+                            </div>
                         </div>
                     `;
                 }
@@ -816,10 +830,16 @@ window.Profile = {
             }
         } catch (error) {
             resultDiv.innerHTML = `
-                <div class="alert alert-danger">
-                    <i class="bi bi-x-circle"></i>
-                    <strong>Balance Persistence: ERROR</strong><br>
-                    <small>Unable to verify balance persistence: ${error.message}</small>
+                <div class="alert-modern alert-modern-error">
+                    <div class="alert-modern-icon">
+                        <i class="bi bi-x-circle"></i>
+                    </div>
+                    <div class="alert-modern-content">
+                        <div class="alert-modern-title">Balance Persistence: ERROR</div>
+                        <div class="alert-modern-message">
+                            <small>Unable to verify balance persistence: ${error.message}</small>
+                        </div>
+                    </div>
                 </div>
             `;
         }

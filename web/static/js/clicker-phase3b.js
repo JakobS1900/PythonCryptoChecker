@@ -175,7 +175,7 @@ class LeaderboardsManager {
                 player.value
             );
 
-            const avatarUrl = player.avatar_url || '/static/images/default-avatar.png';
+            const avatarUrl = player.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(player.username)}&size=40&background=667eea&color=fff`;
 
             html += `
                 <div class="leaderboard-row ${rowClass}">
@@ -186,7 +186,7 @@ class LeaderboardsManager {
                         <img src="${avatarUrl}"
                              alt="${player.username}"
                              class="leaderboard-player-avatar"
-                             onerror="this.src='/static/images/default-avatar.png'">
+                             onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(player.username)}&size=40&background=667eea&color=fff'">
                         <div class="leaderboard-player-name">
                             ${this.escapeHtml(player.username)}
                             ${isCurrentPlayer ? '<span style="color: var(--warning); margin-left: 8px;">(You)</span>' : ''}
