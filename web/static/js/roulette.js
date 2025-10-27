@@ -49,6 +49,16 @@
         this.pollingFallbackInterval = null;
         this.serverRoundState = null;
 
+        // Enhanced error handling & connection management
+        this.connectionStatus = 'connected'; // 'connected', 'reconnecting', 'disconnected'
+        this.consecutiveFailures = 0;
+        this.maxConsecutiveFailures = 3;
+        this.retryAttempts = new Map(); // Track retry attempts per operation
+        this.maxRetryAttempts = 3;
+        this.retryDelay = 1000; // Start with 1 second, exponential backoff
+        this.lastSuccessfulPoll = Date.now();
+        this.pollTimeout = 10000; // Consider connection dead after 10s without successful poll
+
         // Auto-bet state
         this.autoBetEnabled = false;
         this.bettingStrategy = 'manual';
@@ -113,6 +123,7 @@
         this.cacheElements();
         this.bindEventListeners();
         this.generateNumberGrid();
+        this.renderWheel(); // PHASE 2 OPTIMIZATION: Render wheel from data
         this.initializeWheelLoop(); // NEW: Initialize seamless wheel scrolling
         this.syncInitialBalance();
         this.updateBetAmountDisplay();
@@ -146,6 +157,49 @@
 
         window.rouletteGame = this;
         console.log('RouletteGame ready');
+    }
+
+    renderWheel() {
+        // PHASE 2 OPTIMIZATION: Component-based wheel rendering
+        // Wheel data: 37 positions (0-36) with crypto names and colors
+        const wheelData = [
+            {num: 0, crypto: 'BTC', color: 'green'},
+            {num: 1, crypto: 'ETH', color: 'red'}, {num: 2, crypto: 'ADA', color: 'black'},
+            {num: 3, crypto: 'SOL', color: 'red'}, {num: 4, crypto: 'DOT', color: 'black'},
+            {num: 5, crypto: 'MATIC', color: 'red'}, {num: 6, crypto: 'AVAX', color: 'black'},
+            {num: 7, crypto: 'LINK', color: 'red'}, {num: 8, crypto: 'UNI', color: 'black'},
+            {num: 9, crypto: 'LTC', color: 'red'}, {num: 10, crypto: 'BCH', color: 'black'},
+            {num: 11, crypto: 'XLM', color: 'red'}, {num: 12, crypto: 'VET', color: 'black'},
+            {num: 13, crypto: 'FIL', color: 'red'}, {num: 14, crypto: 'TRX', color: 'black'},
+            {num: 15, crypto: 'ETC', color: 'red'}, {num: 16, crypto: 'THETA', color: 'black'},
+            {num: 17, crypto: 'XMR', color: 'red'}, {num: 18, crypto: 'ALGO', color: 'black'},
+            {num: 19, crypto: 'AAVE', color: 'red'}, {num: 20, crypto: 'ATOM', color: 'black'},
+            {num: 21, crypto: 'XTZ', color: 'red'}, {num: 22, crypto: 'COMP', color: 'black'},
+            {num: 23, crypto: 'SUSHI', color: 'red'}, {num: 24, crypto: 'GRT', color: 'black'},
+            {num: 25, crypto: 'MKR', color: 'red'}, {num: 26, crypto: 'SNX', color: 'black'},
+            {num: 27, crypto: 'YFI', color: 'red'}, {num: 28, crypto: 'UMA', color: 'black'},
+            {num: 29, crypto: 'BAL', color: 'red'}, {num: 30, crypto: 'CRV', color: 'black'},
+            {num: 31, crypto: '1INCH', color: 'red'}, {num: 32, crypto: 'BAND', color: 'black'},
+            {num: 33, crypto: 'KNC', color: 'red'}, {num: 34, crypto: 'REN', color: 'black'},
+            {num: 35, crypto: 'LRC', color: 'red'}, {num: 36, crypto: 'ZRX', color: 'black'}
+        ];
+
+        const wheelNumbers = document.getElementById('wheelNumbers');
+        if (!wheelNumbers) {
+            console.warn('⚠️ wheelNumbers element not found');
+            return;
+        }
+
+        // Generate HTML from data using CSS classes instead of inline styles
+        const html = wheelData.map(slot => `
+            <div class="wheel-slot ${slot.color}">
+                <div class="slot-number">${slot.num}</div>
+                <div class="slot-crypto">${slot.crypto}</div>
+            </div>
+        `).join('');
+
+        wheelNumbers.innerHTML = html;
+        console.log(`🎡 Wheel rendered: ${wheelData.length} slots (component-based)`);
     }
 
     initializeWheelLoop() {
@@ -1277,10 +1331,24 @@
         if (this.gameId) {
             return;
         }
-        const response = await this.post('/api/gaming/roulette/create', {});
-        if (response && response.game_id) {
-            this.gameId = response.game_id;
-            console.log('Roulette session created', this.gameId);
+
+        try {
+            const response = await this.post('/api/gaming/roulette/create', {});
+            if (response && response.game_id) {
+                this.gameId = response.game_id;
+                console.log('✓ Roulette session created:', this.gameId);
+            } else {
+                throw new Error('Server did not return a valid game ID');
+            }
+        } catch (error) {
+            console.error('❌ Failed to create game session:', error.message);
+
+            // Show user-friendly error
+            if (window.Toast) {
+                Toast.error('Failed to initialize game session. Please refresh the page.');
+            }
+
+            throw new Error('Game session unavailable');
         }
     }
 
@@ -1387,12 +1455,51 @@
             }
         } catch (error) {
             console.error('❌ Bet placement error:', error);
+
+            // Determine error type for better user feedback
+            let errorMessage = 'Failed to place bet. ';
+
+            if (error.message.includes('timeout') || error.message.includes('timed out')) {
+                errorMessage += 'Request timed out. Please check your connection and try again.';
+            } else if (error.message.includes('network') || error.message.includes('Failed to fetch')) {
+                errorMessage += 'Network error. Please check your internet connection.';
+            } else if (error.message.includes('Authentication')) {
+                errorMessage += 'Your session expired. Please log in again.';
+            } else if (error.message.includes('Insufficient balance')) {
+                errorMessage += 'Insufficient balance for this bet.';
+            } else if (error.message.includes('Game session')) {
+                errorMessage += 'Game session unavailable. Refreshing...';
+                // Try to reinitialize game session
+                setTimeout(() => this.ensureGameSession(), 1000);
+            } else {
+                errorMessage += error.message || 'Unknown error occurred.';
+            }
+
             // FIX: Rollback balance if bet failed but balance changed
             if (this.balance < balanceBeforeBet) {
                 console.warn(`⚠️ Balance mismatch detected! Rolling back from ${this.balance} to ${balanceBeforeBet}`);
                 this.setBalance(balanceBeforeBet, { source: 'rollback' });
+                errorMessage += ' Balance has been restored.';
             }
-            this.showNotification(`Network error: ${error.message || 'Unknown error'}`, 'error');
+
+            // Show user-friendly error with Toast
+            if (window.Toast) {
+                Toast.error(errorMessage);
+            } else {
+                this.showNotification(errorMessage, 'error');
+            }
+
+            // If bet placement has failed multiple times, suggest reconnection
+            const betRetryKey = 'placeBet';
+            const currentRetries = this.retryAttempts.get(betRetryKey) || 0;
+            this.retryAttempts.set(betRetryKey, currentRetries + 1);
+
+            if (currentRetries >= 2) {
+                console.log('[Bet] Multiple bet failures detected, checking connection...');
+                this.updateConnectionStatus('reconnecting');
+                // Reset retry counter
+                this.retryAttempts.delete(betRetryKey);
+            }
         } finally {
             // FIX: Always ensure isProcessing is reset
             this.isProcessing = false;
@@ -2411,9 +2518,25 @@
             const response = await this.get('/api/gaming/roulette/round/current');
             if (response && response.round) {
                 this.handleRoundCurrent(response.round);
+                this.lastSuccessfulPoll = Date.now();
+                this.consecutiveFailures = 0;
             }
         } catch (error) {
-            console.error('[Polling] Failed to fetch current round:', error);
+            console.error('[Polling] Failed to fetch current round:', error.message);
+
+            // Check if polling has been failing for too long
+            const timeSinceLastSuccess = Date.now() - this.lastSuccessfulPoll;
+            if (timeSinceLastSuccess > this.pollTimeout) {
+                console.error('[Polling] Poll timeout exceeded, connection may be lost');
+                this.updateConnectionStatus('disconnected');
+
+                if (this.consecutiveFailures === this.maxConsecutiveFailures) {
+                    // Only show error once when threshold is reached
+                    if (window.Toast) {
+                        Toast.error('Unable to sync with server. Check your connection.');
+                    }
+                }
+            }
         }
     }
 
@@ -3053,12 +3176,156 @@
         }
     }
 
-    async apiRequest(url, options = {}) {
+    // ===== ERROR HANDLING & CONNECTION MANAGEMENT =====
+
+    updateConnectionStatus(status) {
+        const oldStatus = this.connectionStatus;
+        this.connectionStatus = status;
+
+        if (oldStatus !== status) {
+            console.log(`[Connection] Status changed: ${oldStatus} → ${status}`);
+            this.showConnectionStatusIndicator(status);
+        }
+    }
+
+    showConnectionStatusIndicator(status) {
+        // Create or update connection indicator
+        let indicator = document.getElementById('connection-status-indicator');
+
+        if (!indicator) {
+            indicator = document.createElement('div');
+            indicator.id = 'connection-status-indicator';
+            indicator.style.cssText = `
+                position: fixed;
+                top: 70px;
+                right: 20px;
+                padding: 10px 20px;
+                border-radius: 8px;
+                font-weight: 600;
+                z-index: 9999;
+                transition: all 0.3s ease;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            `;
+            document.body.appendChild(indicator);
+        }
+
+        if (status === 'connected') {
+            indicator.style.background = '#28a745';
+            indicator.style.color = 'white';
+            indicator.innerHTML = '✓ Connected';
+            // Auto-hide after 2 seconds
+            setTimeout(() => {
+                indicator.style.opacity = '0';
+                setTimeout(() => indicator.remove(), 300);
+            }, 2000);
+        } else if (status === 'reconnecting') {
+            indicator.style.background = '#ffc107';
+            indicator.style.color = '#000';
+            indicator.innerHTML = '⟳ Reconnecting...';
+            indicator.style.opacity = '1';
+        } else if (status === 'disconnected') {
+            indicator.style.background = '#dc3545';
+            indicator.style.color = 'white';
+            indicator.innerHTML = '✗ Connection Lost';
+            indicator.style.opacity = '1';
+        }
+    }
+
+    handleConnectionLoss() {
+        console.error('[Connection] Lost connection to server');
+
+        // Show user-friendly notification
+        if (window.Toast) {
+            Toast.error('Connection lost. Attempting to reconnect...');
+        }
+
+        // Stop polling temporarily
+        if (this.pollingFallbackInterval) {
+            clearInterval(this.pollingFallbackInterval);
+            this.pollingFallbackInterval = null;
+        }
+
+        // Attempt to reconnect after a delay
+        setTimeout(() => {
+            console.log('[Connection] Attempting to restore connection...');
+            this.attemptReconnection();
+        }, 5000);
+    }
+
+    async attemptReconnection() {
+        try {
+            console.log('[Connection] Testing connection...');
+
+            // Try a simple request to check if server is back
+            const response = await fetch('/api/gaming/roulette/round/current', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                }
+            });
+
+            if (response.ok) {
+                console.log('[Connection] ✓ Connection restored');
+                this.consecutiveFailures = 0;
+                this.updateConnectionStatus('connected');
+
+                if (window.Toast) {
+                    Toast.success('Connection restored!');
+                }
+
+                // Restart polling
+                this.fallbackToPolling();
+
+                // Refresh game state
+                await this.refreshGameState();
+            } else {
+                throw new Error('Server responded with error');
+            }
+        } catch (error) {
+            console.error('[Connection] Reconnection failed:', error.message);
+            this.updateConnectionStatus('disconnected');
+
+            // Try again after longer delay
+            setTimeout(() => this.attemptReconnection(), 10000);
+        }
+    }
+
+    async refreshGameState() {
+        try {
+            // Refresh balance
+            await this.refreshBalanceFromServer();
+
+            // Fetch current round state
+            await this.fetchCurrentRound();
+
+            console.log('[Connection] Game state refreshed');
+        } catch (error) {
+            console.error('[Connection] Failed to refresh game state:', error);
+        }
+    }
+
+    handleAuthenticationError() {
+        console.error('[Auth] Authentication error detected');
+
+        // Show user notification
+        if (window.Toast) {
+            Toast.error('Your session has expired. Please log in again.');
+        }
+
+        // Trigger auth module's token expiration handler
+        if (window.Auth && typeof window.Auth.handleTokenExpiration === 'function') {
+            window.Auth.handleTokenExpiration();
+        }
+    }
+
+    async apiRequest(url, options = {}, retryCount = 0) {
         const defaultOptions = {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
-            }
+            },
+            timeout: 10000 // 10 second timeout
         };
 
         const token = localStorage.getItem('auth_token');
@@ -3071,12 +3338,70 @@
             finalOptions.body = JSON.stringify(finalOptions.body);
         }
 
-        const response = await fetch(url, finalOptions);
-        if (!response.ok) {
-            const data = await response.json().catch(() => ({}));
-            throw new Error(data.detail || `Request failed with status ${response.status}`);
+        try {
+            // Create an AbortController for timeout
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), finalOptions.timeout);
+
+            try {
+                const response = await fetch(url, {
+                    ...finalOptions,
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeoutId);
+
+                if (!response.ok) {
+                    const data = await response.json().catch(() => ({}));
+
+                    // Special handling for authentication errors
+                    if (response.status === 401) {
+                        this.handleAuthenticationError();
+                        throw new Error('Authentication required. Please log in again.');
+                    }
+
+                    throw new Error(data.detail || `Request failed with status ${response.status}`);
+                }
+
+                // Mark successful request
+                this.consecutiveFailures = 0;
+                this.updateConnectionStatus('connected');
+
+                return response.json();
+
+            } finally {
+                clearTimeout(timeoutId);
+            }
+
+        } catch (error) {
+            console.error(`[API Error] ${url}:`, error.message);
+
+            // Handle different error types
+            if (error.name === 'AbortError') {
+                console.error(`[API Timeout] Request to ${url} timed out`);
+                error.message = 'Request timed out. Please check your connection.';
+            }
+
+            // Retry logic for network errors (not for auth errors)
+            if (retryCount < this.maxRetryAttempts && !error.message.includes('Authentication')) {
+                const delay = this.retryDelay * Math.pow(2, retryCount); // Exponential backoff
+                console.log(`[API Retry] Attempting retry ${retryCount + 1}/${this.maxRetryAttempts} in ${delay}ms...`);
+
+                await new Promise(resolve => setTimeout(resolve, delay));
+                return this.apiRequest(url, options, retryCount + 1);
+            }
+
+            // Track consecutive failures
+            this.consecutiveFailures++;
+            if (this.consecutiveFailures >= this.maxConsecutiveFailures) {
+                this.updateConnectionStatus('disconnected');
+                this.handleConnectionLoss();
+            } else {
+                this.updateConnectionStatus('reconnecting');
+            }
+
+            throw error;
         }
-        return response.json();
     }
 
     async get(url) {
@@ -5238,9 +5563,12 @@
         } catch (error) {
             console.error('❌ CRITICAL: showResultSummary failed:', error);
             console.error('Stack trace:', error.stack);
-            // Show a simple alert as fallback
+            // Show a toast notification as fallback
             const resultMsg = winnings > 0 ? `WON ${winnings} GEM` : `LOST ${losses} GEM`;
-            alert(`🎰 Spin Result: ${resultMsg} on number ${outcome?.number || '?'}`);
+            if (window.Toast) {
+                const toastType = winnings > 0 ? 'success' : 'error';
+                Toast[toastType](`🎰 Spin Result: ${resultMsg} on number ${outcome?.number || '?'}`);
+            }
             throw error; // Re-throw so caller knows it failed
         }
     }

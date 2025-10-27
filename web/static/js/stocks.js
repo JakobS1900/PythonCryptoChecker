@@ -333,7 +333,7 @@ class StockMarket {
         const confirmBtn = document.getElementById('confirm-buy');
 
         confirmBtn.disabled = true;
-        confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Buying...';
+        confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Buying...';
 
         try {
             const response = await fetch(`/api/stocks/${this.currentStock.ticker}/buy`, {
@@ -431,13 +431,11 @@ class StockMarket {
     }
 
     showSuccess(message) {
-        // You can implement a toast notification here
-        alert(message);
+        Toast.success(message);
     }
 
     showError(message) {
-        // You can implement a toast notification here
-        alert(message);
+        Toast.error(message);
     }
 }
 

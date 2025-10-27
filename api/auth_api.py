@@ -26,6 +26,19 @@ SECRET_KEY = os.getenv("JWT_SECRET_KEY", "jwt-secret-key-change-in-production")
 ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
 
+# Validate JWT secret key on startup
+if SECRET_KEY == "jwt-secret-key-change-in-production":
+    raise ValueError(
+        "CRITICAL SECURITY ERROR: JWT_SECRET_KEY is using the default value. "
+        "You MUST set a secure JWT_SECRET_KEY in your .env file before running in production. "
+        "Generate a secure key using: python -c 'import secrets; print(secrets.token_urlsafe(32))'"
+    )
+if len(SECRET_KEY) < 32:
+    raise ValueError(
+        "CRITICAL SECURITY ERROR: JWT_SECRET_KEY is too short (minimum 32 characters required). "
+        "Generate a secure key using: python -c 'import secrets; print(secrets.token_urlsafe(32))'"
+    )
+
 router = APIRouter()
 security = HTTPBearer(auto_error=False)
 
@@ -361,6 +374,55 @@ async def login_user(
             detail=f"Error logging in: {str(e)}"
         )
 
+@router.post("/refresh", response_model=Token)
+async def refresh_token(
+    request: Request,
+    current_user: User = Depends(require_authentication),
+    db: AsyncSession = Depends(get_db)
+):
+    """Refresh access token for authenticated user.
+
+    This endpoint allows users to get a new access token before the current one expires,
+    enabling seamless session continuation without re-authentication.
+    """
+    try:
+        # Create new access token
+        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = create_access_token(
+            data={"sub": current_user.id},
+            expires_delta=access_token_expires
+        )
+
+        # Update session data
+        request.session["auth_token"] = access_token
+        print(f">> Token Refresh: New token issued for user {current_user.id}")
+
+        # Get current wallet balance
+        wallet_balance = await portfolio_manager.get_user_balance(current_user.id)
+
+        return {
+            "access_token": access_token,
+            "token_type": "bearer",
+            "expires_in": ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+            "user": {
+                "id": current_user.id,
+                "username": current_user.username,
+                "email": current_user.email,
+                "role": current_user.role,
+                "is_active": current_user.is_active,
+                "created_at": format_datetime(current_user.created_at),
+                "wallet_balance": wallet_balance
+            }
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error refreshing token: {str(e)}"
+        )
+
 @router.get("/me", response_model=UserResponse)
 async def get_current_user_info(
     current_user: Optional[User] = Depends(get_current_user)
@@ -462,21 +524,8 @@ async def get_auth_status(
             "guest_user": guest_data
         }
 
-@router.get("/debug")
-async def debug_users(db: AsyncSession = Depends(get_db)):
-    """Debug endpoint to see all users (remove in production)."""
-    from sqlalchemy import select
-    users = await db.execute(select(User).limit(10))
-    user_list = []
-    for user in users.scalars():
-        user_list.append({
-            "id": str(user.id),
-            "username": user.username,
-            "email": user.email,
-            "is_active": user.is_active,
-            "role": str(user.role) if user.role else None
-        })
-    return {"users": user_list, "total": len(user_list)}
+# REMOVED: Debug endpoint removed for security (was exposing user data without authentication)
+# If debugging is needed, use proper admin-protected endpoints with authentication
 
 # Profile Management Endpoints
 
@@ -484,7 +533,7 @@ class ProfileUpdateRequest(BaseModel):
     username: Optional[str] = Field(None, min_length=3, max_length=50)
     email: Optional[EmailStr] = None
     bio: Optional[str] = Field(None, max_length=500)
-    avatar_url: Optional[str] = Field(None, max_length=500)
+    avatar_url: Optional[str] = Field(None, max_length=100000)  # Increased to support base64 image data URLs
     profile_theme: Optional[str] = Field(None, max_length=50)
 
 @router.get("/profile")

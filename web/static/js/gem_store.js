@@ -41,7 +41,7 @@ class GemStoreManager {
 
     async loadBalance() {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('auth_token');
             if (!token) {
                 document.getElementById('current-balance').innerHTML = '<span>Login Required</span>';
                 return;
@@ -187,9 +187,9 @@ class GemStoreManager {
         try {
             // Disable button
             confirmBtn.disabled = true;
-            confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processing...';
+            confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Processing...';
 
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('auth_token');
             if (!token) {
                 throw new Error('Please log in to make a purchase');
             }
@@ -230,7 +230,7 @@ class GemStoreManager {
 
         } catch (error) {
             console.error('Purchase error:', error);
-            alert('Purchase failed: ' + error.message);
+            Toast.error('Purchase failed: ' + error.message);
         } finally {
             confirmBtn.disabled = false;
             confirmBtn.innerHTML = originalText;
@@ -239,7 +239,7 @@ class GemStoreManager {
 
     async loadPurchaseHistory() {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('auth_token');
             if (!token) {
                 document.getElementById('purchase-history').innerHTML = `
                     <p style="color: var(--text-muted); text-align: center;">Login to view purchase history</p>

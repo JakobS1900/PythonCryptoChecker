@@ -12,11 +12,14 @@ window.Auth = {
     isAuthenticated: false,
     authModal: null,
     _updateUITimeout: null,  // Debounce timer for UI updates
+    _tokenRenewalTimer: null,  // Timer for proactive token renewal
+    _expiryWarningTimer: null,  // Timer for session expiry warning
 
     // Initialize authentication
     init() {
         this.setupEventListeners();
         this.checkAuthStatus();
+        this.startTokenRenewalMonitor();
     },
 
     // Set up event listeners
@@ -123,6 +126,9 @@ window.Auth = {
                 username: this.currentUser.username
             });
 
+            // Start token renewal monitoring
+            this.startTokenRenewalMonitor();
+
             // Force UI update immediately
             this.updateUserInterface();
 
@@ -201,6 +207,9 @@ window.Auth = {
             App.isAuthenticated = this.isAuthenticated;
             App.isGuest = false;
 
+            // Start token renewal monitoring
+            this.startTokenRenewalMonitor();
+
             // Close modal and update UI
             this.authModal.hide();
             this.updateUserInterface();
@@ -228,6 +237,16 @@ window.Auth = {
         } finally {
             // Clear stored tokens
             this.clearStoredToken();
+
+            // Clear token renewal timers
+            if (this._tokenRenewalTimer) {
+                clearTimeout(this._tokenRenewalTimer);
+                this._tokenRenewalTimer = null;
+            }
+            if (this._expiryWarningTimer) {
+                clearTimeout(this._expiryWarningTimer);
+                this._expiryWarningTimer = null;
+            }
 
             // Reset state
             this.handleUnauthenticated();
@@ -319,7 +338,22 @@ window.Auth = {
             const avatarUrl = this.currentUser.avatar_url ||
                 `https://ui-avatars.com/api/?name=${encodeURIComponent(this.currentUser.username || 'User')}&size=32&background=667eea&color=fff`;
 
-            // Authenticated user UI - always replace the entire content
+            // Try to update existing elements first (prevents flickering)
+            const existingAvatar = userInfo.querySelector('img[alt="Avatar"]');
+            const existingUsername = userInfo.querySelector('.fw-bold.text-light');
+            const existingBalance = userInfo.querySelector('.small.text-light-emphasis');
+
+            if (existingAvatar && existingUsername && existingBalance) {
+                // Just update the content without rebuilding DOM (no flickering)
+                if (existingAvatar.src !== avatarUrl) {
+                    existingAvatar.src = avatarUrl;
+                }
+                existingUsername.textContent = this.currentUser.username;
+                existingBalance.innerHTML = `<i class="bi bi-gem"></i> ${this.formatBalance(this.currentUser.wallet_balance)} GEM`;
+                return; // Skip full rebuild
+            }
+
+            // Only rebuild if elements don't exist (first load)
             userInfo.innerHTML = `
                 <div class="d-flex align-items-center gap-3">
                     <div class="text-end">
@@ -592,6 +626,133 @@ window.Auth = {
             }
             return false;
         }
+    },
+
+    // Proactive token renewal - automatically refresh before expiration
+    async renewToken() {
+        if (!this.isAuthenticated) {
+            console.log('Not authenticated, skipping token renewal');
+            return false;
+        }
+
+        try {
+            console.log('🔄 Attempting proactive token renewal...');
+            const response = await App.api.post('/auth/refresh', {});
+
+            // Store new token with expiration
+            this.storeAuthToken(response.access_token, response.expires_in);
+
+            // Update user data (including balance)
+            this.currentUser = response.user;
+            App.user = this.currentUser;
+
+            console.log('✅ Token renewed successfully. New expiration:', new Date(Date.now() + response.expires_in * 1000));
+
+            // Restart the renewal monitor with new expiration time
+            this.startTokenRenewalMonitor();
+
+            return true;
+        } catch (error) {
+            console.error('❌ Token renewal failed:', error);
+
+            // If renewal fails with 401, token is likely expired - logout gracefully
+            if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+                this.handleTokenExpiration();
+            }
+
+            return false;
+        }
+    },
+
+    // Start monitoring token expiration and schedule renewal
+    startTokenRenewalMonitor() {
+        // Clear existing timers
+        if (this._tokenRenewalTimer) {
+            clearTimeout(this._tokenRenewalTimer);
+            this._tokenRenewalTimer = null;
+        }
+        if (this._expiryWarningTimer) {
+            clearTimeout(this._expiryWarningTimer);
+            this._expiryWarningTimer = null;
+        }
+
+        if (!this.isAuthenticated) {
+            return;
+        }
+
+        try {
+            const tokenDataStr = localStorage.getItem('auth_token_data');
+            if (!tokenDataStr) {
+                return;
+            }
+
+            const tokenData = JSON.parse(tokenDataStr);
+            const expiresAt = tokenData.expires;
+            const now = Date.now();
+            const timeUntilExpiry = expiresAt - now;
+
+            console.log(`⏰ Token expires in ${Math.round(timeUntilExpiry / 1000 / 60)} minutes`);
+
+            // Schedule renewal at 75% of token lifetime (e.g., 45 mins for 60 min token)
+            const renewalTime = timeUntilExpiry * 0.75;
+
+            // Schedule warning at 90% of token lifetime (e.g., 54 mins for 60 min token)
+            const warningTime = timeUntilExpiry * 0.90;
+
+            if (renewalTime > 0) {
+                this._tokenRenewalTimer = setTimeout(() => {
+                    console.log('⏰ Token renewal time reached');
+                    this.renewToken();
+                }, renewalTime);
+
+                console.log(`⏰ Token renewal scheduled in ${Math.round(renewalTime / 1000 / 60)} minutes`);
+            }
+
+            if (warningTime > 0) {
+                this._expiryWarningTimer = setTimeout(() => {
+                    console.log('⚠️ Session expiry warning time reached');
+                    this.showExpiryWarning(timeUntilExpiry - warningTime);
+                }, warningTime);
+            }
+
+        } catch (error) {
+            console.warn('Error setting up token renewal monitor:', error);
+        }
+    },
+
+    // Show session expiry warning to user
+    showExpiryWarning(timeRemaining) {
+        const minutesRemaining = Math.ceil(timeRemaining / 1000 / 60);
+
+        if (window.Toast) {
+            Toast.warning(`Your session will expire in ${minutesRemaining} minute${minutesRemaining !== 1 ? 's' : ''}. Activity will extend your session.`);
+        } else {
+            console.log(`⚠️ Session expiring in ${minutesRemaining} minutes`);
+        }
+    },
+
+    // Handle token expiration gracefully
+    handleTokenExpiration() {
+        console.log('🔒 Token has expired, logging out gracefully');
+
+        // Clear timers
+        if (this._tokenRenewalTimer) {
+            clearTimeout(this._tokenRenewalTimer);
+            this._tokenRenewalTimer = null;
+        }
+        if (this._expiryWarningTimer) {
+            clearTimeout(this._expiryWarningTimer);
+            this._expiryWarningTimer = null;
+        }
+
+        // Show notification
+        if (window.Toast) {
+            Toast.info('Your session has expired. Please log in again to continue.');
+        }
+
+        // Clear stored token and reset to guest mode
+        this.clearStoredToken();
+        this.handleUnauthenticated();
     },
 
     // Refresh user balance from server

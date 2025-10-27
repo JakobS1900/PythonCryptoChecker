@@ -25,9 +25,9 @@ crypto_tracker_v3.db
 
 # 🔐 CLAUDE CODE SETTINGS (NEVER COMMIT - Contains API keys)
 .claude/
-.claude/*
+.claude/**
 .claude/settings.local.json
-settings.local.json
+**/.claude/settings.local.json
 
 # 📁 VIRTUAL ENVIRONMENTS (NEVER COMMIT)
 .venv/
@@ -97,15 +97,21 @@ ClaudeTemp_*
 # 📚 SESSION DOCUMENTATION (Temporary session reports - keep in docs/session-reports/)
 CLICKER_*.md
 PHASE*.md
-SESSION_SUMMARY.md
+SESSION_SUMMARY*.md
 ROUND_*.md
-ROULETTE_BUG*.md
+ROULETTE_*.md
 GEM_MARKETPLACE_*.md
 STOCK_TRADING_*.md
+TOKEN_*.md
+GITHUB_COMMENT*.md
+MANUAL_*.md
+POLISH_*.md
 *_COMPLETE.md
 *_PROGRESS.md
 *_FIXED.md
 *_ANALYSIS.md
+*_SUMMARY.md
+*_HANDLING*.md
 
 # 🚧 CONSTRUCTION DOCUMENTATION (Comment out if needed)
 ## .allowed_markdown.txt
@@ -122,11 +128,20 @@ database/migrations/run_migration_002.py
 Error.txt
 FINAL_PHASE6_SUCCESS_REPORT.md
 fix_game_bets_schema.py
-GITHUB_COMMENT.md
+GITHUB_COMMENT*.md
 INSTALL_POSTGRESQL.md
 phase6_validation_test.py
 POSTGRESQL_UPGRADE.md
 scripts/migrate_to_postgresql.py
 TESTING_GUIDE.md
 install_postgresql_windows.ps1
-.claude/settings.local.json
+
+# ALL SESSION SUMMARY FILES
+*_SUMMARY.md
+TOKEN_EXPIRATION_HANDLING_SUMMARY.md
+ROULETTE_ERROR_HANDLING_SUMMARY.md
+PHASE4_ACCESSIBILITY_POLISH_SUMMARY.md
+POLISH_CONTINUATION_SUMMARY.md
+MANUAL_TESTING_GUIDE.md
+SESSION_SUMMARY_2025-10-27_FINAL.md
+GITHUB_COMMENT_TOKEN_EXPIRATION.md
