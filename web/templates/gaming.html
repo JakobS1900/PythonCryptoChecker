@@ -7,7 +7,7 @@
 <link href="{{ url_for('static', path='/css/roulette-design-system.css') }}?v=2" rel="stylesheet">
 <link href="{{ url_for('static', path='/css/roulette-components.css') }}?v=2" rel="stylesheet">
 <link href="{{ url_for('static', path='/css/roulette-animations.css') }}?v=2" rel="stylesheet">
-<link href="{{ url_for('static', path='/css/roulette.css') }}?v=12" rel="stylesheet">
+<link href="{{ url_for('static', path='/css/roulette.css') }}?v=13" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
 {% endblock %}
 
@@ -137,31 +137,31 @@
 
                     <div class="amount-selector">
                         <div class="rd-chip-grid quick-amounts">
-                            <button class="rd-chip-btn chip-btn enhanced-hover smooth-transition pulse-ripple" data-amount="10">
-                                <span class="rd-chip-value chip-value">10</span>
-                                <div class="rd-chip-glow chip-glow"></div>
-                            </button>
-                            <button class="rd-chip-btn chip-btn enhanced-hover smooth-transition pulse-ripple" data-amount="50">
-                                <span class="rd-chip-value chip-value">50</span>
-                                <div class="rd-chip-glow chip-glow"></div>
-                            </button>
-                            <button class="rd-chip-btn chip-btn enhanced-hover smooth-transition pulse-ripple active" data-amount="100">
-                                <span class="rd-chip-value chip-value">100</span>
-                                <div class="rd-chip-glow chip-glow"></div>
-                            </button>
-                            <button class="rd-chip-btn chip-btn enhanced-hover smooth-transition pulse-ripple" data-amount="500">
-                                <span class="rd-chip-value chip-value">500</span>
-                                <div class="rd-chip-glow chip-glow"></div>
-                            </button>
                             <button class="rd-chip-btn chip-btn enhanced-hover smooth-transition pulse-ripple" data-amount="1000">
                                 <span class="rd-chip-value chip-value">1K</span>
+                                <div class="rd-chip-glow chip-glow"></div>
+                            </button>
+                            <button class="rd-chip-btn chip-btn enhanced-hover smooth-transition pulse-ripple" data-amount="5000">
+                                <span class="rd-chip-value chip-value">5K</span>
+                                <div class="rd-chip-glow chip-glow"></div>
+                            </button>
+                            <button class="rd-chip-btn chip-btn enhanced-hover smooth-transition pulse-ripple active" data-amount="10000">
+                                <span class="rd-chip-value chip-value">10K</span>
+                                <div class="rd-chip-glow chip-glow"></div>
+                            </button>
+                            <button class="rd-chip-btn chip-btn enhanced-hover smooth-transition pulse-ripple" data-amount="50000">
+                                <span class="rd-chip-value chip-value">50K</span>
+                                <div class="rd-chip-glow chip-glow"></div>
+                            </button>
+                            <button class="rd-chip-btn chip-btn enhanced-hover smooth-transition pulse-ripple" data-amount="100000">
+                                <span class="rd-chip-value chip-value">100K</span>
                                 <div class="rd-chip-glow chip-glow"></div>
                             </button>
                         </div>
 
                         <div class="custom-amount-section">
                             <div class="amount-input-group">
-                                <input type="number" id="betAmount" class="amount-input" placeholder="Custom amount" min="10" max="10000" value="100">
+                                <input type="number" id="betAmount" class="amount-input" placeholder="Custom amount" min="1000" max="5000000" value="10000">
                                 <span class="input-currency">GEM</span>
                             </div>
                             <div class="amount-controls">

@@ -8,8 +8,8 @@
     };
 
     constructor() {
-        this.MIN_BET = 10;
-        this.MAX_BET = 10000;
+        this.MIN_BET = 1000;
+        this.MAX_BET = 5000000;
         this.ROUND_DURATION = 15000;
 
         // Core game state - streamlined
@@ -878,16 +878,16 @@
     // Generate appropriate bet amount based on bot personality
     generateBotBetAmount(personality) {
         const baseAmounts = {
-            'CONSERVATIVE': [10, 25, 50, 75],
-            'TREND_FOLLOWER': [20, 50, 100, 150],
-            'OPPORTUNISTIC': [15, 75, 150, 250],
-            'AGGRESSIVE': [50, 150, 300, 500],
-            'HIGHROLLER': [100, 250, 500, 1000],
-            'TIMID': [5, 10, 15, 25],
-            'PREDICTABLE_GAMBLER': [25, 50, 100, 200]
+            'CONSERVATIVE': [10000, 20000, 35000, 50000],
+            'TREND_FOLLOWER': [20000, 50000, 80000, 120000],
+            'OPPORTUNISTIC': [30000, 75000, 120000, 180000],
+            'AGGRESSIVE': [50000, 100000, 175000, 250000],
+            'HIGHROLLER': [100000, 300000, 650000, 1000000],
+            'TIMID': [5000, 10000, 17000, 25000],
+            'PREDICTABLE_GAMBLER': [15000, 40000, 60000, 80000]
         };
 
-        const amounts = baseAmounts[personality] || [20, 50, 100, 200];
+        const amounts = baseAmounts[personality] || [20000, 50000, 100000, 200000];
         return amounts[Math.floor(Math.random() * amounts.length)];
     }
 

@@ -4794,3 +4794,129 @@
     width: 100% !important;
     min-width: 0 !important;
 }
+
+/* ===================================================================
+   CUSTOM AMOUNT INPUT & CONTROLS - Premium Styling
+   =================================================================== */
+
+/* Custom amount section */
+.custom-amount-section {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1rem !important;
+    width: 100% !important;
+}
+
+/* Amount input group - premium glassmorphism input */
+.amount-input-group {
+    position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+    background: linear-gradient(135deg,
+        rgba(255, 255, 255, 0.05),
+        rgba(255, 255, 255, 0.02)) !important;
+    border: 2px solid rgba(251, 191, 36, 0.3) !important;
+    border-radius: 12px !important;
+    padding: 0.75rem 1rem !important;
+    transition: all 0.2s ease !important;
+}
+
+.amount-input-group:focus-within {
+    border-color: rgba(251, 191, 36, 0.6) !important;
+    box-shadow: 0 0 20px rgba(251, 191, 36, 0.2) !important;
+    background: linear-gradient(135deg,
+        rgba(251, 191, 36, 0.08),
+        rgba(251, 191, 36, 0.03)) !important;
+}
+
+/* Custom input field */
+.amount-input {
+    flex: 1 !important;
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+    color: #ffffff !important;
+    font-size: 1.125rem !important;
+    font-weight: 600 !important;
+    font-family: 'Inter', monospace !important;
+    padding: 0 !important;
+}
+
+.amount-input::placeholder {
+    color: rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Remove number input arrows */
+.amount-input::-webkit-outer-spin-button,
+.amount-input::-webkit-inner-spin-button {
+    -webkit-appearance: none !important;
+    margin: 0 !important;
+}
+
+.amount-input[type=number] {
+    -moz-appearance: textfield !important;
+}
+
+/* GEM currency label */
+.input-currency {
+    color: #fbbf24 !important;
+    font-size: 0.875rem !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    margin-left: 0.5rem !important;
+}
+
+/* Amount control buttons (½, 2×, MAX) */
+.amount-controls {
+    display: flex !important;
+    gap: 0.5rem !important;
+    width: 100% !important;
+}
+
+.amount-control-btn {
+    flex: 1 !important;
+    height: 44px !important;
+    background: linear-gradient(135deg,
+        rgba(255, 255, 255, 0.05),
+        rgba(255, 255, 255, 0.02)) !important;
+    border: 2px solid rgba(148, 163, 184, 0.3) !important;
+    border-radius: 10px !important;
+    color: #94a3b8 !important;
+    font-size: 0.875rem !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+
+.amount-control-btn:hover {
+    background: linear-gradient(135deg,
+        rgba(148, 163, 184, 0.15),
+        rgba(148, 163, 184, 0.05)) !important;
+    border-color: rgba(148, 163, 184, 0.5) !important;
+    color: #cbd5e1 !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(148, 163, 184, 0.2) !important;
+}
+
+.amount-control-btn:active {
+    transform: translateY(0) !important;
+}
+
+/* MAX button gets gold accent */
+.amount-control-btn#maxBtn {
+    background: linear-gradient(135deg,
+        rgba(251, 191, 36, 0.15),
+        rgba(251, 191, 36, 0.05)) !important;
+    border-color: rgba(251, 191, 36, 0.4) !important;
+    color: #fbbf24 !important;
+}
+
+.amount-control-btn#maxBtn:hover {
+    background: linear-gradient(135deg,
+        rgba(251, 191, 36, 0.25),
+        rgba(251, 191, 36, 0.1)) !important;
+    border-color: rgba(251, 191, 36, 0.7) !important;
+    box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3),
+                0 0 20px rgba(251, 191, 36, 0.2) !important;
+}

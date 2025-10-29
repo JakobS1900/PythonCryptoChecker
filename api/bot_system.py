@@ -25,51 +25,52 @@ class BotGamblingPersonality:
         self.personality_type = personality_type
 
         # Define betting parameters based on personality (GEM amounts ~ USD equivalent)
+        # ULTRA HIGH STAKES - Massive betting ranges for exciting gameplay
         if personality_type == BotPersonalityType.CONSERVATIVE:
-            self.min_bet = 50
-            self.max_bet = 2000  # $50-$2,000
+            self.min_bet = 10000
+            self.max_bet = 50000  # $10,000-$50,000
             self.bet_frequency = 0.6  # 60% chance to bet each round
             self.strategy_preference = ["red_black", "even_odd"]  # Safer bets
             self.risk_tolerance = 0.3
 
         elif personality_type == BotPersonalityType.AGGRESSIVE:
-            self.min_bet = 500
-            self.max_bet = 10000  # $500-$10,000
+            self.min_bet = 50000
+            self.max_bet = 250000  # $50,000-$250,000
             self.bet_frequency = 0.8  # 80% chance to bet each round
             self.strategy_preference = ["single_number", "color", "category"]  # Riskier bets
             self.risk_tolerance = 0.8
 
         elif personality_type == BotPersonalityType.TREND_FOLLOWER:
-            self.min_bet = 200
-            self.max_bet = 5000  # $200-$5,000
+            self.min_bet = 20000
+            self.max_bet = 120000  # $20,000-$120,000
             self.bet_frequency = 0.7
             self.strategy_preference = ["red_black", "even_odd", "high_low"]  # Follow trends
             self.risk_tolerance = 0.5
 
         elif personality_type == BotPersonalityType.OPPORTUNISTIC:
-            self.min_bet = 300
-            self.max_bet = 7500  # $300-$7,500
+            self.min_bet = 30000
+            self.max_bet = 180000  # $30,000-$180,000
             self.bet_frequency = 0.5  # Bets less frequently, but larger when they do
             self.strategy_preference = ["single_number", "color"]  # Favorite-based
             self.risk_tolerance = 0.6
 
         elif personality_type == BotPersonalityType.PREDICTABLE_GAMBLER:
-            self.min_bet = 100
-            self.max_bet = 3000  # $100-$3,000
+            self.min_bet = 15000
+            self.max_bet = 80000  # $15,000-$80,000
             self.bet_frequency = 0.9  # Bets most rounds
             self.strategy_preference = ["even_odd"]  # Pattern-based
             self.risk_tolerance = 0.4
 
         elif personality_type == BotPersonalityType.HIGHROLLER:
-            self.min_bet = 5000
-            self.max_bet = 50000  # $5,000-$50,000 - High roller bets
-            self.bet_frequency = 0.3  # Bets less often but big when they do
+            self.min_bet = 100000
+            self.max_bet = 1000000  # $100,000-$1,000,000 - ULTRA high roller bets
+            self.bet_frequency = 0.4  # Bets moderately often with MASSIVE amounts
             self.strategy_preference = ["single_number", "category"]  # High risk/high reward
             self.risk_tolerance = 0.9
 
         elif personality_type == BotPersonalityType.TIMID:
-            self.min_bet = 50
-            self.max_bet = 500  # $50-$500
+            self.min_bet = 5000
+            self.max_bet = 25000  # $5,000-$25,000
             self.bet_frequency = 0.2  # Rarely bets
             self.strategy_preference = ["red_black", "high_low"]  # Very safe
             self.risk_tolerance = 0.1
