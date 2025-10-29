@@ -140,7 +140,7 @@ class User(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     last_login = Column(DateTime)
     # Profile fields
-    avatar_url = Column(String(500), nullable=True)  # Avatar image URL or path
+    avatar_url = Column(String(100000), nullable=True)  # Avatar image URL or base64 data URL
     bio = Column(String(500), nullable=True)  # User bio/description
     profile_theme = Column(String(50), default='purple', nullable=True)  # Profile card theme color
     # Bot-specific fields
@@ -217,7 +217,7 @@ class Wallet(Base):
     __tablename__ = "wallets"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_id = Column(String, ForeignKey("users.id"), unique=True, nullable=False)
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
     gem_balance = Column(Float, default=0.0)
     total_deposited = Column(Float, default=0.0)
     total_withdrawn = Column(Float, default=0.0)
@@ -227,6 +227,11 @@ class Wallet(Base):
 
     # Relationships
     user = relationship("User", back_populates="wallet")
+
+    # Database indexes for performance (user_id already has unique constraint which creates index)
+    __table_args__ = (
+        Index('idx_wallet_user_id', 'user_id'),  # Explicit index for clarity
+    )
 
     def to_dict(self):
         """Convert wallet to dictionary."""
@@ -246,18 +251,26 @@ class Transaction(Base):
     __tablename__ = "transactions"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     transaction_type = Column(String(20), nullable=False)
     amount = Column(Float, nullable=False)
     balance_before = Column(Float, nullable=False)
     balance_after = Column(Float, nullable=False)
     description = Column(Text)
-    game_session_id = Column(String, ForeignKey("game_sessions.id"), nullable=True)
+    game_session_id = Column(String, ForeignKey("game_sessions.id", ondelete="SET NULL"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # Relationships
     user = relationship("User", back_populates="transactions")
     game_session = relationship("GameSession", back_populates="transactions")
+
+    # Database indexes for performance
+    __table_args__ = (
+        Index('idx_transaction_user_id', 'user_id'),
+        Index('idx_transaction_created_at', 'created_at'),
+        Index('idx_transaction_type', 'transaction_type'),
+        Index('idx_transaction_user_created', 'user_id', 'created_at'),  # Composite for common query
+    )
 
     def to_dict(self):
         """Convert transaction to dictionary."""
@@ -278,7 +291,7 @@ class GameSession(Base):
     __tablename__ = "game_sessions"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     status = Column(String(20), default=GameStatus.ACTIVE.value)
 
     # Provably fair data
@@ -428,6 +441,14 @@ class GameBet(Base):
     user = relationship("User")
     round = relationship("RouletteRound", back_populates="bets")  # NEW: Round relationship
 
+    # Database indexes for performance
+    __table_args__ = (
+        Index('idx_gamebet_user_id', 'user_id'),
+        Index('idx_gamebet_created_at', 'created_at'),
+        Index('idx_gamebet_user_created', 'user_id', 'created_at'),  # Composite for user bet history
+        Index('idx_gamebet_round_id', 'round_id'),  # For round-based queries
+    )
+
     def calculate_payout(self, winning_number: int, winning_color: str, winning_crypto: str) -> tuple:
         """Calculate if bet wins and payout amount."""
         is_winner = False
@@ -517,7 +538,7 @@ class PortfolioHolding(Base):
     __tablename__ = "portfolio_holdings"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     crypto_id = Column(String, ForeignKey("cryptocurrencies.id"), nullable=False)
     quantity = Column(Float, default=0.0)  # Amount of crypto owned
     average_buy_price_gem = Column(Float, default=0.0)  # Average buy price in GEMs
@@ -534,7 +555,7 @@ class DailyBonus(Base):
     __tablename__ = "daily_bonuses"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     claim_date = Column(DateTime, default=datetime.utcnow)
     bonus_amount = Column(Float, nullable=False)  # GEM amount awarded
     consecutive_days = Column(Integer, default=1)  # Streak counter
@@ -566,7 +587,7 @@ class UserAchievement(Base):
     __tablename__ = "user_achievements"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     achievement_id = Column(String, ForeignKey("achievements.id"), nullable=False)
     current_progress = Column(Float, default=0.0)  # Current progress towards target
     is_completed = Column(Boolean, default=False)
@@ -602,7 +623,7 @@ class UserEmergencyTask(Base):
     __tablename__ = "user_emergency_tasks"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     task_id = Column(String, ForeignKey("emergency_tasks.id"), nullable=False)
     completed_at = Column(DateTime, default=datetime.utcnow)
     reward_claimed = Column(Boolean, default=True)  # Auto-claimed for emergency tasks
@@ -619,7 +640,7 @@ class DailyMissionProgress(Base):
     __tablename__ = "daily_missions_progress"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     mission_key = Column(String(50), nullable=False)  # e.g., "login_daily", "place_5_bets"
     current_progress = Column(Integer, default=0)  # Current count towards target
     target_value = Column(Integer, nullable=False)  # Target count to complete
@@ -645,7 +666,7 @@ class WeeklyChallengeProgress(Base):
     __tablename__ = "weekly_challenges_progress"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     challenge_key = Column(String(50), nullable=False)  # e.g., "win_10_rounds", "wager_10000_gem"
     current_progress = Column(Float, default=0.0)  # Current progress towards target
     target_value = Column(Float, nullable=False)  # Target value to complete
@@ -671,7 +692,7 @@ class AchievementUnlocked(Base):
     __tablename__ = "achievements_unlocked"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     achievement_key = Column(String(100), nullable=False)
     unlocked_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     reward_amount = Column(Float, nullable=False)
@@ -754,7 +775,7 @@ class StockHolding(Base):
     __tablename__ = "stock_holdings"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     ticker = Column(String(10), nullable=False)
     quantity = Column(Float, nullable=False)
     average_buy_price_gem = Column(Float, nullable=False)
@@ -787,7 +808,7 @@ class StockTransaction(Base):
     __tablename__ = "stock_transactions"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     ticker = Column(String(10), nullable=False)
     transaction_type = Column(String(10), nullable=False)  # 'BUY' or 'SELL'
     quantity = Column(Float, nullable=False)
@@ -890,7 +911,7 @@ class ClickerUpgradePurchase(Base):
     __tablename__ = "clicker_upgrade_purchases"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     upgrade_type = Column(String(50), nullable=False)  # 'click_power', 'auto_clicker', 'multiplier', etc.
     level_purchased = Column(Integer, nullable=False)
     cost_gems = Column(Float, nullable=False)
@@ -939,7 +960,7 @@ class ClickerPowerup(Base):
     __tablename__ = "clicker_powerups"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     powerup_type = Column(String(50), nullable=False)  # 'double_rewards', 'energy_refill', etc.
     activated_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     expires_at = Column(DateTime, nullable=True)  # Null for instant power-ups
@@ -975,7 +996,7 @@ class ClickerChallenge(Base):
     __tablename__ = "clicker_challenges"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     challenge_type = Column(String(50), nullable=False)  # 'daily_clicks', 'weekly_combo', etc.
     challenge_period = Column(String(20), nullable=False)  # 'daily' or 'weekly'
     challenge_date = Column(Date, nullable=False)  # Start date of the challenge
@@ -1047,7 +1068,7 @@ class ClickerAchievement(Base):
     __tablename__ = "clicker_achievements"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     achievement_id = Column(String(100), nullable=False)  # From config
 
     unlocked_at = Column(DateTime, nullable=False, default=datetime.utcnow)

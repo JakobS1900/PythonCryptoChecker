@@ -282,7 +282,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" style="filter: invert(1);"></button>
             </div>
             <div class="modal-body">
-                <form id="editProfileForm">
+                <form id="editProfileForm" data-validate>
                     <div class="form-group-modern">
                         <label for="edit-username" class="form-label-modern">Username</label>
                         <input type="text" class="form-control-modern" id="edit-username" required minlength="3" maxlength="50">
@@ -848,7 +848,7 @@ window.Profile = {
     // Profile editing functions
     showEditModal() {
         if (!this.userStats || !this.userStats.user) {
-            alert('Profile data not loaded yet');
+            Toast.warning('Profile data not loaded yet');
             return;
         }
 
@@ -900,11 +900,7 @@ window.Profile = {
                     await this.loadUserProfile();
 
                     // Show success message
-                    if (window.App && window.App.showAlert) {
-                        App.showAlert('success', 'Profile updated successfully!');
-                    } else {
-                        alert('Profile updated successfully!');
-                    }
+                    Toast.success('Profile updated successfully!');
                 }
             } else {
                 const error = await response.json();
@@ -912,11 +908,7 @@ window.Profile = {
             }
         } catch (error) {
             console.error('Error saving profile:', error);
-            if (window.App && window.App.showAlert) {
-                App.showAlert('danger', `Error: ${error.message}`);
-            } else {
-                alert(`Error: ${error.message}`);
-            }
+            Toast.error(`Error: ${error.message}`);
         }
     },
 
@@ -926,15 +918,34 @@ window.Profile = {
 
         // Check file type
         if (!file.type.startsWith('image/')) {
-            alert('Please select an image file');
+            Toast.error('Please select an image file');
             return;
         }
 
         // Check file size (max 5MB)
         if (file.size > 5 * 1024 * 1024) {
-            alert('Image size must be less than 5MB');
+            Toast.error('Image size must be less than 5MB');
             return;
         }
+
+        // Show loading overlay on avatar
+        const avatarContainer = document.querySelector('.position-relative.d-inline-block');
+        const loadingOverlay = document.createElement('div');
+        loadingOverlay.style.cssText = `
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        `;
+        loadingOverlay.innerHTML = '<div class="spinner-border text-light" role="status"></div>';
+        avatarContainer.appendChild(loadingOverlay);
 
         try {
             // Convert to data URL and store
@@ -961,15 +972,14 @@ window.Profile = {
                     body: JSON.stringify({ avatar_url: dataUrl })
                 });
 
+                // Remove loading overlay
+                loadingOverlay.remove();
+
                 if (response.ok) {
                     const result = await response.json();
                     console.log('✅ Avatar upload response:', result);
 
-                    if (window.App && window.App.showAlert) {
-                        App.showAlert('success', 'Avatar updated successfully!');
-                    } else {
-                        alert('Avatar updated successfully!');
-                    }
+                    Toast.success('Avatar updated successfully!');
 
                     // Reload to update everywhere
                     await this.loadUserProfile();
@@ -982,7 +992,14 @@ window.Profile = {
             reader.readAsDataURL(file);
         } catch (error) {
             console.error('Error uploading avatar:', error);
-            alert('Error uploading avatar: ' + error.message);
+            // Remove loading overlay on error
+            const overlay = avatarContainer.querySelector('div[style*="position: absolute"]');
+            if (overlay && overlay !== loadingOverlay) {
+                // Don't remove the camera button
+            } else if (loadingOverlay.parentNode) {
+                loadingOverlay.remove();
+            }
+            Toast.error('Error uploading avatar: ' + error.message);
         }
     }
 };

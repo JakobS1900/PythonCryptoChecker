@@ -312,16 +312,14 @@ const MissionsManager = {
         // Create toast notification for error
         console.error('Mission error:', message);
 
-        // You can implement a toast notification system here
-        alert('Error: ' + message);
+        Toast.error('Error: ' + message);
     },
 
     showSuccess(message) {
         // Create toast notification for success
         console.log('Mission success:', message);
 
-        // You can implement a toast notification system here
-        alert('Success: ' + message);
+        Toast.success('Success: ' + message);
     }
 };
 

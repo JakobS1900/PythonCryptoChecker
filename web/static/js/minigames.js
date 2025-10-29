@@ -20,7 +20,7 @@ class MiniGamesManager {
 
     async loadBalance() {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('auth_token');
             if (!token) return;
 
             const response = await fetch('/api/auth/status', {
@@ -39,7 +39,7 @@ class MiniGamesManager {
 
     async loadStats() {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('auth_token');
             if (!token) return;
 
             const response = await fetch('/api/minigames/stats', {
@@ -62,7 +62,7 @@ class MiniGamesManager {
 
     async loadHistory() {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('auth_token');
             if (!token) {
                 document.getElementById('history-list').innerHTML = '<p class="text-center">Login to view history</p>';
                 return;
@@ -111,7 +111,7 @@ class MiniGamesManager {
     }
 
     showGame(gameType) {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('auth_token');
         if (!token) {
             window.location.href = '/login?redirect=/minigames';
             return;
@@ -226,7 +226,7 @@ class MiniGamesManager {
         }
 
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('auth_token');
             const response = await fetch('/api/minigames/coinflip', {
                 method: 'POST',
                 headers: {
@@ -257,7 +257,7 @@ class MiniGamesManager {
         }
 
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('auth_token');
             const response = await fetch('/api/minigames/dice', {
                 method: 'POST',
                 headers: {
@@ -288,7 +288,7 @@ class MiniGamesManager {
         }
 
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('auth_token');
             const response = await fetch('/api/minigames/higherlower', {
                 method: 'POST',
                 headers: {
@@ -360,10 +360,12 @@ class MiniGamesManager {
     }
 
     showError(message) {
-        if (window.showAlert) {
+        if (window.Toast) {
+            Toast.error(message);
+        } else if (window.showAlert) {
             window.showAlert(message, 'danger');
         } else {
-            alert(message);
+            console.error('[ERROR]', message);
         }
     }
 }

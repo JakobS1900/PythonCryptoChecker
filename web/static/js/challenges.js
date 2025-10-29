@@ -15,7 +15,7 @@ class ChallengesManager {
         console.log('[Challenges] Initializing...');
 
         // Check if user is logged in
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('auth_token');
         if (!token) {
             window.location.href = '/login';
             return;
@@ -41,7 +41,7 @@ class ChallengesManager {
     }
 
     async loadLoginStreak() {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('auth_token');
 
         try {
             const response = await fetch('/api/challenges/login-streak', {
@@ -102,7 +102,7 @@ class ChallengesManager {
     }
 
     async claimDailyLogin() {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('auth_token');
         const claimBtn = document.getElementById('claim-login-btn');
 
         // Disable button during request
@@ -146,7 +146,7 @@ class ChallengesManager {
     }
 
     async loadChallenges() {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('auth_token');
 
         try {
             const response = await fetch('/api/challenges/active', {
@@ -259,7 +259,7 @@ class ChallengesManager {
     }
 
     async claimReward(challengeId) {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('auth_token');
 
         try {
             const response = await fetch(`/api/challenges/claim/${challengeId}`, {

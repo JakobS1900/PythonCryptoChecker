@@ -13,7 +13,7 @@
                 </div>
 
                 <!-- Login Form -->
-                <form id="loginForm" data-api-form data-api-endpoint="/api/auth/login" data-method="POST" style="display: block;">
+                <form id="loginForm" data-api-form data-api-endpoint="/api/auth/login" data-method="POST" data-validate style="display: block;">
                     <div class="mb-3">
                         <label for="loginUsername" class="form-label">Username</label>
                         <input type="text" class="form-control" id="loginUsername" name="username" required>
@@ -23,7 +23,7 @@
                         <input type="password" class="form-control" id="loginPassword" name="password" required>
                     </div>
                     <div class="d-grid">
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn-modern btn-modern-primary">
                             <span class="spinner-border spinner-border-sm me-2" style="display: none;" aria-hidden="true"></span>
                             Sign In
                         </button>
@@ -31,7 +31,7 @@
                 </form>
 
                 <!-- Register Form -->
-                <form id="registerForm" data-api-form data-api-endpoint="/api/auth/register" data-method="POST" style="display: none;">
+                <form id="registerForm" data-api-form data-api-endpoint="/api/auth/register" data-method="POST" data-validate style="display: none;">
                     <div class="mb-3">
                         <label for="registerUsername" class="form-label">Username</label>
                         <input type="text" class="form-control" id="registerUsername" name="username" required minlength="3" maxlength="50">
@@ -51,7 +51,7 @@
                         <input type="password" class="form-control" id="registerConfirmPassword" name="confirmPassword" required>
                     </div>
                     <div class="d-grid">
-                        <button type="submit" class="btn btn-success">
+                        <button type="submit" class="btn-modern btn-modern-success">
                             <span class="spinner-border spinner-border-sm me-2" style="display: none;" aria-hidden="true"></span>
                             Create Account
                         </button>
@@ -60,7 +60,7 @@
 
                 <!-- Toggle between forms -->
                 <div class="text-center mt-3">
-                    <button type="button" class="btn btn-link" id="toggleAuthForm">
+                    <button type="button" class="btn-modern btn-modern-link" id="toggleAuthForm">
                         <span id="toggleAuthText">Don't have an account? Sign up</span>
                     </button>
                 </div>
@@ -68,7 +68,7 @@
                 <!-- Guest Mode -->
                 <div class="text-center mt-3">
                     <hr>
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" onclick="Auth.setGuestMode()">
+                    <button type="button" class="btn-modern btn-modern-secondary" data-bs-dismiss="modal" onclick="Auth.setGuestMode()">
                         <i class="bi bi-person"></i> Continue as Guest
                     </button>
                     <div class="form-text mt-2">Get 5,000 GEM to explore the platform</div>

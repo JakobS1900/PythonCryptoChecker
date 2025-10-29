@@ -158,7 +158,6 @@ async def purchase_gem_package(
         balance_before=balance_before,
         balance_after=wallet.gem_balance,
         description=f"GEM Purchase - {package['name']} ({transaction_id})",
-        reference_id=transaction_id,
         created_at=datetime.utcnow()
     )
     db.add(transaction)

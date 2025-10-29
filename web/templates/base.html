@@ -22,6 +22,9 @@
     <!-- Custom CSS -->
     <link href="{{ url_for('static', path='/css/main.css') }}" rel="stylesheet">
 
+    <!-- Toast Notifications -->
+    <link href="{{ url_for('static', path='/css/toast.css') }}" rel="stylesheet">
+
     {% block extra_css %}{% endblock %}
 </head>
 <body>
@@ -40,101 +43,76 @@
 
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav-modern mx-auto">
+                    <!-- Dashboard -->
                     <li class="nav-item">
                         <a class="nav-link-modern" href="/" data-page="dashboard">
                             <i class="bi bi-house-door"></i>
                             <span>Dashboard</span>
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link-modern" href="/gaming" data-page="gaming">
-                            <i class="bi bi-dice-5-fill"></i>
-                            <span>Roulette</span>
+
+                    <!-- Games Dropdown -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link-modern dropdown-toggle" href="#" id="gamesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-controller"></i>
+                            <span>Games</span>
                         </a>
+                        <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="gamesDropdown">
+                            <li><a class="dropdown-item" href="/gaming"><i class="bi bi-dice-5-fill me-2"></i>Roulette</a></li>
+                            <li><a class="dropdown-item" href="/clicker"><i class="bi bi-mouse me-2"></i>GEM Clicker</a></li>
+                            <li><a class="dropdown-item" href="/minigames"><i class="bi bi-dice-5 me-2"></i>Mini-Games</a></li>
+                            <li><a class="dropdown-item" href="/crash"><i class="bi bi-rocket-takeoff me-2"></i>Crash</a></li>
+                        </ul>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link-modern" href="/stocks" data-page="stocks">
+
+                    <!-- Trading Dropdown -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link-modern dropdown-toggle" href="#" id="tradingDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="bi bi-graph-up-arrow"></i>
-                            <span>Stock Market</span>
+                            <span>Trading</span>
                         </a>
+                        <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="tradingDropdown">
+                            <li><a class="dropdown-item" href="/stocks"><i class="bi bi-graph-up-arrow me-2"></i>Stock Market</a></li>
+                            <li><a class="dropdown-item" href="/trading"><i class="bi bi-arrow-left-right me-2"></i>P2P Trading</a></li>
+                            <li><a class="dropdown-item" href="/staking"><i class="bi bi-piggy-bank me-2"></i>Staking</a></li>
+                        </ul>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link-modern" href="/clicker" data-page="clicker">
-                            <i class="bi bi-mouse"></i>
-                            <span>GEM Clicker</span>
-                        </a>
-                    </li>
+
+                    <!-- Store -->
                     <li class="nav-item">
                         <a class="nav-link-modern" href="/gem-store" data-page="gem-store">
                             <i class="bi bi-shop"></i>
-                            <span>GEM Store</span>
+                            <span>Store</span>
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link-modern" href="/staking" data-page="staking">
-                            <i class="bi bi-piggy-bank"></i>
-                            <span>Staking</span>
+
+                    <!-- Community Dropdown -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link-modern dropdown-toggle" href="#" id="communityDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-people"></i>
+                            <span>Community</span>
                         </a>
+                        <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="communityDropdown">
+                            <li><a class="dropdown-item" href="/leaderboards"><i class="bi bi-trophy me-2"></i>Leaderboards</a></li>
+                            <li><a class="dropdown-item" href="/challenges"><i class="bi bi-calendar-check me-2"></i>Challenges</a></li>
+                            <li><a class="dropdown-item" href="/missions"><i class="bi bi-trophy-fill me-2"></i>Missions</a></li>
+                            <li><a class="dropdown-item" href="/achievements"><i class="bi bi-award-fill me-2"></i>Achievements</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/social"><i class="bi bi-chat-dots me-2"></i>Social</a></li>
+                        </ul>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link-modern" href="/trading" data-page="trading">
-                            <i class="bi bi-shop"></i>
-                            <span>Trading</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link-modern" href="/minigames" data-page="minigames">
-                            <i class="bi bi-dice-5"></i>
-                            <span>Mini-Games</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link-modern" href="/crash" data-page="crash">
-                            <i class="bi bi-rocket-takeoff"></i>
-                            <span>Crash</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link-modern" href="/leaderboards" data-page="leaderboards">
-                            <i class="bi bi-trophy"></i>
-                            <span>Leaderboards</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link-modern" href="/challenges" data-page="challenges">
-                            <i class="bi bi-calendar-check"></i>
-                            <span>Challenges</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link-modern" href="/portfolio" data-page="portfolio">
-                            <i class="bi bi-wallet2"></i>
-                            <span>Portfolio</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link-modern" href="/converter" data-page="converter">
-                            <i class="bi bi-arrow-left-right"></i>
-                            <span>Converter</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link-modern" href="/profile" data-page="profile">
+
+                    <!-- Account Dropdown -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link-modern dropdown-toggle" href="#" id="accountDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="bi bi-person-circle"></i>
-                            <span>Profile</span>
+                            <span>Account</span>
                         </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link-modern" href="/missions" data-page="missions">
-                            <i class="bi bi-trophy-fill"></i>
-                            <span>Missions</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link-modern" href="/achievements" data-page="achievements">
-                            <i class="bi bi-award-fill"></i>
-                            <span>Achievements</span>
-                        </a>
+                        <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="accountDropdown">
+                            <li><a class="dropdown-item" href="/profile"><i class="bi bi-person me-2"></i>Profile</a></li>
+                            <li><a class="dropdown-item" href="/portfolio"><i class="bi bi-wallet2 me-2"></i>Portfolio</a></li>
+                            <li><a class="dropdown-item" href="/converter"><i class="bi bi-arrow-left-right me-2"></i>Converter</a></li>
+                        </ul>
                     </li>
                 </ul>
 
@@ -197,6 +175,10 @@
 
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Toast Notification System -->
+    <script src="{{ url_for('static', path='/js/toast.js') }}"></script>
+    <!-- Form Validation -->
+    <script src="{{ url_for('static', path='/js/form-validation.js') }}"></script>
     <!-- Custom JavaScript -->
     <script src="{{ url_for('static', path='/js/main.js') }}"></script>
     <script src="{{ url_for('static', path='/js/auth.js') }}"></script>

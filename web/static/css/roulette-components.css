@@ -1,0 +1,1000 @@
+/**
+ * CryptoChecker Roulette Component Styles
+ * Version: 3.1.0
+ *
+ * This file contains component-specific styles for the roulette interface:
+ * - Layout components (header, status bar, grid)
+ * - Game components (wheel, timer, results)
+ * - Betting components (buttons, chips, bet list)
+ * - Bot components (arena, activity feed, avatars)
+ * - Utility classes (glassmorphism, gradients, elevation)
+ *
+ * Naming Convention: .rd-{component}-{element}--{modifier}
+ * Examples:
+ *   .rd-header-brand
+ *   .rd-bet-button
+ *   .rd-bet-button--red
+ *   .rd-bet-button--active
+ *
+ * Dependencies: roulette-design-system.css (design tokens)
+ */
+
+/* ===================================================================
+   UTILITY CLASSES - Reusable Design Patterns
+   =================================================================== */
+
+/* Glassmorphism Effects */
+.rd-glass {
+    background: var(--rd-glass-bg);
+    backdrop-filter: var(--rd-blur-lg);
+    -webkit-backdrop-filter: var(--rd-blur-lg);
+    border: 1px solid var(--rd-glass-border);
+}
+
+.rd-glass-hover {
+    transition: all var(--rd-transition-base) var(--rd-ease-smooth);
+}
+
+.rd-glass-hover:hover {
+    background: var(--rd-glass-bg-hover);
+    border-color: var(--rd-glass-border-hover);
+}
+
+.rd-glass-elevated {
+    background: linear-gradient(
+        135deg,
+        var(--rd-glass-bg),
+        rgba(255, 255, 255, 0.02)
+    );
+    box-shadow: var(--rd-shadow-lg);
+}
+
+/* Gradient Backgrounds */
+.rd-gradient-primary {
+    background: linear-gradient(135deg,
+        var(--rd-bg-primary),
+        var(--rd-bg-secondary));
+}
+
+.rd-gradient-elevated {
+    background: linear-gradient(135deg,
+        var(--rd-bg-secondary),
+        var(--rd-bg-tertiary));
+}
+
+.rd-gradient-accent {
+    background: linear-gradient(135deg,
+        var(--rd-accent-cyan),
+        var(--rd-accent-purple));
+}
+
+.rd-gradient-gold {
+    background: linear-gradient(135deg,
+        var(--rd-accent-gold),
+        var(--rd-accent-gold-dark));
+}
+
+.rd-gradient-cyan {
+    background: linear-gradient(135deg,
+        var(--rd-accent-cyan),
+        var(--rd-accent-cyan-dark));
+}
+
+/* Typography Utilities */
+.rd-label {
+    font-size: var(--rd-text-xs);
+    font-weight: var(--rd-font-semibold);
+    text-transform: uppercase;
+    letter-spacing: var(--rd-tracking-wider);
+    color: var(--rd-text-tertiary);
+}
+
+.rd-heading {
+    font-size: var(--rd-text-2xl);
+    font-weight: var(--rd-font-bold);
+    color: var(--rd-text-primary);
+    letter-spacing: var(--rd-tracking-tight);
+    line-height: var(--rd-leading-tight);
+}
+
+.rd-number-display {
+    font-family: var(--rd-font-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: var(--rd-tracking-tight);
+}
+
+.rd-number-large {
+    font-size: var(--rd-text-4xl);
+    font-weight: var(--rd-font-black);
+    line-height: var(--rd-leading-tight);
+}
+
+.rd-number-highlight {
+    background: linear-gradient(135deg,
+        var(--rd-accent-gold),
+        var(--rd-accent-cyan));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Elevation & Shadows */
+.rd-elevation-1 {
+    box-shadow: var(--rd-shadow-sm);
+}
+
+.rd-elevation-2 {
+    box-shadow: var(--rd-shadow-md);
+}
+
+.rd-elevation-3 {
+    box-shadow: var(--rd-shadow-lg);
+}
+
+.rd-elevation-4 {
+    box-shadow: var(--rd-shadow-xl);
+}
+
+/* Glow Effects */
+.rd-glow-on-hover {
+    transition: box-shadow var(--rd-transition-base) var(--rd-ease-smooth);
+}
+
+.rd-glow-on-hover:hover {
+    box-shadow: var(--rd-glow-gold);
+}
+
+.rd-glow-gold {
+    box-shadow: var(--rd-glow-gold);
+}
+
+.rd-glow-cyan {
+    box-shadow: var(--rd-glow-cyan);
+}
+
+.rd-glow-green {
+    box-shadow: var(--rd-glow-green);
+}
+
+.rd-glow-red {
+    box-shadow: var(--rd-glow-red);
+}
+
+.rd-glow-purple {
+    box-shadow: var(--rd-glow-purple);
+}
+
+/* Interactive States */
+.rd-interactive {
+    cursor: pointer;
+    user-select: none;
+    transition: all var(--rd-transition-base) var(--rd-ease-smooth);
+}
+
+.rd-interactive:hover {
+    transform: translateY(-2px);
+}
+
+.rd-interactive:active {
+    transform: translateY(0);
+}
+
+.rd-clickable {
+    cursor: pointer;
+    transition: transform var(--rd-transition-fast) var(--rd-ease-smooth);
+}
+
+.rd-clickable:active {
+    transform: scale(0.98);
+}
+
+/* ===================================================================
+   COMPONENT STYLES
+   =================================================================== */
+
+/* ===================================================================
+   HEADER COMPONENT - Premium Gaming Header
+   =================================================================== */
+
+/* Header Container */
+.rd-header {
+    background: linear-gradient(135deg,
+        var(--rd-bg-primary),
+        var(--rd-bg-secondary));
+    border-bottom: 1px solid var(--rd-glass-border);
+    padding: var(--rd-space-4) var(--rd-space-6);
+    position: relative;
+}
+
+.rd-header::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg,
+        transparent,
+        var(--rd-accent-gold),
+        var(--rd-accent-cyan),
+        transparent);
+    opacity: 0.3;
+}
+
+.rd-header-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: var(--rd-space-8);
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 0 var(--rd-space-6);
+}
+
+/* Branding Section */
+.rd-header-brand {
+    display: flex;
+    align-items: center;
+    gap: var(--rd-space-4);
+}
+
+.rd-brand-icon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg,
+        var(--rd-accent-gold),
+        var(--rd-accent-gold-dark));
+    border-radius: var(--rd-radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--rd-text-2xl);
+    color: var(--rd-bg-primary);
+    box-shadow: var(--rd-glow-gold), var(--rd-shadow-md);
+    position: relative;
+    overflow: hidden;
+}
+
+.rd-brand-icon::before {
+    content: '';
+    position: absolute;
+    inset: -50%;
+    background: linear-gradient(45deg,
+        transparent 30%,
+        rgba(255, 255, 255, 0.3) 50%,
+        transparent 70%);
+    animation: rd-shimmer 3s infinite;
+}
+
+.rd-brand-title {
+    font-size: var(--rd-text-3xl);
+    font-weight: var(--rd-font-black);
+    letter-spacing: var(--rd-tracking-tight);
+    background: linear-gradient(135deg,
+        var(--rd-accent-gold),
+        var(--rd-accent-cyan));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0;
+    line-height: var(--rd-leading-tight);
+    text-shadow: 0 2px 10px rgba(251, 191, 36, 0.3);
+}
+
+.rd-live-badge {
+    display: flex;
+    align-items: center;
+    gap: var(--rd-space-2);
+    padding: var(--rd-space-2) var(--rd-space-4);
+    background: var(--rd-error-bg);
+    border: 1px solid var(--rd-error);
+    border-radius: var(--rd-radius-full);
+    font-size: var(--rd-text-xs);
+    font-weight: var(--rd-font-semibold);
+    text-transform: uppercase;
+    letter-spacing: var(--rd-tracking-wider);
+    color: var(--rd-error);
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
+}
+
+.rd-pulse-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--rd-error);
+    border-radius: 50%;
+    animation: rd-pulse 2s ease-in-out infinite;
+    box-shadow: 0 0 8px var(--rd-error);
+}
+
+/* Balance Display */
+.rd-header-balance {
+    display: flex;
+    gap: var(--rd-space-4);
+}
+
+.rd-balance-card {
+    background: var(--rd-glass-bg);
+    backdrop-filter: var(--rd-blur-lg);
+    -webkit-backdrop-filter: var(--rd-blur-lg);
+    border: 1px solid var(--rd-glass-border);
+    border-radius: var(--rd-radius-xl);
+    padding: var(--rd-space-4) var(--rd-space-6);
+    min-width: 220px;
+    transition: all var(--rd-transition-base) var(--rd-ease-smooth);
+    position: relative;
+    overflow: hidden;
+}
+
+.rd-balance-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg,
+        transparent,
+        rgba(251, 191, 36, 0.1),
+        transparent);
+    transition: left 0.5s ease;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.rd-balance-card:hover {
+    background: var(--rd-glass-bg-hover);
+    border-color: var(--rd-glass-border-hover);
+    box-shadow: var(--rd-glow-gold), var(--rd-shadow-lg);
+    transform: translateY(-2px);
+}
+
+.rd-balance-card:hover::before {
+    left: 100%;
+}
+
+.rd-balance-label {
+    font-size: var(--rd-text-xs);
+    font-weight: var(--rd-font-semibold);
+    text-transform: uppercase;
+    letter-spacing: var(--rd-tracking-wider);
+    color: var(--rd-text-tertiary);
+    margin-bottom: var(--rd-space-1);
+    position: relative;
+    z-index: 10;
+}
+
+.rd-balance-value {
+    display: flex;
+    align-items: center;
+    gap: var(--rd-space-2);
+    font-size: var(--rd-text-3xl);
+    font-weight: var(--rd-font-black);
+    color: var(--rd-text-primary);
+    line-height: var(--rd-leading-tight);
+    position: relative;
+    z-index: 10;
+}
+
+.rd-balance-amount {
+    font-family: var(--rd-font-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: var(--rd-tracking-tight);
+}
+
+.rd-balance-currency {
+    font-size: var(--rd-text-sm);
+    font-weight: var(--rd-font-medium);
+    color: var(--rd-text-tertiary);
+}
+
+/* Gem Icon Styling - Remove all backgrounds and overlays */
+.rd-balance-value .bi-gem,
+.rd-balance-value .bi-gem::before,
+.rd-balance-value .bi-gem::after {
+    color: var(--rd-accent-gold) !important;
+    background: none !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    -webkit-text-fill-color: currentColor !important;
+}
+
+.rd-balance-value .bi-gem {
+    font-size: var(--rd-text-2xl);
+    filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.6)) !important;
+    animation: rd-glow-pulse 3s ease-in-out infinite;
+    position: relative;
+    z-index: 10;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .rd-header {
+        padding: var(--rd-space-3) var(--rd-space-4);
+    }
+
+    .rd-header-content {
+        flex-direction: column;
+        gap: var(--rd-space-4);
+        align-items: flex-start;
+    }
+
+    .rd-brand-title {
+        font-size: var(--rd-text-xl);
+    }
+
+    .rd-brand-icon {
+        width: 40px;
+        height: 40px;
+        font-size: var(--rd-text-xl);
+    }
+
+    .rd-balance-card {
+        min-width: 180px;
+        padding: var(--rd-space-3) var(--rd-space-4);
+    }
+
+    .rd-balance-value {
+        font-size: var(--rd-text-2xl);
+    }
+}
+
+/* ===================================================================
+   STATUS BAR COMPONENT - Game Phase & Progress
+   =================================================================== */
+
+/* Status Bar Container */
+.rd-status-bar {
+    background: var(--rd-bg-secondary);
+    border-bottom: 1px solid var(--rd-glass-border);
+    position: relative;
+    overflow: hidden;
+    transition: background var(--rd-transition-base) var(--rd-ease-smooth);
+}
+
+.rd-status-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: var(--rd-space-8);
+    padding: var(--rd-space-5) var(--rd-space-6);
+    max-width: 1600px;
+    margin: 0 auto;
+    position: relative;
+}
+
+.rd-status-content > * {
+    flex-shrink: 0;
+}
+
+/* Phase Indicator */
+.rd-phase-indicator {
+    display: flex;
+    align-items: center;
+    gap: var(--rd-space-3);
+}
+
+.rd-phase-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--rd-radius-lg);
+    background: var(--rd-glass-bg);
+    border: 1px solid var(--rd-glass-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--rd-text-xl);
+    transition: all var(--rd-transition-base) var(--rd-ease-smooth);
+}
+
+.rd-phase-info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--rd-space-1);
+}
+
+.rd-phase-text {
+    font-size: var(--rd-text-lg);
+    font-weight: var(--rd-font-semibold);
+    color: var(--rd-text-primary);
+    line-height: var(--rd-leading-tight);
+}
+
+.rd-phase-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+/* Phase-Specific Styling */
+.rd-status-bar[data-phase="betting"] {
+    --phase-color: var(--rd-accent-cyan);
+}
+
+.rd-status-bar[data-phase="betting"] .rd-phase-icon {
+    background: var(--rd-info-bg);
+    color: var(--rd-accent-cyan);
+    border-color: var(--rd-info-border);
+    box-shadow: var(--rd-glow-cyan-sm);
+}
+
+.rd-status-bar[data-phase="betting"] .rd-phase-text {
+    color: var(--rd-accent-cyan);
+}
+
+.rd-status-bar[data-phase="spinning"] {
+    --phase-color: var(--rd-accent-gold);
+    background: linear-gradient(135deg,
+        var(--rd-bg-secondary),
+        rgba(251, 191, 36, 0.05));
+}
+
+.rd-status-bar[data-phase="spinning"] .rd-phase-icon {
+    background: var(--rd-warning-bg);
+    color: var(--rd-accent-gold);
+    border-color: var(--rd-warning-border);
+    box-shadow: var(--rd-glow-gold-sm);
+    animation: rd-pulse 1s ease-in-out infinite;
+}
+
+.rd-status-bar[data-phase="spinning"] .rd-phase-text {
+    color: var(--rd-accent-gold);
+}
+
+.rd-status-bar[data-phase="results"] {
+    --phase-color: var(--rd-success);
+    background: linear-gradient(135deg,
+        var(--rd-bg-secondary),
+        rgba(34, 197, 94, 0.05));
+}
+
+.rd-status-bar[data-phase="results"] .rd-phase-icon {
+    background: var(--rd-success-bg);
+    color: var(--rd-success);
+    border-color: var(--rd-success-border);
+    box-shadow: var(--rd-glow-green-sm);
+}
+
+.rd-status-bar[data-phase="results"] .rd-phase-text {
+    color: var(--rd-success);
+}
+
+/* Progress Bar */
+.rd-status-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+}
+
+.rd-status-progress-bar {
+    height: 100%;
+    background: var(--phase-color, var(--rd-accent-cyan));
+    box-shadow: 0 0 10px var(--phase-color);
+    transition: width 1s linear, background-color var(--rd-transition-base);
+    position: relative;
+}
+
+.rd-status-progress-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 100px;
+    background: linear-gradient(90deg,
+        transparent,
+        rgba(255, 255, 255, 0.3));
+    animation: rd-shimmer 2s infinite;
+}
+
+/* Recent Results */
+.rd-recent-results {
+    display: flex;
+    align-items: center;
+    gap: var(--rd-space-4);
+}
+
+.rd-results-label {
+    font-size: var(--rd-text-sm);
+    font-weight: var(--rd-font-semibold);
+    text-transform: uppercase;
+    letter-spacing: var(--rd-tracking-wider);
+    color: var(--rd-text-tertiary);
+}
+
+.rd-results-list {
+    display: flex;
+    gap: var(--rd-space-2);
+    flex-wrap: wrap;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .rd-status-content {
+        flex-direction: column;
+        gap: var(--rd-space-3);
+        align-items: flex-start;
+        padding: var(--rd-space-3) var(--rd-space-4);
+    }
+
+    .rd-phase-text {
+        font-size: var(--rd-text-base);
+    }
+
+    .rd-phase-icon {
+        width: 36px;
+        height: 36px;
+        font-size: var(--rd-text-lg);
+    }
+
+    .rd-recent-results {
+        width: 100%;
+    }
+}
+
+
+/* ===================================================================
+   CHIP BUTTONS - Casino-Style 3D Chips
+   =================================================================== */
+
+.rd-chip-grid {
+    display: flex;
+    gap: var(--rd-space-4);
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.rd-chip-btn {
+    position: relative;
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: linear-gradient(135deg,
+        var(--rd-accent-gold),
+        var(--rd-accent-gold-dark));
+    border: 4px solid rgba(255, 255, 255, 0.2);
+    box-shadow:
+        0 4px 8px rgba(0, 0, 0, 0.3),
+        inset 0 2px 4px rgba(255, 255, 255, 0.2),
+        inset 0 -2px 4px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    transition: all var(--rd-transition-base) var(--rd-ease-smooth);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    outline: none;
+}
+
+.rd-chip-btn::before {
+    content: "";
+    position: absolute;
+    inset: 8px;
+    border-radius: 50%;
+    border: 2px dashed rgba(255, 255, 255, 0.3);
+}
+
+.rd-chip-btn:hover {
+    transform: translateY(-4px) scale(1.05);
+    box-shadow:
+        0 8px 16px rgba(0, 0, 0, 0.4),
+        var(--rd-glow-gold),
+        inset 0 2px 4px rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.rd-chip-btn:active {
+    transform: translateY(-2px) scale(1.02);
+}
+
+.rd-chip-btn.active {
+    border-color: var(--rd-accent-cyan);
+    box-shadow:
+        0 8px 16px rgba(0, 0, 0, 0.4),
+        var(--rd-glow-cyan),
+        inset 0 2px 4px rgba(255, 255, 255, 0.3);
+    animation: rd-pulse 2s ease-in-out infinite;
+}
+
+.rd-chip-value {
+    font-size: var(--rd-text-lg);
+    font-weight: var(--rd-font-black);
+    color: var(--rd-bg-primary);
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.3);
+    position: relative;
+    z-index: 2;
+}
+
+.rd-chip-glow {
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    background: radial-gradient(
+        circle,
+        rgba(251, 191, 36, 0.4) 0%,
+        transparent 70%
+    );
+    opacity: 0;
+    transition: opacity var(--rd-transition-base);
+    pointer-events: none;
+}
+
+.rd-chip-btn:hover .rd-chip-glow {
+    opacity: 1;
+}
+
+@media (max-width: 768px) {
+    .rd-chip-btn {
+        width: 60px;
+        height: 60px;
+    }
+
+    .rd-chip-value {
+        font-size: var(--rd-text-base);
+    }
+}
+
+/* ===================================================================
+   COLOR BET BUTTONS - Premium Casino Roulette Betting
+   =================================================================== */
+
+.rd-color-grid {
+    display: flex;
+    gap: var(--rd-space-4);
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.rd-color-bet {
+    position: relative;
+    min-width: 140px;
+    height: 100px;
+    border-radius: var(--rd-radius-xl);
+    background: var(--rd-glass-bg);
+    backdrop-filter: var(--rd-blur-lg);
+    border: 2px solid var(--rd-glass-border);
+    cursor: pointer;
+    transition: all var(--rd-transition-base) var(--rd-ease-smooth);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--rd-space-2);
+    padding: var(--rd-space-4);
+    overflow: hidden;
+}
+
+.rd-color-bet::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg,
+        transparent,
+        rgba(255, 255, 255, 0.05),
+        transparent);
+    opacity: 0;
+    transition: opacity var(--rd-transition-base);
+}
+
+.rd-color-bet:hover {
+    transform: translateY(-4px) scale(1.02);
+    border-color: var(--rd-glass-border-hover);
+}
+
+.rd-color-bet:hover::before {
+    opacity: 1;
+}
+
+.rd-color-bet:active {
+    transform: translateY(-2px) scale(1.01);
+}
+
+/* Color Indicator (Circular Badge) */
+.rd-color-indicator {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    box-shadow: var(--rd-shadow-md);
+    position: relative;
+}
+
+.rd-color-indicator::after {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.3), transparent);
+}
+
+/* Bet Content */
+.rd-bet-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--rd-space-1);
+}
+
+.rd-bet-label {
+    font-size: var(--rd-text-lg);
+    font-weight: var(--rd-font-bold);
+    color: var(--rd-text-primary);
+    letter-spacing: var(--rd-tracking-wide);
+}
+
+.rd-bet-payout {
+    font-size: var(--rd-text-sm);
+    font-weight: var(--rd-font-medium);
+    color: var(--rd-text-tertiary);
+    opacity: 0.8;
+}
+
+.rd-bet-amount {
+    position: absolute;
+    top: var(--rd-space-2);
+    right: var(--rd-space-2);
+    min-width: 36px;
+    padding: var(--rd-space-1) var(--rd-space-2);
+    background: var(--rd-bg-primary);
+    border: 1px solid var(--rd-glass-border);
+    border-radius: var(--rd-radius-full);
+    font-size: var(--rd-text-xs);
+    font-weight: var(--rd-font-semibold);
+    color: var(--rd-accent-gold);
+    text-align: center;
+}
+
+/* Red Bet Variant */
+.rd-color-bet--red {
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.rd-color-bet--red:hover {
+    background: linear-gradient(135deg,
+        var(--rd-glass-bg),
+        rgba(239, 68, 68, 0.1));
+    border-color: rgba(239, 68, 68, 0.5);
+    box-shadow: var(--rd-shadow-lg), 0 0 20px rgba(239, 68, 68, 0.3);
+}
+
+.rd-color-bet--red .rd-color-indicator {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    border-color: rgba(255, 255, 255, 0.4);
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.6);
+}
+
+.rd-color-bet--red .rd-bet-label {
+    color: #ef4444;
+}
+
+/* Green Bet Variant */
+.rd-color-bet--green {
+    border-color: rgba(34, 197, 94, 0.3);
+}
+
+.rd-color-bet--green:hover {
+    background: linear-gradient(135deg,
+        var(--rd-glass-bg),
+        rgba(34, 197, 94, 0.1));
+    border-color: rgba(34, 197, 94, 0.5);
+    box-shadow: var(--rd-shadow-lg), 0 0 20px rgba(34, 197, 94, 0.3);
+}
+
+.rd-color-bet--green .rd-color-indicator {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    border-color: rgba(255, 255, 255, 0.4);
+    box-shadow: 0 0 15px rgba(34, 197, 94, 0.6);
+}
+
+.rd-color-bet--green .rd-bet-label {
+    color: #22c55e;
+}
+
+/* Black Bet Variant */
+.rd-color-bet--black {
+    border-color: rgba(148, 163, 184, 0.3);
+}
+
+.rd-color-bet--black:hover {
+    background: linear-gradient(135deg,
+        var(--rd-glass-bg),
+        rgba(148, 163, 184, 0.1));
+    border-color: rgba(148, 163, 184, 0.5);
+    box-shadow: var(--rd-shadow-lg), 0 0 20px rgba(148, 163, 184, 0.3);
+}
+
+.rd-color-bet--black .rd-color-indicator {
+    background: linear-gradient(135deg, #334155, #1e293b);
+    border-color: rgba(255, 255, 255, 0.4);
+    box-shadow: 0 0 15px rgba(148, 163, 184, 0.6);
+}
+
+.rd-color-bet--black .rd-bet-label {
+    color: #94a3b8;
+}
+
+/* Active State */
+.rd-color-bet.active {
+    transform: translateY(-4px) scale(1.02);
+    animation: rd-pulse 2s ease-in-out infinite;
+}
+
+.rd-color-bet--red.active {
+    background: linear-gradient(135deg,
+        rgba(239, 68, 68, 0.15),
+        rgba(220, 38, 38, 0.1));
+    border-color: rgba(239, 68, 68, 0.7);
+    box-shadow: var(--rd-shadow-xl), 0 0 30px rgba(239, 68, 68, 0.5);
+}
+
+.rd-color-bet--green.active {
+    background: linear-gradient(135deg,
+        rgba(34, 197, 94, 0.15),
+        rgba(22, 163, 74, 0.1));
+    border-color: rgba(34, 197, 94, 0.7);
+    box-shadow: var(--rd-shadow-xl), 0 0 30px rgba(34, 197, 94, 0.5);
+}
+
+.rd-color-bet--black.active {
+    background: linear-gradient(135deg,
+        rgba(148, 163, 184, 0.15),
+        rgba(100, 116, 139, 0.1));
+    border-color: rgba(148, 163, 184, 0.7);
+    box-shadow: var(--rd-shadow-xl), 0 0 30px rgba(148, 163, 184, 0.5);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .rd-color-bet {
+        min-width: 110px;
+        height: 85px;
+        padding: var(--rd-space-3);
+    }
+
+    .rd-color-indicator {
+        width: 28px;
+        height: 28px;
+    }
+
+    .rd-bet-label {
+        font-size: var(--rd-text-base);
+    }
+}
+
+/* ===================================================================
+   PANEL FIXES - Center panel titles properly
+   =================================================================== */
+
+/* Override panel header alignment to center titles */
+.bet-panel .panel-header,
+.betting-options-panel .panel-header,
+.active-bets-panel .panel-header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    flex-direction: column;
+    gap: var(--rd-space-2);
+}
+
+/* When there are multiple children, use space-between */
+.panel-header:has(> :nth-child(2)) {
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+/* Center panel titles */
+.panel-title {
+    text-align: center;
+    margin: 0 auto;
+}
+
+/* Center balance info and betting status */
+.balance-info,
+.betting-status {
+    text-align: center;
+}

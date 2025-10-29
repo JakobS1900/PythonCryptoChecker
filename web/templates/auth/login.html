@@ -13,7 +13,7 @@
                     <div id="authAlert" class="alert" style="display: none;" role="alert"></div>
 
                     <!-- Login Form -->
-                    <form id="login-page-form" class="needs-validation" novalidate>
+                    <form id="login-page-form" class="needs-validation" data-validate novalidate>
                         <div class="mb-3">
                             <label for="username" class="form-label">Username</label>
                             <input type="text" class="form-control" id="username" name="username" required>
@@ -23,8 +23,8 @@
                             <input type="password" class="form-control" id="password" name="password" required>
                         </div>
                         <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary">Login</button>
-                            <button type="button" class="btn btn-secondary" onclick="Auth.handleGuestLogin()">Continue as Guest</button>
+                            <button type="submit" class="btn-modern btn-modern-primary">Login</button>
+                            <button type="button" class="btn-modern btn-modern-secondary" onclick="Auth.handleGuestLogin()">Continue as Guest</button>
                         </div>
                     </form>
 

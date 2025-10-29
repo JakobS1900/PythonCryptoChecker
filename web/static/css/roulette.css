@@ -162,6 +162,9 @@
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     color: #ffffff;
     overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 /* =========================
@@ -172,15 +175,18 @@
     backdrop-filter: blur(20px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     padding: 1rem 0;
+    width: 100%;
 }
 
 .header-content {
-    max-width: 1400px;
+    max-width: 1600px;
     margin: 0 auto;
     padding: 0 2rem;
+    width: 100%;
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
+    gap: 3rem;
 }
 
 /* Brand Section */
@@ -313,9 +319,13 @@
    MAIN GAMING AREA
    ========================= */
 .gaming-main {
-    max-width: 1400px;
+    max-width: 1600px;
     margin: 0 auto;
     padding: 2rem;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 /* =========================
@@ -328,12 +338,15 @@
     padding: 1.5rem;
     margin-bottom: 2rem;
     backdrop-filter: blur(10px);
+    width: 100%;
+    max-width: 1600px;
 }
 
 .status-content {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
+    gap: 3rem;
 }
 
 /* Timer Section */
@@ -467,7 +480,8 @@
 .bot-arena-container {
     position: relative;
     margin: 1.5rem auto 2rem;
-    max-width: 1400px;
+    max-width: 1600px;
+    width: 100%;
     padding: 0 2rem;
 }
 
@@ -710,8 +724,9 @@
    ROULETTE DISPLAY SECTION
    ========================= */
 .roulette-section {
-    max-width: 1400px;
+    max-width: 1600px;
     margin: 0 auto 3rem;
+    width: 100%;
     padding: 0 2rem;
 }
 
@@ -1085,11 +1100,15 @@
    ========================= */
 .betting-interface {
     margin-bottom: 2rem;
+    max-width: 1600px;
+    width: 100%;
 }
 
 /* Add breathing room between major sections */
 .roulette-section {
     margin-bottom: 1.5rem;
+    max-width: 1600px;
+    width: 100%;
 }
 
 .timer-container {
@@ -1123,11 +1142,18 @@
 
 .panel-header {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
     margin-bottom: 1.5rem;
     padding-bottom: 1rem;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+/* If panel header has multiple children, space them out */
+.panel-header:has(> *:nth-child(2)) {
+    justify-content: space-between;
 }
 
 .panel-title {
@@ -1135,6 +1161,8 @@
     font-weight: 600;
     color: #ffffff;
     margin: 0;
+    flex: 1;
+    text-align: center;
 }
 
 /* Bet Amount Panel */
@@ -4446,4 +4474,323 @@
 
 ::-webkit-scrollbar-thumb:hover {
     background: linear-gradient(135deg, var(--gaming-primary-dark), var(--gaming-primary-darker));
+}
+/* Quick Links for Earning Panel */
+.earning-quick-links { display: flex; flex-direction: column; gap: 1rem; padding: 1rem; }
+.earning-link-card { display: flex; align-items: center; gap: 1rem; padding: 1.5rem; background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 12px; text-decoration: none; transition: all 0.3s ease; }
+.earning-link-card:hover { background: rgba(139, 92, 246, 0.2); border-color: rgba(139, 92, 246, 0.5); transform: translateY(-2px); }
+.earning-link-card .link-icon { font-size: 2rem; color: #8b5cf6; }
+.earning-link-card .link-info { flex: 1; }
+.earning-link-card .link-info h4 { margin: 0 0 0.5rem; color: #fff; font-size: 1.1rem; }
+.earning-link-card .link-info p { margin: 0; color: rgba(255,255,255,0.7); font-size: 0.9rem; }
+.earning-link-card .link-arrow { font-size: 1.5rem; color: #8b5cf6; }
+
+/* Optimized Wheel Rendering - Component-based CSS */
+.wheel-slot {
+    width: 70px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    font-weight: 600;
+    font-size: 1rem;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    flex-shrink: 0;
+}
+
+.wheel-slot.green {
+    background: linear-gradient(to bottom, #22c55e, #16a34a);
+}
+
+.wheel-slot.red {
+    background: linear-gradient(to bottom, #ef4444, #dc2626);
+}
+
+.wheel-slot.black {
+    background: linear-gradient(to bottom, #374151, #111827);
+}
+
+.slot-number {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.slot-crypto {
+    font-size: 0.7rem;
+    opacity: 0.8;
+    margin-top: 2px;
+}
+
+/* ===================================================================
+   CRITICAL FIXES - Override all misalignments
+   =================================================================== */
+
+/* Force center all status bar content */
+.game-status-bar .status-content,
+.rd-status-bar .rd-status-content {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 3rem !important;
+}
+
+/* Force center panel headers and titles */
+.bet-panel .panel-header,
+.betting-options-panel .panel-header,
+.active-bets-panel .panel-header {
+    justify-content: center !important;
+    text-align: center !important;
+}
+
+/* Single child headers should center everything */
+.panel-header:not(:has(> *:nth-child(2))) {
+    justify-content: center !important;
+    flex-direction: column !important;
+}
+
+.panel-header:not(:has(> *:nth-child(2))) .panel-title {
+    width: 100%;
+    text-align: center !important;
+}
+
+/* Balance info and betting status centered */
+.balance-info,
+.betting-status {
+    text-align: center !important;
+    width: 100%;
+}
+
+/* Fix gem icon - remove any overlays */
+.rd-balance-value .bi-gem,
+.stat-value .bi-gem {
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    -webkit-background-clip: initial !important;
+    background-clip: initial !important;
+}
+
+/* Hide the "RECENT" label from status bar */
+.rd-results-label,
+.results-label {
+    display: none !important;
+}
+
+/* Make betting panels take full width and center properly */
+.betting-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr 1fr !important;
+    gap: 2rem !important;
+    align-items: start !important;
+    justify-items: center !important;
+    width: 100% !important;
+}
+
+/* Each panel should be centered within its grid cell */
+.bet-panel,
+.betting-options-panel,
+.active-bets-panel {
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+/* ===================================================================
+   CHIP BUTTON REDESIGN - Match Place Your Bets Style
+   =================================================================== */
+
+/* Override circular chip design with rectangular button style */
+.rd-chip-btn,
+.chip-btn[data-amount] {
+    width: auto !important;
+    min-width: 80px !important;
+    height: 50px !important;
+    border-radius: 12px !important;
+    background: linear-gradient(135deg, 
+        rgba(255, 255, 255, 0.05),
+        rgba(255, 255, 255, 0.02)) !important;
+    border: 2px solid rgba(251, 191, 36, 0.3) !important;
+    padding: 0.75rem 1.5rem !important;
+    transition: all 0.2s ease !important;
+}
+
+.rd-chip-btn::before {
+    display: none !important;
+}
+
+.rd-chip-btn:hover {
+    transform: translateY(-2px) scale(1.02) !important;
+    background: linear-gradient(135deg,
+        rgba(251, 191, 36, 0.15),
+        rgba(251, 191, 36, 0.05)) !important;
+    border-color: rgba(251, 191, 36, 0.6) !important;
+    box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3),
+                0 0 20px rgba(251, 191, 36, 0.2) !important;
+}
+
+.rd-chip-btn.active,
+.chip-btn.active {
+    background: linear-gradient(135deg,
+        rgba(251, 191, 36, 0.2),
+        rgba(251, 191, 36, 0.1)) !important;
+    border-color: rgba(251, 191, 36, 0.8) !important;
+    box-shadow: 0 4px 12px rgba(251, 191, 36, 0.4),
+                0 0 25px rgba(251, 191, 36, 0.3),
+                inset 0 1px 3px rgba(251, 191, 36, 0.2) !important;
+    animation: pulse-glow 2s ease-in-out infinite !important;
+}
+
+.rd-chip-value,
+.chip-value {
+    font-size: 1rem !important;
+    font-weight: 700 !important;
+    color: #fbbf24 !important;
+    text-shadow: 0 0 8px rgba(251, 191, 36, 0.5) !important;
+    position: static !important;
+    z-index: 2 !important;
+}
+
+/* Make chip grid wrap nicely */
+.rd-chip-grid,
+.quick-amounts {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 0.75rem !important;
+    justify-content: center !important;
+}
+
+@keyframes pulse-glow {
+    0%, 100% {
+        box-shadow: 0 4px 12px rgba(251, 191, 36, 0.4),
+                    0 0 25px rgba(251, 191, 36, 0.3),
+                    inset 0 1px 3px rgba(251, 191, 36, 0.2);
+    }
+    50% {
+        box-shadow: 0 4px 16px rgba(251, 191, 36, 0.6),
+                    0 0 35px rgba(251, 191, 36, 0.5),
+                    inset 0 1px 3px rgba(251, 191, 36, 0.3);
+    }
+}
+
+/* ===================================================================
+   NUCLEAR OPTION - Force everything to center
+   =================================================================== */
+
+/* Override betting interface to force center */
+.betting-interface {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    width: 100% !important;
+}
+
+/* Betting grid - change from grid to flex for better centering */
+.betting-interface .betting-grid {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    gap: 2rem !important;
+    justify-content: center !important;
+    align-items: flex-start !important;
+    max-width: 1400px !important;
+    margin: 0 auto !important;
+}
+
+/* Each panel gets equal flex */
+.betting-grid > .bet-panel,
+.betting-grid > .betting-options-panel,
+.betting-grid > .active-bets-panel {
+    flex: 0 1 auto !important;
+    min-width: 300px !important;
+    max-width: 400px !important;
+}
+
+/* On smaller screens, stack them */
+@media (max-width: 1200px) {
+    .betting-interface .betting-grid {
+        flex-direction: column !important;
+        align-items: center !important;
+    }
+    
+    .betting-grid > .bet-panel,
+    .betting-grid > .betting-options-panel,
+    .betting-grid > .active-bets-panel {
+        width: 100% !important;
+        max-width: 600px !important;
+    }
+}
+
+/* ===================================================================
+   FIX BETTING OPEN BADGE AND BUTTON LAYOUT
+   =================================================================== */
+
+/* Center the "BETTING OPEN" badge under Place Your Bets title */
+.betting-status {
+    display: flex !important;
+    justify-content: center !important;
+    width: 100% !important;
+    margin-top: 0.5rem !important;
+}
+
+.status-indicator {
+    margin: 0 auto !important;
+}
+
+/* Fix Place Your Bets panel header to stack vertically and center everything */
+.betting-options-panel .panel-header {
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+}
+
+.betting-options-panel .panel-title {
+    width: 100% !important;
+    text-align: center !important;
+}
+
+/* Fix the betting grid layout inside Place Your Bets panel */
+.betting-grid-layout {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1.5rem !important;
+    width: 100% !important;
+}
+
+/* Fix color betting buttons - ensure they fit properly */
+.color-betting,
+.rd-color-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 1rem !important;
+    width: 100% !important;
+}
+
+/* Make color bet buttons fit within their container */
+.rd-color-bet,
+.color-bet-btn {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+}
+
+/* Fix additional bets (ODD/EVEN, 1-18/19-36) */
+.additional-bets {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1rem !important;
+    width: 100% !important;
+}
+
+.additional-bets .bet-row {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 1rem !important;
+    width: 100% !important;
+}
+
+.additional-bet-btn {
+    width: 100% !important;
+    min-width: 0 !important;
 }

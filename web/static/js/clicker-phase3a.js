@@ -243,11 +243,13 @@ class AchievementsManager {
     }
 
     showNotification(message, type = 'info') {
-        // Use existing notification system if available
-        if (window.showToast) {
+        // Use Toast notification system
+        if (window.Toast) {
+            Toast[type](message);
+        } else if (window.showToast) {
             window.showToast(message, type);
         } else {
-            alert(message);
+            console.log(`[${type.toUpperCase()}] ${message}`);
         }
     }
 

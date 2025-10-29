@@ -287,12 +287,14 @@ class AchievementsManager {
     }
 
     showNotification(type, title, message) {
-        // Use existing notification system if available
-        if (window.showAlert) {
+        // Use Toast notification system
+        if (window.Toast) {
+            const toastType = type === 'success' ? 'success' : type === 'error' ? 'error' : 'info';
+            Toast[toastType](`${title}: ${message}`);
+        } else if (window.showAlert) {
             window.showAlert(type, `${title}: ${message}`);
         } else {
             console.log(`[${type.toUpperCase()}] ${title}: ${message}`);
-            alert(`${title}\n${message}`);
         }
     }
 

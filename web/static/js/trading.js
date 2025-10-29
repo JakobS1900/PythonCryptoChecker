@@ -39,7 +39,7 @@ class TradingManagerClass {
 
     async loadBalance() {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('auth_token');
             if (!token) return;
 
             const response = await fetch('/api/auth/status', {
@@ -176,7 +176,7 @@ class TradingManagerClass {
 
     async loadMyOrders(status = null) {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('auth_token');
             if (!token) {
                 document.getElementById('my-orders-list').innerHTML = `
                     <div class="alert-modern alert-modern-warning">
@@ -394,7 +394,7 @@ class TradingManagerClass {
     async placeOrder(event) {
         event.preventDefault();
 
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('auth_token');
         if (!token) {
             window.location.href = '/login?redirect=/trading';
             return;
@@ -456,7 +456,7 @@ class TradingManagerClass {
         if (!confirm('Cancel this order?')) return;
 
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('auth_token');
             const response = await fetch(`/api/trading/cancel-order/${orderId}`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` }
@@ -512,18 +512,22 @@ class TradingManagerClass {
     }
 
     showSuccess(message) {
-        if (window.showAlert) {
+        if (window.Toast) {
+            Toast.success(message);
+        } else if (window.showAlert) {
             window.showAlert(message, 'success');
         } else {
-            alert(message);
+            console.log('[SUCCESS]', message);
         }
     }
 
     showError(message) {
-        if (window.showAlert) {
+        if (window.Toast) {
+            Toast.error(message);
+        } else if (window.showAlert) {
             window.showAlert(message, 'danger');
         } else {
-            alert(message);
+            console.error('[ERROR]', message);
         }
     }
 

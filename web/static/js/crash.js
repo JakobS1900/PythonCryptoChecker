@@ -18,7 +18,7 @@ class CrashGameManager {
         console.log('[Crash] Initializing...');
 
         // Check authentication
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('auth_token');
         if (!token) {
             window.location.href = '/login';
             return;
@@ -226,7 +226,7 @@ class CrashGameManager {
         }
 
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('auth_token');
             const response = await fetch('/api/crash/bet', {
                 method: 'POST',
                 headers: {
@@ -256,7 +256,7 @@ class CrashGameManager {
 
     async cashout() {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('auth_token');
             const response = await fetch('/api/crash/cashout', {
                 method: 'POST',
                 headers: {
@@ -285,7 +285,7 @@ class CrashGameManager {
     }
 
     async loadBalance() {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('auth_token');
 
         try {
             const response = await fetch('/api/users/me', {

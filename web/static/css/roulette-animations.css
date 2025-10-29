@@ -1,0 +1,298 @@
+/**
+ * CryptoChecker Roulette Animation Library
+ * Version: 3.1.0
+ *
+ * This file contains all animation keyframes and transition utilities:
+ * - Micro-interactions (hover, click, focus)
+ * - Entrance animations (fade, slide, scale)
+ * - Loading states (shimmer, pulse, skeleton)
+ * - Celebration effects (particles, explosions)
+ * - Transition utilities
+ *
+ * Performance Notes:
+ * - All animations use GPU-accelerated properties (transform, opacity)
+ * - Target 60fps on all devices
+ * - Respect prefers-reduced-motion
+ *
+ * Dependencies: roulette-design-system.css (timing variables)
+ */
+
+/* ===================================================================
+   RESPECT USER PREFERENCES
+   =================================================================== */
+
+/* Disable animations for users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* ===================================================================
+   ANIMATION KEYFRAMES
+   =================================================================== */
+
+/* Micro-interactions */
+@keyframes rd-lift {
+    from {
+        transform: translateY(0);
+    }
+    to {
+        transform: translateY(-4px);
+    }
+}
+
+@keyframes rd-scale-bounce {
+    0% { transform: scale(1); }
+    50% { transform: scale(0.95); }
+    100% { transform: scale(1); }
+}
+
+@keyframes rd-pulse {
+    0%, 100% {
+        opacity: 0.7;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.05);
+    }
+}
+
+@keyframes rd-shimmer {
+    0% {
+        background-position: -1000px 0;
+    }
+    100% {
+        background-position: 1000px 0;
+    }
+}
+
+/* Entrance Animations */
+@keyframes rd-fade-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes rd-fade-in-up {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes rd-fade-in-down {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes rd-slide-in-right {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes rd-slide-in-left {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes rd-scale-in {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Particle Effects */
+@keyframes rd-particle-float {
+    0% {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-500px) scale(0);
+        opacity: 0;
+    }
+}
+
+@keyframes rd-particle-explode {
+    0% {
+        transform: translate(0, 0) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(var(--tx), var(--ty)) scale(0);
+        opacity: 0;
+    }
+}
+
+/* Special Effects */
+@keyframes rd-glow-pulse {
+    0%, 100% {
+        box-shadow: 0 0 10px currentColor;
+    }
+    50% {
+        box-shadow: 0 0 30px currentColor;
+    }
+}
+
+@keyframes rd-rotate {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes rd-spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ===================================================================
+   ANIMATION UTILITY CLASSES
+   =================================================================== */
+
+/* Hover Effects */
+.rd-lift-on-hover {
+    transition: transform var(--rd-transition-base) var(--rd-ease-smooth);
+}
+
+.rd-lift-on-hover:hover {
+    animation: rd-lift var(--rd-transition-base) forwards;
+}
+
+/* Active States */
+.rd-clickable:active {
+    animation: rd-scale-bounce var(--rd-transition-fast);
+}
+
+/* Pulse */
+.rd-pulse {
+    animation: rd-pulse 2s ease-in-out infinite;
+}
+
+.rd-pulse-slow {
+    animation: rd-pulse 3s ease-in-out infinite;
+}
+
+.rd-pulse-fast {
+    animation: rd-pulse 1s ease-in-out infinite;
+}
+
+/* Shimmer Loading */
+.rd-shimmer {
+    background: linear-gradient(
+        90deg,
+        var(--rd-glass-bg) 0%,
+        rgba(255, 255, 255, 0.1) 50%,
+        var(--rd-glass-bg) 100%
+    );
+    background-size: 1000px 100%;
+    animation: rd-shimmer 2s infinite;
+}
+
+/* Entrance Animations */
+.rd-fade-in {
+    animation: rd-fade-in var(--rd-transition-slow) var(--rd-ease-smooth);
+}
+
+.rd-fade-in-up {
+    animation: rd-fade-in-up var(--rd-transition-slow) var(--rd-ease-smooth);
+}
+
+.rd-fade-in-down {
+    animation: rd-fade-in-down var(--rd-transition-slow) var(--rd-ease-smooth);
+}
+
+.rd-slide-in-right {
+    animation: rd-slide-in-right var(--rd-transition-slow) var(--rd-ease-smooth);
+}
+
+.rd-slide-in-left {
+    animation: rd-slide-in-left var(--rd-transition-slow) var(--rd-ease-smooth);
+}
+
+.rd-scale-in {
+    animation: rd-scale-in var(--rd-transition-base) var(--rd-ease-spring);
+}
+
+/* Stagger Entrance (for lists) */
+.rd-stagger-item {
+    opacity: 0;
+    animation: rd-fade-in-up var(--rd-transition-slow) var(--rd-ease-smooth) forwards;
+}
+
+.rd-stagger-item:nth-child(1) { animation-delay: 0ms; }
+.rd-stagger-item:nth-child(2) { animation-delay: 50ms; }
+.rd-stagger-item:nth-child(3) { animation-delay: 100ms; }
+.rd-stagger-item:nth-child(4) { animation-delay: 150ms; }
+.rd-stagger-item:nth-child(5) { animation-delay: 200ms; }
+.rd-stagger-item:nth-child(6) { animation-delay: 250ms; }
+.rd-stagger-item:nth-child(7) { animation-delay: 300ms; }
+.rd-stagger-item:nth-child(8) { animation-delay: 350ms; }
+.rd-stagger-item:nth-child(9) { animation-delay: 400ms; }
+.rd-stagger-item:nth-child(10) { animation-delay: 450ms; }
+
+/* Special Effects */
+.rd-glow-pulse {
+    animation: rd-glow-pulse 2s ease-in-out infinite;
+}
+
+.rd-spin {
+    animation: rd-spin 1s linear infinite;
+}
+
+.rd-spin-slow {
+    animation: rd-spin 2s linear infinite;
+}
+
+/* Particle Effects */
+.rd-particle {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: currentColor;
+    border-radius: 50%;
+    pointer-events: none;
+    animation: rd-particle-float 2s ease-out forwards;
+}

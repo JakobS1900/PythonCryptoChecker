@@ -45,7 +45,7 @@ class StakingManager {
 
     async loadBalance() {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('auth_token');
             if (!token) return;
 
             const response = await fetch('/api/auth/status', {
@@ -153,7 +153,7 @@ class StakingManager {
 
     async loadStats() {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('auth_token');
             if (!token) return;
 
             const response = await fetch('/api/staking/stats', {
@@ -175,7 +175,7 @@ class StakingManager {
 
     async loadStakes(status = null) {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('auth_token');
             if (!token) {
                 document.getElementById('active-stakes-list').innerHTML = `
                     <div class="alert-modern alert-modern-warning">
@@ -334,7 +334,7 @@ class StakingManager {
     }
 
     showStakeModal(planId) {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('auth_token');
         if (!token) {
             window.location.href = '/login?redirect=/staking';
             return;
@@ -369,7 +369,7 @@ class StakingManager {
 
     async loadBalanceForModal() {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('auth_token');
             const response = await fetch('/api/auth/status', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -410,7 +410,7 @@ class StakingManager {
         }
 
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('auth_token');
             const response = await fetch('/api/staking/stake', {
                 method: 'POST',
                 headers: {
@@ -456,7 +456,7 @@ class StakingManager {
         if (!confirm('Claim your accumulated rewards?')) return;
 
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('auth_token');
             const response = await fetch(`/api/staking/claim-rewards/${stakeId}`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` }
@@ -485,7 +485,7 @@ class StakingManager {
         if (!confirm('Unstake and return your GEM plus any remaining rewards?')) return;
 
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('auth_token');
             const response = await fetch(`/api/staking/unstake/${stakeId}`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` }
@@ -518,20 +518,22 @@ class StakingManager {
     }
 
     showSuccess(message) {
-        // Use existing alert system if available, otherwise use alert
-        if (window.showAlert) {
+        if (window.Toast) {
+            Toast.success(message);
+        } else if (window.showAlert) {
             window.showAlert(message, 'success');
         } else {
-            alert(message);
+            console.log('[SUCCESS]', message);
         }
     }
 
     showError(message) {
-        // Use existing alert system if available, otherwise use alert
-        if (window.showAlert) {
+        if (window.Toast) {
+            Toast.error(message);
+        } else if (window.showAlert) {
             window.showAlert(message, 'danger');
         } else {
-            alert(message);
+            console.error('[ERROR]', message);
         }
     }
 

@@ -3,102 +3,73 @@
 {% block title %}Crypto Roulette - CryptoChecker v3{% endblock %}
 
 {% block extra_css %}
-<link href="{{ url_for('static', path='/css/roulette.css') }}?v=4" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- Roulette Design System (v3.1) - Load Order Critical -->
+<link href="{{ url_for('static', path='/css/roulette-design-system.css') }}?v=2" rel="stylesheet">
+<link href="{{ url_for('static', path='/css/roulette-components.css') }}?v=2" rel="stylesheet">
+<link href="{{ url_for('static', path='/css/roulette-animations.css') }}?v=2" rel="stylesheet">
+<link href="{{ url_for('static', path='/css/roulette.css') }}?v=12" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
 {% endblock %}
 
 {% block content %}
 <div class="gaming-app">
-    <!-- Gaming Header -->
-    <header class="gaming-header">
-        <div class="header-content">
-            <div class="brand-section">
-                <div class="brand-icon">
+    <!-- Gaming Header - Enhanced v3.1 -->
+    <header class="rd-header gaming-header">
+        <div class="rd-header-content header-content">
+            <!-- Left: Branding -->
+            <div class="rd-header-brand brand-section">
+                <div class="rd-brand-icon brand-icon">
                     <i class="bi bi-dice-5-fill"></i>
                 </div>
-                <h1 class="brand-title">CRYPTO ROULETTE</h1>
-                <div class="live-indicator">
-                    <span class="pulse-dot"></span>
+                <h1 class="rd-brand-title brand-title">CRYPTO ROULETTE</h1>
+                <div class="rd-live-badge live-indicator">
+                    <span class="rd-pulse-dot pulse-dot"></span>
                     <span>LIVE</span>
                 </div>
             </div>
 
-            <div class="header-stats">
-                <div class="stat-card">
-                    <div class="stat-label">Balance</div>
-                    <div class="stat-value">
+            <!-- Right: Balance (Hero Element) -->
+            <div class="rd-header-balance header-stats">
+                <div class="rd-balance-card stat-card">
+                    <div class="rd-balance-label stat-label">Balance</div>
+                    <div class="rd-balance-value stat-value">
                         <i class="bi bi-gem"></i>
-                        <span id="gaming-balance">Loading...</span>
-                        <span class="currency">GEM</span>
+                        <span id="gaming-balance" class="rd-balance-amount">Loading...</span>
+                        <span class="rd-balance-currency currency">GEM</span>
                     </div>
                 </div>
-                <div class="stat-card earning-card" id="daily-bonus-card">
-                    <div class="stat-label">Daily Bonus</div>
-                    <div class="stat-value daily-bonus-status" id="daily-bonus-status">
-                        <i class="bi bi-calendar-check"></i>
-                        <span id="bonus-status-text">Available</span>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Round</div>
-                    <div class="stat-value" id="round-number">#1</div>
-                </div>
-            <div class="stat-card bots-stat-card">
-                    <div class="stat-label">Active Bots</div>
-                    <div class="stat-value">
-                        <i class="bi bi-robot"></i>
-                        <span id="bots-online-count">0</span>
-                        <span class="bots-indicator" id="bots-indicator">
-                            <span class="pulse-dot online"></span>
-                        </span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="header-controls">
-                <button class="control-btn earn-gem-btn" id="earn-gem-btn" title="Get More GEM">
-                    <i class="bi bi-plus-circle"></i>
-                    <span class="earn-text">Earn GEM</span>
-                </button>
-                <button class="control-btn sound-btn" id="sound-toggle">
-                    <i class="bi bi-volume-up"></i>
-                </button>
-                <button class="control-btn settings-btn">
-                    <i class="bi bi-gear"></i>
-                </button>
-                <button class="control-btn fullscreen-btn">
-                    <i class="bi bi-arrows-fullscreen"></i>
-                </button>
             </div>
         </div>
     </header>
 
     <!-- Main Gaming Area -->
     <main class="gaming-main">
-        <!-- Game Status Bar -->
-        <div class="game-status-bar">
-            <div class="status-content">
-                <div class="timer-section">
-                    <div class="timer-label">Next Round</div>
-                    <div class="timer-display">
-                        <div class="timer-circle">
-                            <div class="timer-progress" id="timer-progress"></div>
-                            <span class="timer-text" id="timer-text">15s</span>
-                        </div>
+        <!-- Game Status Bar - Enhanced v3.1 -->
+        <div class="rd-status-bar game-status-bar" data-phase="betting">
+            <div class="rd-status-content status-content">
+                <!-- Phase Indicator -->
+                <div class="rd-phase-indicator game-phase" id="game-phase" data-phase="betting">
+                    <div class="rd-phase-icon">
+                        <i class="bi bi-cash-coin"></i>
+                    </div>
+                    <div class="rd-phase-info">
+                        <span class="rd-phase-text phase-text">Place Your Bets</span>
+                        <div class="rd-phase-dot phase-indicator betting"></div>
                     </div>
                 </div>
 
-                <div class="game-phase" id="game-phase">
-                    <span class="phase-text">Place Your Bets</span>
-                    <div class="phase-indicator betting"></div>
-                </div>
-
-                <div class="recent-results">
-                    <div class="results-label">Recent</div>
-                    <div class="results-list" id="recent-results">
+                <!-- Recent Results -->
+                <div class="rd-recent-results recent-results">
+                    <div class="rd-results-label results-label">Recent</div>
+                    <div class="rd-results-list results-list" id="recent-results">
                         <!-- Recent results will be populated by JS -->
                     </div>
                 </div>
+            </div>
+
+            <!-- Progress Bar (Visual Timer) -->
+            <div class="rd-status-progress">
+                <div class="rd-status-progress-bar" id="phase-timer-bar" style="width: 100%;"></div>
             </div>
         </div>
 
@@ -146,44 +117,7 @@
                 <div class="wheel-container" style="height: 120px; position: relative; overflow: hidden; border-radius: 12px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3); margin: 1rem 0;">
                     <div class="wheel-pointer" style="position: absolute; left: 50%; top: 0; height: 100%; width: 3px; background: linear-gradient(to bottom, #00f5ff, #8b5cf6); z-index: 10; box-shadow: 0 0 15px rgba(0, 245, 255, 0.8); transform: translateX(-50%);"></div>
                     <div class="wheel-numbers" id="wheelNumbers" style="position: absolute; top: 0; left: 0; height: 100%; display: flex; white-space: nowrap;">
-                        <!-- Simplified Horizontal Wheel -->
-                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #22c55e, #16a34a); color: white; flex-shrink: 0;"><div>0</div><div style="font-size: 0.7rem; opacity: 0.8;">BTC</div></div>
-                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #ef4444, #dc2626); color: white; flex-shrink: 0;"><div>1</div><div style="font-size: 0.7rem; opacity: 0.8;">ETH</div></div>
-                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #374151, #111827); color: white; flex-shrink: 0;"><div>2</div><div style="font-size: 0.7rem; opacity: 0.8;">ADA</div></div>
-                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #ef4444, #dc2626); color: white; flex-shrink: 0;"><div>3</div><div style="font-size: 0.7rem; opacity: 0.8;">SOL</div></div>
-                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #374151, #111827); color: white; flex-shrink: 0;"><div>4</div><div style="font-size: 0.7rem; opacity: 0.8;">DOT</div></div>
-                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #ef4444, #dc2626); color: white; flex-shrink: 0;"><div>5</div><div style="font-size: 0.7rem; opacity: 0.8;">MATIC</div></div>
-                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #374151, #111827); color: white; flex-shrink: 0;"><div>6</div><div style="font-size: 0.7rem; opacity: 0.8;">AVAX</div></div>
-                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #ef4444, #dc2626); color: white; flex-shrink: 0;"><div>7</div><div style="font-size: 0.7rem; opacity: 0.8;">LINK</div></div>
-                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #374151, #111827); color: white; flex-shrink: 0;"><div>8</div><div style="font-size: 0.7rem; opacity: 0.8;">UNI</div></div>
-                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #ef4444, #dc2626); color: white; flex-shrink: 0;"><div>9</div><div style="font-size: 0.7rem; opacity: 0.8;">LTC</div></div>
-                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #374151, #111827); color: white; flex-shrink: 0;"><div>10</div><div style="font-size: 0.7rem; opacity: 0.8;">BCH</div></div>
-                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #ef4444, #dc2626); color: white; flex-shrink: 0;"><div>11</div><div style="font-size: 0.7rem; opacity: 0.8;">XLM</div></div>
-                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #374151, #111827); color: white; flex-shrink: 0;"><div>12</div><div style="font-size: 0.7rem; opacity: 0.8;">VET</div></div>
-                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #ef4444, #dc2626); color: white; flex-shrink: 0;"><div>13</div><div style="font-size: 0.7rem; opacity: 0.8;">FIL</div></div>
-                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #374151, #111827); color: white; flex-shrink: 0;"><div>14</div><div style="font-size: 0.7rem; opacity: 0.8;">TRX</div></div>
-                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #ef4444, #dc2626); color: white; flex-shrink: 0;"><div>15</div><div style="font-size: 0.7rem; opacity: 0.8;">ETC</div></div>
-                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #374151, #111827); color: white; flex-shrink: 0;"><div>16</div><div style="font-size: 0.7rem; opacity: 0.8;">THETA</div></div>
-                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #ef4444, #dc2626); color: white; flex-shrink: 0;"><div>17</div><div style="font-size: 0.7rem; opacity: 0.8;">XMR</div></div>
-                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #374151, #111827); color: white; flex-shrink: 0;"><div>18</div><div style="font-size: 0.7rem; opacity: 0.8;">ALGO</div></div>
-                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #ef4444, #dc2626); color: white; flex-shrink: 0;"><div>19</div><div style="font-size: 0.7rem; opacity: 0.8;">AAVE</div></div>
-                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #374151, #111827); color: white; flex-shrink: 0;"><div>20</div><div style="font-size: 0.7rem; opacity: 0.8;">ATOM</div></div>
-                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #ef4444, #dc2626); color: white; flex-shrink: 0;"><div>21</div><div style="font-size: 0.7rem; opacity: 0.8;">XTZ</div></div>
-                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #374151, #111827); color: white; flex-shrink: 0;"><div>22</div><div style="font-size: 0.7rem; opacity: 0.8;">COMP</div></div>
-                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #ef4444, #dc2626); color: white; flex-shrink: 0;"><div>23</div><div style="font-size: 0.7rem; opacity: 0.8;">SUSHI</div></div>
-                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #374151, #111827); color: white; flex-shrink: 0;"><div>24</div><div style="font-size: 0.7rem; opacity: 0.8;">GRT</div></div>
-                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #ef4444, #dc2626); color: white; flex-shrink: 0;"><div>25</div><div style="font-size: 0.7rem; opacity: 0.8;">MKR</div></div>
-                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #374151, #111827); color: white; flex-shrink: 0;"><div>26</div><div style="font-size: 0.7rem; opacity: 0.8;">SNX</div></div>
-                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #ef4444, #dc2626); color: white; flex-shrink: 0;"><div>27</div><div style="font-size: 0.7rem; opacity: 0.8;">YFI</div></div>
-                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #374151, #111827); color: white; flex-shrink: 0;"><div>28</div><div style="font-size: 0.7rem; opacity: 0.8;">UMA</div></div>
-                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #ef4444, #dc2626); color: white; flex-shrink: 0;"><div>29</div><div style="font-size: 0.7rem; opacity: 0.8;">BAL</div></div>
-                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #374151, #111827); color: white; flex-shrink: 0;"><div>30</div><div style="font-size: 0.7rem; opacity: 0.8;">CRV</div></div>
-                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #ef4444, #dc2626); color: white; flex-shrink: 0;"><div>31</div><div style="font-size: 0.7rem; opacity: 0.8;">1INCH</div></div>
-                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #374151, #111827); color: white; flex-shrink: 0;"><div>32</div><div style="font-size: 0.7rem; opacity: 0.8;">BAND</div></div>
-                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #ef4444, #dc2626); color: white; flex-shrink: 0;"><div>33</div><div style="font-size: 0.7rem; opacity: 0.8;">KNC</div></div>
-                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #374151, #111827); color: white; flex-shrink: 0;"><div>34</div><div style="font-size: 0.7rem; opacity: 0.8;">REN</div></div>
-                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: 1px solid rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, #ef4444, #dc2626); color: white; flex-shrink: 0;"><div>35</div><div style="font-size: 0.7rem; opacity: 0.8;">LRC</div></div>
-                        <div style="width: 70px; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; font-weight: 600; font-size: 1rem; border-right: none; background: linear-gradient(to bottom, #374151, #111827); color: white; flex-shrink: 0;"><div>36</div><div style="font-size: 0.7rem; opacity: 0.8;">ZRX</div></div>
+                        <!-- Wheel will be rendered by JavaScript - see roulette.js -->
                     </div>
                 </div>
             </div>
@@ -202,26 +136,26 @@
                     </div>
 
                     <div class="amount-selector">
-                        <div class="quick-amounts">
-                            <button class="chip-btn enhanced-hover smooth-transition pulse-ripple" data-amount="10">
-                                <span class="chip-value">10</span>
-                                <div class="chip-glow"></div>
+                        <div class="rd-chip-grid quick-amounts">
+                            <button class="rd-chip-btn chip-btn enhanced-hover smooth-transition pulse-ripple" data-amount="10">
+                                <span class="rd-chip-value chip-value">10</span>
+                                <div class="rd-chip-glow chip-glow"></div>
                             </button>
-                            <button class="chip-btn enhanced-hover smooth-transition pulse-ripple" data-amount="50">
-                                <span class="chip-value">50</span>
-                                <div class="chip-glow"></div>
+                            <button class="rd-chip-btn chip-btn enhanced-hover smooth-transition pulse-ripple" data-amount="50">
+                                <span class="rd-chip-value chip-value">50</span>
+                                <div class="rd-chip-glow chip-glow"></div>
                             </button>
-                            <button class="chip-btn enhanced-hover smooth-transition pulse-ripple active" data-amount="100">
-                                <span class="chip-value">100</span>
-                                <div class="chip-glow"></div>
+                            <button class="rd-chip-btn chip-btn enhanced-hover smooth-transition pulse-ripple active" data-amount="100">
+                                <span class="rd-chip-value chip-value">100</span>
+                                <div class="rd-chip-glow chip-glow"></div>
                             </button>
-                            <button class="chip-btn enhanced-hover smooth-transition pulse-ripple" data-amount="500">
-                                <span class="chip-value">500</span>
-                                <div class="chip-glow"></div>
+                            <button class="rd-chip-btn chip-btn enhanced-hover smooth-transition pulse-ripple" data-amount="500">
+                                <span class="rd-chip-value chip-value">500</span>
+                                <div class="rd-chip-glow chip-glow"></div>
                             </button>
-                            <button class="chip-btn enhanced-hover smooth-transition pulse-ripple" data-amount="1000">
-                                <span class="chip-value">1K</span>
-                                <div class="chip-glow"></div>
+                            <button class="rd-chip-btn chip-btn enhanced-hover smooth-transition pulse-ripple" data-amount="1000">
+                                <span class="rd-chip-value chip-value">1K</span>
+                                <div class="rd-chip-glow chip-glow"></div>
                             </button>
                         </div>
 
@@ -250,32 +184,32 @@
 
                     <div class="betting-grid-layout">
                         <!-- Color Betting Section -->
-                        <div class="color-betting">
-                            <button class="color-bet-btn red-bet bet-btn enhanced-hover" data-type="color" data-value="red">
-                                <div class="bet-color red"></div>
-                                <div class="bet-info">
-                                    <span class="bet-label">RED</span>
-                                    <span class="bet-payout">2:1</span>
+                        <div class="rd-color-grid color-betting">
+                            <button class="rd-color-bet rd-color-bet--red color-bet-btn red-bet bet-btn enhanced-hover" data-type="color" data-value="red">
+                                <div class="rd-color-indicator bet-color red"></div>
+                                <div class="rd-bet-content bet-info">
+                                    <span class="rd-bet-label bet-label">RED</span>
+                                    <span class="rd-bet-payout bet-payout">2:1</span>
                                 </div>
-                                <div class="bet-amount-display" id="red-bet-amount">0</div>
+                                <div class="rd-bet-amount bet-amount-display" id="red-bet-amount">0</div>
                             </button>
 
-                            <button class="color-bet-btn green-bet bet-btn enhanced-hover" data-type="color" data-value="green">
-                                <div class="bet-color green"></div>
-                                <div class="bet-info">
-                                    <span class="bet-label">GREEN</span>
-                                    <span class="bet-payout">14:1</span>
+                            <button class="rd-color-bet rd-color-bet--green color-bet-btn green-bet bet-btn enhanced-hover" data-type="color" data-value="green">
+                                <div class="rd-color-indicator bet-color green"></div>
+                                <div class="rd-bet-content bet-info">
+                                    <span class="rd-bet-label bet-label">GREEN</span>
+                                    <span class="rd-bet-payout bet-payout">14:1</span>
                                 </div>
-                                <div class="bet-amount-display" id="green-bet-amount">0</div>
+                                <div class="rd-bet-amount bet-amount-display" id="green-bet-amount">0</div>
                             </button>
 
-                            <button class="color-bet-btn black-bet bet-btn enhanced-hover" data-type="color" data-value="black">
-                                <div class="bet-color black"></div>
-                                <div class="bet-info">
-                                    <span class="bet-label">BLACK</span>
-                                    <span class="bet-payout">2:1</span>
+                            <button class="rd-color-bet rd-color-bet--black color-bet-btn black-bet bet-btn enhanced-hover" data-type="color" data-value="black">
+                                <div class="rd-color-indicator bet-color black"></div>
+                                <div class="rd-bet-content bet-info">
+                                    <span class="rd-bet-label bet-label">BLACK</span>
+                                    <span class="rd-bet-payout bet-payout">2:1</span>
                                 </div>
-                                <div class="bet-amount-display" id="black-bet-amount">0</div>
+                                <div class="rd-bet-amount bet-amount-display" id="black-bet-amount">0</div>
                             </button>
                         </div>
 
@@ -367,56 +301,38 @@
                 </button>
             </div>
 
-            <div class="earning-tabs">
-                <button class="earning-tab active" data-tab="daily-bonus">Daily Bonus</button>
-                <button class="earning-tab" data-tab="achievements">Achievements</button>
-                <button class="earning-tab" data-tab="emergency-tasks">Emergency GEM</button>
-            </div>
-
             <div class="earning-content">
-                <!-- Daily Bonus Tab -->
-                <div class="earning-tab-content active" id="daily-bonus-content">
-                    <div class="daily-bonus-section">
-                        <div class="bonus-card">
-                            <div class="bonus-icon">
-                                <i class="bi bi-calendar-check"></i>
-                            </div>
-                            <div class="bonus-info">
-                                <h4>Daily Bonus Reward</h4>
-                                <p class="bonus-description">Claim your daily GEM bonus! Build a streak for bigger rewards.</p>
-                                <div class="bonus-details" id="bonus-details">
-                                    <div class="bonus-amount">Base: 100 GEM + Streak Bonus</div>
-                                    <div class="bonus-streak" id="bonus-streak">Current Streak: Loading...</div>
-                                </div>
-                            </div>
-                            <button class="claim-bonus-btn" id="claim-daily-bonus-btn">
-                                <i class="bi bi-gift"></i>
-                                <span>Claim Bonus</span>
-                            </button>
+                <!-- Quick Links Section -->
+                <div class="earning-quick-links">
+                    <a href="/challenges" class="earning-link-card">
+                        <div class="link-icon">
+                            <i class="bi bi-calendar-check"></i>
                         </div>
-                    </div>
-                </div>
+                        <div class="link-info">
+                            <h4>Daily Challenges</h4>
+                            <p>Complete daily quests and maintain your login streak for bonus GEM!</p>
+                        </div>
+                        <div class="link-arrow">
+                            <i class="bi bi-arrow-right"></i>
+                        </div>
+                    </a>
 
-                <!-- Achievements Tab -->
-                <div class="earning-tab-content" id="achievements-content">
-                    <div class="achievements-section">
-                        <div class="achievements-header">
-                            <h4><i class="bi bi-trophy"></i> Your Achievements</h4>
-                            <div class="unclaimed-rewards" id="unclaimed-rewards">
-                                <span>Unclaimed: 0 GEM</span>
-                            </div>
+                    <a href="/achievements" class="earning-link-card">
+                        <div class="link-icon">
+                            <i class="bi bi-trophy"></i>
                         </div>
-                        <div class="achievements-list" id="achievements-list">
-                            <div class="achievements-loading">
-                                <i class="bi bi-arrow-clockwise spin"></i>
-                                <span>Loading achievements...</span>
-                            </div>
+                        <div class="link-info">
+                            <h4>Achievements</h4>
+                            <p>Unlock achievements and claim GEM rewards for your accomplishments!</p>
                         </div>
-                    </div>
+                        <div class="link-arrow">
+                            <i class="bi bi-arrow-right"></i>
+                        </div>
+                    </a>
                 </div>
 
                 <!-- Emergency Tasks Tab -->
-                <div class="earning-tab-content" id="emergency-tasks-content">
+                <div class="earning-tab-content active" id="emergency-tasks-content">
                     <div class="emergency-section">
                         <div class="emergency-header">
                             <h4><i class="bi bi-exclamation-triangle"></i> Emergency GEM Tasks</h4>
