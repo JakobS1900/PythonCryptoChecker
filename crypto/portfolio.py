@@ -588,12 +588,12 @@ class PortfolioManager:
         """Validate if user can place a bet of given amount."""
         try:
             # Check minimum bet
-            if amount < 10:
-                return False, "Minimum bet amount is 10 GEM"
+            if amount < 1000:
+                return False, "Minimum bet amount is 1,000 GEM"
 
             # Check maximum bet
-            if amount > 10000:
-                return False, "Maximum bet amount is 10,000 GEM"
+            if amount > 5000000:
+                return False, "Maximum bet amount is 5,000,000 GEM"
 
             # Check user balance
             balance = await self.get_user_balance(user_id)

@@ -522,10 +522,10 @@ async def validate_bet_amount(
         if not current_user:
             # Guest mode validation
             guest_gems = 5000  # Guest mode balance
-            if amount < 10:
-                return {"valid": False, "message": "Minimum bet amount is 10 GEM"}
-            elif amount > 10000:
-                return {"valid": False, "message": "Maximum bet amount is 10,000 GEM"}
+            if amount < 1000:
+                return {"valid": False, "message": "Minimum bet amount is 1,000 GEM"}
+            elif amount > 5000000:
+                return {"valid": False, "message": "Maximum bet amount is 5,000,000 GEM"}
             elif amount > guest_gems:
                 return {"valid": False, "message": f"Insufficient guest balance: {guest_gems} GEM"}
             else:
@@ -1113,12 +1113,16 @@ async def initialize_default_achievements(
 # ==================== SERVER-MANAGED ROUND ENDPOINTS ====================
 
 @router.get("/roulette/round/current")
-async def get_current_round(current_user: User = Depends(get_current_user)):
-    """Get current round state"""
+async def get_current_round(current_user: Optional[User] = Depends(get_current_user)):
+    """Get current round state - with lazy first round creation"""
     current = round_manager.get_current_round()
     if not current:
-        # No round active, this shouldn't happen but handle gracefully
-        return {"success": False, "error": "No active round"}
+        # Lazy round creation: Start first round when first player connects
+        user_id = current_user.id if current_user else "guest"
+        username = current_user.username if current_user else "guest"
+        print(f"[API] First player detected ({username}), starting first round")
+        current = await round_manager.start_new_round(triggered_by=user_id)
+        print(f"[API] First round created: #{current.round_number}")
 
     return {"success": True, "round": current}
 
@@ -1146,6 +1150,13 @@ async def round_event_stream(current_user: Optional[User] = Depends(get_current_
     """Server-Sent Events stream for round updates"""
     # Generate a unique ID for guest users
     user_id = current_user.id if current_user else f"guest-{id(current_user)}"
+
+    # Lazy round creation: Start first round if none exists
+    if not round_manager.get_current_round():
+        username = current_user.username if current_user else "guest"
+        print(f"[SSE] First player connected ({username}), starting first round")
+        await round_manager.start_new_round(triggered_by=user_id)
+
     queue = await round_manager.subscribe_sse(user_id)
 
     async def event_generator():
