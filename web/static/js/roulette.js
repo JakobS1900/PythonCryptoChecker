@@ -15,7 +15,7 @@
         // Core game state - streamlined
         this.gameId = null;
         this.balance = 0;
-        this.currentAmount = 100;
+        this.currentAmount = 10000;
         this.currentBets = [];
         this.isProcessing = false;
         this.isSpinning = false;
@@ -992,8 +992,8 @@
             availableBalance: $('#available-balance'),
             gamingBalance: $('#gaming-balance'),
             roundIndicator: $('#round-number'),
-            timerText: document.getElementById('timer-text'),
-            timerBar: document.getElementById('timer-progress'),
+            timerText: document.getElementById('auto-spin-timer-text'),
+            timerBar: document.getElementById('auto-spin-timer-progress'),
             autoSpinTimerText: document.getElementById('auto-spin-timer-text'),
             autoSpinTimerBar: document.getElementById('auto-spin-timer-progress'),
             previousRolls: document.getElementById('previous-rolls'),
@@ -1011,7 +1011,7 @@
         if (!this.elements.timerBar) {
             console.warn('⚠️ Timer bar not found initially, retrying in 1 second...');
             setTimeout(() => {
-                this.elements.timerBar = document.getElementById('timer-progress');
+                this.elements.timerBar = document.getElementById('auto-spin-timer-progress');
                 console.log('🔄 Retry result:', !!this.elements.timerBar);
             }, 1000);
         }
@@ -1172,7 +1172,32 @@
             this.setBalance(window.App.user.wallet_balance, { source: 'app' });
             return;
         }
+        // Fallback to guest mode, but retry after auth loads
         this.setBalance(5000, { source: 'guest-default' });
+
+        // CRITICAL FIX: Retry balance sync after auth has time to load
+        // Auth.js may still be fetching user data when roulette initializes
+        const retryBalanceSync = (attempt = 1) => {
+            if (this.balance === 5000) { // Still in guest mode
+                console.log(`[Roulette] Retrying balance sync (attempt ${attempt})...`);
+                if (window.Auth && window.Auth.currentUser && typeof window.Auth.currentUser.wallet_balance === 'number') {
+                    console.log(`[Roulette] ✅ Found auth balance: ${window.Auth.currentUser.wallet_balance} GEM`);
+                    this.setBalance(window.Auth.currentUser.wallet_balance, { source: 'auth-retry' });
+                } else if (window.App && window.App.user && typeof window.App.user.wallet_balance === 'number') {
+                    console.log(`[Roulette] ✅ Found app balance: ${window.App.user.wallet_balance} GEM`);
+                    this.setBalance(window.App.user.wallet_balance, { source: 'app-retry' });
+                } else {
+                    console.log('[Roulette] ⚠️ Still no auth data available');
+                    if (attempt < 3) {
+                        // Retry up to 3 times
+                        setTimeout(() => retryBalanceSync(attempt + 1), 1000);
+                    } else {
+                        console.log('[Roulette] ❌ Giving up - continuing in guest mode');
+                    }
+                }
+            }
+        };
+        setTimeout(() => retryBalanceSync(1), 1500); // First retry after 1.5s
     }
 
     // ===== TRANSACTION LOCKING SYSTEM =====

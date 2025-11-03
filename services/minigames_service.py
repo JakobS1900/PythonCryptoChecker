@@ -13,8 +13,9 @@ from sqlalchemy import select, update, func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.models import (
-    User, MiniGame, MiniGameStats, Transaction, TransactionType
+    User, MiniGame, MiniGameStats, Transaction, TransactionType, Wallet
 )
+from crypto.portfolio import portfolio_manager
 
 
 class MiniGamesService:
@@ -75,22 +76,32 @@ class MiniGamesService:
         if choice not in ['heads', 'tails']:
             raise ValueError("Choice must be 'heads' or 'tails'")
 
-        # Get user and check balance
-        result = await db.execute(select(User).where(User.id == user_id))
-        user = result.scalar_one_or_none()
-        if not user:
-            raise ValueError("User not found")
-        if user.gem_balance < bet_amount:
+        # Get user wallet and check balance
+        result = await db.execute(select(Wallet).where(Wallet.user_id == user_id))
+        wallet = result.scalar_one_or_none()
+        if not wallet:
+            raise ValueError("User wallet not found")
+        
+        # Initialize balance if None
+        if wallet.gem_balance is None:
+            wallet.gem_balance = 0.0
+            
+        if wallet.gem_balance < bet_amount:
             raise ValueError("Insufficient GEM balance")
 
+        # Capture balance before bet
+        balance_before = wallet.gem_balance
+
         # Deduct bet amount
-        user.gem_balance -= bet_amount
+        wallet.gem_balance -= bet_amount
 
         # Create transaction for bet
         bet_transaction = Transaction(
             user_id=user_id,
-            transaction_type=TransactionType.MINIGAME_BET,
+            transaction_type=TransactionType.MINIGAME_BET.value,
             amount=-bet_amount,
+            balance_before=balance_before,
+            balance_after=wallet.gem_balance,
             description=f"Coin Flip bet: {choice}"
         )
         db.add(bet_transaction)
@@ -105,13 +116,18 @@ class MiniGamesService:
         if won:
             payout = int(bet_amount * MiniGamesService.COINFLIP_MULTIPLIER)
             profit = payout - bet_amount
-            user.gem_balance += payout
+
+            # Capture balance before win payout
+            balance_before_win = wallet.gem_balance
+            wallet.gem_balance += payout
 
             # Create transaction for win
             win_transaction = Transaction(
                 user_id=user_id,
-                transaction_type=TransactionType.MINIGAME_WIN,
+                transaction_type=TransactionType.MINIGAME_WIN.value,
                 amount=payout,
+                balance_before=balance_before_win,
+                balance_after=wallet.gem_balance,
                 description=f"Coin Flip win: {result_flip}"
             )
             db.add(win_transaction)
@@ -146,7 +162,7 @@ class MiniGamesService:
             'bet_amount': bet_amount,
             'payout': payout,
             'profit': profit,
-            'new_balance': user.gem_balance
+            'new_balance': wallet.gem_balance
         }
 
     @staticmethod
@@ -167,7 +183,6 @@ class MiniGamesService:
             bet_value: Value for exact bets
             db: Database session
 
-        Returns:
             Dict with game result
         """
         # Validate bet amount
@@ -186,22 +201,32 @@ class MiniGamesService:
             if bet_value is None or bet_value < 1 or bet_value > 6:
                 raise ValueError("Exact bet requires value between 1 and 6")
 
-        # Get user and check balance
-        result = await db.execute(select(User).where(User.id == user_id))
-        user = result.scalar_one_or_none()
-        if not user:
-            raise ValueError("User not found")
-        if user.gem_balance < bet_amount:
+        # Get user wallet and check balance
+        result = await db.execute(select(Wallet).where(Wallet.user_id == user_id))
+        wallet = result.scalar_one_or_none()
+        if not wallet:
+            raise ValueError("User wallet not found")
+        
+        # Initialize balance if None
+        if wallet.gem_balance is None:
+            wallet.gem_balance = 0.0
+            
+        if wallet.gem_balance < bet_amount:
             raise ValueError("Insufficient GEM balance")
 
+        # Capture balance before bet
+        balance_before = wallet.gem_balance
+
         # Deduct bet amount
-        user.gem_balance -= bet_amount
+        wallet.gem_balance -= bet_amount
 
         # Create transaction for bet
         bet_transaction = Transaction(
             user_id=user_id,
-            transaction_type=TransactionType.MINIGAME_BET,
+            transaction_type=TransactionType.MINIGAME_BET.value,
             amount=-bet_amount,
+            balance_before=balance_before,
+            balance_after=wallet.gem_balance,
             description=f"Dice Roll bet: {bet_type}" + (f" {bet_value}" if bet_type == 'exact' else "")
         )
         db.add(bet_transaction)
@@ -235,13 +260,17 @@ class MiniGamesService:
             multiplier = MiniGamesService.DICE_MULTIPLIERS[multiplier_key]
             payout = int(bet_amount * multiplier)
             profit = payout - bet_amount
-            user.gem_balance += payout
+            # Capture balance before win payout
+            balance_before_win = wallet.gem_balance
+            wallet.gem_balance += payout
 
             # Create transaction for win
             win_transaction = Transaction(
                 user_id=user_id,
-                transaction_type=TransactionType.MINIGAME_WIN,
+                transaction_type=TransactionType.MINIGAME_WIN.value,
                 amount=payout,
+                balance_before=balance_before_win,
+                balance_after=wallet.gem_balance,
                 description=f"Dice Roll win: rolled {roll}"
             )
             db.add(win_transaction)
@@ -279,9 +308,8 @@ class MiniGamesService:
             'bet_amount': bet_amount,
             'payout': payout,
             'profit': profit,
-            'new_balance': user.gem_balance
+            'new_balance': wallet.gem_balance
         }
-
     @staticmethod
     async def play_higherlower(
         user_id: str,
@@ -312,22 +340,32 @@ class MiniGamesService:
         if guess not in ['higher', 'lower', 'same']:
             raise ValueError("Guess must be 'higher', 'lower', or 'same'")
 
-        # Get user and check balance
-        result = await db.execute(select(User).where(User.id == user_id))
-        user = result.scalar_one_or_none()
-        if not user:
-            raise ValueError("User not found")
-        if user.gem_balance < bet_amount:
+        # Get user wallet and check balance
+        result = await db.execute(select(Wallet).where(Wallet.user_id == user_id))
+        wallet = result.scalar_one_or_none()
+        if not wallet:
+            raise ValueError("User wallet not found")
+        
+        # Initialize balance if None
+        if wallet.gem_balance is None:
+            wallet.gem_balance = 0.0
+            
+        if wallet.gem_balance < bet_amount:
             raise ValueError("Insufficient GEM balance")
 
+        # Capture balance before bet
+        balance_before = wallet.gem_balance
+
         # Deduct bet amount
-        user.gem_balance -= bet_amount
+        wallet.gem_balance -= bet_amount
 
         # Create transaction for bet
         bet_transaction = Transaction(
             user_id=user_id,
-            transaction_type=TransactionType.MINIGAME_BET,
+            transaction_type=TransactionType.MINIGAME_BET.value,
             amount=-bet_amount,
+            balance_before=balance_before,
+            balance_after=wallet.gem_balance,
             description=f"Higher/Lower bet: {guess}"
         )
         db.add(bet_transaction)
@@ -353,15 +391,20 @@ class MiniGamesService:
             multiplier = MiniGamesService.HIGHERLOWER_SAME_MULTIPLIER if guess == 'same' else MiniGamesService.HIGHERLOWER_MULTIPLIER
             payout = int(bet_amount * multiplier)
             profit = payout - bet_amount
-            user.gem_balance += payout
+            # Capture balance before win payout
+            balance_before_win = wallet.gem_balance
+            wallet.gem_balance += payout
 
             # Create transaction for win
             win_transaction = Transaction(
                 user_id=user_id,
-                transaction_type=TransactionType.MINIGAME_WIN,
+                transaction_type=TransactionType.MINIGAME_WIN.value,
                 amount=payout,
+                balance_before=balance_before_win,
+                balance_after=wallet.gem_balance,
                 description=f"Higher/Lower win: {card1} -> {card2}"
             )
+            db.add(win_transaction)
             db.add(win_transaction)
 
         # Create game record
@@ -397,7 +440,7 @@ class MiniGamesService:
             'bet_amount': bet_amount,
             'payout': payout,
             'profit': profit,
-            'new_balance': user.gem_balance
+            'new_balance': wallet.gem_balance
         }
 
     @staticmethod

@@ -184,11 +184,7 @@ app.include_router(
     prefix="/api/staking",
     tags=["Staking"]
 )
-app.include_router(
-    trading_router,
-    prefix="/api/trading",
-    tags=["Trading"]
-)
+# trading_router already registered above (line 155-157) - removed duplicate
 app.include_router(
     minigames_router,
     prefix="/api/minigames",

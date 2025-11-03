@@ -51,15 +51,18 @@ class RoundManager:
         self._timer_task: Optional[asyncio.Task] = None
 
     async def initialize(self):
-        """Initialize round manager - start first round and background timer"""
+        """Initialize round manager - prepare for lazy round creation"""
         print("[Round Manager] Initializing...")
-        await self.start_new_round()
+        print("[Round Manager] Lazy initialization - first round will start on first player connection")
+
+        # DON'T start first round immediately - wait for first player
+        # This prevents timing issues where server is in SPINNING phase before anyone connects
 
         # Start background timer task for automatic round advancement
         # Use get_running_loop() to ensure proper event loop attachment
         loop = asyncio.get_running_loop()
         self._timer_task = loop.create_task(self.auto_advance_timer())
-        print("[Round Manager] Initialized - first round started, auto-advance timer enabled")
+        print("[Round Manager] Initialized - auto-advance timer enabled, waiting for first player")
         print(f"[Round Manager] Timer task created: {self._timer_task}")
         print(f"[Round Manager] Event loop: {loop}")
 
