@@ -23,15 +23,19 @@ crypto_tracker_v3.db
 *secret*
 *password*
 
-# 🔐 CLAUDE CODE SETTINGS (NEVER COMMIT - Contains API keys)
+# 🔐 SENSITIVE DIRECTORIES
 .claude/
-.claude/**
-.claude/settings.local.json
-**/.claude/settings.local.json
+.claude-flow/
+.specify/
+.specifymemory/
+.specifyscripts/
+.specifyspecs/
+.specifytemplates/
 
 # 📁 VIRTUAL ENVIRONMENTS (NEVER COMMIT)
 .venv/
 venv/
+env/
 
 # 📝 LOGS & DEBUG FILES
 *.log
@@ -39,109 +43,37 @@ Error.txt
 debug_sessions.log
 construction_projects.log
 context_knowledge.log
-.claude/
-.claude-flow/
 
-# 🧪 TEST FILES (Ignore temporary test scripts)
-test_*.py
-*_test.py
-*_test_*.py
+# 🧪 TEST FILES & ARTIFACTS
 test_screenshots/
-fix_*.py
-add_test_*.py
-comprehensive_test.py
-simple_test.py
-phase*_validation_test.py
-api_smoke_tests.py
-
-# 💻 IDE & DEVELOPMENT
-.vscode/
-
-# 🐍 PYTHON CACHE
+test_videos/
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 *.py[cod]
 
-# 🎮 DEVELOPMENT ARTIFACTS (Keep file structure working)
-# docs/_build/
-# .coverage
-# .pytest_cache/
-# .tox/
-# backup/
-# test_api.sh  # ← Comment out if needed for setup
-# nul
+# 💻 IDE & DEVELOPMENT
+.vscode/
+.idea/
 
 # 💾 OS SPECIFIC
 .DS_Store
 Thumbs.db
 desktop.ini
+nul
 
 # 📦 BUILD ARTIFACTS
 dist/
 build/
 *.egg-info/
 
-# 🔧 DEVELOPMENT ONLY (No need to track)
+# 🔧 DEVELOPMENT ONLY
 fresh_env/
 specs/
 memory/
 Ignoreme/
 *_debug.txt
 *_scratch.txt
-*_draft.txt
 ClaudeTemp_*
-.prohibited_words.txt  # ← Keep if needed for setup
 
-# 📚 SESSION DOCUMENTATION (Temporary session reports - keep in docs/session-reports/)
-CLICKER_*.md
-PHASE*.md
-SESSION_SUMMARY*.md
-ROUND_*.md
-ROULETTE_*.md
-GEM_MARKETPLACE_*.md
-STOCK_TRADING_*.md
-TOKEN_*.md
-GITHUB_COMMENT*.md
-MANUAL_*.md
-POLISH_*.md
-*_COMPLETE.md
-*_PROGRESS.md
-*_FIXED.md
-*_ANALYSIS.md
-*_SUMMARY.md
-*_HANDLING*.md
-
-# 🚧 CONSTRUCTION DOCUMENTATION (Comment out if needed)
-## .allowed_markdown.txt
-## *[INSERT_DATE]*.md
-## INSTRUCTIONSFORGPT5.md
-.prohibited_words.txt
-/.specify
-nul
-BUGFIX_SUMMARY.md
-CHANGELOG.md
-check_schema.py
-database/migrations/002_add_roulette_rounds.sql
-database/migrations/run_migration_002.py
-Error.txt
-FINAL_PHASE6_SUCCESS_REPORT.md
-fix_game_bets_schema.py
-GITHUB_COMMENT*.md
-INSTALL_POSTGRESQL.md
-phase6_validation_test.py
-POSTGRESQL_UPGRADE.md
-scripts/migrate_to_postgresql.py
-TESTING_GUIDE.md
-install_postgresql_windows.ps1
-
-# ALL SESSION SUMMARY FILES
-*_SUMMARY.md
-TOKEN_EXPIRATION_HANDLING_SUMMARY.md
-ROULETTE_ERROR_HANDLING_SUMMARY.md
-PHASE4_ACCESSIBILITY_POLISH_SUMMARY.md
-POLISH_CONTINUATION_SUMMARY.md
-MANUAL_TESTING_GUIDE.md
-SESSION_SUMMARY_2025-10-27_FINAL.md
-GITHUB_COMMENT_TOKEN_EXPIRATION.md

@@ -1,0 +1,402 @@
+/* ============================================
+   PREMIUM RESULTS DISPLAY ANIMATIONS
+   Crypto Roulette - CryptoChecker V3
+   ============================================ */
+
+/* Results Overlay Container */
+.rd-results-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(10px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.rd-results-overlay.rd-active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Winning Number Display */
+.rd-winning-number-display {
+    text-align: center;
+    transform: scale(0.5);
+    opacity: 0;
+    transition: all 0.5s ease;
+}
+
+.rd-results-overlay.rd-active .rd-winning-number-display {
+    transform: scale(1);
+    opacity: 1;
+    animation: rd-result-entrance 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes rd-result-entrance {
+    0% {
+        transform: scale(0.3) rotate(-10deg);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.1) rotate(5deg);
+    }
+    100% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+    }
+}
+
+/* Winning Number Label */
+.rd-winning-label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: #9ca3af;
+    margin-bottom: 1.5rem;
+    opacity: 0;
+    animation: rd-label-fade-in 0.5s ease-out 0.3s forwards;
+}
+
+@keyframes rd-label-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Premium Number Badge */
+.rd-premium-number-badge {
+    width: 220px;
+    height: 220px;
+    margin: 0 auto 2rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 96px;
+    font-weight: 900;
+    position: relative;
+    box-shadow:
+        0 0 60px rgba(0, 0, 0, 0.6),
+        0 0 100px rgba(0, 0, 0, 0.4);
+}
+
+/* Red Number Styling */
+.rd-premium-number-badge.rd-red {
+    background: radial-gradient(circle at 30% 30%,
+        rgba(239, 68, 68, 1),
+        rgba(220, 38, 38, 0.9));
+    color: #ffffff;
+    text-shadow:
+        0 4px 12px rgba(0, 0, 0, 0.8),
+        0 0 30px rgba(239, 68, 68, 0.8);
+    border: 4px solid rgba(239, 68, 68, 0.4);
+    animation: rd-red-glow 2s ease-in-out infinite;
+}
+
+@keyframes rd-red-glow {
+    0%, 100% {
+        box-shadow:
+            0 0 60px rgba(239, 68, 68, 0.6),
+            0 0 100px rgba(239, 68, 68, 0.4),
+            inset 0 0 40px rgba(0, 0, 0, 0.3);
+    }
+    50% {
+        box-shadow:
+            0 0 80px rgba(239, 68, 68, 0.8),
+            0 0 120px rgba(239, 68, 68, 0.6),
+            inset 0 0 40px rgba(0, 0, 0, 0.3);
+    }
+}
+
+/* Black Number Styling */
+.rd-premium-number-badge.rd-black {
+    background: radial-gradient(circle at 30% 30%,
+        rgba(50, 50, 50, 1),
+        rgba(20, 20, 20, 0.95));
+    color: #ffffff;
+    text-shadow:
+        0 4px 12px rgba(0, 0, 0, 0.9),
+        0 0 30px rgba(255, 255, 255, 0.3);
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    animation: rd-black-glow 2s ease-in-out infinite;
+}
+
+@keyframes rd-black-glow {
+    0%, 100% {
+        box-shadow:
+            0 0 60px rgba(255, 255, 255, 0.3),
+            0 0 100px rgba(100, 100, 100, 0.4),
+            inset 0 0 40px rgba(0, 0, 0, 0.8);
+    }
+    50% {
+        box-shadow:
+            0 0 80px rgba(255, 255, 255, 0.5),
+            0 0 120px rgba(100, 100, 100, 0.6),
+            inset 0 0 40px rgba(0, 0, 0, 0.8);
+    }
+}
+
+/* Green (0) Number Styling */
+.rd-premium-number-badge.rd-green {
+    background: radial-gradient(circle at 30% 30%,
+        rgba(34, 197, 94, 1),
+        rgba(22, 163, 74, 0.9));
+    color: #ffffff;
+    text-shadow:
+        0 4px 12px rgba(0, 0, 0, 0.8),
+        0 0 30px rgba(34, 197, 94, 0.8);
+    border: 4px solid rgba(34, 197, 94, 0.4);
+    animation: rd-green-glow 2s ease-in-out infinite;
+}
+
+@keyframes rd-green-glow {
+    0%, 100% {
+        box-shadow:
+            0 0 60px rgba(34, 197, 94, 0.6),
+            0 0 100px rgba(34, 197, 94, 0.4),
+            0 0 140px rgba(251, 191, 36, 0.3),
+            inset 0 0 40px rgba(0, 0, 0, 0.3);
+    }
+    50% {
+        box-shadow:
+            0 0 80px rgba(34, 197, 94, 0.8),
+            0 0 120px rgba(34, 197, 94, 0.6),
+            0 0 160px rgba(251, 191, 36, 0.5),
+            inset 0 0 40px rgba(0, 0, 0, 0.3);
+    }
+}
+
+/* Sparkle Effects Around Number */
+.rd-premium-number-badge::before {
+    content: '';
+    position: absolute;
+    inset: -10px;
+    border-radius: 50%;
+    background: conic-gradient(
+        transparent 0deg,
+        rgba(251, 191, 36, 0.3) 90deg,
+        transparent 180deg,
+        rgba(6, 182, 212, 0.3) 270deg,
+        transparent 360deg
+    );
+    animation: rd-sparkle-rotate 4s linear infinite;
+    opacity: 0.6;
+}
+
+@keyframes rd-sparkle-rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Color Name Display */
+.rd-color-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    margin-bottom: 2rem;
+    opacity: 0;
+    animation: rd-color-fade-in 0.6s ease-out 0.5s forwards;
+}
+
+.rd-color-name.rd-red {
+    color: #ef4444;
+    text-shadow: 0 0 20px rgba(239, 68, 68, 0.6);
+}
+
+.rd-color-name.rd-black {
+    color: #e5e7eb;
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+}
+
+.rd-color-name.rd-green {
+    color: #22c55e;
+    text-shadow: 0 0 20px rgba(34, 197, 94, 0.6);
+}
+
+@keyframes rd-color-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Payout Information */
+.rd-payout-info {
+    background: linear-gradient(135deg,
+        rgba(20, 24, 41, 0.9),
+        rgba(30, 34, 51, 0.95));
+    border: 2px solid rgba(251, 191, 36, 0.3);
+    border-radius: 16px;
+    padding: 2rem;
+    margin: 2rem auto 0;
+    max-width: 400px;
+    opacity: 0;
+    animation: rd-payout-slide-up 0.7s ease-out 0.7s forwards;
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.4),
+        0 0 60px rgba(251, 191, 36, 0.1);
+}
+
+@keyframes rd-payout-slide-up {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Payout Row */
+.rd-payout-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.rd-payout-row:last-child {
+    border-bottom: none;
+    padding-top: 1rem;
+    margin-top: 0.5rem;
+    border-top: 2px solid rgba(251, 191, 36, 0.3);
+}
+
+.rd-payout-label {
+    font-size: 0.875rem;
+    color: #9ca3af;
+    font-weight: 500;
+}
+
+.rd-payout-value {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #f9fafb;
+}
+
+/* Win/Loss Status */
+.rd-payout-value.rd-win {
+    color: #22c55e;
+    text-shadow: 0 0 10px rgba(34, 197, 94, 0.4);
+    animation: rd-value-pulse 1s ease-in-out infinite;
+}
+
+.rd-payout-value.rd-loss {
+    color: #ef4444;
+    opacity: 0.7;
+}
+
+@keyframes rd-value-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+/* Total Payout Highlight */
+.rd-payout-row:last-child .rd-payout-label {
+    font-size: 1rem;
+    color: #fbbf24;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.rd-payout-row:last-child .rd-payout-value {
+    font-size: 1.5rem;
+}
+
+/* Continue Button */
+.rd-continue-btn {
+    margin-top: 2rem;
+    padding: 1rem 2.5rem;
+    background: linear-gradient(135deg, #fbbf24, #fcd34d);
+    border: 2px solid rgba(251, 191, 36, 0.5);
+    border-radius: 12px;
+    color: #0a0e1a;
+    font-size: 1.125rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow:
+        0 4px 16px rgba(251, 191, 36, 0.3),
+        0 0 40px rgba(251, 191, 36, 0.2);
+    opacity: 0;
+    animation: rd-button-fade-in 0.5s ease-out 1.2s forwards;
+    width: 100%;
+}
+
+.rd-continue-btn:hover {
+    transform: translateY(-2px);
+    box-shadow:
+        0 6px 20px rgba(251, 191, 36, 0.5),
+        0 0 60px rgba(251, 191, 36, 0.4);
+    border-color: rgba(251, 191, 36, 0.8);
+}
+
+.rd-continue-btn:active {
+    transform: translateY(0);
+}
+
+@keyframes rd-button-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ============================================
+   MOBILE RESPONSIVE
+   ============================================ */
+
+@media (max-width: 768px) {
+    .rd-premium-number-badge {
+        width: 180px;
+        height: 180px;
+        font-size: 72px;
+    }
+
+    .rd-winning-label {
+        font-size: 10px;
+        letter-spacing: 2px;
+    }
+
+    .rd-color-name {
+        font-size: 1.25rem;
+        letter-spacing: 3px;
+    }
+
+    .rd-payout-info {
+        max-width: 90%;
+        padding: 1.5rem;
+    }
+
+    .rd-continue-btn {
+        padding: 0.875rem 2rem;
+        font-size: 1rem;
+    }
+}

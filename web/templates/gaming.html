@@ -5,7 +5,8 @@
 {% block extra_css %}
 <!-- Roulette Design System (v3.1) - Load Order Critical -->
 <link href="{{ url_for('static', path='/css/roulette-design-system.css') }}?v=2" rel="stylesheet">
-<link href="{{ url_for('static', path='/css/roulette-components.css') }}?v=2" rel="stylesheet">
+<link href="{{ url_for('static', path='/css/roulette-components.css') }}?v=4" rel="stylesheet">
+<link href="{{ url_for('static', path='/css/results-display.css') }}?v=1" rel="stylesheet">
 <link href="{{ url_for('static', path='/css/roulette-animations.css') }}?v=2" rel="stylesheet">
 <link href="{{ url_for('static', path='/css/roulette.css') }}?v=13" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
@@ -73,36 +74,44 @@
             </div>
         </div>
 
-        <!-- Bot Arena & Timer Section -->
-        <div class="bot-arena-container">
+        <!-- Bot Arena & Timer Section - Enhanced v3.1 -->
+        <div class="rd-arena-container bot-arena-container">
             <!-- Bot Activity Arena -->
-            <div class="bot-arena-section" id="bot-arena-section">
-                <div class="arena-header">
-                    <span class="arena-label"><i class="bi bi-robot"></i> BOT ARENA</span>
-                    <div class="active-players" id="active-players">
-                        <span class="player-count" id="arena-player-count">0 players</span>
+            <div class="rd-bot-arena bot-arena-section" id="bot-arena-section">
+                <div class="rd-arena-header arena-header">
+                    <div class="rd-arena-title">
+                        <div class="rd-arena-icon">
+                            <i class="bi bi-robot"></i>
+                        </div>
+                        <span class="rd-arena-label arena-label">BOT ARENA</span>
+                    </div>
+                    <div class="rd-active-players active-players" id="active-players">
+                        <div class="rd-players-badge">
+                            <i class="bi bi-people-fill"></i>
+                            <span class="rd-player-count player-count" id="arena-player-count">0</span>
+                        </div>
                     </div>
                 </div>
-                <div class="bot-activity-arena" id="bot-activity-arena">
+                <div class="rd-arena-stage bot-activity-arena" id="bot-activity-arena">
                     <!-- Bot avatars will appear here -->
-                    <div class="bot-spinning-wheel" id="bot-spinning-wheel" style="display: none;">
-                        <div class="wheel-decoration"><i class="bi bi-controller"></i></div>
-                        <span>Bots Calculating Bets...</span>
-                        <div class="wheel-decoration"><i class="bi bi-dice-3"></i></div>
+                    <div class="rd-bot-calculating bot-spinning-wheel" id="bot-spinning-wheel" style="display: none;">
+                        <div class="rd-calc-icon wheel-decoration"><i class="bi bi-cpu"></i></div>
+                        <span class="rd-calc-text">Bots Placing Bets...</span>
+                        <div class="rd-calc-icon wheel-decoration"><i class="bi bi-lightning-charge"></i></div>
                     </div>
                 </div>
             </div>
 
             <!-- Round Timer Bar -->
-            <div class="timer-container-with-arena">
-                <div class="round-timer-wrapper">
-                    <div class="timer-label">
-                        <i class="bi bi-clock-history"></i>
-                        <span>TIME UNTIL AUTO-SPIN</span>
+            <div class="rd-timer-container timer-container-with-arena">
+                <div class="rd-timer-wrapper round-timer-wrapper">
+                    <div class="rd-timer-header timer-label">
+                        <i class="bi bi-hourglass-split"></i>
+                        <span class="rd-timer-title">AUTO-SPIN IN</span>
                     </div>
-                    <div class="timer-bar">
-                        <div class="timer-progress" id="auto-spin-timer-progress"></div>
-                        <span class="timer-text" id="auto-spin-timer-text">15.0s</span>
+                    <div class="rd-timer-bar timer-bar">
+                        <div class="rd-timer-progress timer-progress" id="auto-spin-timer-progress"></div>
+                        <span class="rd-timer-text timer-text" id="auto-spin-timer-text">15.0s</span>
                     </div>
                 </div>
             </div>
@@ -423,8 +432,10 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
 <!-- Font Awesome -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+<!-- Results Display -->
+<script src="{{ url_for('static', path='/js/results-display.js') }}?v=1"></script>
 <!-- Game script -->
-<script src="{{ url_for('static', path='/js/roulette.js') }}?v=16"></script>
+<script src="{{ url_for('static', path='/js/roulette.js') }}?v=22"></script>
 <!-- GEM Earning System script -->
 <script src="{{ url_for('static', path='/js/gem-earning.js') }}"></script>
 <script>

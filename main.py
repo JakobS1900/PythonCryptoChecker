@@ -42,21 +42,24 @@ from api.clicker_api import router as clicker_router
 from api.missions_api import router as missions_router
 from api.stocks_api import router as stocks_router
 from api.achievements_api import router as achievements_router
+from api.challenge_api import router as challenge_router
+from api.social_api import router as social_router
+
 from api.gem_store_api import router as gem_store_router
 from api.staking_api import router as staking_router
 from api.trading_api import router as trading_router
 from api.minigames_api import router as minigames_router
 from api.leaderboard_api import router as leaderboard_router
-from api.challenge_api import router as challenge_router
+from api.gaming_api import router as gaming_router
+from api.auth_api import router as auth_router
 from api.crash_api import router as crash_router
-from api.social_api import router as social_router
 
-# Import database and services
-from database.database import init_database, get_db
+# Import services
+from database.database import init_database
 from crypto.price_service import price_service
-from services.crash_game_manager import crash_manager
 from api.bot_system import initialize_bot_population
 from gaming.round_manager import round_manager
+from services.crash_game_manager import crash_manager
 
 # Load environment variables
 load_dotenv()
@@ -82,6 +85,10 @@ async def lifespan(app: FastAPI):
     await round_manager.initialize()
     print(">> Round manager initialized")
 
+    # Start Crash Game Manager
+    await crash_manager.start()
+    print(">> Crash Game manager started")
+
     print(">> CryptoChecker Version3 ready!")
     print("   >> Crypto Tracker: http://localhost:8000")
     print("   >> Roulette Gaming: http://localhost:8000/gaming")
@@ -90,6 +97,7 @@ async def lifespan(app: FastAPI):
     yield
 
     # Cleanup
+    await crash_manager.stop()
     await price_service.stop()
     print(">> CryptoChecker Version3 stopped")
 
@@ -117,7 +125,7 @@ app.add_middleware(
     secret_key=os.getenv("SECRET_KEY", "crypto-tracker-secret-key-change-in-production"),
     session_cookie="crypto_session",
     max_age=3600,  # 1 hour
-    same_site="strict",
+    same_site="lax",
     https_only=False  # Set to True in production
 )
 

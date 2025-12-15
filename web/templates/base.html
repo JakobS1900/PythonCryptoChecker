@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="dark">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -27,6 +28,7 @@
 
     {% block extra_css %}{% endblock %}
 </head>
+
 <body>
     <!-- Modern Navigation -->
     <nav class="navbar-modern">
@@ -53,28 +55,37 @@
 
                     <!-- Games Dropdown -->
                     <li class="nav-item dropdown">
-                        <a class="nav-link-modern dropdown-toggle" href="#" id="gamesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <a class="nav-link-modern dropdown-toggle" href="#" id="gamesDropdown" role="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="bi bi-controller"></i>
                             <span>Games</span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="gamesDropdown">
-                            <li><a class="dropdown-item" href="/gaming"><i class="bi bi-dice-5-fill me-2"></i>Roulette</a></li>
-                            <li><a class="dropdown-item" href="/clicker"><i class="bi bi-mouse me-2"></i>GEM Clicker</a></li>
-                            <li><a class="dropdown-item" href="/minigames"><i class="bi bi-dice-5 me-2"></i>Mini-Games</a></li>
-                            <li><a class="dropdown-item" href="/crash"><i class="bi bi-rocket-takeoff me-2"></i>Crash</a></li>
+                            <li><a class="dropdown-item" href="/gaming"><i
+                                        class="bi bi-dice-5-fill me-2"></i>Roulette</a></li>
+                            <li><a class="dropdown-item" href="/clicker"><i class="bi bi-mouse me-2"></i>GEM Clicker</a>
+                            </li>
+                            <li><a class="dropdown-item" href="/minigames"><i
+                                        class="bi bi-dice-5 me-2"></i>Mini-Games</a></li>
+                            <li><a class="dropdown-item" href="/crash"><i
+                                        class="bi bi-rocket-takeoff me-2"></i>Crash</a></li>
                         </ul>
                     </li>
 
                     <!-- Trading Dropdown -->
                     <li class="nav-item dropdown">
-                        <a class="nav-link-modern dropdown-toggle" href="#" id="tradingDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <a class="nav-link-modern dropdown-toggle" href="#" id="tradingDropdown" role="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="bi bi-graph-up-arrow"></i>
                             <span>Trading</span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="tradingDropdown">
-                            <li><a class="dropdown-item" href="/stocks"><i class="bi bi-graph-up-arrow me-2"></i>Stock Market</a></li>
-                            <li><a class="dropdown-item" href="/trading"><i class="bi bi-arrow-left-right me-2"></i>P2P Trading</a></li>
-                            <li><a class="dropdown-item" href="/staking"><i class="bi bi-piggy-bank me-2"></i>Staking</a></li>
+                            <li><a class="dropdown-item" href="/stocks"><i class="bi bi-graph-up-arrow me-2"></i>Stock
+                                    Market</a></li>
+                            <li><a class="dropdown-item" href="/trading"><i class="bi bi-arrow-left-right me-2"></i>P2P
+                                    Trading</a></li>
+                            <li><a class="dropdown-item" href="/staking"><i
+                                        class="bi bi-piggy-bank me-2"></i>Staking</a></li>
                         </ul>
                     </li>
 
@@ -88,30 +99,42 @@
 
                     <!-- Community Dropdown -->
                     <li class="nav-item dropdown">
-                        <a class="nav-link-modern dropdown-toggle" href="#" id="communityDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <a class="nav-link-modern dropdown-toggle" href="#" id="communityDropdown" role="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="bi bi-people"></i>
                             <span>Community</span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="communityDropdown">
-                            <li><a class="dropdown-item" href="/leaderboards"><i class="bi bi-trophy me-2"></i>Leaderboards</a></li>
-                            <li><a class="dropdown-item" href="/challenges"><i class="bi bi-calendar-check me-2"></i>Challenges</a></li>
-                            <li><a class="dropdown-item" href="/missions"><i class="bi bi-trophy-fill me-2"></i>Missions</a></li>
-                            <li><a class="dropdown-item" href="/achievements"><i class="bi bi-award-fill me-2"></i>Achievements</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="/social"><i class="bi bi-chat-dots me-2"></i>Social</a></li>
+                            <li><a class="dropdown-item" href="/leaderboards"><i
+                                        class="bi bi-trophy me-2"></i>Leaderboards</a></li>
+                            <li><a class="dropdown-item" href="/challenges"><i
+                                        class="bi bi-calendar-check me-2"></i>Challenges</a></li>
+                            <li><a class="dropdown-item" href="/missions"><i
+                                        class="bi bi-trophy-fill me-2"></i>Missions</a></li>
+                            <li><a class="dropdown-item" href="/achievements"><i
+                                        class="bi bi-award-fill me-2"></i>Achievements</a></li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li><a class="dropdown-item" href="/social"><i class="bi bi-chat-dots me-2"></i>Social</a>
+                            </li>
                         </ul>
                     </li>
 
                     <!-- Account Dropdown -->
                     <li class="nav-item dropdown">
-                        <a class="nav-link-modern dropdown-toggle" href="#" id="accountDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <a class="nav-link-modern dropdown-toggle" href="#" id="accountDropdown" role="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="bi bi-person-circle"></i>
                             <span>Account</span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="accountDropdown">
-                            <li><a class="dropdown-item" href="/profile"><i class="bi bi-person me-2"></i>Profile</a></li>
-                            <li><a class="dropdown-item" href="/portfolio"><i class="bi bi-wallet2 me-2"></i>Portfolio</a></li>
-                            <li><a class="dropdown-item" href="/converter"><i class="bi bi-arrow-left-right me-2"></i>Converter</a></li>
+                            <li><a class="dropdown-item" href="/profile"><i class="bi bi-person me-2"></i>Profile</a>
+                            </li>
+                            <li><a class="dropdown-item" href="/portfolio"><i
+                                        class="bi bi-wallet2 me-2"></i>Portfolio</a></li>
+                            <li><a class="dropdown-item" href="/converter"><i
+                                        class="bi bi-arrow-left-right me-2"></i>Converter</a></li>
                         </ul>
                     </li>
                 </ul>
@@ -122,13 +145,16 @@
                         <!-- Will be populated by JavaScript -->
                         <div class="d-flex align-items-center gap-3">
                             <div class="d-none d-md-block text-end">
-                                <div class="fw-semibold" style="font-size: var(--text-sm); color: var(--text-primary);">Loading...</div>
-                                <div class="d-flex align-items-center justify-content-end gap-1" style="font-size: var(--text-xs); color: var(--text-muted);">
+                                <div class="fw-semibold" style="font-size: var(--text-sm); color: var(--text-primary);">
+                                    Loading...</div>
+                                <div class="d-flex align-items-center justify-content-end gap-1"
+                                    style="font-size: var(--text-xs); color: var(--text-muted);">
                                     <i class="bi bi-gem" style="color: var(--gem);"></i>
                                     <span id="navbar-balance">Loading...</span>
                                 </div>
                             </div>
-                            <button class="btn-modern btn-modern-primary btn-modern-sm" id="login-btn" data-action="showLoginModal">
+                            <button class="btn-modern btn-modern-primary btn-modern-sm" id="login-btn"
+                                data-action="showLoginModal">
                                 <i class="bi bi-box-arrow-in-right"></i>
                                 <span>Sign In</span>
                             </button>
@@ -150,15 +176,19 @@
     </main>
 
     <!-- Footer -->
-    <footer style="background: var(--bg-secondary); border-top: 1px solid var(--border-subtle); padding: var(--space-12) 0; margin-top: var(--space-16);">
+    <footer
+        style="background: var(--bg-secondary); border-top: 1px solid var(--border-subtle); padding: var(--space-12) 0; margin-top: var(--space-16);">
         <div class="container" style="max-width: var(--container-max-width);">
             <div class="row">
                 <div class="col-md-6">
                     <div class="d-flex align-items-center gap-2 mb-3">
-                        <i class="bi bi-currency-bitcoin" style="font-size: var(--text-2xl); color: var(--primary);"></i>
-                        <h5 style="margin: 0; color: var(--text-primary); font-weight: var(--font-semibold);">CryptoChecker v3</h5>
+                        <i class="bi bi-currency-bitcoin"
+                            style="font-size: var(--text-2xl); color: var(--primary);"></i>
+                        <h5 style="margin: 0; color: var(--text-primary); font-weight: var(--font-semibold);">
+                            CryptoChecker v3</h5>
                     </div>
-                    <p style="color: var(--text-muted); font-size: var(--text-sm);">Real-time cryptocurrency tracking with integrated gaming.</p>
+                    <p style="color: var(--text-muted); font-size: var(--text-sm);">Real-time cryptocurrency tracking
+                        with integrated gaming.</p>
                 </div>
                 <div class="col-md-6 text-md-end">
                     <p style="color: var(--text-muted); margin-bottom: 0; font-size: var(--text-sm);">
@@ -187,7 +217,7 @@
 
     <!-- Initialize App -->
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             console.log('🚀 CryptoChecker v3 DOM loaded');
 
             // Simple initialization without complex async logic
@@ -197,4 +227,5 @@
         });
     </script>
 </body>
+
 </html>

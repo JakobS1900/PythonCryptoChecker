@@ -998,3 +998,527 @@
 .betting-status {
     text-align: center;
 }
+
+/* ===================================================================
+   BOT ARENA - Premium Gaming Arena
+   =================================================================== */
+
+.rd-arena-container {
+    width: 100%;
+    max-width: 1600px;
+    margin: 0 auto 2rem;
+}
+
+.rd-bot-arena {
+    background: linear-gradient(135deg,
+        rgba(139, 92, 246, 0.05),
+        rgba(67, 56, 202, 0.02));
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    border-radius: var(--rd-radius-xl);
+    padding: var(--rd-space-5);
+    backdrop-filter: var(--rd-blur-lg);
+    position: relative;
+    overflow: hidden;
+}
+
+.rd-bot-arena::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 200%;
+    height: 100%;
+    background: linear-gradient(90deg,
+        transparent,
+        rgba(139, 92, 246, 0.1),
+        transparent);
+    animation: rd-shimmer 3s infinite;
+}
+
+/* Arena Header */
+.rd-arena-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--rd-space-4);
+    position: relative;
+    z-index: 2;
+}
+
+.rd-arena-title {
+    display: flex;
+    align-items: center;
+    gap: var(--rd-space-3);
+}
+
+.rd-arena-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--rd-radius-lg);
+    background: linear-gradient(135deg,
+        var(--rd-accent-purple),
+        var(--rd-accent-purple-dark));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--rd-text-xl);
+    color: var(--rd-text-primary);
+    box-shadow: var(--rd-shadow-md), 0 0 20px rgba(139, 92, 246, 0.4);
+    animation: rd-pulse 3s ease-in-out infinite;
+}
+
+.rd-arena-label {
+    font-size: var(--rd-text-lg);
+    font-weight: var(--rd-font-bold);
+    color: var(--rd-accent-purple);
+    text-transform: uppercase;
+    letter-spacing: var(--rd-tracking-wider);
+}
+
+.rd-active-players {
+    display: flex;
+    align-items: center;
+}
+
+.rd-players-badge {
+    display: flex;
+    align-items: center;
+    gap: var(--rd-space-2);
+    padding: var(--rd-space-2) var(--rd-space-4);
+    background: rgba(139, 92, 246, 0.15);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    border-radius: var(--rd-radius-full);
+    font-size: var(--rd-text-sm);
+    font-weight: var(--rd-font-semibold);
+    color: var(--rd-accent-purple);
+}
+
+.rd-players-badge i {
+    font-size: var(--rd-text-base);
+}
+
+/* Arena Stage (where bots appear) */
+.rd-arena-stage {
+    min-height: 80px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: var(--rd-radius-lg);
+    padding: var(--rd-space-4);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--rd-space-3);
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 2;
+}
+
+/* Bot Calculating State */
+.rd-bot-calculating {
+    display: flex;
+    align-items: center;
+    gap: var(--rd-space-4);
+    color: var(--rd-accent-purple);
+    font-weight: var(--rd-font-semibold);
+}
+
+.rd-calc-icon {
+    font-size: var(--rd-text-2xl);
+    animation: rd-spin 2s linear infinite;
+}
+
+.rd-calc-text {
+    font-size: var(--rd-text-base);
+    letter-spacing: var(--rd-tracking-wide);
+}
+
+/* ===================================================================
+   TIMER COMPONENT - Premium Auto-Spin Timer
+   =================================================================== */
+
+.rd-timer-container {
+    margin-top: var(--rd-space-4);
+    width: 100%;
+}
+
+.rd-timer-wrapper {
+    background: var(--rd-glass-bg);
+    backdrop-filter: var(--rd-blur-lg);
+    border: 1px solid var(--rd-glass-border);
+    border-radius: var(--rd-radius-xl);
+    padding: var(--rd-space-4);
+}
+
+.rd-timer-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--rd-space-2);
+    margin-bottom: var(--rd-space-3);
+    color: var(--rd-text-tertiary);
+    font-size: var(--rd-text-sm);
+    font-weight: var(--rd-font-semibold);
+    text-transform: uppercase;
+    letter-spacing: var(--rd-tracking-wider);
+}
+
+.rd-timer-header i {
+    font-size: var(--rd-text-base);
+    color: var(--rd-accent-cyan);
+}
+
+.rd-timer-title {
+    color: var(--rd-text-secondary);
+}
+
+.rd-timer-bar {
+    position: relative;
+    height: 40px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: var(--rd-radius-lg);
+    overflow: hidden;
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.rd-timer-progress {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: linear-gradient(90deg,
+        var(--rd-accent-cyan),
+        var(--rd-accent-purple));
+    border-radius: var(--rd-radius-lg);
+    transition: width 1s linear;
+    box-shadow: 0 0 20px rgba(6, 182, 212, 0.5);
+}
+
+.rd-timer-progress::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 100px;
+    background: linear-gradient(90deg,
+        transparent,
+        rgba(255, 255, 255, 0.3));
+    animation: rd-shimmer 2s infinite;
+}
+
+.rd-timer-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: var(--rd-text-xl);
+    font-weight: var(--rd-font-bold);
+    color: var(--rd-text-primary);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    z-index: 2;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .rd-bot-arena {
+        padding: var(--rd-space-4);
+    }
+
+    .rd-arena-icon {
+        width: 36px;
+        height: 36px;
+        font-size: var(--rd-text-lg);
+    }
+
+    .rd-arena-label {
+        font-size: var(--rd-text-base);
+    }
+
+    .rd-timer-bar {
+        height: 36px;
+    }
+
+    .rd-timer-text {
+        font-size: var(--rd-text-lg);
+    }
+}
+
+/* ===================================================================
+   PREMIUM ROULETTE WHEEL - Phase 3: P3-001
+   =================================================================== */
+
+/* Enhanced Wheel Container with Premium Depth */
+.rd-wheel-container {
+    height: 140px;
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--rd-radius-xl);
+    background: linear-gradient(135deg,
+        rgba(10, 14, 26, 0.9),
+        rgba(20, 24, 41, 0.9));
+    border: 2px solid rgba(251, 191, 36, 0.2);
+    box-shadow:
+        inset 0 4px 12px rgba(0, 0, 0, 0.6),
+        0 8px 24px rgba(0, 0, 0, 0.4),
+        0 0 40px rgba(251, 191, 36, 0.1);
+    margin: var(--rd-space-4) 0;
+}
+
+/* Premium pointer with enhanced glow */
+.rd-wheel-pointer {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    height: 100%;
+    width: 4px;
+    background: linear-gradient(to bottom,
+        var(--rd-accent-cyan),
+        var(--rd-accent-purple));
+    z-index: 10;
+    box-shadow:
+        0 0 20px rgba(6, 182, 212, 0.8),
+        0 0 40px rgba(139, 92, 246, 0.4);
+    transform: translateX(-50%);
+    animation: rd-pointer-glow 2s ease-in-out infinite;
+}
+
+@keyframes rd-pointer-glow {
+    0%, 100% {
+        box-shadow:
+            0 0 20px rgba(6, 182, 212, 0.8),
+            0 0 40px rgba(139, 92, 246, 0.4);
+    }
+    50% {
+        box-shadow:
+            0 0 30px rgba(6, 182, 212, 1),
+            0 0 60px rgba(139, 92, 246, 0.6),
+            0 0 80px rgba(251, 191, 36, 0.3);
+    }
+}
+
+/* Pointer diamond tip */
+.rd-wheel-pointer::before {
+    content: '';
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-top: 12px solid var(--rd-accent-cyan);
+    filter: drop-shadow(0 2px 8px rgba(6, 182, 212, 0.8));
+}
+
+/* Wheel numbers track */
+.rd-wheel-numbers {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    display: flex;
+    white-space: nowrap;
+    transition: transform 3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Individual number slots with premium styling */
+.rd-number-slot {
+    min-width: 80px;
+    width: 80px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: var(--rd-space-1);
+    font-weight: var(--rd-font-bold);
+    font-size: var(--rd-text-lg);
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    position: relative;
+    transition: all var(--rd-transition-base);
+}
+
+/* Premium RED slots */
+.rd-number-slot--red {
+    background: linear-gradient(135deg,
+        rgba(239, 68, 68, 0.4),
+        rgba(220, 38, 38, 0.3));
+    color: var(--rd-text-primary);
+    text-shadow: 0 2px 8px rgba(239, 68, 68, 0.6);
+}
+
+.rd-number-slot--red::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom,
+        rgba(239, 68, 68, 0.1),
+        transparent 50%,
+        rgba(0, 0, 0, 0.2));
+    pointer-events: none;
+}
+
+/* Premium BLACK slots */
+.rd-number-slot--black {
+    background: linear-gradient(135deg,
+        rgba(55, 65, 81, 0.4),
+        rgba(17, 24, 39, 0.3));
+    color: var(--rd-text-primary);
+    text-shadow: 0 2px 8px rgba(148, 163, 184, 0.6);
+}
+
+.rd-number-slot--black::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom,
+        rgba(148, 163, 184, 0.1),
+        transparent 50%,
+        rgba(0, 0, 0, 0.3));
+    pointer-events: none;
+}
+
+/* Premium GREEN slots (0) */
+.rd-number-slot--green {
+    background: linear-gradient(135deg,
+        rgba(34, 197, 94, 0.4),
+        rgba(22, 163, 74, 0.3));
+    color: var(--rd-text-primary);
+    text-shadow: 0 2px 8px rgba(34, 197, 94, 0.6);
+}
+
+.rd-number-slot--green::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom,
+        rgba(34, 197, 94, 0.1),
+        transparent 50%,
+        rgba(0, 0, 0, 0.2));
+    pointer-events: none;
+}
+
+/* Crypto symbol styling */
+.rd-crypto-symbol {
+    font-size: var(--rd-text-sm);
+    opacity: 0.85;
+    font-weight: var(--rd-font-medium);
+    letter-spacing: 0.05em;
+}
+
+/* Center slot highlight (where pointer is) */
+.rd-number-slot.rd-center-slot {
+    transform: scale(1.08);
+    z-index: 5;
+    border-left: 1px solid rgba(251, 191, 36, 0.3);
+    border-right: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+.rd-number-slot--red.rd-center-slot {
+    box-shadow:
+        inset 0 0 20px rgba(239, 68, 68, 0.3),
+        0 0 30px rgba(239, 68, 68, 0.2);
+}
+
+.rd-number-slot--black.rd-center-slot {
+    box-shadow:
+        inset 0 0 20px rgba(148, 163, 184, 0.3),
+        0 0 30px rgba(148, 163, 184, 0.2);
+}
+
+.rd-number-slot--green.rd-center-slot {
+    box-shadow:
+        inset 0 0 20px rgba(34, 197, 94, 0.3),
+        0 0 30px rgba(34, 197, 94, 0.2);
+}
+
+/* Spinning animation state */
+.rd-wheel-numbers.rd-spinning {
+    animation: rd-wheel-blur 0.5s ease-in-out;
+}
+
+@keyframes rd-wheel-blur {
+    0%, 100% { filter: blur(0px); }
+    50% { filter: blur(2px); }
+}
+
+/* Wheel edge gradients for infinite scroll effect */
+.rd-wheel-container::before,
+.rd-wheel-container::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    width: 60px;
+    height: 100%;
+    z-index: 8;
+    pointer-events: none;
+}
+
+.rd-wheel-container::before {
+    left: 0;
+    background: linear-gradient(to right,
+        rgba(10, 14, 26, 0.95),
+        transparent);
+}
+
+.rd-wheel-container::after {
+    right: 0;
+    background: linear-gradient(to left,
+        rgba(10, 14, 26, 0.95),
+        transparent);
+}
+
+/* Premium glow on spin */
+.rd-wheel-container.rd-spinning {
+    border-color: rgba(251, 191, 36, 0.5);
+    box-shadow:
+        inset 0 4px 12px rgba(0, 0, 0, 0.6),
+        0 8px 24px rgba(0, 0, 0, 0.4),
+        0 0 60px rgba(251, 191, 36, 0.3),
+        0 0 80px rgba(6, 182, 212, 0.2);
+    animation: rd-wheel-glow 1.5s ease-in-out infinite;
+}
+
+@keyframes rd-wheel-glow {
+    0%, 100% {
+        box-shadow:
+            inset 0 4px 12px rgba(0, 0, 0, 0.6),
+            0 8px 24px rgba(0, 0, 0, 0.4),
+            0 0 60px rgba(251, 191, 36, 0.3),
+            0 0 80px rgba(6, 182, 212, 0.2);
+    }
+    50% {
+        box-shadow:
+            inset 0 4px 12px rgba(0, 0, 0, 0.6),
+            0 8px 24px rgba(0, 0, 0, 0.4),
+            0 0 80px rgba(251, 191, 36, 0.5),
+            0 0 120px rgba(6, 182, 212, 0.3);
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .rd-wheel-container {
+        height: 110px;
+    }
+
+    .rd-number-slot {
+        min-width: 65px;
+        width: 65px;
+        font-size: var(--rd-text-base);
+    }
+
+    .rd-crypto-symbol {
+        font-size: var(--rd-text-xs);
+    }
+
+    .rd-wheel-pointer {
+        width: 3px;
+    }
+
+    .rd-wheel-pointer::before {
+        border-left-width: 6px;
+        border-right-width: 6px;
+        border-top-width: 10px;
+    }
+}

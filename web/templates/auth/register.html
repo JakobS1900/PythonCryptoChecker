@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Register - CryptoChecker{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-6 offset-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="card-title text-center mb-4">Create Account</h2>
+
+                    <div id="authAlert" class="alert" style="display: none;" role="alert"></div>
+
+                    <!-- Register Form -->
+                    <form id="register-page-form" class="needs-validation"
+                        onsubmit="event.preventDefault(); Auth.handleRegister('register-page-form');" novalidate>
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="username" name="username" required
+                                minlength="3">
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email address</label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="password" name="password" required
+                                minlength="6">
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirm_password" class="form-label">Confirm Password</label>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password"
+                                required>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn-modern btn-modern-primary">Register</button>
+                        </div>
+                    </form>
+
+                    <div class="text-center mt-3">
+                        <p>Already have an account? <a href="/login">Login</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Check if Auth module is loaded
+        if (window.Auth) {
+            Auth.init();
+        } else {
+            console.error("Auth module not found!");
+        }
+    });
+</script>
+{% endblock %}

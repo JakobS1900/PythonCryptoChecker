@@ -86,6 +86,22 @@ async def check_auth(
     if user_id and auth_token:
         return {"status": "success", "authenticated": True}
 
+    # 3) Fall back to "auth_token" cookie (set by client as backup)
+    cookie_token = request.cookies.get("auth_token")
+    if cookie_token:
+        try:
+            payload = jwt.decode(cookie_token, SECRET_KEY, algorithms=[ALGORITHM])
+            user_id = payload.get("sub")
+            if user_id:
+                 # Verify user exists
+                user = await db.get(User, user_id)
+                if user:
+                    print(f">> Auth Check: Cookie JWT validated for user {user_id}")
+                    return {"status": "success", "authenticated": True}
+        except JWTError as e:
+            print(f">> Auth Check: Cookie JWT validation failed: {e}")
+            pass
+
     raise HTTPException(status_code=401, detail="Not authenticated")
 
 # ==================== REQUEST/RESPONSE MODELS ====================

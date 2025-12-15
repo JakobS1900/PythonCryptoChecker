@@ -1,0 +1,617 @@
+/**
+ * CryptoChecker Roulette - Animation Polish & Enhancement
+ * Phase 4: Animation & Polish
+ * Version: 1.0.0
+ *
+ * This file contains refined animations and polish for:
+ * - Smooth state transitions
+ * - Loading state animations
+ * - Celebration effects for wins
+ * - Enhanced micro-interactions
+ * - Betting phase animations
+ * - Round transition effects
+ */
+
+/* ============================================
+   PHASE TRANSITION ANIMATIONS
+   ============================================ */
+
+/* Smooth phase transitions for status bar */
+.rd-status-bar {
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Phase-specific glow effects */
+.rd-status-bar[data-phase="betting"] {
+    animation: rd-betting-pulse 2s ease-in-out infinite;
+}
+
+@keyframes rd-betting-pulse {
+    0%, 100% {
+        box-shadow:
+            0 4px 12px rgba(6, 182, 212, 0.2),
+            0 0 40px rgba(6, 182, 212, 0.1);
+    }
+    50% {
+        box-shadow:
+            0 4px 16px rgba(6, 182, 212, 0.4),
+            0 0 60px rgba(6, 182, 212, 0.2);
+    }
+}
+
+.rd-status-bar[data-phase="spinning"] {
+    animation: rd-spinning-pulse 1s ease-in-out infinite;
+}
+
+@keyframes rd-spinning-pulse {
+    0%, 100% {
+        box-shadow:
+            0 4px 12px rgba(251, 191, 36, 0.3),
+            0 0 50px rgba(251, 191, 36, 0.15);
+    }
+    50% {
+        box-shadow:
+            0 4px 16px rgba(251, 191, 36, 0.5),
+            0 0 70px rgba(251, 191, 36, 0.3);
+    }
+}
+
+.rd-status-bar[data-phase="results"] {
+    animation: rd-results-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes rd-results-pulse {
+    0%, 100% {
+        box-shadow:
+            0 4px 12px rgba(34, 197, 94, 0.3),
+            0 0 50px rgba(34, 197, 94, 0.15);
+    }
+    50% {
+        box-shadow:
+            0 4px 16px rgba(34, 197, 94, 0.5),
+            0 0 70px rgba(34, 197, 94, 0.3);
+    }
+}
+
+/* ============================================
+   BETTING BUTTON ENHANCEMENTS
+   ============================================ */
+
+/* Enhanced betting button animations */
+.rd-bet-btn,
+.bet-option {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Ripple effect on click */
+.rd-bet-btn::after,
+.bet-option::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s, opacity 0.6s;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.rd-bet-btn:active::after,
+.bet-option:active::after {
+    width: 200%;
+    height: 200%;
+    opacity: 0;
+}
+
+/* Betting button hover states */
+.rd-bet-btn:hover,
+.bet-option:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow:
+        0 8px 20px rgba(0, 0, 0, 0.3),
+        0 0 40px rgba(251, 191, 36, 0.2);
+}
+
+/* Active/selected betting button */
+.rd-bet-btn.rd-active,
+.bet-option.active {
+    transform: scale(1.05);
+    box-shadow:
+        0 0 30px rgba(251, 191, 36, 0.5),
+        0 0 60px rgba(6, 182, 212, 0.3),
+        inset 0 0 20px rgba(251, 191, 36, 0.2);
+    animation: rd-selected-glow 2s ease-in-out infinite;
+}
+
+@keyframes rd-selected-glow {
+    0%, 100% {
+        box-shadow:
+            0 0 30px rgba(251, 191, 36, 0.5),
+            0 0 60px rgba(6, 182, 212, 0.3),
+            inset 0 0 20px rgba(251, 191, 36, 0.2);
+    }
+    50% {
+        box-shadow:
+            0 0 40px rgba(251, 191, 36, 0.7),
+            0 0 80px rgba(6, 182, 212, 0.5),
+            inset 0 0 30px rgba(251, 191, 36, 0.3);
+    }
+}
+
+/* ============================================
+   CHIP BUTTON ANIMATIONS
+   ============================================ */
+
+/* Enhanced chip button interactions */
+.rd-chip-btn {
+    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.rd-chip-btn:hover {
+    transform: translateY(-3px) rotate(5deg);
+    box-shadow:
+        0 6px 20px rgba(0, 0, 0, 0.4),
+        0 0 40px rgba(251, 191, 36, 0.3);
+}
+
+.rd-chip-btn:active {
+    transform: translateY(-1px) rotate(0deg) scale(0.95);
+    transition-duration: 0.1s;
+}
+
+.rd-chip-btn.active {
+    animation: rd-chip-bounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes rd-chip-bounce {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2) rotate(10deg); }
+    100% { transform: scale(1.1); }
+}
+
+/* ============================================
+   SPIN BUTTON ENHANCEMENT
+   ============================================ */
+
+/* Premium spin button */
+.rd-spin-btn,
+#spinWheel {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Shine effect on spin button */
+.rd-spin-btn::before,
+#spinWheel::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -100%;
+    width: 100%;
+    height: 200%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.3),
+        transparent
+    );
+    transform: skewX(-20deg);
+    animation: rd-shine-sweep 3s ease-in-out infinite;
+}
+
+@keyframes rd-shine-sweep {
+    0%, 100% { left: -100%; }
+    50% { left: 200%; }
+}
+
+.rd-spin-btn:not(:disabled):hover,
+#spinWheel:not(:disabled):hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow:
+        0 8px 24px rgba(251, 191, 36, 0.4),
+        0 0 60px rgba(251, 191, 36, 0.3),
+        inset 0 0 20px rgba(255, 255, 255, 0.1);
+}
+
+.rd-spin-btn:not(:disabled):active,
+#spinWheel:not(:disabled):active {
+    transform: translateY(-1px) scale(1.02);
+}
+
+/* Spin button ready state */
+.rd-spin-btn.rd-ready,
+#spinWheel:not(:disabled) {
+    animation: rd-spin-ready-pulse 2s ease-in-out infinite;
+}
+
+@keyframes rd-spin-ready-pulse {
+    0%, 100% {
+        box-shadow:
+            0 6px 20px rgba(251, 191, 36, 0.3),
+            0 0 50px rgba(251, 191, 36, 0.2);
+    }
+    50% {
+        box-shadow:
+            0 8px 24px rgba(251, 191, 36, 0.5),
+            0 0 70px rgba(251, 191, 36, 0.4);
+    }
+}
+
+/* ============================================
+   LOADING & SKELETON STATES
+   ============================================ */
+
+/* Enhanced shimmer effect for loading */
+@keyframes rd-shimmer-enhanced {
+    0% {
+        background-position: -1000px 0;
+    }
+    100% {
+        background-position: 1000px 0;
+    }
+}
+
+.rd-skeleton-enhanced {
+    background: linear-gradient(
+        90deg,
+        rgba(20, 24, 41, 0.9) 0%,
+        rgba(30, 34, 51, 0.95) 50%,
+        rgba(20, 24, 41, 0.9) 100%
+    );
+    background-size: 1000px 100%;
+    animation: rd-shimmer-enhanced 2s ease-in-out infinite;
+}
+
+/* Loading spinner with glow */
+.rd-loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(251, 191, 36, 0.2);
+    border-top-color: #fbbf24;
+    border-radius: 50%;
+    animation: rd-spinner-glow 1s linear infinite;
+}
+
+@keyframes rd-spinner-glow {
+    0% {
+        transform: rotate(0deg);
+        box-shadow: 0 0 20px rgba(251, 191, 36, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 40px rgba(251, 191, 36, 0.6);
+    }
+    100% {
+        transform: rotate(360deg);
+        box-shadow: 0 0 20px rgba(251, 191, 36, 0.3);
+    }
+}
+
+/* ============================================
+   CELEBRATION EFFECTS
+   ============================================ */
+
+/* Confetti burst animation */
+@keyframes rd-confetti-burst {
+    0% {
+        transform: translate(0, 0) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(var(--tx, 0), var(--ty, -300px)) rotate(720deg);
+        opacity: 0;
+    }
+}
+
+.rd-confetti {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    pointer-events: none;
+    animation: rd-confetti-burst 2s ease-out forwards;
+    z-index: 9999;
+    --tx: 0px;
+    --ty: -300px;
+}
+
+.rd-confetti:nth-child(odd) {
+    background: #fbbf24;
+}
+
+.rd-confetti:nth-child(even) {
+    background: #06b6d4;
+}
+
+/* Win celebration overlay */
+.rd-celebration-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9998;
+    opacity: 0;
+    animation: rd-celebration-flash 0.5s ease-out;
+}
+
+@keyframes rd-celebration-flash {
+    0%, 100% { opacity: 0; }
+    50% { opacity: 0.3; }
+}
+
+.rd-celebration-overlay.rd-win {
+    background: radial-gradient(
+        circle at center,
+        rgba(34, 197, 94, 0.3),
+        transparent 70%
+    );
+}
+
+.rd-celebration-overlay.rd-big-win {
+    background: radial-gradient(
+        circle at center,
+        rgba(251, 191, 36, 0.4),
+        transparent 70%
+    );
+    animation: rd-big-win-flash 0.8s ease-out;
+}
+
+@keyframes rd-big-win-flash {
+    0%, 100% { opacity: 0; }
+    25%, 75% { opacity: 0.5; }
+    50% { opacity: 0; }
+}
+
+/* Floating GEM animation for wins */
+@keyframes rd-gem-float-up {
+    0% {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-150px) scale(1.5);
+        opacity: 0;
+    }
+}
+
+.rd-floating-gem {
+    position: fixed;
+    font-size: 24px;
+    font-weight: bold;
+    color: #22c55e;
+    text-shadow: 0 0 20px rgba(34, 197, 94, 0.8);
+    pointer-events: none;
+    z-index: 9999;
+    animation: rd-gem-float-up 2s ease-out forwards;
+}
+
+/* ============================================
+   BALANCE UPDATE ANIMATIONS
+   ============================================ */
+
+/* Balance increase animation */
+@keyframes rd-balance-increase {
+    0%, 100% {
+        transform: scale(1);
+        color: inherit;
+    }
+    25% {
+        transform: scale(1.15);
+        color: #22c55e;
+        text-shadow: 0 0 20px rgba(34, 197, 94, 0.6);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+.rd-balance-increase {
+    animation: rd-balance-increase 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Balance decrease animation */
+@keyframes rd-balance-decrease {
+    0%, 100% {
+        transform: scale(1);
+        color: inherit;
+    }
+    25% {
+        transform: scale(0.9);
+        color: #ef4444;
+    }
+    50% {
+        transform: scale(0.95);
+    }
+}
+
+.rd-balance-decrease {
+    animation: rd-balance-decrease 0.4s ease-out;
+}
+
+/* ============================================
+   NUMBER HISTORY ANIMATIONS
+   ============================================ */
+
+/* Enhanced history number entrance */
+.previous-roll,
+.history-number {
+    animation: rd-history-pop-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes rd-history-pop-in {
+    0% {
+        transform: scale(0) rotate(-180deg);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.2) rotate(10deg);
+    }
+    100% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+    }
+}
+
+/* Pulse newest number */
+.previous-roll:first-child,
+.history-number:first-child {
+    animation:
+        rd-history-pop-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+        rd-history-highlight 2s ease-in-out 0.4s;
+}
+
+@keyframes rd-history-highlight {
+    0%, 100% {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+    50% {
+        box-shadow:
+            0 4px 16px rgba(251, 191, 36, 0.5),
+            0 0 30px rgba(251, 191, 36, 0.3);
+        transform: scale(1.1);
+    }
+}
+
+/* ============================================
+   TIMER ANIMATIONS
+   ============================================ */
+
+/* Enhanced timer urgency states */
+.rd-timer-bar[data-urgency="high"] {
+    animation: rd-timer-urgent 0.5s ease-in-out infinite;
+}
+
+@keyframes rd-timer-urgent {
+    0%, 100% {
+        background: linear-gradient(90deg, #ef4444, #dc2626);
+        box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+    }
+    50% {
+        background: linear-gradient(90deg, #dc2626, #ef4444);
+        box-shadow: 0 0 30px rgba(239, 68, 68, 0.6);
+    }
+}
+
+/* Timer text pulse when urgent */
+.rd-timer-text[data-urgency="high"] {
+    animation: rd-timer-text-pulse 0.5s ease-in-out infinite;
+}
+
+@keyframes rd-timer-text-pulse {
+    0%, 100% {
+        color: #ef4444;
+        text-shadow: 0 0 10px rgba(239, 68, 68, 0.6);
+        transform: scale(1);
+    }
+    50% {
+        color: #fca5a5;
+        text-shadow: 0 0 20px rgba(239, 68, 68, 0.8);
+        transform: scale(1.05);
+    }
+}
+
+/* ============================================
+   BOT PARTICIPANT ANIMATIONS
+   ============================================ */
+
+/* Bot avatar entrance */
+.rd-bot-avatar {
+    animation: rd-bot-entrance 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes rd-bot-entrance {
+    0% {
+        transform: scale(0) rotate(-180deg);
+        opacity: 0;
+    }
+    100% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+    }
+}
+
+/* Bot betting animation */
+.rd-bot-avatar.rd-betting {
+    animation: rd-bot-betting 1s ease-in-out;
+}
+
+@keyframes rd-bot-betting {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+    50% {
+        transform: scale(1.15);
+        box-shadow:
+            0 4px 16px rgba(251, 191, 36, 0.4),
+            0 0 30px rgba(251, 191, 36, 0.2);
+    }
+}
+
+/* ============================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================ */
+
+@media (max-width: 768px) {
+    /* Reduce animation intensity on mobile for performance */
+    .rd-bet-btn:hover,
+    .bet-option:hover {
+        transform: translateY(-1px) scale(1.01);
+    }
+
+    .rd-chip-btn:hover {
+        transform: translateY(-2px) rotate(3deg);
+    }
+
+    .rd-spin-btn:not(:disabled):hover,
+    #spinWheel:not(:disabled):hover {
+        transform: translateY(-2px) scale(1.03);
+    }
+
+    /* Smaller confetti on mobile */
+    .rd-confetti {
+        width: 6px;
+        height: 6px;
+    }
+
+    /* Reduce floating gem distance */
+    @keyframes rd-gem-float-up {
+        0% {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+        }
+        100% {
+            transform: translateY(-100px) scale(1.3);
+            opacity: 0;
+        }
+    }
+}
+
+/* ============================================
+   ACCESSIBILITY - REDUCED MOTION
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+
+    /* Keep essential visual feedback */
+    .rd-bet-btn:hover,
+    .bet-option:hover,
+    .rd-chip-btn:hover {
+        transform: none !important;
+        opacity: 0.9;
+    }
+}

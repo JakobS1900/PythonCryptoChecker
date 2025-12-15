@@ -18,10 +18,10 @@ class CrashGameManager {
         console.log('[Crash] Initializing...');
 
         // Check authentication
+        // Check authentication (optional for viewing/guest play)
         const token = localStorage.getItem('auth_token');
         if (!token) {
-            window.location.href = '/login';
-            return;
+            console.log('[Crash] No auth token found, initializing as Guest/Viewer');
         }
 
         // Load balance

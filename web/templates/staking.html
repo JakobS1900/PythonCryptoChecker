@@ -176,17 +176,17 @@
 </div>
 
 <!-- Stake Modal -->
-<div class="modal fade" id="stakeModal" tabindex="-1">
+<div class="modal fade" id="stakeModal" tabindex="-1" aria-labelledby="stakeModalLabel" aria-describedby="stakeModalDesc">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content" style="background: var(--bg-secondary); border: 1px solid rgba(139, 92, 246, 0.3);">
             <div class="modal-header" style="border-bottom: 1px solid rgba(139, 92, 246, 0.2);">
-                <h5 class="modal-title">
+                <h5 class="modal-title" id="stakeModalLabel">
                     <i class="bi bi-lock-fill"></i>
                     Stake GEM
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body" id="stakeModalDesc">
                 <!-- Plan Info -->
                 <div class="alert-modern alert-modern-info mb-4">
                     <div class="alert-modern-content">
@@ -263,17 +263,17 @@
 </div>
 
 <!-- Success Modal -->
-<div class="modal fade" id="successModal" tabindex="-1">
+<div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-describedby="successModalDesc">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content" style="background: var(--bg-secondary); border: 1px solid rgba(34, 197, 94, 0.3);">
             <div class="modal-header" style="border-bottom: 1px solid rgba(34, 197, 94, 0.2);">
-                <h5 class="modal-title" style="color: var(--success);">
+                <h5 class="modal-title" id="successModalLabel" style="color: var(--success);">
                     <i class="bi bi-check-circle-fill"></i>
                     Stake Successful!
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body text-center py-4">
+            <div class="modal-body text-center py-4" id="successModalDesc">
                 <div style="font-size: 4rem; color: var(--success);">
                     <i class="bi bi-lock-fill"></i>
                 </div>

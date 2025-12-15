@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Betting Auth Test</title>
+</head>
+<body>
+    <h1>Betting Authentication Test</h1>
+    <div id="results"></div>
+
+    <script>
+        async function testBetting() {
+            const results = document.getElementById('results');
+
+            // Check JWT token
+            const token = localStorage.getItem('jwt_token');
+            results.innerHTML += `<p>JWT Token: ${token ? 'EXISTS ✓' : 'MISSING ✗'}</p>`;
+
+            // Check Auth object
+            const auth = window.Auth || {};
+            results.innerHTML += `<p>Auth Object: ${Object.keys(auth).length > 0 ? 'EXISTS ✓' : 'MISSING ✗'}</p>`;
+            results.innerHTML += `<p>Current User: ${auth.currentUser ? auth.currentUser.username : 'NONE (GUEST MODE)'}</p>`;
+
+            // Test balance check
+            try {
+                const balanceResponse = await fetch('/api/crypto/portfolio/balance', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const balanceData = await balanceResponse.json();
+                results.innerHTML += `<p>Balance API: ${balanceResponse.ok ? '✓' : '✗'} - ${balanceData.balance || balanceData.error}</p>`;
+            } catch (error) {
+                results.innerHTML += `<p>Balance API: ERROR - ${error.message}</p>`;
+            }
+
+            // Test bet validation
+            try {
+                const validateResponse = await fetch('/api/gaming/validate-bet?amount=10000', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const validateData = await validateResponse.json();
+                results.innerHTML += `<p>10K Bet Validation: ${validateData.valid ? '✓ VALID' : '✗ INVALID'} - ${validateData.message}</p>`;
+            } catch (error) {
+                results.innerHTML += `<p>Bet Validation: ERROR - ${error.message}</p>`;
+            }
+        }
+
+        testBetting();
+    </script>
+</body>
+</html>

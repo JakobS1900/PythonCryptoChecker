@@ -19,8 +19,11 @@
 
 /* Global Styles */
 body {
-    padding-top: 76px; /* Account for fixed navbar */
-    background-color: #f8f9fa;
+    padding-top: 76px;
+    /* Account for fixed navbar */
+    background-color: #0f0f23;
+    /* Dark theme to match gaming interface */
+    color: #e0e0e0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
@@ -46,10 +49,21 @@ body {
 }
 
 /* Custom Text Colors */
-.text-purple { color: var(--purple-color) !important; }
-.text-bitcoin { color: var(--bitcoin-color) !important; }
-.text-ethereum { color: var(--ethereum-color) !important; }
-.text-gem { color: var(--gem-color) !important; }
+.text-purple {
+    color: var(--purple-color) !important;
+}
+
+.text-bitcoin {
+    color: var(--bitcoin-color) !important;
+}
+
+.text-ethereum {
+    color: var(--ethereum-color) !important;
+}
+
+.text-gem {
+    color: var(--gem-color) !important;
+}
 
 /* Card Enhancements */
 .card {
@@ -137,8 +151,13 @@ body {
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 /* Roulette Wheel Styles */
@@ -149,46 +168,44 @@ body {
     border: 8px solid #333;
     margin: 0 auto;
     position: relative;
-    background: conic-gradient(
-        from 0deg,
-        #dc3545 0deg 9.73deg,
-        #212529 9.73deg 19.46deg,
-        #dc3545 19.46deg 29.19deg,
-        #212529 29.19deg 38.92deg,
-        #dc3545 38.92deg 48.65deg,
-        #212529 48.65deg 58.38deg,
-        #dc3545 58.38deg 68.11deg,
-        #212529 68.11deg 77.84deg,
-        #dc3545 77.84deg 87.57deg,
-        #212529 87.57deg 97.3deg,
-        #dc3545 97.3deg 107.03deg,
-        #212529 107.03deg 116.76deg,
-        #dc3545 116.76deg 126.49deg,
-        #212529 126.49deg 136.22deg,
-        #dc3545 136.22deg 145.95deg,
-        #212529 145.95deg 155.68deg,
-        #dc3545 155.68deg 165.41deg,
-        #212529 165.41deg 175.14deg,
-        #dc3545 175.14deg 184.87deg,
-        #212529 184.87deg 194.6deg,
-        #dc3545 194.6deg 204.33deg,
-        #212529 204.33deg 214.06deg,
-        #dc3545 214.06deg 223.79deg,
-        #212529 223.79deg 233.52deg,
-        #dc3545 233.52deg 243.25deg,
-        #212529 243.25deg 252.98deg,
-        #dc3545 252.98deg 262.71deg,
-        #212529 262.71deg 272.44deg,
-        #dc3545 272.44deg 282.17deg,
-        #212529 282.17deg 291.9deg,
-        #dc3545 291.9deg 301.63deg,
-        #212529 301.63deg 311.36deg,
-        #dc3545 311.36deg 321.09deg,
-        #212529 321.09deg 330.82deg,
-        #dc3545 330.82deg 340.55deg,
-        #212529 340.55deg 350.28deg,
-        #dc3545 350.28deg 360deg
-    );
+    background: conic-gradient(from 0deg,
+            #dc3545 0deg 9.73deg,
+            #212529 9.73deg 19.46deg,
+            #dc3545 19.46deg 29.19deg,
+            #212529 29.19deg 38.92deg,
+            #dc3545 38.92deg 48.65deg,
+            #212529 48.65deg 58.38deg,
+            #dc3545 58.38deg 68.11deg,
+            #212529 68.11deg 77.84deg,
+            #dc3545 77.84deg 87.57deg,
+            #212529 87.57deg 97.3deg,
+            #dc3545 97.3deg 107.03deg,
+            #212529 107.03deg 116.76deg,
+            #dc3545 116.76deg 126.49deg,
+            #212529 126.49deg 136.22deg,
+            #dc3545 136.22deg 145.95deg,
+            #212529 145.95deg 155.68deg,
+            #dc3545 155.68deg 165.41deg,
+            #212529 165.41deg 175.14deg,
+            #dc3545 175.14deg 184.87deg,
+            #212529 184.87deg 194.6deg,
+            #dc3545 194.6deg 204.33deg,
+            #212529 204.33deg 214.06deg,
+            #dc3545 214.06deg 223.79deg,
+            #212529 223.79deg 233.52deg,
+            #dc3545 233.52deg 243.25deg,
+            #212529 243.25deg 252.98deg,
+            #dc3545 252.98deg 262.71deg,
+            #212529 262.71deg 272.44deg,
+            #dc3545 272.44deg 282.17deg,
+            #212529 282.17deg 291.9deg,
+            #dc3545 291.9deg 301.63deg,
+            #212529 301.63deg 311.36deg,
+            #dc3545 311.36deg 321.09deg,
+            #212529 321.09deg 330.82deg,
+            #dc3545 330.82deg 340.55deg,
+            #212529 340.55deg 350.28deg,
+            #dc3545 350.28deg 360deg);
     transition: transform 3s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
@@ -228,8 +245,13 @@ body {
 }
 
 @keyframes wheelSpin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(var(--spin-rotation, 1800deg)); }
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(var(--spin-rotation, 1800deg));
+    }
 }
 
 /* Betting Grid */
@@ -339,13 +361,15 @@ body {
 }
 
 /* Form Enhancements */
-.form-control, .form-select {
+.form-control,
+.form-select {
     border-radius: 0.5rem;
     border: 2px solid #e9ecef;
     transition: all 0.3s ease;
 }
 
-.form-control:focus, .form-select:focus {
+.form-control:focus,
+.form-select:focus {
     border-color: var(--primary-color);
     box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.25);
 }
@@ -413,41 +437,47 @@ body {
 }
 
 /* Dark Mode Support */
-@media (prefers-color-scheme: dark) {
-    body {
-        background-color: #1a1a1a;
-        color: #fff;
-    }
+/* Dark Mode Enforced Globally */
+body {
+    background-color: #1a1a1a;
+    color: #fff;
+}
 
-    .card {
-        background-color: #2d2d2d;
-        border-color: #444;
-    }
+.card {
+    background-color: #2d2d2d;
+    border-color: #444;
+}
 
-    .card-header {
-        background: linear-gradient(135deg, #2d2d2d 0%, #383838 100%);
-        border-bottom-color: #444;
-    }
+.card-header {
+    background: linear-gradient(135deg, #2d2d2d 0%, #383838 100%);
+    border-bottom-color: #444;
+}
 
-    .table {
-        color: #fff;
-    }
+.table {
+    color: #fff;
+}
 
-    .table-light {
-        background-color: #3d3d3d;
-        color: #fff;
-    }
+.table-light {
+    background-color: #3d3d3d;
+    color: #fff;
+}
 
-    .form-control, .form-select {
-        background-color: #2d2d2d;
-        border-color: #444;
-        color: #fff;
-    }
+.form-control,
+.form-select {
+    background-color: #2d2d2d;
+    border-color: #444;
+    color: #fff;
+}
 
-    .modal-content {
-        background-color: #2d2d2d;
-        color: #fff;
-    }
+.form-control:focus,
+.form-select:focus {
+    color: #fff;
+    background-color: #383838;
+}
+
+.modal-content {
+    background-color: #2d2d2d;
+    color: #fff;
 }
 
 /* Utility Classes */
@@ -492,11 +522,25 @@ body {
 }
 
 @keyframes pulse-live {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.7;
+    }
 }
 
 @keyframes pulse-offline {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
 }

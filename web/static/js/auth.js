@@ -3,7 +3,7 @@
  */
 
 // Debug Options - Set these to true for verbose logging during debugging
-window.DEBUG_AUTH_CHANGES = false;         // Log authentication state changes
+window.DEBUG_AUTH_CHANGES = true;         // Log authentication state changes
 window.DEBUG_BALANCE_UPDATES = false;      // Log every balance display update
 window.DEBUG_GAMBLING_CHANGES = false;     // Log gambling win/loss changes
 
@@ -46,6 +46,11 @@ window.Auth = {
         if (modalElement) {
             this.authModal = new bootstrap.Modal(modalElement);
         }
+
+        // Cross-tab session synchronization
+        window.addEventListener('storage', (e) => {
+            this.handleStorageChange(e);
+        });
     },
 
     // Check current authentication status
@@ -53,14 +58,16 @@ window.Auth = {
         try {
             // First check if we have a valid stored token
             const storedToken = this.getStoredToken();
+            console.log('[Auth Debug] checkAuthStatus - Stored Token:', storedToken ? 'Found' : 'Missing');
+
             if (!storedToken) {
-                console.log('No valid auth token found, setting guest mode');
-                this.handleUnauthenticated();
-                return;
+                console.log('[Auth Debug] No local token found, attempting server-side cookie check...');
             }
 
-            // Validate token with server
+            // Validate token or check cookie with server
+            console.log('[Auth Debug] Calling /api/auth/status...');
             const response = await App.api.get('/auth/status');
+            console.log('[Auth Debug] /api/auth/status response:', response);
 
             if (response.authenticated && response.user) {
                 console.log('User authenticated successfully:', response.user.username);
@@ -187,20 +194,22 @@ window.Auth = {
             await this.storeAuthToken(response.access_token, response.expires_in);
 
             // Set secure session cookie
-            document.cookie = `auth_token=${response.access_token}; path=/; max-age=${response.expires_in}; SameSite=Strict`;
+            document.cookie = `auth_token=${response.access_token}; path=/; max-age=${response.expires_in}; SameSite=Lax`;
 
             // Update state
             this.currentUser = response.user;
             this.isAuthenticated = true;
 
-            // Verify session is active
+            // Verify session is active - SKIP to rely on JWT
+            /*
             const sessionCheck = await fetch('/api/auth/check', {
                 credentials: 'include'
             });
-            
+
             if (!sessionCheck.ok) {
                 throw new Error('Session verification failed');
             }
+            */
 
             // Update global app state
             App.user = this.currentUser;
@@ -607,6 +616,120 @@ window.Auth = {
         console.log('Auth token cleared from storage');
     },
 
+    // Handle cross-tab session synchronization via localStorage events
+    handleStorageChange(event) {
+        // Only handle auth-related storage changes
+        if (event.key !== 'auth_token' && event.key !== 'auth_token_data') {
+            return;
+        }
+
+        console.log('[Cross-Tab Sync] Storage event detected:', event.key, 'Old:', event.oldValue, 'New:', event.newValue);
+
+        // Case 1: Token was removed (logout in another tab)
+        if (event.key === 'auth_token' && event.oldValue && !event.newValue) {
+            console.log('[Cross-Tab Sync] Logout detected in another tab');
+            this.syncLogoutFromOtherTab();
+            return;
+        }
+
+        // Case 2: Token was added or changed (login or token refresh in another tab)
+        if (event.key === 'auth_token' && event.newValue && event.oldValue !== event.newValue) {
+            console.log('[Cross-Tab Sync] Login/Token update detected in another tab');
+            this.syncLoginFromOtherTab();
+            return;
+        }
+
+        // Case 3: Token data was updated (token renewal in another tab)
+        if (event.key === 'auth_token_data' && event.newValue) {
+            console.log('[Cross-Tab Sync] Token data update detected in another tab');
+            // Restart token renewal monitor with new expiration time
+            this.startTokenRenewalMonitor();
+        }
+    },
+
+    // Synchronize logout from another tab
+    async syncLogoutFromOtherTab() {
+        try {
+            console.log('[Cross-Tab Sync] Synchronizing logout...');
+
+            // Update local state
+            this.currentUser = null;
+            this.isAuthenticated = false;
+
+            // Clear any timers
+            if (this._tokenRenewalTimer) {
+                clearTimeout(this._tokenRenewalTimer);
+                this._tokenRenewalTimer = null;
+            }
+            if (this._expiryWarningTimer) {
+                clearTimeout(this._expiryWarningTimer);
+                this._expiryWarningTimer = null;
+            }
+
+            // Update UI
+            this.handleUnauthenticated();
+
+            // Show notification
+            if (window.Toast) {
+                Toast.info('You have been logged out from another tab');
+            }
+
+            console.log('[Cross-Tab Sync] Logout synchronized successfully');
+        } catch (error) {
+            console.error('[Cross-Tab Sync] Error synchronizing logout:', error);
+        }
+    },
+
+    // Synchronize login from another tab
+    async syncLoginFromOtherTab() {
+        try {
+            console.log('[Cross-Tab Sync] Synchronizing login...');
+
+            // Validate the new token and fetch user data
+            const token = this.getStoredToken();
+            if (!token) {
+                console.warn('[Cross-Tab Sync] No valid token found during sync');
+                return;
+            }
+
+            // Fetch current auth status with the new token
+            const response = await App.api.get('/auth/status');
+
+            if (response.authenticated && response.user) {
+                console.log('[Cross-Tab Sync] User authenticated:', response.user.username);
+
+                // Update local state
+                this.currentUser = response.user;
+                this.isAuthenticated = true;
+
+                // Update global app state
+                App.user = this.currentUser;
+                App.isAuthenticated = this.isAuthenticated;
+                App.isGuest = false;
+
+                // Update UI
+                this.updateUserInterface();
+
+                // Start token renewal monitoring
+                this.startTokenRenewalMonitor();
+
+                // Show notification
+                if (window.Toast) {
+                    Toast.success(`Logged in as ${response.user.username} from another tab`);
+                }
+
+                console.log('[Cross-Tab Sync] Login synchronized successfully');
+            } else {
+                console.warn('[Cross-Tab Sync] Token validation failed during sync');
+                this.clearStoredToken();
+                this.handleUnauthenticated();
+            }
+        } catch (error) {
+            console.error('[Cross-Tab Sync] Error synchronizing login:', error);
+            this.handleUnauthenticated();
+        }
+    },
+
     // Enhanced authentication check with auto-refresh
     async validateAndRefreshToken() {
         const token = this.getStoredToken();
@@ -853,7 +976,7 @@ window.Auth = {
 };
 
 // Global utility function to trigger balance updates from anywhere
-window.updateBalanceGlobally = async function() {
+window.updateBalanceGlobally = async function () {
     if (window.Auth && typeof window.Auth.refreshBalanceGlobally === 'function') {
         return await window.Auth.refreshBalanceGlobally();
     }
@@ -861,7 +984,7 @@ window.updateBalanceGlobally = async function() {
 };
 
 // Direct balance update function for immediate UI updates (silent)
-window.updateNavbarBalance = function(newBalance) {
+window.updateNavbarBalance = function (newBalance) {
     // Silent operation for performance - no logging in production
     if (window.DEBUG_BALANCE_UPDATES) {
         console.log('💎 Direct navbar balance update:', newBalance);
@@ -880,7 +1003,7 @@ window.updateNavbarBalance = function(newBalance) {
 };
 
 // Gaming system balance sync (silent)
-window.syncGamingBalance = function() {
+window.syncGamingBalance = function () {
     // Update gaming page balance displays
     const gamingBalanceElements = [
         document.getElementById('gaming-balance'),
@@ -902,7 +1025,7 @@ window.syncGamingBalance = function() {
 };
 
 // Test function to manually trigger balance updates (for debugging)
-window.testBalanceUpdate = async function() {
+window.testBalanceUpdate = async function () {
     console.log('🧪 Testing balance update...');
     console.log('Auth.isAuthenticated:', window.Auth?.isAuthenticated);
     console.log('Auth.currentUser:', window.Auth?.currentUser);
@@ -914,7 +1037,7 @@ window.testBalanceUpdate = async function() {
 };
 
 // Balance animation state and controls
-Auth.animateNavbarBalance = function(change, isPositive) {
+Auth.animateNavbarBalance = function (change, isPositive) {
     console.log(`🎨 Animating navbar balance: ${change > 0 ? '+' : ''}${change} GEM`);
 
     // Find the balance element in navbar
@@ -953,7 +1076,7 @@ Auth.animateNavbarBalance = function(change, isPositive) {
 };
 
 // Force update of gaming page balance displays
-Auth.updateGamingBalanceDisplays = function(newBalance) {
+Auth.updateGamingBalanceDisplays = function (newBalance) {
     console.log('🎮 Updating gaming page balance displays:', newBalance);
 
     // Update all gaming page balance elements
