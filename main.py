@@ -293,6 +293,11 @@ async def crypto_market_page(request: Request):
         {"request": request}
     )
 
+@app.get("/showcase", response_class=HTMLResponse)
+async def showcase(request: Request):
+    """LinkedIn showcase landing page - project portfolio."""
+    return templates.TemplateResponse("showcase.html", {"request": request})
+
 @app.get("/gaming/roulette", response_class=HTMLResponse)
 async def gaming_roulette(request: Request):
     """Direct route to roulette gaming page."""

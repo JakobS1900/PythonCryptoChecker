@@ -1,0 +1,685 @@
+{% extends "base.html" %}
+
+{% block title %}CryptoChecker v3 - Project Showcase{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Hero Section */
+    .hero-section {
+        background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 50%, rgba(99, 102, 241, 0.1) 100%);
+        padding: 100px 0 80px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -25%;
+        width: 800px;
+        height: 800px;
+        background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
+        border-radius: 50%;
+        pointer-events: none;
+    }
+
+    .hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(99, 102, 241, 0.1);
+        border: 1px solid rgba(99, 102, 241, 0.3);
+        padding: 8px 16px;
+        border-radius: var(--radius-full);
+        font-size: var(--text-sm);
+        color: var(--primary);
+        margin-bottom: 24px;
+    }
+
+    .hero-title {
+        font-size: clamp(2.5rem, 5vw, 4rem);
+        font-weight: 800;
+        line-height: 1.1;
+        margin-bottom: 24px;
+        background: linear-gradient(135deg, var(--text-primary) 0%, var(--primary) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .hero-subtitle {
+        font-size: var(--text-xl);
+        color: var(--text-muted);
+        max-width: 600px;
+        margin-bottom: 32px;
+        line-height: 1.6;
+    }
+
+    .hero-buttons {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    .btn-hero {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 14px 28px;
+        border-radius: var(--radius-lg);
+        font-weight: 600;
+        font-size: var(--text-base);
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+
+    .btn-hero-primary {
+        background: var(--primary);
+        color: white;
+        box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+    }
+
+    .btn-hero-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+        color: white;
+    }
+
+    .btn-hero-secondary {
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        border: 1px solid var(--border-subtle);
+    }
+
+    .btn-hero-secondary:hover {
+        background: var(--bg-secondary);
+        border-color: var(--primary);
+        color: var(--text-primary);
+    }
+
+    /* Tech Stack */
+    .tech-stack {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 48px;
+    }
+
+    .tech-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-subtle);
+        padding: 8px 14px;
+        border-radius: var(--radius-md);
+        font-size: var(--text-sm);
+        color: var(--text-secondary);
+    }
+
+    .tech-badge i {
+        color: var(--primary);
+    }
+
+    /* Feature Cards */
+    .feature-section {
+        padding: 80px 0;
+    }
+
+    .section-header {
+        text-align: center;
+        margin-bottom: 60px;
+    }
+
+    .section-title {
+        font-size: var(--text-3xl);
+        font-weight: 700;
+        margin-bottom: 16px;
+        color: var(--text-primary);
+    }
+
+    .section-subtitle {
+        font-size: var(--text-lg);
+        color: var(--text-muted);
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .feature-card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-xl);
+        padding: 32px;
+        height: 100%;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .feature-card:hover {
+        border-color: var(--primary);
+        transform: translateY(-4px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    .feature-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: var(--radius-lg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        margin-bottom: 20px;
+    }
+
+    .feature-icon.crypto {
+        background: linear-gradient(135deg, #F7931A 0%, #FFB347 100%);
+        color: white;
+    }
+
+    .feature-icon.gaming {
+        background: linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%);
+        color: white;
+    }
+
+    .feature-icon.trading {
+        background: linear-gradient(135deg, #10B981 0%, #34D399 100%);
+        color: white;
+    }
+
+    .feature-icon.realtime {
+        background: linear-gradient(135deg, #3B82F6 0%, #60A5FA 100%);
+        color: white;
+    }
+
+    .feature-icon.auth {
+        background: linear-gradient(135deg, #EF4444 0%, #F87171 100%);
+        color: white;
+    }
+
+    .feature-icon.stocks {
+        background: linear-gradient(135deg, #06B6D4 0%, #22D3EE 100%);
+        color: white;
+    }
+
+    .feature-title {
+        font-size: var(--text-xl);
+        font-weight: 600;
+        margin-bottom: 12px;
+        color: var(--text-primary);
+    }
+
+    .feature-desc {
+        color: var(--text-muted);
+        font-size: var(--text-sm);
+        line-height: 1.6;
+    }
+
+    /* Stats Section */
+    .stats-section {
+        background: var(--bg-secondary);
+        padding: 60px 0;
+        border-top: 1px solid var(--border-subtle);
+        border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .stat-item {
+        text-align: center;
+    }
+
+    .stat-value {
+        font-size: var(--text-4xl);
+        font-weight: 800;
+        color: var(--primary);
+        margin-bottom: 8px;
+    }
+
+    .stat-label {
+        font-size: var(--text-sm);
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    /* Architecture Section */
+    .architecture-section {
+        padding: 80px 0;
+        background: var(--bg-primary);
+    }
+
+    .arch-card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-lg);
+        padding: 24px;
+        margin-bottom: 16px;
+    }
+
+    .arch-layer {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .arch-layer:last-child {
+        border-bottom: none;
+    }
+
+    .arch-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: var(--radius-md);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        background: rgba(99, 102, 241, 0.1);
+        color: var(--primary);
+    }
+
+    .arch-name {
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .arch-tech {
+        font-size: var(--text-sm);
+        color: var(--text-muted);
+    }
+
+    /* CTA Section */
+    .cta-section {
+        padding: 80px 0;
+        text-align: center;
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, var(--bg-primary) 100%);
+    }
+
+    .cta-title {
+        font-size: var(--text-3xl);
+        font-weight: 700;
+        margin-bottom: 16px;
+        color: var(--text-primary);
+    }
+
+    .cta-desc {
+        font-size: var(--text-lg);
+        color: var(--text-muted);
+        margin-bottom: 32px;
+        max-width: 500px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    /* Footer override */
+    .showcase-footer {
+        background: var(--bg-secondary);
+        border-top: 1px solid var(--border-subtle);
+        padding: 40px 0;
+        text-align: center;
+    }
+
+    .footer-credits {
+        color: var(--text-muted);
+        font-size: var(--text-sm);
+    }
+
+    .footer-credits a {
+        color: var(--primary);
+        text-decoration: none;
+    }
+
+    /* Animations */
+    @keyframes float {
+
+        0%,
+        100% {
+            transform: translateY(0);
+        }
+
+        50% {
+            transform: translateY(-10px);
+        }
+    }
+
+    .float-animation {
+        animation: float 6s ease-in-out infinite;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-7">
+                <div class="hero-badge">
+                    <i class="bi bi-lightning-charge-fill"></i>
+                    Full-Stack Project Showcase
+                </div>
+                <h1 class="hero-title">CryptoChecker v3</h1>
+                <p class="hero-subtitle">
+                    A real-time cryptocurrency tracking platform with integrated gaming,
+                    stock trading simulation, and portfolio management. Built with modern
+                    async Python architecture.
+                </p>
+                <div class="hero-buttons">
+                    <a href="/" class="btn-hero btn-hero-primary">
+                        <i class="bi bi-play-fill"></i>
+                        Explore Demo
+                    </a>
+                    <a href="https://www.github.com/jakobs1900/pythoncryptochecker" class="btn-hero btn-hero-secondary"
+                        target="_blank">
+                        <i class="bi bi-github"></i>
+                        View Source
+                    </a>
+                </div>
+
+                <div class="tech-stack">
+                    <div class="tech-badge"><i class="bi bi-braces"></i> Python 3.9+</div>
+                    <div class="tech-badge"><i class="bi bi-lightning"></i> FastAPI</div>
+                    <div class="tech-badge"><i class="bi bi-broadcast"></i> WebSockets</div>
+                    <div class="tech-badge"><i class="bi bi-database"></i> SQLAlchemy</div>
+                    <div class="tech-badge"><i class="bi bi-bootstrap"></i> Bootstrap 5</div>
+                    <div class="tech-badge"><i class="bi bi-filetype-js"></i> Vanilla JS</div>
+                </div>
+            </div>
+            <div class="col-lg-5 d-none d-lg-block">
+                <div class="text-center float-animation">
+                    <i class="bi bi-currency-bitcoin"
+                        style="font-size: 200px; color: var(--primary); opacity: 0.3;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Section -->
+<section class="stats-section">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-md-3 col-6">
+                <div class="stat-item">
+                    <div class="stat-value">50+</div>
+                    <div class="stat-label">API Endpoints</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-item">
+                    <div class="stat-value">7</div>
+                    <div class="stat-label">Core Features</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-item">
+                    <div class="stat-value">100%</div>
+                    <div class="stat-label">Async</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-item">
+                    <div class="stat-value">Live</div>
+                    <div class="stat-label">Real-Time Data</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="feature-section">
+    <div class="container">
+        <div class="section-header">
+            <h2 class="section-title">Key Features</h2>
+            <p class="section-subtitle">
+                A comprehensive platform showcasing modern full-stack development practices
+            </p>
+        </div>
+
+        <div class="row g-4">
+            <!-- Feature 1: Crypto Tracking -->
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card">
+                    <div class="feature-icon crypto">
+                        <i class="bi bi-currency-bitcoin"></i>
+                    </div>
+                    <h3 class="feature-title">Real-Time Crypto Tracking</h3>
+                    <p class="feature-desc">
+                        Live cryptocurrency price feeds from CoinGecko API with automatic
+                        updates, price alerts, and historical data visualization.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Feature 2: Gaming -->
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card">
+                    <div class="feature-icon gaming">
+                        <i class="bi bi-rocket-takeoff"></i>
+                    </div>
+                    <h3 class="feature-title">Multiplayer Crash Game</h3>
+                    <p class="feature-desc">
+                        Server-authoritative WebSocket game with real-time multiplier curve,
+                        live betting, and instant cashout - all running on async Python.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Feature 3: Trading -->
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card">
+                    <div class="feature-icon trading">
+                        <i class="bi bi-graph-up-arrow"></i>
+                    </div>
+                    <h3 class="feature-title">Stock Trading Simulation</h3>
+                    <p class="feature-desc">
+                        Buy and sell real stocks using virtual GEM currency. Complete with
+                        portfolio tracking, P/L calculations, and transaction history.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Feature 4: Real-Time -->
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card">
+                    <div class="feature-icon realtime">
+                        <i class="bi bi-broadcast"></i>
+                    </div>
+                    <h3 class="feature-title">WebSocket Architecture</h3>
+                    <p class="feature-desc">
+                        Bi-directional real-time communication for live game state, price
+                        updates, and instant notifications without page reloads.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Feature 5: Auth -->
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card">
+                    <div class="feature-icon auth">
+                        <i class="bi bi-shield-lock"></i>
+                    </div>
+                    <h3 class="feature-title">JWT Authentication</h3>
+                    <p class="feature-desc">
+                        Secure token-based authentication with session persistence,
+                        password hashing, and protected API endpoints.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Feature 6: Crypto Trading -->
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card">
+                    <div class="feature-icon stocks">
+                        <i class="bi bi-coin"></i>
+                    </div>
+                    <h3 class="feature-title">Crypto Trading</h3>
+                    <p class="feature-desc">
+                        Buy and sell cryptocurrencies with GEM currency. Real-time quotes,
+                        4% trading fees, and complete P/L tracking.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Architecture Section -->
+<section class="architecture-section">
+    <div class="container">
+        <div class="section-header">
+            <h2 class="section-title">Technical Architecture</h2>
+            <p class="section-subtitle">
+                Clean, modular design with separation of concerns
+            </p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-6">
+                <div class="arch-card">
+                    <h5 class="mb-4" style="color: var(--text-primary);"><i class="bi bi-layers me-2"></i>Backend Stack
+                    </h5>
+
+                    <div class="arch-layer">
+                        <div class="arch-icon"><i class="bi bi-lightning"></i></div>
+                        <div>
+                            <div class="arch-name">FastAPI Framework</div>
+                            <div class="arch-tech">Async/await, automatic OpenAPI docs</div>
+                        </div>
+                    </div>
+
+                    <div class="arch-layer">
+                        <div class="arch-icon"><i class="bi bi-database"></i></div>
+                        <div>
+                            <div class="arch-name">SQLAlchemy ORM</div>
+                            <div class="arch-tech">Async support, PostgreSQL-ready</div>
+                        </div>
+                    </div>
+
+                    <div class="arch-layer">
+                        <div class="arch-icon"><i class="bi bi-broadcast"></i></div>
+                        <div>
+                            <div class="arch-name">WebSocket Manager</div>
+                            <div class="arch-tech">Real-time game loops, connection pooling</div>
+                        </div>
+                    </div>
+
+                    <div class="arch-layer">
+                        <div class="arch-icon"><i class="bi bi-gear"></i></div>
+                        <div>
+                            <div class="arch-name">Service Layer</div>
+                            <div class="arch-tech">Business logic isolation, testability</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="arch-card">
+                    <h5 class="mb-4" style="color: var(--text-primary);"><i class="bi bi-window me-2"></i>Frontend Stack
+                    </h5>
+
+                    <div class="arch-layer">
+                        <div class="arch-icon"><i class="bi bi-filetype-html"></i></div>
+                        <div>
+                            <div class="arch-name">Jinja2 Templates</div>
+                            <div class="arch-tech">Server-side rendering, component includes</div>
+                        </div>
+                    </div>
+
+                    <div class="arch-layer">
+                        <div class="arch-icon"><i class="bi bi-bootstrap"></i></div>
+                        <div>
+                            <div class="arch-name">Bootstrap 5 + Custom CSS</div>
+                            <div class="arch-tech">Dark mode, CSS variables design system</div>
+                        </div>
+                    </div>
+
+                    <div class="arch-layer">
+                        <div class="arch-icon"><i class="bi bi-filetype-js"></i></div>
+                        <div>
+                            <div class="arch-name">Vanilla JavaScript</div>
+                            <div class="arch-tech">No frameworks, ES6+ modules</div>
+                        </div>
+                    </div>
+
+                    <div class="arch-layer">
+                        <div class="arch-icon"><i class="bi bi-wifi"></i></div>
+                        <div>
+                            <div class="arch-name">WebSocket Client</div>
+                            <div class="arch-tech">Auto-reconnect, state synchronization</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section">
+    <div class="container">
+        <h2 class="cta-title">Ready to Explore?</h2>
+        <p class="cta-desc">
+            Jump into the demo and experience the platform in action.
+        </p>
+        <div class="d-flex gap-3 justify-content-center flex-wrap">
+            <a href="/gaming" class="btn-hero btn-hero-primary">
+                <i class="bi bi-dice-5-fill"></i>
+                Try Roulette
+            </a>
+            <a href="/crash" class="btn-hero btn-hero-secondary">
+                <i class="bi bi-rocket-takeoff"></i>
+                Play Crash Game
+            </a>
+            <a href="/stocks" class="btn-hero btn-hero-secondary">
+                <i class="bi bi-graph-up"></i>
+                Trade Stocks
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Showcase Footer -->
+<section class="showcase-footer">
+    <div class="container">
+        <div class="footer-credits">
+            <p class="mb-2">
+                <strong>CryptoChecker v3</strong> — Built with ❤️ using Python & FastAPI
+            </p>
+            <p class="mb-0">
+                <a href="https://www.linkedin.com/in/jakob-stanfield-65a4b85a/" target="_blank">
+                    <i class="bi bi-linkedin"></i> Connect on LinkedIn
+                </a>
+            </p>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Simple scroll animation
+    document.addEventListener('DOMContentLoaded', function () {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.feature-card, .arch-card').forEach(card => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            card.style.transition = 'all 0.6s ease';
+            observer.observe(card);
+        });
+    });
+</script>
+{% endblock %}
