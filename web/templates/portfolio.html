@@ -6,10 +6,12 @@
 <!-- Portfolio Header -->
 <div class="row mb-4">
     <div class="col-12">
-        <div class="card-modern" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.05) 100%); border-color: var(--success); padding: var(--space-8);">
+        <div class="card-modern"
+            style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.05) 100%); border-color: var(--success); padding: var(--space-8);">
             <div class="row align-items-center">
                 <div class="col-md-8">
-                    <h1 style="font-size: var(--text-4xl); font-weight: var(--font-bold); color: var(--text-primary); margin-bottom: var(--space-3);">
+                    <h1
+                        style="font-size: var(--text-4xl); font-weight: var(--font-bold); color: var(--text-primary); margin-bottom: var(--space-3);">
                         <i class="bi bi-wallet2" style="color: var(--success);"></i>
                         My Portfolio
                     </h1>
@@ -19,10 +21,12 @@
                 </div>
                 <div class="col-md-4 text-md-end">
                     <div class="d-flex flex-column align-items-md-end gap-2">
-                        <div class="badge-modern badge-modern-gem" style="font-size: var(--text-base); padding: var(--space-2) var(--space-4);">
+                        <div class="badge-modern badge-modern-gem"
+                            style="font-size: var(--text-base); padding: var(--space-2) var(--space-4);">
                             <i class="bi bi-gem"></i> <span id="portfolio-balance">Loading...</span> GEM
                         </div>
-                        <div class="badge-modern badge-modern-success" style="font-size: var(--text-sm); padding: var(--space-2) var(--space-4);">
+                        <div class="badge-modern badge-modern-success"
+                            style="font-size: var(--text-sm); padding: var(--space-2) var(--space-4);">
                             ≈ $<span id="portfolio-balance-usd">0.00</span> USD
                         </div>
                     </div>
@@ -41,7 +45,8 @@
             </div>
             <div class="stat-value" id="current-balance">Loading...</div>
             <div class="stat-label">Current Balance</div>
-            <small class="text-muted" style="display: block; margin-top: var(--space-2); font-size: var(--text-xs);">GEM Coins</small>
+            <small class="text-muted" style="display: block; margin-top: var(--space-2); font-size: var(--text-xs);">GEM
+                Coins</small>
         </div>
     </div>
     <div class="col-md-3 mb-3">
@@ -51,7 +56,8 @@
             </div>
             <div class="stat-value" id="total-earned">0</div>
             <div class="stat-label">Total Earned</div>
-            <small class="text-muted" style="display: block; margin-top: var(--space-2); font-size: var(--text-xs);">From gaming</small>
+            <small class="text-muted"
+                style="display: block; margin-top: var(--space-2); font-size: var(--text-xs);">From gaming</small>
         </div>
     </div>
     <div class="col-md-3 mb-3">
@@ -61,7 +67,8 @@
             </div>
             <div class="stat-value" id="games-played">0</div>
             <div class="stat-label">Games Played</div>
-            <small class="text-muted" style="display: block; margin-top: var(--space-2); font-size: var(--text-xs);">Roulette rounds</small>
+            <small class="text-muted"
+                style="display: block; margin-top: var(--space-2); font-size: var(--text-xs);">Roulette rounds</small>
         </div>
     </div>
     <div class="col-md-3 mb-3">
@@ -71,7 +78,8 @@
             </div>
             <div class="stat-value" id="win-rate">0%</div>
             <div class="stat-label">Win Rate</div>
-            <small class="text-muted" style="display: block; margin-top: var(--space-2); font-size: var(--text-xs);">Success rate</small>
+            <small class="text-muted"
+                style="display: block; margin-top: var(--space-2); font-size: var(--text-xs);">Success rate</small>
         </div>
     </div>
 </div>
@@ -80,20 +88,32 @@
 <div class="row">
     <div class="col-12">
         <div class="card-modern" style="padding: 0; overflow: hidden;">
-            <ul class="nav nav-tabs" id="portfolioTabs" role="tablist" style="background: var(--bg-tertiary); border-bottom: 1px solid var(--border-subtle); margin: 0; padding: var(--space-2) var(--space-6);">
+            <ul class="nav nav-tabs" id="portfolioTabs" role="tablist"
+                style="background: var(--bg-tertiary); border-bottom: 1px solid var(--border-subtle); margin: 0; padding: var(--space-2) var(--space-6);">
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="balance-tab" data-bs-toggle="tab" data-bs-target="#balance" type="button" style="border: none; background: rgba(99, 102, 241, 0.1); color: var(--primary); border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); font-weight: var(--font-medium);">
+                    <button class="nav-link active" id="balance-tab" data-bs-toggle="tab" data-bs-target="#balance"
+                        type="button"
+                        style="border: none; background: rgba(99, 102, 241, 0.1); color: var(--primary); border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); font-weight: var(--font-medium);">
                         <i class="bi bi-wallet2"></i> Balance Details
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="transactions-tab" data-bs-toggle="tab" data-bs-target="#transactions" type="button" style="border: none; background: transparent; color: var(--text-secondary); border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); font-weight: var(--font-medium);">
+                    <button class="nav-link" id="transactions-tab" data-bs-toggle="tab" data-bs-target="#transactions"
+                        type="button"
+                        style="border: none; background: transparent; color: var(--text-secondary); border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); font-weight: var(--font-medium);">
                         <i class="bi bi-list-ul"></i> Transaction History
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="gaming-tab" data-bs-toggle="tab" data-bs-target="#gaming" type="button" style="border: none; background: transparent; color: var(--text-secondary); border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); font-weight: var(--font-medium);">
+                    <button class="nav-link" id="gaming-tab" data-bs-toggle="tab" data-bs-target="#gaming" type="button"
+                        style="border: none; background: transparent; color: var(--text-secondary); border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); font-weight: var(--font-medium);">
                         <i class="bi bi-dice-5-fill"></i> Gaming Stats
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="stocks-tab" data-bs-toggle="tab" data-bs-target="#stocks" type="button"
+                        style="border: none; background: transparent; color: var(--text-secondary); border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); font-weight: var(--font-medium);">
+                        <i class="bi bi-graph-up-arrow"></i> Stock Holdings
                     </button>
                 </li>
             </ul>
@@ -112,17 +132,24 @@
                                 <div class="form-group-modern">
                                     <label class="form-label-modern">Current GEM Balance</label>
                                     <div class="input-group" style="display: flex; gap: 0;">
-                                        <span class="input-group-text" style="background: var(--bg-tertiary); border: 1px solid var(--border-subtle); border-right: none; border-radius: var(--radius-md) 0 0 var(--radius-md); color: var(--text-secondary); padding: var(--space-3) var(--space-4);"><i class="bi bi-gem"></i></span>
-                                        <input type="text" class="form-control-modern" id="balance-display" readonly style="border-radius: 0; border-left: none; border-right: none;">
-                                        <span class="input-group-text" style="background: var(--bg-tertiary); border: 1px solid var(--border-subtle); border-left: none; border-radius: 0 var(--radius-md) var(--radius-md) 0; color: var(--text-secondary); padding: var(--space-3) var(--space-4);">GEM</span>
+                                        <span class="input-group-text"
+                                            style="background: var(--bg-tertiary); border: 1px solid var(--border-subtle); border-right: none; border-radius: var(--radius-md) 0 0 var(--radius-md); color: var(--text-secondary); padding: var(--space-3) var(--space-4);"><i
+                                                class="bi bi-gem"></i></span>
+                                        <input type="text" class="form-control-modern" id="balance-display" readonly
+                                            style="border-radius: 0; border-left: none; border-right: none;">
+                                        <span class="input-group-text"
+                                            style="background: var(--bg-tertiary); border: 1px solid var(--border-subtle); border-left: none; border-radius: 0 var(--radius-md) var(--radius-md) 0; color: var(--text-secondary); padding: var(--space-3) var(--space-4);">GEM</span>
                                     </div>
                                 </div>
                                 <div class="form-group-modern">
                                     <label class="form-label-modern">USD Equivalent</label>
                                     <div class="input-group" style="display: flex; gap: 0;">
-                                        <span class="input-group-text" style="background: var(--bg-tertiary); border: 1px solid var(--border-subtle); border-right: none; border-radius: var(--radius-md) 0 0 var(--radius-md); color: var(--text-secondary); padding: var(--space-3) var(--space-4);">$</span>
-                                        <input type="text" class="form-control-modern" id="balance-usd-display" readonly style="border-radius: 0; border-left: none; border-right: none;">
-                                        <span class="input-group-text" style="background: var(--bg-tertiary); border: 1px solid var(--border-subtle); border-left: none; border-radius: 0 var(--radius-md) var(--radius-md) 0; color: var(--text-secondary); padding: var(--space-3) var(--space-4);">USD</span>
+                                        <span class="input-group-text"
+                                            style="background: var(--bg-tertiary); border: 1px solid var(--border-subtle); border-right: none; border-radius: var(--radius-md) 0 0 var(--radius-md); color: var(--text-secondary); padding: var(--space-3) var(--space-4);">$</span>
+                                        <input type="text" class="form-control-modern" id="balance-usd-display" readonly
+                                            style="border-radius: 0; border-left: none; border-right: none;">
+                                        <span class="input-group-text"
+                                            style="background: var(--bg-tertiary); border: 1px solid var(--border-subtle); border-left: none; border-radius: 0 var(--radius-md) var(--radius-md) 0; color: var(--text-secondary); padding: var(--space-3) var(--space-4);">USD</span>
                                     </div>
                                 </div>
                             </div>
@@ -134,7 +161,8 @@
                                     <div class="alert-modern-content">
                                         <div class="alert-modern-title">About GEM Coins</div>
                                         <div class="alert-modern-message">
-                                            <p style="margin-bottom: var(--space-2);">GEM is the virtual currency used throughout CryptoChecker:</p>
+                                            <p style="margin-bottom: var(--space-2);">GEM is the virtual currency used
+                                                throughout CryptoChecker:</p>
                                             <ul style="margin: 0; padding-left: var(--space-5);">
                                                 <li>1,000 GEM ≈ $10 USD (reference value)</li>
                                                 <li>Use GEM for crypto roulette gaming</li>
@@ -150,7 +178,9 @@
                         <!-- Quick Actions -->
                         <div class="row mt-4">
                             <div class="col-12">
-                                <h6 style="margin-bottom: var(--space-3); color: var(--text-secondary); font-weight: var(--font-semibold);">Quick Actions</h6>
+                                <h6
+                                    style="margin-bottom: var(--space-3); color: var(--text-secondary); font-weight: var(--font-semibold);">
+                                    Quick Actions</h6>
                                 <div class="d-flex gap-2 flex-wrap">
                                     <a href="/gaming" class="btn-modern btn-modern-primary">
                                         <i class="bi bi-dice-5"></i> Play Roulette
@@ -170,11 +200,13 @@
 
             <!-- Transaction History Tab -->
             <div class="tab-pane fade" id="transactions" role="tabpanel">
-                <div class="card-modern-header" style="padding: var(--space-6); display: flex; justify-content: space-between; align-items: center;">
+                <div class="card-modern-header"
+                    style="padding: var(--space-6); display: flex; justify-content: space-between; align-items: center;">
                     <h5 class="card-modern-title" style="margin: 0;">
                         <i class="bi bi-list-ul"></i> Transaction History
                     </h5>
-                    <button class="btn-modern btn-modern-outline btn-modern-sm" onclick="Portfolio.refreshTransactions()">
+                    <button class="btn-modern btn-modern-outline btn-modern-sm"
+                        onclick="Portfolio.refreshTransactions()">
                         <i class="bi bi-arrow-clockwise"></i> Refresh
                     </button>
                 </div>
@@ -195,7 +227,8 @@
                                 <tr>
                                     <td colspan="6" class="text-center py-4">
                                         <div class="spinner-border spinner-border-sm" role="status"></div>
-                                        <span style="color: var(--text-muted); margin-left: var(--space-2);">Loading transactions...</span>
+                                        <span style="color: var(--text-muted); margin-left: var(--space-2);">Loading
+                                            transactions...</span>
                                     </td>
                                 </tr>
                             </tbody>
@@ -214,79 +247,178 @@
                 <div style="padding: var(--space-6);">
                     <div class="row">
                         <div class="col-md-6">
-                            <h6 style="margin-bottom: var(--space-4); color: var(--text-secondary); font-weight: var(--font-semibold);">Roulette Performance</h6>
-                                <div class="mb-3">
-                                    <div class="d-flex justify-content-between">
-                                        <span>Games Won</span>
-                                        <span class="text-success" id="games-won-count">0</span>
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <div class="d-flex justify-content-between">
-                                        <span>Games Lost</span>
-                                        <span class="text-danger" id="games-lost-count">0</span>
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <div class="d-flex justify-content-between">
-                                        <span>Total Games</span>
-                                        <span class="text-primary" id="total-games-count">0</span>
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <div class="d-flex justify-content-between">
-                                        <span>Win Rate</span>
-                                        <span class="fw-bold" id="win-rate-percentage">0%</span>
-                                    </div>
+                            <h6
+                                style="margin-bottom: var(--space-4); color: var(--text-secondary); font-weight: var(--font-semibold);">
+                                Roulette Performance</h6>
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between">
+                                    <span>Games Won</span>
+                                    <span class="text-success" id="games-won-count">0</span>
                                 </div>
                             </div>
-                            <div class="col-md-6">
-                                <h6 style="margin-bottom: var(--space-4); color: var(--text-secondary); font-weight: var(--font-semibold);">Financial Summary</h6>
-                                <div class="mb-3">
-                                    <div class="d-flex justify-content-between">
-                                        <span>Total Wagered</span>
-                                        <span id="total-wagered">0 GEM</span>
-                                    </div>
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between">
+                                    <span>Games Lost</span>
+                                    <span class="text-danger" id="games-lost-count">0</span>
                                 </div>
-                                <div class="mb-3">
-                                    <div class="d-flex justify-content-between">
-                                        <span>Total Won</span>
-                                        <span class="text-success" id="total-won">0 GEM</span>
-                                    </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between">
+                                    <span>Total Games</span>
+                                    <span class="text-primary" id="total-games-count">0</span>
                                 </div>
-                                <div class="mb-3">
-                                    <div class="d-flex justify-content-between">
-                                        <span>Net Gaming Result</span>
-                                        <span id="net-gaming-result" class="fw-bold">0 GEM</span>
-                                    </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between">
+                                    <span>Win Rate</span>
+                                    <span class="fw-bold" id="win-rate-percentage">0%</span>
                                 </div>
                             </div>
                         </div>
-
-                        <!-- Gaming Tips -->
-                        <div class="mt-4">
-                            <div class="alert-modern alert-modern-info">
-                                <div class="alert-modern-icon">
-                                    <i class="bi bi-lightbulb"></i>
+                        <div class="col-md-6">
+                            <h6
+                                style="margin-bottom: var(--space-4); color: var(--text-secondary); font-weight: var(--font-semibold);">
+                                Financial Summary</h6>
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between">
+                                    <span>Total Wagered</span>
+                                    <span id="total-wagered">0 GEM</span>
                                 </div>
-                                <div class="alert-modern-content">
-                                    <div class="alert-modern-title">Gaming Tips</div>
-                                    <div class="alert-modern-message">
-                                        <ul style="margin: 0; padding-left: var(--space-5);">
-                                            <li>Start with smaller bets to learn the game mechanics</li>
-                                            <li>Set a budget and stick to it for responsible gaming</li>
-                                            <li>Remember that all games are provably fair and based on chance</li>
-                                            <li>Track your performance to understand your gaming patterns</li>
-                                        </ul>
-                                    </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between">
+                                    <span>Total Won</span>
+                                    <span class="text-success" id="total-won">0 GEM</span>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between">
+                                    <span>Net Gaming Result</span>
+                                    <span id="net-gaming-result" class="fw-bold">0 GEM</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Gaming Tips -->
+                    <div class="mt-4">
+                        <div class="alert-modern alert-modern-info">
+                            <div class="alert-modern-icon">
+                                <i class="bi bi-lightbulb"></i>
+                            </div>
+                            <div class="alert-modern-content">
+                                <div class="alert-modern-title">Gaming Tips</div>
+                                <div class="alert-modern-message">
+                                    <ul style="margin: 0; padding-left: var(--space-5);">
+                                        <li>Start with smaller bets to learn the game mechanics</li>
+                                        <li>Set a budget and stick to it for responsible gaming</li>
+                                        <li>Remember that all games are provably fair and based on chance</li>
+                                        <li>Track your performance to understand your gaming patterns</li>
+                                    </ul>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <!-- Stock Holdings Tab -->
+            <div class="tab-pane fade" id="stocks" role="tabpanel">
+                <div class="card-modern-header"
+                    style="padding: var(--space-6); display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h5 class="card-modern-title" style="margin: 0;">
+                            <i class="bi bi-graph-up-arrow"></i> Stock Holdings
+                        </h5>
+                        <small style="color: var(--text-muted);">Your stock positions and P/L</small>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="/stocks" class="btn-modern btn-modern-primary btn-modern-sm">
+                            <i class="bi bi-plus-circle"></i> Buy More Stocks
+                        </a>
+                        <button class="btn-modern btn-modern-outline btn-modern-sm"
+                            onclick="Portfolio.refreshStockHoldings()">
+                            <i class="bi bi-arrow-clockwise"></i> Refresh
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Stock Portfolio Summary -->
+                <div
+                    style="padding: var(--space-4) var(--space-6); background: var(--bg-tertiary); border-bottom: 1px solid var(--border-subtle);">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <small style="color: var(--text-muted);">Total Stock Value</small>
+                            <div
+                                style="font-size: var(--text-xl); font-weight: var(--font-bold); color: var(--text-primary);">
+                                <span id="stock-total-value">0</span> GEM
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <small style="color: var(--text-muted);">Total P/L</small>
+                            <div style="font-size: var(--text-xl); font-weight: var(--font-bold);"
+                                id="stock-total-pl-container">
+                                <span id="stock-total-pl">0</span> GEM
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <small style="color: var(--text-muted);">P/L %</small>
+                            <div style="font-size: var(--text-xl); font-weight: var(--font-bold);"
+                                id="stock-pl-pct-container">
+                                <span id="stock-pl-pct">0</span>%
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <small style="color: var(--text-muted);">Positions</small>
+                            <div
+                                style="font-size: var(--text-xl); font-weight: var(--font-bold); color: var(--text-primary);">
+                                <span id="stock-positions-count">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Holdings Table -->
+                <div style="padding: 0;">
+                    <div class="table-responsive">
+                        <table class="table-modern">
+                            <thead>
+                                <tr>
+                                    <th>Stock</th>
+                                    <th class="text-end">Shares</th>
+                                    <th class="text-end">Avg Buy Price</th>
+                                    <th class="text-end">Current Price</th>
+                                    <th class="text-end">Market Value</th>
+                                    <th class="text-end">P/L</th>
+                                    <th class="text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="stock-holdings-table-body">
+                                <tr>
+                                    <td colspan="7" class="text-center py-4">
+                                        <div class="spinner-border spinner-border-sm" role="status"></div>
+                                        <span style="color: var(--text-muted); margin-left: var(--space-2);">Loading
+                                            stock holdings...</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Empty State (hidden by default) -->
+                <div id="stock-empty-state" style="display: none; padding: var(--space-8); text-align: center;">
+                    <i class="bi bi-graph-up-arrow" style="font-size: 3rem; color: var(--text-muted);"></i>
+                    <h5 style="color: var(--text-primary); margin-top: var(--space-4);">No Stock Holdings Yet</h5>
+                    <p style="color: var(--text-muted);">Visit the Stock Market to buy your first stocks!</p>
+                    <a href="/stocks" class="btn-modern btn-modern-primary">
+                        <i class="bi bi-shop"></i> Browse Stocks
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
+</div>
 </div>
 
 <!-- Guest Mode Notice -->
@@ -297,7 +429,8 @@
     <div class="alert-modern-content">
         <div class="alert-modern-title">Guest Mode Limitations</div>
         <div class="alert-modern-message">
-            <p style="margin-bottom: var(--space-2);">You're currently using CryptoChecker in guest mode. Some portfolio features are limited:</p>
+            <p style="margin-bottom: var(--space-2);">You're currently using CryptoChecker in guest mode. Some portfolio
+                features are limited:</p>
             <ul style="margin-bottom: var(--space-3); padding-left: var(--space-5);">
                 <li>Balance and transactions are temporary and not saved</li>
                 <li>No persistent transaction history</li>

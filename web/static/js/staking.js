@@ -94,13 +94,13 @@ class StakingManager {
 
         plans.forEach(plan => {
             const borderColor = plan.popular ? 'var(--primary)' :
-                              plan.best_value ? 'var(--success)' :
-                              'var(--border)';
+                plan.best_value ? 'var(--success)' :
+                    'var(--border)';
 
             const badgeColor = plan.color === 'gem' ? 'var(--gem)' :
-                             plan.color === 'primary' ? 'var(--primary)' :
-                             plan.color === 'success' ? 'var(--success)' :
-                             'var(--secondary)';
+                plan.color === 'primary' ? 'var(--primary)' :
+                    plan.color === 'success' ? 'var(--success)' :
+                        'var(--secondary)';
 
             html += `
                 <div class="col-md-6 col-lg-3 mb-4">
@@ -138,7 +138,7 @@ class StakingManager {
                             </div>
 
                             <button class="btn-modern btn-modern-${plan.color === 'gem' ? 'primary' : plan.color} w-100"
-                                    onclick="StakingManager.showStakeModal('${plan.id}')">
+                                    onclick="stakingManager.showStakeModal('${plan.id}')">
                                 <i class="bi bi-lock-fill"></i>
                                 Stake Now
                             </button>
@@ -263,7 +263,7 @@ class StakingManager {
                             ${stake.status === 'active' ? `
                                 ${stake.can_unstake ? `
                                     <button class="btn-modern btn-modern-success btn-modern-sm mb-2 w-100"
-                                            onclick="StakingManager.unstake(${stake.id})">
+                                            onclick="stakingManager.unstake(${stake.id})">
                                         <i class="bi bi-unlock-fill"></i>
                                         Unstake
                                     </button>
@@ -275,7 +275,7 @@ class StakingManager {
                                 `}
                                 ${stake.unclaimed_rewards > 0 ? `
                                     <button class="btn-modern btn-modern-primary btn-modern-sm w-100"
-                                            onclick="StakingManager.claimRewards(${stake.id})">
+                                            onclick="stakingManager.claimRewards(${stake.id})">
                                         <i class="bi bi-gift"></i>
                                         Claim ${this.formatNumber(stake.unclaimed_rewards)} GEM
                                     </button>
@@ -545,9 +545,9 @@ class StakingManager {
 }
 
 // Create global instance
-const StakingManager = new StakingManager();
+const stakingManager = new StakingManager();
 
 // Cleanup on page unload
 window.addEventListener('beforeunload', () => {
-    StakingManager.destroy();
+    stakingManager.destroy();
 });

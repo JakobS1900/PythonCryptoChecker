@@ -8,6 +8,7 @@ window.Portfolio = {
     portfolioData: null,
     transactions: [],
     isLoading: false,
+    stocksLoaded: false,
 
     // Initialize portfolio - simple and reliable
     init() {
@@ -17,9 +18,25 @@ window.Portfolio = {
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
                 this.loadDataWhenReady();
+                this.setupTabListeners();
             });
         } else {
             this.loadDataWhenReady();
+            this.setupTabListeners();
+        }
+    },
+
+    // Set up tab switch listeners
+    setupTabListeners() {
+        // Listen for when Stocks tab is shown
+        const stocksTab = document.getElementById('stocks-tab');
+        if (stocksTab) {
+            stocksTab.addEventListener('shown.bs.tab', () => {
+                if (!this.stocksLoaded) {
+                    this.loadStockHoldings();
+                    this.stocksLoaded = true;
+                }
+            });
         }
     },
 
@@ -32,6 +49,7 @@ window.Portfolio = {
         setTimeout(() => this.attemptLoad(), 1000);
         setTimeout(() => this.attemptLoad(), 3000);
     },
+
 
     // Simple load attempt
     async attemptLoad() {
@@ -133,6 +151,146 @@ window.Portfolio = {
     refreshBalance() {
         console.log('🔄 Manual refresh requested');
         this.loadDataWhenReady();
+    },
+
+    // ========== STOCK HOLDINGS FUNCTIONS ==========
+
+    // Load stock holdings from API
+    async loadStockHoldings() {
+        console.log('📈 Loading stock holdings...');
+
+        try {
+            const response = await fetch('/api/stocks/portfolio/holdings', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('auth_token') || ''}`
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                console.log('✅ Stock holdings loaded:', data);
+
+                if (data.success && data.holdings) {
+                    this.renderStockHoldings(data.holdings, data.summary || {});
+                    return;
+                }
+            }
+
+            // No holdings or error
+            this.renderStockHoldings([], {});
+
+        } catch (error) {
+            console.error('💥 Stock holdings load error:', error);
+            this.renderStockHoldings([], {});
+        }
+    },
+
+    // Render stock holdings table
+    renderStockHoldings(holdings, summary) {
+        const tableBody = document.getElementById('stock-holdings-table-body');
+        const emptyState = document.getElementById('stock-empty-state');
+
+        // Update summary stats
+        this.updateElement('stock-total-value', this.formatNumber(summary.total_value_gem || 0));
+        this.updateElement('stock-total-pl', this.formatNumber(summary.total_profit_loss || 0));
+        this.updateElement('stock-pl-pct', (summary.total_profit_loss_pct || 0).toFixed(2));
+        this.updateElement('stock-positions-count', holdings.length);
+
+        // Apply P/L colors
+        const plContainer = document.getElementById('stock-total-pl-container');
+        const plPctContainer = document.getElementById('stock-pl-pct-container');
+        if (plContainer) {
+            plContainer.style.color = (summary.total_profit_loss || 0) >= 0 ? 'var(--success)' : 'var(--error)';
+        }
+        if (plPctContainer) {
+            plPctContainer.style.color = (summary.total_profit_loss_pct || 0) >= 0 ? 'var(--success)' : 'var(--error)';
+        }
+
+        if (!tableBody) return;
+
+        if (!holdings || holdings.length === 0) {
+            tableBody.innerHTML = '';
+            if (emptyState) emptyState.style.display = 'block';
+            return;
+        }
+
+        if (emptyState) emptyState.style.display = 'none';
+
+        const rows = holdings.map(h => {
+            const profitLoss = h.profit_loss_gem || 0;
+            const profitLossPct = h.profit_loss_pct || 0;
+            const plColor = profitLoss >= 0 ? 'var(--success)' : 'var(--error)';
+            const plIcon = profitLoss >= 0 ? 'bi-arrow-up' : 'bi-arrow-down';
+
+            return `
+                <tr>
+                    <td>
+                        <div style="font-weight: var(--font-semibold); color: var(--text-primary);">${h.ticker}</div>
+                        <small style="color: var(--text-muted);">${h.company_name || ''}</small>
+                    </td>
+                    <td class="text-end" style="color: var(--text-primary);">${this.formatNumber(h.quantity)}</td>
+                    <td class="text-end" style="color: var(--text-secondary);">${this.formatNumber(h.avg_buy_price_gem)} GEM</td>
+                    <td class="text-end" style="color: var(--text-primary);">${this.formatNumber(h.current_price_gem)} GEM</td>
+                    <td class="text-end" style="color: var(--text-primary);">${this.formatNumber(h.market_value_gem)} GEM</td>
+                    <td class="text-end" style="color: ${plColor};">
+                        <i class="bi ${plIcon}"></i>
+                        ${this.formatNumber(Math.abs(profitLoss))} GEM
+                        <small>(${profitLossPct >= 0 ? '+' : ''}${profitLossPct.toFixed(2)}%)</small>
+                    </td>
+                    <td class="text-center">
+                        <button class="btn-modern btn-modern-danger btn-modern-sm" 
+                                onclick="Portfolio.confirmSellStock('${h.ticker}', ${h.quantity}, ${h.current_price_gem})">
+                            <i class="bi bi-cash-coin"></i> Sell
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+
+        tableBody.innerHTML = rows;
+        console.log('🎉 Stock holdings rendered successfully');
+    },
+
+    // Refresh stock holdings
+    refreshStockHoldings() {
+        console.log('🔄 Refreshing stock holdings...');
+        this.loadStockHoldings();
+    },
+
+    // Confirm sell stock (opens modal or redirects)
+    confirmSellStock(ticker, quantity, currentPrice) {
+        if (confirm(`Sell ${quantity} shares of ${ticker} at ${this.formatNumber(currentPrice)} GEM each?`)) {
+            this.sellStock(ticker, quantity);
+        }
+    },
+
+    // Execute stock sale
+    async sellStock(ticker, quantity) {
+        try {
+            const response = await fetch(`/api/stocks/${ticker}/sell`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('auth_token') || ''}`
+                },
+                body: JSON.stringify({ quantity: quantity })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                alert(`Successfully sold ${quantity} shares of ${ticker}!\nProceeds: ${this.formatNumber(data.net_proceeds_gem)} GEM`);
+                this.loadStockHoldings(); // Refresh
+                this.attemptLoad(); // Refresh main balance
+            } else {
+                alert(`Failed to sell: ${data.message || 'Unknown error'}`);
+            }
+        } catch (error) {
+            console.error('💥 Sell stock error:', error);
+            alert('Failed to sell stock. Please try again.');
+        }
     }
 };
 

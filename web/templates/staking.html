@@ -23,7 +23,7 @@
         border-radius: 20px;
         font-size: 0.85rem;
         font-weight: 600;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
 
     .plan-icon {
@@ -86,7 +86,8 @@
 {% block content %}
 <div class="container-modern">
     <!-- Page Header -->
-    <div class="card-modern" style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(124, 58, 237, 0.05) 100%);">
+    <div class="card-modern"
+        style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(124, 58, 237, 0.05) 100%);">
         <h1 class="mb-3">
             <i class="bi bi-piggy-bank" style="color: var(--gem);"></i>
             GEM Staking
@@ -161,10 +162,12 @@
                 My Active Stakes
             </h4>
             <div class="btn-group btn-group-modern" role="group">
-                <button type="button" class="btn-modern btn-modern-sm btn-modern-primary active" onclick="StakingManager.filterStakes('active')">
+                <button type="button" class="btn-modern btn-modern-sm btn-modern-primary active"
+                    onclick="stakingManager.filterStakes('active')">
                     Active
                 </button>
-                <button type="button" class="btn-modern btn-modern-sm btn-modern-secondary" onclick="StakingManager.filterStakes('completed')">
+                <button type="button" class="btn-modern btn-modern-sm btn-modern-secondary"
+                    onclick="stakingManager.filterStakes('completed')">
                     Completed
                 </button>
             </div>
@@ -176,7 +179,8 @@
 </div>
 
 <!-- Stake Modal -->
-<div class="modal fade" id="stakeModal" tabindex="-1" aria-labelledby="stakeModalLabel" aria-describedby="stakeModalDesc">
+<div class="modal fade" id="stakeModal" tabindex="-1" aria-labelledby="stakeModalLabel"
+    aria-describedby="stakeModalDesc">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content" style="background: var(--bg-secondary); border: 1px solid rgba(139, 92, 246, 0.3);">
             <div class="modal-header" style="border-bottom: 1px solid rgba(139, 92, 246, 0.2);">
@@ -206,12 +210,8 @@
                         <span class="input-group-text">
                             <i class="bi bi-gem"></i>
                         </span>
-                        <input type="number"
-                               class="form-control-modern"
-                               id="stake-amount"
-                               placeholder="Enter amount"
-                               min="1000"
-                               step="100">
+                        <input type="number" class="form-control-modern" id="stake-amount" placeholder="Enter amount"
+                            min="1000" step="100">
                         <span class="input-group-text">GEM</span>
                     </div>
                     <small class="form-text">
@@ -220,7 +220,8 @@
                 </div>
 
                 <!-- Rewards Preview -->
-                <div class="card-modern" style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, transparent 100%);">
+                <div class="card-modern"
+                    style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, transparent 100%);">
                     <h6 class="mb-3">Estimated Rewards</h6>
                     <div class="row">
                         <div class="col-6">
@@ -244,7 +245,8 @@
                     </div>
                     <div class="alert-modern-content">
                         <div class="alert-modern-message">
-                            Your GEM will be locked for the specified period. You can claim rewards anytime, but cannot unstake until the lock period ends.
+                            Your GEM will be locked for the specified period. You can claim rewards anytime, but cannot
+                            unstake until the lock period ends.
                         </div>
                     </div>
                 </div>
@@ -253,7 +255,7 @@
                 <button type="button" class="btn-modern btn-modern-secondary" data-bs-dismiss="modal">
                     Cancel
                 </button>
-                <button type="button" class="btn-modern btn-modern-primary" onclick="StakingManager.confirmStake()">
+                <button type="button" class="btn-modern btn-modern-primary" onclick="stakingManager.confirmStake()">
                     <i class="bi bi-lock-fill"></i>
                     Stake Now
                 </button>
@@ -263,7 +265,8 @@
 </div>
 
 <!-- Success Modal -->
-<div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-describedby="successModalDesc">
+<div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel"
+    aria-describedby="successModalDesc">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content" style="background: var(--bg-secondary); border: 1px solid rgba(34, 197, 94, 0.3);">
             <div class="modal-header" style="border-bottom: 1px solid rgba(34, 197, 94, 0.2);">
@@ -304,7 +307,7 @@
 <script>
     // Initialize when page loads
     document.addEventListener('DOMContentLoaded', () => {
-        StakingManager.init();
+        stakingManager.init();
     });
 </script>
 {% endblock %}
