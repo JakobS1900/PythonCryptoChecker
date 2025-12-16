@@ -338,30 +338,36 @@ async def trading(request: Request):
     """GEM P2P Trading page - buy and sell GEM."""
     return templates.TemplateResponse("trading.html", {"request": request})
 
-@app.get("/minigames", response_class=HTMLResponse)
-async def minigames(request: Request):
-    """Mini-Games page - quick fun games to win GEM."""
-    return templates.TemplateResponse("minigames.html", {"request": request})
+# ==================== HIDDEN ROUTES - Reserved for future use ====================
+# Mini-Games page - hidden for now, preserved for future
+# @app.get("/minigames", response_class=HTMLResponse)
+# async def minigames(request: Request):
+#     """Mini-Games page - quick fun games to win GEM."""
+#     return templates.TemplateResponse("minigames.html", {"request": request})
 
-@app.get("/leaderboards", response_class=HTMLResponse)
-async def leaderboards(request: Request):
-    """Leaderboards page - top players and rankings."""
-    return templates.TemplateResponse("leaderboards.html", {"request": request})
+# Leaderboards page - hidden for now, preserved for future
+# @app.get("/leaderboards", response_class=HTMLResponse)
+# async def leaderboards(request: Request):
+#     """Leaderboards page - top players and rankings."""
+#     return templates.TemplateResponse("leaderboards.html", {"request": request})
 
-@app.get("/challenges", response_class=HTMLResponse)
-async def challenges(request: Request):
-    """Daily Challenges page - complete quests for rewards."""
-    return templates.TemplateResponse("challenges.html", {"request": request})
+# Daily Challenges page - hidden for now, preserved for future
+# @app.get("/challenges", response_class=HTMLResponse)
+# async def challenges(request: Request):
+#     """Daily Challenges page - complete quests for rewards."""
+#     return templates.TemplateResponse("challenges.html", {"request": request})
 
 @app.get("/crash", response_class=HTMLResponse)
 async def crash_game(request: Request):
     """Crash Game page - multiplayer betting game."""
     return templates.TemplateResponse("crash.html", {"request": request})
 
-@app.get("/social", response_class=HTMLResponse)
-async def social(request: Request):
-    """Social page - friends, messages, and activity."""
-    return templates.TemplateResponse("social.html", {"request": request})
+# Social page - hidden for now, preserved for future
+# @app.get("/social", response_class=HTMLResponse)
+# async def social(request: Request):
+#     """Social page - friends, messages, and activity."""
+#     return templates.TemplateResponse("social.html", {"request": request})
+# ==================== END HIDDEN ROUTES ====================
 
 @app.get("/profile/{username}", response_class=HTMLResponse)
 async def profile(request: Request, username: str):
