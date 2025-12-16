@@ -1,0 +1,368 @@
+{% extends "base.html" %}
+
+{% block title %}Crypto Market - CryptoChecker v3{% endblock %}
+
+{% block extra_css %}
+<style>
+    .crypto-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-lg);
+        padding: var(--space-5);
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .crypto-card:hover {
+        transform: translateY(-4px);
+        border-color: var(--primary);
+        box-shadow: 0 8px 24px var(--shadow-lg);
+    }
+
+    .crypto-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
+    .crypto-name {
+        font-weight: var(--font-semibold);
+        color: var(--text-primary);
+        margin-bottom: 0;
+    }
+
+    .crypto-symbol {
+        color: var(--text-muted);
+        font-size: var(--text-sm);
+    }
+
+    .crypto-price {
+        font-weight: var(--font-bold);
+        font-size: var(--text-lg);
+        color: var(--text-primary);
+    }
+
+    .crypto-change {
+        font-size: var(--text-sm);
+        font-weight: var(--font-medium);
+    }
+
+    .crypto-change.positive {
+        color: var(--success);
+    }
+
+    .crypto-change.negative {
+        color: var(--error);
+    }
+
+    .holdings-table {
+        width: 100%;
+    }
+
+    .holdings-table th {
+        color: var(--text-muted);
+        font-weight: var(--font-medium);
+        font-size: var(--text-sm);
+        padding: var(--space-4);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .holdings-table td {
+        padding: var(--space-4);
+        border-bottom: 1px solid var(--border-subtle);
+        vertical-align: middle;
+    }
+
+    .trade-modal-content {
+        background: var(--card-bg);
+        border-radius: var(--radius-xl);
+        padding: var(--space-6);
+    }
+
+    .quote-breakdown {
+        background: var(--bg-tertiary);
+        border-radius: var(--radius-md);
+        padding: var(--space-4);
+        margin: var(--space-4) 0;
+    }
+
+    .quote-row {
+        display: flex;
+        justify-content: space-between;
+        padding: var(--space-2) 0;
+    }
+
+    .quote-row.total {
+        border-top: 1px solid var(--border-subtle);
+        margin-top: var(--space-2);
+        padding-top: var(--space-3);
+        font-weight: var(--font-bold);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="crypto-market-container">
+    <!-- Market Header -->
+    <div class="market-header">
+        <div class="container">
+            <div class="row align-items-center mb-4">
+                <div class="col-md-6">
+                    <h1
+                        style="font-size: var(--text-4xl); font-weight: var(--font-bold); color: var(--text-primary); margin-bottom: var(--space-2);">
+                        <i class="bi bi-currency-bitcoin" style="color: var(--warning);"></i>
+                        Crypto Market
+                    </h1>
+                    <p style="color: var(--text-muted); margin: 0;">Trade cryptocurrencies with GEM • 4% trading fee</p>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-flex gap-3 justify-content-md-end">
+                        <div class="stat-card-modern" style="min-width: 140px;">
+                            <small style="color: var(--text-muted); font-size: var(--text-xs);">Crypto Portfolio</small>
+                            <h4 id="crypto-portfolio-value" style="margin: 0; color: var(--text-primary);">
+                                <span class="spinner-border spinner-border-sm" role="status"></span>
+                            </h4>
+                        </div>
+                        <div class="stat-card-modern" style="min-width: 140px;">
+                            <small style="color: var(--text-muted); font-size: var(--text-xs);">Available GEM</small>
+                            <h4 id="available-gem" style="margin: 0; color: var(--text-primary);">
+                                <span class="spinner-border spinner-border-sm" role="status"></span>
+                            </h4>
+                        </div>
+                        <div class="stat-card-modern" style="min-width: 140px;">
+                            <small style="color: var(--text-muted); font-size: var(--text-xs);">Total P/L</small>
+                            <h4 id="crypto-total-pl" style="margin: 0; color: var(--text-primary);">
+                                <span class="spinner-border spinner-border-sm" role="status"></span>
+                            </h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search -->
+            <div class="card-modern">
+                <div style="padding: var(--space-4);">
+                    <div class="row g-3 align-items-center">
+                        <div class="col-md-8">
+                            <div class="input-group" style="display: flex; gap: 0;">
+                                <span class="input-group-text"
+                                    style="background: var(--bg-tertiary); border: 1px solid var(--border-subtle); border-right: none; border-radius: var(--radius-md) 0 0 var(--radius-md); color: var(--text-secondary); padding: var(--space-3) var(--space-4);">
+                                    <i class="bi bi-search"></i>
+                                </span>
+                                <input type="text" class="form-control-modern" id="crypto-search"
+                                    placeholder="Search cryptocurrencies (BTC, ETH, Solana...)"
+                                    style="border-radius: 0 var(--radius-md) var(--radius-md) 0; border-left: none;">
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-md-end">
+                            <button class="btn-modern btn-modern-outline" onclick="CryptoMarket.refreshPrices()">
+                                <i class="bi bi-arrow-clockwise"></i> Refresh
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mt-4">
+        <div class="row">
+            <!-- Left Column: Crypto List -->
+            <div class="col-lg-8">
+                <div class="card-modern">
+                    <div class="card-modern-header"
+                        style="padding: var(--space-5); border-bottom: 1px solid var(--border-subtle);">
+                        <h5 class="card-modern-title" style="margin: 0;">
+                            <i class="bi bi-collection"></i> Available Cryptocurrencies
+                        </h5>
+                    </div>
+                    <div style="padding: var(--space-4);">
+                        <div id="crypto-list" class="row g-3">
+                            <!-- Loading state -->
+                            <div class="col-12 text-center py-5">
+                                <div class="spinner-border text-primary" role="status"></div>
+                                <p class="text-muted mt-2">Loading cryptocurrencies...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Holdings -->
+            <div class="col-lg-4">
+                <div class="card-modern mb-4">
+                    <div class="card-modern-header"
+                        style="padding: var(--space-5); border-bottom: 1px solid var(--border-subtle);">
+                        <h5 class="card-modern-title" style="margin: 0;">
+                            <i class="bi bi-wallet2"></i> Your Holdings
+                        </h5>
+                    </div>
+                    <div id="holdings-container" style="padding: var(--space-4);">
+                        <!-- Loading state -->
+                        <div class="text-center py-4">
+                            <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                            <p class="text-muted mt-2 mb-0">Loading holdings...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Transactions -->
+                <div class="card-modern">
+                    <div class="card-modern-header"
+                        style="padding: var(--space-5); border-bottom: 1px solid var(--border-subtle);">
+                        <h5 class="card-modern-title" style="margin: 0;">
+                            <i class="bi bi-clock-history"></i> Recent Trades
+                        </h5>
+                    </div>
+                    <div id="transactions-container"
+                        style="padding: var(--space-4); max-height: 300px; overflow-y: auto;">
+                        <div class="text-center py-4">
+                            <p class="text-muted mb-0">No recent trades</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Buy Modal -->
+<div class="modal fade" id="buyModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content trade-modal-content">
+            <div class="modal-header" style="border-bottom: 1px solid var(--border-subtle);">
+                <h5 class="modal-title">
+                    <i class="bi bi-cart-plus text-success"></i>
+                    Buy <span id="buy-crypto-name">Cryptocurrency</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex align-items-center mb-4">
+                    <img id="buy-crypto-icon" src="" class="crypto-icon me-3" onerror="this.style.display='none'">
+                    <div>
+                        <h4 id="buy-crypto-symbol" class="mb-0">BTC</h4>
+                        <span id="buy-crypto-price" class="text-muted">$0.00</span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Quantity to Buy</label>
+                    <input type="number" class="form-control-modern" id="buy-quantity" placeholder="0.00" step="any"
+                        min="0" oninput="CryptoMarket.updateBuyQuote()">
+                </div>
+
+                <div id="buy-quote-container" class="quote-breakdown" style="display: none;">
+                    <div class="quote-row">
+                        <span class="text-muted">Price per unit</span>
+                        <span id="buy-price-per-unit">0 GEM</span>
+                    </div>
+                    <div class="quote-row">
+                        <span class="text-muted">Subtotal</span>
+                        <span id="buy-subtotal">0 GEM</span>
+                    </div>
+                    <div class="quote-row">
+                        <span class="text-muted">Trading Fee (4%)</span>
+                        <span id="buy-fee" class="text-warning">0 GEM</span>
+                    </div>
+                    <div class="quote-row total">
+                        <span>Total Cost</span>
+                        <span id="buy-total" class="text-primary">0 GEM</span>
+                    </div>
+                    <div class="mt-3">
+                        <small class="text-muted">Your balance: <span id="buy-balance">0</span> GEM</small>
+                        <div id="buy-insufficient-funds" class="text-danger mt-1" style="display: none;">
+                            <i class="bi bi-exclamation-triangle"></i> Insufficient funds
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="border-top: 1px solid var(--border-subtle);">
+                <button type="button" class="btn-modern btn-modern-outline" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn-modern btn-modern-success" id="confirm-buy-btn"
+                    onclick="CryptoMarket.confirmBuy()">
+                    <i class="bi bi-check-circle"></i> Confirm Purchase
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sell Modal -->
+<div class="modal fade" id="sellModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content trade-modal-content">
+            <div class="modal-header" style="border-bottom: 1px solid var(--border-subtle);">
+                <h5 class="modal-title">
+                    <i class="bi bi-cash-coin text-danger"></i>
+                    Sell <span id="sell-crypto-name">Cryptocurrency</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex align-items-center mb-4">
+                    <img id="sell-crypto-icon" src="" class="crypto-icon me-3" onerror="this.style.display='none'">
+                    <div>
+                        <h4 id="sell-crypto-symbol" class="mb-0">BTC</h4>
+                        <span id="sell-crypto-price" class="text-muted">$0.00</span>
+                    </div>
+                </div>
+
+                <div class="alert-modern alert-modern-info mb-3">
+                    <div class="alert-modern-content" style="padding: var(--space-2);">
+                        <span>You own: <strong id="sell-max-quantity">0</strong> <span
+                                id="sell-owned-symbol">BTC</span></span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Quantity to Sell</label>
+                    <div class="d-flex gap-2">
+                        <input type="number" class="form-control-modern" id="sell-quantity" placeholder="0.00"
+                            step="any" min="0" oninput="CryptoMarket.updateSellQuote()">
+                        <button type="button" class="btn-modern btn-modern-outline"
+                            onclick="CryptoMarket.sellMax()">Max</button>
+                    </div>
+                </div>
+
+                <div id="sell-quote-container" class="quote-breakdown" style="display: none;">
+                    <div class="quote-row">
+                        <span class="text-muted">Price per unit</span>
+                        <span id="sell-price-per-unit">0 GEM</span>
+                    </div>
+                    <div class="quote-row">
+                        <span class="text-muted">Subtotal</span>
+                        <span id="sell-subtotal">0 GEM</span>
+                    </div>
+                    <div class="quote-row">
+                        <span class="text-muted">Trading Fee (4%)</span>
+                        <span id="sell-fee" class="text-warning">0 GEM</span>
+                    </div>
+                    <div class="quote-row total">
+                        <span>Net Proceeds</span>
+                        <span id="sell-net" class="text-success">0 GEM</span>
+                    </div>
+                    <div class="quote-row">
+                        <span class="text-muted">Expected P/L</span>
+                        <span id="sell-pl">0 GEM</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="border-top: 1px solid var(--border-subtle);">
+                <button type="button" class="btn-modern btn-modern-outline" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn-modern btn-modern-danger" id="confirm-sell-btn"
+                    onclick="CryptoMarket.confirmSell()">
+                    <i class="bi bi-check-circle"></i> Confirm Sale
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', path='/js/crypto_market.js') }}"></script>
+{% endblock %}

@@ -154,6 +154,7 @@ class User(Base):
     portfolio_holdings = relationship("PortfolioHolding", back_populates="user")
     stock_holdings = relationship("StockHolding", back_populates="user")
     stock_transactions = relationship("StockTransaction", back_populates="user")
+    crypto_transactions = relationship("CryptoTransaction", back_populates="user")
     clicker_stats = relationship("ClickerStats", back_populates="user", uselist=False)
     clicker_upgrades = relationship("ClickerUpgradePurchase", back_populates="user")
     # Phase 2 relationships
@@ -549,6 +550,52 @@ class PortfolioHolding(Base):
     # Relationships
     user = relationship("User", back_populates="portfolio_holdings")
     cryptocurrency = relationship("CryptoCurrency")
+
+
+class CryptoTransaction(Base):
+    """Crypto buy/sell transaction history."""
+    __tablename__ = "crypto_transactions"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    crypto_id = Column(String, ForeignKey("cryptocurrencies.id"), nullable=False)
+    transaction_type = Column(String(10), nullable=False)  # 'BUY' or 'SELL'
+    quantity = Column(Float, nullable=False)
+    price_per_unit_gem = Column(Float, nullable=False)
+    total_amount_gem = Column(Float, nullable=False)
+    fee_gem = Column(Float, default=0.0)
+    profit_loss_gem = Column(Float, nullable=True)  # For sells only
+    wallet_transaction_id = Column(String, ForeignKey("transactions.id"), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    user = relationship("User", back_populates="crypto_transactions")
+    cryptocurrency = relationship("CryptoCurrency")
+    wallet_transaction = relationship("Transaction", foreign_keys=[wallet_transaction_id])
+
+    # Indexes
+    __table_args__ = (
+        Index('idx_crypto_tx_user', 'user_id'),
+        Index('idx_crypto_tx_crypto', 'crypto_id'),
+        Index('idx_crypto_tx_created', 'created_at'),
+    )
+
+    def to_dict(self):
+        """Convert crypto transaction to dictionary."""
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "crypto_id": self.crypto_id,
+            "transaction_type": self.transaction_type,
+            "quantity": self.quantity,
+            "price_per_unit_gem": self.price_per_unit_gem,
+            "total_amount_gem": self.total_amount_gem,
+            "fee_gem": self.fee_gem,
+            "profit_loss_gem": self.profit_loss_gem,
+            "wallet_transaction_id": self.wallet_transaction_id,
+            "created_at": self.created_at.isoformat() if self.created_at else None
+        }
+
 
 class DailyBonus(Base):
     """Daily bonus claims for users."""

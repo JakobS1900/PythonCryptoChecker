@@ -423,3 +423,231 @@ async def search_cryptocurrencies(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error searching: {str(e)}")
+
+
+# ==================== CRYPTO TRADING ENDPOINTS ====================
+
+from sqlalchemy.ext.asyncio import AsyncSession
+from database.database import get_db
+from api.auth_api import require_authentication
+from services.crypto_trading_service import crypto_trading_service
+from services.crypto_portfolio_service import crypto_portfolio_service
+
+
+class BuyCryptoRequest(BaseModel):
+    """Request model for buying cryptocurrency."""
+    quantity: float = Field(..., gt=0, description="Amount of crypto to buy")
+
+
+class SellCryptoRequest(BaseModel):
+    """Request model for selling cryptocurrency."""
+    quantity: float = Field(..., gt=0, description="Amount of crypto to sell")
+
+
+@router.get("/{crypto_id}/buy-quote")
+async def get_crypto_buy_quote(
+    crypto_id: str,
+    quantity: float = Query(..., gt=0, description="Amount of crypto to buy"),
+    current_user: User = Depends(require_authentication),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get a quote for buying cryptocurrency without executing the trade.
+    
+    Shows the cost breakdown including 4% trading fee.
+    """
+    try:
+        quote = await crypto_trading_service.get_buy_quote(
+            user_id=current_user.id,
+            crypto_id=crypto_id,
+            quantity=quantity,
+            db=db
+        )
+        return {
+            "success": True,
+            "quote": quote
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get quote: {str(e)}")
+
+
+@router.get("/{crypto_id}/sell-quote")
+async def get_crypto_sell_quote(
+    crypto_id: str,
+    quantity: float = Query(..., gt=0, description="Amount of crypto to sell"),
+    current_user: User = Depends(require_authentication),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get a quote for selling cryptocurrency without executing the trade.
+    
+    Shows the proceeds breakdown including 4% trading fee and expected P/L.
+    """
+    try:
+        quote = await crypto_trading_service.get_sell_quote(
+            user_id=current_user.id,
+            crypto_id=crypto_id,
+            quantity=quantity,
+            db=db
+        )
+        return {
+            "success": True,
+            "quote": quote
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get quote: {str(e)}")
+
+
+@router.post("/{crypto_id}/buy")
+async def buy_crypto(
+    crypto_id: str,
+    request: BuyCryptoRequest,
+    current_user: User = Depends(require_authentication),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Buy cryptocurrency with GEM.
+    
+    Trading fee: 4%
+    """
+    try:
+        result = await crypto_trading_service.buy_crypto(
+            user_id=current_user.id,
+            crypto_id=crypto_id,
+            quantity=request.quantity,
+            db=db
+        )
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to buy crypto: {str(e)}")
+
+
+@router.post("/{crypto_id}/sell")
+async def sell_crypto(
+    crypto_id: str,
+    request: SellCryptoRequest,
+    current_user: User = Depends(require_authentication),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Sell cryptocurrency for GEM.
+    
+    Trading fee: 4%
+    Returns P/L calculation based on average buy price.
+    """
+    try:
+        result = await crypto_trading_service.sell_crypto(
+            user_id=current_user.id,
+            crypto_id=crypto_id,
+            quantity=request.quantity,
+            db=db
+        )
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to sell crypto: {str(e)}")
+
+
+@router.get("/holdings/list")
+async def get_crypto_holdings(
+    current_user: User = Depends(require_authentication),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get user's cryptocurrency holdings with P/L calculations.
+    """
+    try:
+        holdings = await crypto_portfolio_service.get_holdings(
+            user_id=current_user.id,
+            db=db
+        )
+        return {
+            "success": True,
+            "holdings": holdings,
+            "total": len(holdings)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get holdings: {str(e)}")
+
+
+@router.get("/holdings/summary")
+async def get_crypto_portfolio_summary(
+    current_user: User = Depends(require_authentication),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get cryptocurrency portfolio summary with totals and P/L.
+    """
+    try:
+        summary = await crypto_portfolio_service.get_portfolio_summary(
+            user_id=current_user.id,
+            db=db
+        )
+        return {
+            "success": True,
+            "summary": summary
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get summary: {str(e)}")
+
+
+@router.get("/holdings/transactions")
+async def get_crypto_transaction_history(
+    limit: int = Query(50, ge=1, le=100),
+    crypto_id: Optional[str] = Query(None, description="Filter by crypto ID"),
+    transaction_type: Optional[str] = Query(None, description="Filter by BUY or SELL"),
+    current_user: User = Depends(require_authentication),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get cryptocurrency transaction history.
+    """
+    try:
+        transactions = await crypto_portfolio_service.get_transaction_history(
+            user_id=current_user.id,
+            limit=limit,
+            crypto_id=crypto_id,
+            transaction_type=transaction_type,
+            db=db
+        )
+        return {
+            "success": True,
+            "transactions": transactions,
+            "total": len(transactions)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get transactions: {str(e)}")
+
+
+@router.get("/holdings/{crypto_id}")
+async def get_crypto_position(
+    crypto_id: str,
+    current_user: User = Depends(require_authentication),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get detailed information about a specific crypto position.
+    """
+    try:
+        position = await crypto_portfolio_service.get_crypto_position(
+            user_id=current_user.id,
+            crypto_id=crypto_id,
+            db=db
+        )
+        if not position:
+            raise HTTPException(status_code=404, detail=f"No position found for {crypto_id}")
+        return {
+            "success": True,
+            "position": position
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get position: {str(e)}")

@@ -285,6 +285,14 @@ async def stocks_page(request: Request):
         {"request": request}
     )
 
+@app.get("/crypto-market")
+async def crypto_market_page(request: Request):
+    """Cryptocurrency market page - buy/sell crypto with GEM."""
+    return templates.TemplateResponse(
+        "crypto_market.html",
+        {"request": request}
+    )
+
 @app.get("/gaming/roulette", response_class=HTMLResponse)
 async def gaming_roulette(request: Request):
     """Direct route to roulette gaming page."""
