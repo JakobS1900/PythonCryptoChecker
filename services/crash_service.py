@@ -20,6 +20,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from database.models import (
     User, CrashGame, CrashBet, Transaction, TransactionType
 )
+from crypto.portfolio import portfolio_manager
 
 
 class CrashGameService:
@@ -117,9 +118,16 @@ class CrashGameService:
         if not user:
             raise ValueError("User not found")
 
+        # Get balance from portfolio manager
+        user_balance = await portfolio_manager.get_user_balance(str(user_id))
+        
+        print(f"[Crash] Placing bet for User {user.username} (ID: {user_id})")
+        print(f"[Crash] Bet Amount: {bet_amount}, Current Balance: {user_balance}")
+
         # Check balance
-        if user.gem_balance < bet_amount:
-            raise ValueError("Insufficient GEM balance")
+        if user_balance < bet_amount:
+            print(f"[Crash] CHECK FAILED: {user_balance} < {bet_amount}")
+            raise ValueError(f"Insufficient GEM balance (Have: {user_balance})")
 
         # Get game
         result = await db.execute(select(CrashGame).where(CrashGame.id == game_id))
@@ -141,8 +149,18 @@ class CrashGameService:
         if existing_bet:
             raise ValueError("You already have a bet in this game")
 
-        # Deduct bet amount
-        user.gem_balance -= bet_amount
+        # Deduct bet amount using portfolio manager
+        success = await portfolio_manager.deduct_gems(
+            str(user_id), 
+            bet_amount, 
+            TransactionType.CRASH_BET,
+            f"Crash game #{game_id} bet"
+        )
+        if not success:
+            raise ValueError("Failed to deduct balance")
+        
+        # Get new balance after deduction
+        new_balance = await portfolio_manager.get_user_balance(str(user_id))
 
         # Create bet record
         bet = CrashBet(
@@ -154,16 +172,8 @@ class CrashGameService:
 
         db.add(bet)
 
-        # Create transaction record
-        transaction = Transaction(
-            user_id=user_id,
-            transaction_type=TransactionType.CRASH_BET,
-            amount=-bet_amount,
-            balance_after=user.gem_balance,
-            description=f"Crash game #{game_id} bet"
-        )
-
-        db.add(transaction)
+        # Note: Transaction is already created by portfolio_manager.deduct_gems()
+        # so we don't need to create another one here
 
         # Update game stats
         game.total_bets += 1
@@ -178,7 +188,7 @@ class CrashGameService:
             "bet_id": bet.id,
             "game_id": game_id,
             "bet_amount": bet_amount,
-            "new_balance": user.gem_balance,
+            "new_balance": new_balance,  # Fixed: was user.gem_balance
             "message": f"Bet placed: {bet_amount} GEM"
         }
 
@@ -295,7 +305,7 @@ class CrashGameService:
                 CrashGame.status.in_(['waiting', 'starting', 'playing'])
             ).order_by(CrashGame.id.desc())
         )
-        game = result.scalar_one_or_none()
+        game = result.scalars().first()  # Get most recent active game
 
         if not game:
             # Create new game

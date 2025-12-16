@@ -109,6 +109,10 @@ class CrashGameManager {
             this.currentMultiplier = state.multiplier || 1.00;
             this.updateMultiplierDisplay();
             this.updateStatus('Game in Progress');
+        } else if (state.status === 'idle') {
+            this.gameState = 'idle';
+            this.updateStatus('Waiting for players...');
+            this.disableBetting();
         }
 
         if (state.server_seed_hash) {
@@ -128,6 +132,9 @@ class CrashGameManager {
             this.updatePlayersList();
         } else if (data.status === 'starting') {
             this.updateStatus('Starting...');
+            this.disableBetting();
+        } else if (data.status === 'idle') {
+            this.updateStatus('Waiting for players...');
             this.disableBetting();
         }
 
@@ -220,8 +227,10 @@ class CrashGameManager {
             return;
         }
 
+        console.log('[Crash] placeBet check: betAmount=', betAmount, 'userBalance=', this.userBalance, 'type=', typeof this.userBalance);
+
         if (betAmount > this.userBalance) {
-            this.showNotification('error', 'Insufficient balance');
+            this.showNotification('error', `Insufficient balance (Bet: ${betAmount}, Have: ${this.userBalance})`);
             return;
         }
 
@@ -285,16 +294,39 @@ class CrashGameManager {
     }
 
     async loadBalance() {
+        // Try to get balance from global App state first (synced by auth.js)
+        if (window.App && window.App.user && window.App.user.wallet_balance > 0) {
+            console.log('[Crash] Using global App.user balance:', window.App.user.wallet_balance);
+            this.userBalance = window.App.user.wallet_balance;
+            const balanceEl = document.getElementById('user-balance');
+            if (balanceEl) balanceEl.textContent = this.userBalance.toLocaleString();
+            return;
+        }
+
+        console.log('[Crash] App.user not ready or balance is 0, falling back to API...');
+
         const token = localStorage.getItem('auth_token');
+        if (!token) {
+            console.log('[Crash] No token for balance load, user is guest');
+            this.userBalance = 0;
+            return;
+        }
 
         try {
-            const response = await fetch('/api/users/me', {
+            console.log('[Crash] Fetching balance from API (/api/auth/me)...');
+            const response = await fetch('/api/auth/me', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
+            if (!response.ok) throw new Error('Failed to fetch user data');
+
             const data = await response.json();
-            this.userBalance = data.gem_balance;
-            document.getElementById('user-balance').textContent = this.userBalance.toLocaleString();
+            // API returns wallet_balance, frontend was looking for gem_balance
+            this.userBalance = data.wallet_balance !== undefined ? data.wallet_balance : (data.gem_balance || 0);
+            console.log('[Crash] Balance loaded from API:', this.userBalance);
+
+            const balanceEl = document.getElementById('user-balance');
+            if (balanceEl) balanceEl.textContent = this.userBalance.toLocaleString();
 
         } catch (error) {
             console.error('[Crash] Error loading balance:', error);

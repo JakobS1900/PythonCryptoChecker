@@ -10,6 +10,14 @@
         padding: 2rem;
     }
 
+    /* Variable Mapping for Crash Game Compatibility */
+    :root {
+        --card-bg: var(--bg-secondary);
+        --card-border: var(--border-subtle);
+        --surface: var(--bg-tertiary);
+        --success: #10b981;
+    }
+
     .crash-header {
         text-align: center;
         margin-bottom: 2rem;
@@ -66,8 +74,15 @@
     }
 
     @keyframes crashPulse {
-        0%, 100% { transform: scale(1); }
-        50% { transform: scale(1.2); }
+
+        0%,
+        100% {
+            transform: scale(1);
+        }
+
+        50% {
+            transform: scale(1.2);
+        }
     }
 
     .game-status {
@@ -78,9 +93,17 @@
         color: var(--text-secondary);
     }
 
-    .game-status.waiting { color: #fbbf24; }
-    .game-status.playing { color: #10b981; }
-    .game-status.crashed { color: #f5576c; }
+    .game-status.waiting {
+        color: #fbbf24;
+    }
+
+    .game-status.playing {
+        color: #10b981;
+    }
+
+    .game-status.crashed {
+        color: #f5576c;
+    }
 
     /* Betting Panel */
     .betting-panel {
@@ -134,7 +157,8 @@
         background: var(--card-border);
     }
 
-    .bet-btn, .cashout-btn {
+    .bet-btn,
+    .cashout-btn {
         width: 100%;
         padding: 1rem;
         border: none;
@@ -349,7 +373,7 @@
     </div>
 </div>
 
-<script src="/static/js/crash.js"></script>
+<script src="/static/js/crash.js?v=3"></script>
 <script>
     // Initialize when page loads
     document.addEventListener('DOMContentLoaded', () => {

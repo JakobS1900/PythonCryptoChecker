@@ -14,6 +14,7 @@ from database.models import User
 from api.auth_api import require_authentication
 from services.crash_service import CrashGameService
 from services.crash_game_manager import crash_manager
+from crypto.portfolio import portfolio_manager
 
 
 router = APIRouter()
@@ -39,7 +40,7 @@ class PlaceBetResponse(BaseModel):
     bet_id: Optional[int]
     game_id: int
     bet_amount: int
-    new_balance: int
+    new_balance: float  # Changed from int to support fractional balances
     message: str
 
 
@@ -99,12 +100,13 @@ async def place_bet(
         game = await CrashGameService.get_current_game(db)
 
         if not game or game.status not in ['waiting', 'starting']:
+            user_balance = await portfolio_manager.get_user_balance(str(current_user.id))
             return PlaceBetResponse(
                 success=False,
                 bet_id=None,
                 game_id=0,
                 bet_amount=request.bet_amount,
-                new_balance=current_user.gem_balance,
+                new_balance=int(user_balance),
                 message="Cannot bet on game in progress"
             )
 
@@ -134,12 +136,13 @@ async def place_bet(
         )
 
     except ValueError as e:
+        user_balance = await portfolio_manager.get_user_balance(str(current_user.id))
         return PlaceBetResponse(
             success=False,
             bet_id=None,
             game_id=0,
             bet_amount=request.bet_amount,
-            new_balance=current_user.gem_balance,
+            new_balance=int(user_balance),
             message=str(e)
         )
 

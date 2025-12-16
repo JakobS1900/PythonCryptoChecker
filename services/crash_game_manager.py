@@ -6,8 +6,9 @@ Handles timing, multiplier progression, and game state.
 """
 
 import asyncio
+import random
 from datetime import datetime
-from typing import Optional, Set
+from typing import Optional, Set, Dict, List
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.database import get_db
@@ -17,13 +18,19 @@ from services.crash_service import CrashGameService
 
 class CrashGameManager:
     """Manages automatic crash game rounds."""
+    
+    # Bot simulation settings
+    MIN_BOTS = 1
+    MAX_BOTS = 3
 
     def __init__(self):
         self.current_game: Optional[CrashGame] = None
         self.current_multiplier: float = 1.00
         self.is_running: bool = False
+        self.is_idle: bool = True  # True when no players connected
         self.task: Optional[asyncio.Task] = None
         self.connected_clients: Set = set()
+        self.current_bets: List[Dict] = []  # Track bets for current round
 
     async def start(self):
         """Start the game manager."""
@@ -49,6 +56,26 @@ class CrashGameManager:
         """Main game loop that runs continuously."""
         while self.is_running:
             try:
+                # Wait for at least one player to connect before starting rounds
+                while not self.connected_clients and self.is_running:
+                    if not self.is_idle:
+                        self.is_idle = True
+                        print("[Crash Manager] Entering idle mode - waiting for players")
+                        await self.broadcast({
+                            "type": "game_state",
+                            "status": "idle",
+                            "message": "Waiting for players..."
+                        })
+                    await asyncio.sleep(0.5)  # Check every 500ms
+                
+                # Player connected - exit idle mode
+                if self.is_idle:
+                    self.is_idle = False
+                    print(f"[Crash Manager] Player connected! Starting new round...")
+                
+                # Reset bets for new round
+                self.current_bets = []
+                
                 # Create new game
                 async for db in get_db():
                     self.current_game = await CrashGameService.create_game(db)
@@ -92,8 +119,19 @@ class CrashGameManager:
             "server_seed_hash": self.current_game.server_seed_hash
         })
 
-        # Wait for betting duration
-        await asyncio.sleep(CrashGameService.BETTING_DURATION)
+        # Simulate bot bets during betting phase (staggered for realism)
+        asyncio.create_task(self._simulate_bot_bets())
+        
+        # Adaptive betting duration: shorter when solo, longer with multiple players
+        player_count = len(self.connected_clients)
+        if player_count <= 1:
+            betting_duration = 5  # Faster for solo debugging
+            print(f"[Crash Manager] Solo mode: {betting_duration}s betting phase")
+        else:
+            betting_duration = CrashGameService.BETTING_DURATION  # Full 10s
+            print(f"[Crash Manager] Multiplayer ({player_count} players): {betting_duration}s betting phase")
+        
+        await asyncio.sleep(betting_duration)
 
     async def _starting_phase(self):
         """Starting phase - countdown before game starts."""
@@ -217,6 +255,48 @@ class CrashGameManager:
             "server_seed_hash": self.current_game.server_seed_hash
         }
 
+    async def _simulate_bot_bets(self):
+        """
+        Simulate bot bets during betting phase for a livelier feel.
+        Bots place 1-3 bets with staggered timing for realism.
+        """
+        # Bot names for display (subset of available bots)
+        BOT_NAMES = [
+            "CryptoKing", "LuckyBettor", "DiamondHands", "MoonShot",
+            "BlockChainBoss", "TokenMaster", "GemHunter", "RocketRider"
+        ]
+        
+        # Determine number of bots (fewer if real players are betting)
+        real_player_count = len(self.current_bets)
+        max_bots = max(1, self.MAX_BOTS - real_player_count)
+        num_bots = random.randint(self.MIN_BOTS, max_bots)
+        
+        # Select random bot names
+        selected_bots = random.sample(BOT_NAMES, min(num_bots, len(BOT_NAMES)))
+        
+        for bot_name in selected_bots:
+            # Stagger bet timing (1-4 seconds into betting phase)
+            await asyncio.sleep(random.uniform(1.0, 4.0))
+            
+            # Don't place bet if game has moved past waiting phase
+            if self.current_game and self.current_game.status != 'waiting':
+                break
+            
+            # Generate random bet amount (100-5000 GEM)
+            bet_amount = random.choice([100, 250, 500, 1000, 2000, 2500, 3000, 5000])
+            
+            # Broadcast bot bet (display only - not real database bet)
+            await self.broadcast({
+                "type": "bet_placed",
+                "username": bot_name,
+                "bet_amount": bet_amount,
+                "game_id": self.current_game.id if self.current_game else 0,
+                "is_bot": True
+            })
+            
+            print(f"[Crash Manager] Bot {bot_name} placed {bet_amount} GEM bet")
+
 
 # Global instance
 crash_manager = CrashGameManager()
+
