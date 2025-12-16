@@ -439,9 +439,9 @@ window.Dashboard = {
             const name = nameElement ? nameElement.textContent.toLowerCase() : '';
 
             const matches = !searchTerm ||
-                           name.includes(lowerSearchTerm) ||
-                           symbol.includes(lowerSearchTerm) ||
-                           cryptoId.includes(lowerSearchTerm);
+                name.includes(lowerSearchTerm) ||
+                symbol.includes(lowerSearchTerm) ||
+                cryptoId.includes(lowerSearchTerm);
 
             row.style.display = matches ? '' : 'none';
         });
@@ -733,5 +733,12 @@ window.Dashboard = {
 
 // Auto-initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    // Dashboard will be initialized by the page_init block in base template
+    // Check if we're on a page with dashboard elements (like home page)
+    const pricesTable = document.getElementById('prices-table-body');
+    const trendingCards = document.getElementById('trending-cards');
+
+    if (pricesTable || trendingCards) {
+        console.log('Dashboard elements detected, auto-initializing...');
+        Dashboard.init();
+    }
 });
