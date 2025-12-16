@@ -229,19 +229,17 @@ class CrashGameService:
         bet.profit = profit
         bet.cashed_out_at = datetime.utcnow()
 
-        # Update user balance
-        user.gem_balance += payout
-
-        # Create transaction
-        transaction = Transaction(
-            user_id=user_id,
-            transaction_type=TransactionType.CRASH_WIN,
-            amount=payout,
-            balance_after=user.gem_balance,
-            description=f"Crash game #{game_id} cashout at {current_multiplier:.2f}x"
+        # Add payout to user balance using portfolio manager
+        await portfolio_manager.process_win(
+            str(user_id),
+            payout,
+            f"Crash game #{game_id} cashout at {current_multiplier:.2f}x"
         )
-
-        db.add(transaction)
+        
+        # Get new balance after payout
+        new_balance = await portfolio_manager.get_user_balance(str(user_id))
+        
+        # Note: Transaction is handled by portfolio_manager.process_win()
 
         # Update game stats
         result = await db.execute(select(CrashGame).where(CrashGame.id == game_id))
@@ -259,7 +257,7 @@ class CrashGameService:
             "bet_amount": bet.bet_amount,
             "payout": payout,
             "profit": profit,
-            "new_balance": user.gem_balance,
+            "new_balance": new_balance,  # Fixed: was user.gem_balance
             "message": f"Cashed out at {current_multiplier:.2f}x!"
         }
 

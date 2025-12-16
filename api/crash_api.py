@@ -51,7 +51,7 @@ class CashoutResponse(BaseModel):
     bet_amount: int
     payout: int
     profit: int
-    new_balance: int
+    new_balance: float  # Changed from int to support fractional balances
     message: str
 
 
@@ -160,13 +160,14 @@ async def cashout(
         state = crash_manager.get_current_state()
 
         if state.get('status') != 'playing':
+            user_balance = await portfolio_manager.get_user_balance(str(current_user.id))
             return CashoutResponse(
                 success=False,
                 cashout_multiplier=0.0,
                 bet_amount=0,
                 payout=0,
                 profit=0,
-                new_balance=current_user.gem_balance,
+                new_balance=user_balance,
                 message="No active game to cash out"
             )
 
