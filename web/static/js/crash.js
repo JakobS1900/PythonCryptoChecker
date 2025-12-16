@@ -295,7 +295,7 @@ class CrashGameManager {
 
     async loadBalance() {
         // Try to get balance from global App state first (synced by auth.js)
-        if (window.App && window.App.user && window.App.user.wallet_balance > 0) {
+        if (window.App && window.App.user && window.App.user.wallet_balance !== undefined) {
             console.log('[Crash] Using global App.user balance:', window.App.user.wallet_balance);
             this.userBalance = window.App.user.wallet_balance;
             const balanceEl = document.getElementById('user-balance');
@@ -303,7 +303,7 @@ class CrashGameManager {
             return;
         }
 
-        console.log('[Crash] App.user not ready or balance is 0, falling back to API...');
+        console.log('[Crash] App.user not ready, falling back to API...');
 
         const token = localStorage.getItem('auth_token');
         if (!token) {
@@ -471,8 +471,27 @@ class CrashGameManager {
         document.getElementById('bet-amount').value = halved;
     }
 
-    maxBet() {
-        document.getElementById('bet-amount').value = Math.min(this.userBalance, 100000);
+    async maxBet() {
+        // Ensure we have latest balance - try multiple sources
+        let balance = this.userBalance;
+
+        // If userBalance is 0 or undefined, try to get from App.user
+        if (!balance && window.App && window.App.user) {
+            balance = window.App.user.wallet_balance || 0;
+            this.userBalance = balance;
+            console.log('[Crash] maxBet: Using App.user balance:', balance);
+        }
+
+        // If still 0, reload from API
+        if (!balance) {
+            await this.loadBalance();
+            balance = this.userBalance;
+            console.log('[Crash] maxBet: Reloaded from API:', balance);
+        }
+
+        const maxAllowed = Math.min(balance, 100000);
+        document.getElementById('bet-amount').value = maxAllowed > 0 ? Math.floor(maxAllowed) : 100;
+        console.log('[Crash] maxBet set to:', maxAllowed);
     }
 
     minBet() {
