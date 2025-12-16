@@ -192,20 +192,35 @@ window.Portfolio = {
         const tableBody = document.getElementById('stock-holdings-table-body');
         const emptyState = document.getElementById('stock-empty-state');
 
+        // Calculate summary from holdings if not provided
+        let totalValue = 0;
+        let totalInvested = 0;
+        let totalPL = 0;
+
+        if (holdings && holdings.length > 0) {
+            holdings.forEach(h => {
+                totalValue += h.current_value_gem || 0;
+                totalInvested += h.total_invested_gem || 0;
+                totalPL += h.profit_loss_gem || 0;
+            });
+        }
+
+        const totalPLPct = totalInvested > 0 ? (totalPL / totalInvested * 100) : 0;
+
         // Update summary stats
-        this.updateElement('stock-total-value', this.formatNumber(summary.total_value_gem || 0));
-        this.updateElement('stock-total-pl', this.formatNumber(summary.total_profit_loss || 0));
-        this.updateElement('stock-pl-pct', (summary.total_profit_loss_pct || 0).toFixed(2));
+        this.updateElement('stock-total-value', this.formatNumber(totalValue));
+        this.updateElement('stock-total-pl', this.formatNumber(totalPL));
+        this.updateElement('stock-pl-pct', totalPLPct.toFixed(2));
         this.updateElement('stock-positions-count', holdings.length);
 
         // Apply P/L colors
         const plContainer = document.getElementById('stock-total-pl-container');
         const plPctContainer = document.getElementById('stock-pl-pct-container');
         if (plContainer) {
-            plContainer.style.color = (summary.total_profit_loss || 0) >= 0 ? 'var(--success)' : 'var(--error)';
+            plContainer.style.color = totalPL >= 0 ? 'var(--success)' : 'var(--error)';
         }
         if (plPctContainer) {
-            plPctContainer.style.color = (summary.total_profit_loss_pct || 0) >= 0 ? 'var(--success)' : 'var(--error)';
+            plPctContainer.style.color = totalPLPct >= 0 ? 'var(--success)' : 'var(--error)';
         }
 
         if (!tableBody) return;
@@ -231,9 +246,9 @@ window.Portfolio = {
                         <small style="color: var(--text-muted);">${h.company_name || ''}</small>
                     </td>
                     <td class="text-end" style="color: var(--text-primary);">${this.formatNumber(h.quantity)}</td>
-                    <td class="text-end" style="color: var(--text-secondary);">${this.formatNumber(h.avg_buy_price_gem)} GEM</td>
-                    <td class="text-end" style="color: var(--text-primary);">${this.formatNumber(h.current_price_gem)} GEM</td>
-                    <td class="text-end" style="color: var(--text-primary);">${this.formatNumber(h.market_value_gem)} GEM</td>
+                    <td class="text-end" style="color: var(--text-secondary);">${this.formatNumber(h.average_buy_price_gem || 0)} GEM</td>
+                    <td class="text-end" style="color: var(--text-primary);">${this.formatNumber(h.current_price_gem || 0)} GEM</td>
+                    <td class="text-end" style="color: var(--text-primary);">${this.formatNumber(h.current_value_gem || 0)} GEM</td>
                     <td class="text-end" style="color: ${plColor};">
                         <i class="bi ${plIcon}"></i>
                         ${this.formatNumber(Math.abs(profitLoss))} GEM
@@ -241,7 +256,7 @@ window.Portfolio = {
                     </td>
                     <td class="text-center">
                         <button class="btn-modern btn-modern-danger btn-modern-sm" 
-                                onclick="Portfolio.confirmSellStock('${h.ticker}', ${h.quantity}, ${h.current_price_gem})">
+                                onclick="Portfolio.confirmSellStock('${h.ticker}', ${h.quantity}, ${h.current_price_gem || 0})">
                             <i class="bi bi-cash-coin"></i> Sell
                         </button>
                     </td>
